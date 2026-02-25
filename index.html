@@ -2062,7 +2062,7 @@ Option D" required></textarea>
                     <button class="btn btn-danger btn-sm" onclick="closeWsPreview()">✕ Close</button>
                 </div>
             </div>
-            <div class="ws-preview-content" id="wsPreviewContent"></div>
+            <iframe id="wsPreviewFrame" style="width:100%; height:80vh; border:none; border-radius:8px; background:white;" frameborder="0"></iframe>
         </div>
     </div>
 
@@ -4296,11 +4296,11 @@ Option D" required></textarea>
             const html = type === 'tutor' ? ws.tutor_html : ws.student_html;
             const label = type === 'tutor' ? ' — Answer Key' : '';
             document.getElementById('wsPreviewTitle').textContent = ws.title + label;
-            document.getElementById('wsPreviewContent').innerHTML = html;
+
+            // Use iframe to sandbox the worksheet CSS so it cannot affect the main page
+            const frame = document.getElementById('wsPreviewFrame');
+            frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;">' + html + '</body></html>';
             document.getElementById('wsPreviewModal').classList.add('show');
-            setTimeout(() => {
-                if (window.MathJax) MathJax.typesetPromise([document.getElementById('wsPreviewContent')]).catch(console.error);
-            }, 100);
         }
 
         function closeWsPreview() {
@@ -4308,13 +4308,9 @@ Option D" required></textarea>
         }
 
         function printWorksheetPreview() {
-            const content = document.getElementById('wsPreviewContent').innerHTML;
-            const title = document.getElementById('wsPreviewTitle').textContent;
-            const win = window.open('', '_blank');
-            win.document.write('<html><head><title>' + title + '</title><style>@page{margin:18mm;} body{font-family:Arial,sans-serif;}</style></head><body>' + content + '</body></html>');
-            win.document.close();
-            win.focus();
-            setTimeout(() => win.print(), 500);
+            const frame = document.getElementById('wsPreviewFrame');
+            frame.contentWindow.focus();
+            frame.contentWindow.print();
         }
 
         async function deleteWorksheet(wsId) {

@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChemCheck — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+  MathJax = {
+    tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+    startup: { typeset: false }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --surface3: #222636;
+    --border: #2a2f42;
+    --accent: #4af0b0;
+    --accent2: #7c6ff7;
+    --warn: #f0a44a;
+    --danger: #f06464;
+    --text: #e8eaf0;
+    --text-muted: #7a82a0;
+    --text-dim: #4a5070;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,240,176,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,240,176,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ═══ HEADER ═══ */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,15,20,0.8);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .portal-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .badge-teacher {
+    background: rgba(124,111,247,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,111,247,0.3);
+  }
+
+  .badge-student {
+    background: rgba(74,240,176,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(74,240,176,0.25);
+  }
+
+  /* ═══ VIEWS ═══ */
+  .view { display: none; position: relative; z-index: 1; }
+  .view.active { display: block; }
+
+  /* ═══ WELCOME ═══ */
+  #welcomeView {
+    min-height: calc(100vh - 73px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  #welcomeView.active {
+    display: flex;
+  }
+
+  .welcome-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+  }
+
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: 0px;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.2s forwards;
+  }
+
+  .welcome-title .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .welcome-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.3s forwards;
+  }
+
+  .portal-cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.4s forwards;
+  }
+
+  .portal-card {
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .portal-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .portal-card:hover::before { opacity: 1; }
+  .portal-card:hover {
+    border-color: var(--card-accent);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .portal-card.teacher { --card-accent: var(--accent2); }
+  .portal-card.student { --card-accent: var(--accent); }
+
+  .card-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 20px;
+  }
+
+  .teacher .card-icon { background: rgba(124,111,247,0.15); }
+  .student .card-icon { background: rgba(74,240,176,0.1); }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 24px; right: 24px;
+    color: var(--card-accent);
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+  }
+
+  .portal-card:hover .card-arrow { transform: translate(4px, -4px); }
+
+  /* ═══ PASSWORD MODAL ═══ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 360px;
+    max-width: 90vw;
+    animation: scaleIn 0.25s ease;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .modal-sub {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 24px;
+  }
+
+  /* ═══ INPUTS ═══ */
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field textarea { resize: vertical; min-height: 100px; }
+
+  .field select option { background: var(--surface3); }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ═══ BUTTONS ═══ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f14;
+  }
+  .btn-primary:hover { background: #3dd9a0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .btn-purple {
+    background: var(--accent2);
+    color: white;
+  }
+  .btn-purple:hover { background: #6c5fe6; transform: translateY(-1px); }
+
+  .btn-danger {
+    background: rgba(240,100,100,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(240,100,100,0.2);
+  }
+  .btn-danger:hover { background: rgba(240,100,100,0.2); }
+
+  .btn-full { width: 100%; justify-content: center; }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .main-layout {
+    display: flex;
+    min-height: calc(100vh - 73px);
+  }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 12px 10px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: all 0.15s;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface3); color: var(--text); }
+  .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .signout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    width: 100%;
+    background: none;
+    border: none;
+  }
+  .signout-btn:hover { color: var(--danger); background: rgba(240,100,100,0.08); }
+
+  /* ═══ CONTENT AREA ═══ */
+  .content-area {
+    flex: 1;
+    padding: 36px 40px;
+    overflow-y: auto;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+
+  /* ═══ PANELS ═══ */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ═══ QUESTION CARDS ═══ */
+  .q-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .q-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .q-card:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .q-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .q-card-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .q-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .q-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-topic {
+    background: rgba(74,240,176,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(74,240,176,0.2);
+  }
+
+  .tag-marks {
+    background: rgba(124,111,247,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(124,111,247,0.2);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.9rem; }
+
+  /* ═══ FEEDBACK AREA ═══ */
+  .feedback-container {
+    display: none;
+  }
+
+  .feedback-container.visible { display: block; }
+
+  .feedback-section {
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    border-left: 3px solid;
+  }
+
+  .feedback-missing {
+    background: rgba(240,164,74,0.08);
+    border-color: var(--warn);
+  }
+
+  .feedback-incorrect {
+    background: rgba(240,100,100,0.08);
+    border-color: var(--danger);
+  }
+
+  .feedback-length {
+    background: rgba(124,111,247,0.08);
+    border-color: var(--accent2);
+  }
+
+  .feedback-tips {
+    background: rgba(74,240,176,0.08);
+    border-color: var(--accent);
+  }
+
+  .feedback-model {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--border);
+  }
+
+  .feedback-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .missing-label { color: var(--warn); }
+  .incorrect-label { color: var(--danger); }
+  .length-label { color: var(--accent2); }
+  .tips-label { color: var(--accent); }
+  .model-label { color: var(--text-muted); }
+
+  .feedback-body {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+  }
+
+  .loading-spinner.visible { display: block; }
+
+  .spinner-ring {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  /* ═══ FORM GRID ═══ */
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  /* ═══ UPLOAD ZONE ═══ */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface3);
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(74,240,176,0.05);
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(74,240,176,0.08);
+  }
+
+  .upload-zone .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+
+  .upload-zone .upload-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .upload-zone .upload-text strong { color: var(--accent); }
+
+  .upload-zone input { display: none; }
+
+  .file-attached {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(74,240,176,0.1);
+    border: 1px solid rgba(74,240,176,0.25);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--accent);
+  }
+
+  .file-attached.visible { display: flex; }
+
+  /* ═══ QUESTION DETAIL (Student) ═══ */
+  .q-detail {
+    display: none;
+  }
+  .q-detail.visible { display: block; }
+
+  .q-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .back-btn:hover { color: var(--accent); }
+
+  /* ═══ DIVIDER ═══ */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* ═══ ANSWER MODE TOGGLE ═══ */
+  .answer-mode {
+    display: flex;
+    gap: 2px;
+    background: var(--surface3);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+    width: fit-content;
+    margin-bottom: 16px;
+  }
+
+  .mode-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mode-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ═══ SCORE BADGE ═══ */
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: rgba(74,240,176,0.1);
+    border: 1px solid rgba(74,240,176,0.25);
+    border-radius: 30px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  /* ═══ FILTER BAR ═══ */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar select, .filter-bar input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .filter-bar select:focus, .filter-bar input:focus {
+    border-color: var(--accent);
+  }
+
+  /* ═══ ANIMATIONS ═══ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .pulse { animation: pulse 2s ease infinite; }
+
+  .img-upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface3);
+  }
+
+  .img-upload-zone:hover, .img-upload-zone.dragover {
+    border-color: var(--accent2);
+    background: rgba(124,111,247,0.05);
+  }
+
+  .img-preview-item {
+    position: relative;
+    width: 100px; height: 100px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .img-preview-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .img-preview-item .img-remove {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    border: none;
+    line-height: 1;
+  }
+
+  .img-preview-item .img-remove:hover { background: var(--danger); }
+
+  .img-uploading {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+  }
+
+  /* Student image display */
+  .question-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .question-images img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .question-images img:hover { opacity: 0.85; }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+
+  .lightbox.active { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius); }
+  @media (max-width: 768px) {
+    header { padding: 16px 20px; }
+    .main-layout { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 12px; }
+    .sidebar-section-label, .sidebar-footer { display: none; }
+    .content-area { padding: 20px; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚗️</div>
+    <div class="logo-text">Chem<span>Check</span></div>
+  </div>
+  <div class="header-right">
+    <div id="headerBadge" class="portal-badge" style="display:none"></div>
+  </div>
+</header>
+
+<!-- ═══════════════════ WELCOME VIEW ═══════════════════ -->
+<div id="welcomeView" class="view active">
+  <div class="welcome-eyebrow">Mr Khemistry — Answer Checker</div>
+  <h1 class="welcome-title">Get <span class="highlight">instant feedback</span><br>on your <span class="highlight">Chemistry answers</span></h1>
+  <p class="welcome-sub">Upload your answer, compare against the model, and find out exactly what you missed — with tips on how to improve.</p>
+  <div class="portal-cards">
+    <div class="portal-card teacher" onclick="enterPortal('teacher')">
+      <div class="card-icon">🖊️</div>
+      <div class="card-title">Teacher Portal</div>
+      <p class="card-desc">Add questions, model answers, and answer templates for students to practise.</p>
+      <div class="card-arrow">↗</div>
+    </div>
+    <div class="portal-card student" onclick="enterPortal('student')">
+      <div class="card-icon">📚</div>
+      <div class="card-title">Student Portal</div>
+      <p class="card-desc">Pick a question, submit your answer, and get instant AI-powered feedback.</p>
+      <div class="card-arrow">↗</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PASSWORD MODAL ═══════════════════ -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Teacher Access</div>
+    <div class="modal-sub" id="modalSub">Enter the password to continue.</div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="passwordInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPassword()">
+      <div class="error-msg" id="passwordError">Incorrect password. Try again.</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="checkPassword()">Enter</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TEACHER VIEW ═══════════════════ -->
+<div id="teacherView" class="view">
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section-label">Teacher</div>
+      <div class="nav-item active" onclick="switchTeacherTab('questions')" id="tNav-questions">
+        <span class="nav-icon">📋</span> Question Bank
+      </div>
+      <div class="nav-item" onclick="switchTeacherTab('add')" id="tNav-add">
+        <span class="nav-icon">➕</span> Add Question
+      </div>
+      <div class="sidebar-footer">
+        <button class="signout-btn" onclick="signOut()">← Sign Out</button>
+      </div>
+    </div>
+    <!-- Content -->
+    <div class="content-area">
+
+      <!-- QUESTIONS TAB -->
+      <div id="tPanel-questions">
+        <div class="page-title">Question Bank</div>
+        <p class="page-sub">All structured questions available to students.</p>
+
+        <div class="filter-bar">
+          <select id="tFilterTopic" onchange="renderTeacherQuestions()">
+            <option value="">All Topics</option>
+          </select>
+        </div>
+
+        <div class="q-grid" id="teacherQGrid"></div>
+      </div>
+
+      <!-- ADD QUESTION TAB -->
+      <div id="tPanel-add" style="display:none">
+        <div class="page-title" id="addPanelTitle">Add Question</div>
+        <p class="page-sub">Fill in the question details. Model answer is used by the AI for feedback.</p>
+
+        <div class="panel">
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Topic / Concept</label>
+              <input type="text" id="qTopic" placeholder="e.g. Periodicity — Ionisation Energy">
+            </div>
+            <div class="field">
+              <label>Marks</label>
+              <input type="number" id="qMarks" placeholder="e.g. 4" min="1" max="20">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Question Text</label>
+            <textarea id="qText" rows="4" placeholder="Type the full question here. You may use LaTeX e.g. \(H_2O\)"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Model Answer</label>
+            <textarea id="qModel" rows="6" placeholder="Type the full model answer here. Include all marking points."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Model Answer Images (optional — up to 5)</label>
+            <div class="img-upload-zone" id="ansImgUploadZone" onclick="document.getElementById('ansImgFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleAnsImgDrop(event)">
+              <input type="file" id="ansImgFileInput" accept="image/*" multiple style="display:none" onchange="handleAnsImgSelect(this.files)">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
+              <div class="upload-text"><strong>Click to upload answer images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+            </div>
+            <div id="ansImgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+          </div>
+
+          <div class="field">
+            <label>Answer Template / Tip (optional)</label>
+            <textarea id="qTip" rows="4" placeholder="e.g. For 'explain' questions: always state → reason → link to effect. For ionisation energy trends: charge → shielding → distance."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Question Images (optional — up to 5)</label>
+            <div class="img-upload-zone" id="imgUploadZone" onclick="document.getElementById('imgFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleImgDrop(event)">
+              <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this.files)">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
+              <div class="upload-text"><strong>Click to upload images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+            </div>
+            <div id="imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveQuestion()" id="saveQBtn">Save Question</button>
+            <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ STUDENT VIEW ═══════════════════ -->
+<div id="studentView" class="view">
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section-label">Student</div>
+      <div class="nav-item active" onclick="switchStudentTab('browse')" id="sNav-browse">
+        <span class="nav-icon">📖</span> Questions
+      </div>
+      <div class="sidebar-footer">
+        <button class="signout-btn" onclick="signOut()">← Sign Out</button>
+      </div>
+    </div>
+    <!-- Content -->
+    <div class="content-area">
+
+      <!-- BROWSE -->
+      <div id="sPanel-browse">
+
+        <!-- Question List -->
+        <div id="sQuestionList">
+          <div class="page-title">Practice Questions</div>
+          <p class="page-sub">Choose a question to check your answer against the model.</p>
+
+          <div class="filter-bar">
+            <select id="sFilterTopic" onchange="renderStudentQuestions()">
+              <option value="">All Topics</option>
+            </select>
+          </div>
+
+          <div class="q-grid" id="studentQGrid"></div>
+        </div>
+
+        <!-- Question Detail (answer submission) -->
+        <div id="sQuestionDetail" class="q-detail">
+          <div class="q-detail-header">
+            <button class="back-btn" onclick="backToList()">← Back to questions</button>
+          </div>
+
+          <div class="panel">
+            <div id="detailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:16px;"></div>
+            <div id="detailImages" class="question-images"></div>
+            <div id="detailMeta" class="q-meta" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span> Your Answer</div>
+
+            <div class="answer-mode">
+              <button class="mode-btn active" id="modeType" onclick="switchMode('type')">✏️ Type answer</button>
+              <button class="mode-btn" id="modeUpload" onclick="switchMode('upload')">📄 Word doc</button>
+            </div>
+
+            <!-- TYPE MODE -->
+            <div id="typeMode">
+              <div class="field">
+                <textarea id="studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
+              </div>
+            </div>
+
+            <!-- WORD DOC MODE -->
+            <div id="uploadMode" style="display:none">
+              <div class="upload-zone" id="uploadZone" onclick="document.getElementById('docUpload').click()"
+                   ondragover="event.preventDefault(); this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="handleDrop(event)">
+                <input type="file" id="docUpload" accept=".docx" onchange="handleFileUpload(this.files[0])">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
+              </div>
+              <div class="file-attached" id="fileAttached">
+                <span>📎</span>
+                <span id="attachedFileName">document.docx</span>
+                <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="clearFile()">✕</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" id="checkBtn" onclick="checkAnswer()">🔍 Check My Answer</button>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-ring"></div>
+            <div>Analysing your answer...</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">This usually takes 5–10 seconds</div>
+          </div>
+
+          <!-- Feedback -->
+          <div class="feedback-container" id="feedbackContainer">
+
+            <div class="panel" style="border-color: rgba(74,240,176,0.2);">
+              <div id="scoreBadge" class="score-badge pulse">⏳ Checking...</div>
+
+              <div id="fbMissing" class="feedback-section feedback-missing" style="display:none">
+                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
+                <div class="feedback-body" id="fbMissingText"></div>
+              </div>
+
+              <div id="fbIncorrect" class="feedback-section feedback-incorrect" style="display:none">
+                <div class="feedback-label incorrect-label">❌ Incorrect Phrasing / Misconceptions</div>
+                <div class="feedback-body" id="fbIncorrectText"></div>
+              </div>
+
+              <div id="fbLength" class="feedback-section feedback-length" style="display:none">
+                <div class="feedback-label length-label">📏 Answer Length</div>
+                <div class="feedback-body" id="fbLengthText"></div>
+              </div>
+
+              <div id="fbTips" class="feedback-section feedback-tips" style="display:none">
+                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
+                <div class="feedback-body" id="fbTipsText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="feedback-section feedback-model">
+                <div class="feedback-label model-label">📋 Model Answer</div>
+                <div class="feedback-body" id="fbModelText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div style="text-align:center; padding-top:4px;">
+                <button class="btn btn-secondary" onclick="downloadAnalysis()" style="gap:8px;">
+                  ⬇️ Download Analysis
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DELETE CONFIRM MODAL ═══════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-title">Delete Question?</div>
+    <div class="modal-sub">This action cannot be undone. The question and all its data will be permanently removed.</div>
+    <div class="form-actions">
+      <button class="btn btn-danger" onclick="confirmDelete()">Yes, Delete</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('deleteModal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="document.getElementById('lightbox').classList.remove('active')">
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2anFzb2hoaXRwbmt2Zmlyb3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MDI5OTUsImV4cCI6MjA4NjE3ODk5NX0.EysWH7XML4y-ezkoc0NJ_IYExFA4kvtBpx2DrqylgCU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const TEACHER_PASSWORD = 'mrkhemistry';
+const STUDENT_PASSWORD = 'chem2026';
+
+let currentPortal = null;
+let pendingPortal = null;
+let questions = [];
+let editingId = null;
+let deleteTargetId = null;
+let selectedQuestion = null;
+let uploadedText = '';
+let currentAnswerMode = 'type';
+
+// ═══════════════════════════════════════════════════
+//  SUPABASE HELPERS
+// ═══════════════════════════════════════════════════
+async function fetchQuestions() {
+  const { data, error } = await sb
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
+
+async function insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { data, error } = await sb.from('chemcheck_questions').insert([{
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateQuestion(id, topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { error } = await sb.from('chemcheck_questions').update({
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteQuestionById(id) {
+  const { error } = await sb.from('chemcheck_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — QUESTION IMAGES
+// ═══════════════════════════════════════════════════
+let pendingImages = [];
+
+function handleImgSelect(files) {
+  const remaining = 5 - pendingImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderImgPreviews();
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImgSelect(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Image ${i+1}">
+      <button class="img-remove" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = pendingImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeImg(i) {
+  if (pendingImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingImages[i].storagePath]);
+  pendingImages.splice(i, 1);
+  renderImgPreviews();
+}
+
+async function uploadPendingImages() {
+  for (let i = 0; i < pendingImages.length; i++) {
+    const img = pendingImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `questions/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingImages[i] = { ...pendingImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearImgPreviews() {
+  pendingImages = [];
+  renderImgPreviews();
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — ANSWER IMAGES
+// ═══════════════════════════════════════════════════
+let pendingAnsImages = [];
+
+function handleAnsImgSelect(files) {
+  const remaining = 5 - pendingAnsImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingAnsImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderAnsImgPreviews();
+}
+
+function handleAnsImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('ansImgUploadZone').classList.remove('dragover');
+  handleAnsImgSelect(e.dataTransfer.files);
+}
+
+function renderAnsImgPreviews() {
+  const container = document.getElementById('ansImgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingAnsImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Answer Image ${i+1}">
+      <button class="img-remove" onclick="removeAnsImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = pendingAnsImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeAnsImg(i) {
+  if (pendingAnsImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingAnsImages[i].storagePath]);
+  pendingAnsImages.splice(i, 1);
+  renderAnsImgPreviews();
+}
+
+async function uploadPendingAnsImages() {
+  for (let i = 0; i < pendingAnsImages.length; i++) {
+    const img = pendingAnsImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `answers/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingAnsImages[i] = { ...pendingAnsImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingAnsImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearAnsImgPreviews() {
+  pendingAnsImages = [];
+  renderAnsImgPreviews();
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function enterPortal(portal) {
+  pendingPortal = portal;
+  const modal = document.getElementById('passwordModal');
+  document.getElementById('modalTitle').textContent = portal === 'teacher' ? 'Teacher Access' : 'Student Access';
+  document.getElementById('modalSub').textContent = 'Enter the password to continue.';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').style.display = 'none';
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value.trim();
+  const correct = pendingPortal === 'teacher' ? TEACHER_PASSWORD : STUDENT_PASSWORD;
+  if (val === correct) {
+    closeModal();
+    loadPortal(pendingPortal);
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function loadPortal(portal) {
+  currentPortal = portal;
+  document.getElementById('welcomeView').classList.remove('active');
+  const badge = document.getElementById('headerBadge');
+  badge.style.display = 'block';
+
+  await fetchQuestions();
+
+  if (portal === 'teacher') {
+    badge.className = 'portal-badge badge-teacher';
+    badge.textContent = 'Teacher';
+    document.getElementById('teacherView').classList.add('active');
+    populateTopicFilter('tFilterTopic');
+    renderTeacherQuestions();
+    switchTeacherTab('questions');
+  } else {
+    badge.className = 'portal-badge badge-student';
+    badge.textContent = 'Student';
+    document.getElementById('studentView').classList.add('active');
+    populateTopicFilter('sFilterTopic');
+    renderStudentQuestions();
+  }
+}
+
+function signOut() {
+  currentPortal = null;
+  document.getElementById('teacherView').classList.remove('active');
+  document.getElementById('studentView').classList.remove('active');
+  document.getElementById('welcomeView').classList.add('active');
+  document.getElementById('headerBadge').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function switchTeacherTab(tab) {
+  ['questions','add'].forEach(t => {
+    document.getElementById(`tPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tNav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'add' && !editingId) {
+    clearAddForm();
+    document.getElementById('addPanelTitle').textContent = 'Add Question';
+    document.getElementById('saveQBtn').textContent = 'Save Question';
+  }
+}
+
+function switchStudentTab(tab) {
+  document.getElementById(`sNav-${tab}`)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOPIC FILTER
+// ═══════════════════════════════════════════════════
+function populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderTeacherQuestions() {
+  const filter = document.getElementById('tFilterTopic').value;
+  const grid = document.getElementById('teacherQGrid');
+  const filtered = filter ? questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 120)}</div>
+        <div class="q-card-actions">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════
+async function saveQuestion() {
+  const topic = document.getElementById('qTopic').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value);
+  const text = document.getElementById('qText').value.trim();
+  const model = document.getElementById('qModel').value.trim();
+  const tip = document.getElementById('qTip').value.trim();
+
+  if (!topic || !text || !model || isNaN(marks)) {
+    alert('Please fill in Topic, Marks, Question Text, and Model Answer.');
+    return;
+  }
+
+  document.getElementById('saveQBtn').disabled = true;
+  document.getElementById('saveQBtn').textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadPendingImages();
+    const ansImageUrls = await uploadPendingAnsImages();
+    document.getElementById('saveQBtn').textContent = 'Saving...';
+
+    if (editingId) {
+      await updateQuestion(editingId, topic, marks, text, model, tip, imageUrls, ansImageUrls);
+      editingId = null;
+    } else {
+      await insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls);
+    }
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    clearAddForm();
+    clearImgPreviews();
+    clearAnsImgPreviews();
+    switchTeacherTab('questions');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error saving question: ' + err.message);
+  }
+
+  document.getElementById('saveQBtn').disabled = false;
+  document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
+}
+
+function editQuestion(id) {
+  const q = questions.find(q => q.id === id);
+  if (!q) return;
+  editingId = id;
+  document.getElementById('qTopic').value = q.topic || '';
+  document.getElementById('qMarks').value = q.marks || '';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qModel').value = q.model || '';
+  document.getElementById('qTip').value = q.tip || '';
+  // Pre-load existing images
+  pendingImages = (q.images || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderImgPreviews();
+  pendingAnsImages = (q.ansImages || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderAnsImgPreviews();
+  document.getElementById('addPanelTitle').textContent = 'Edit Question';
+  document.getElementById('saveQBtn').textContent = 'Update Question';
+  switchTeacherTab('add');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearAddForm();
+  clearImgPreviews();
+  clearAnsImgPreviews();
+  switchTeacherTab('questions');
+}
+
+function clearAddForm() {
+  ['qTopic','qMarks','qText','qModel','qTip'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteQuestion(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+async function confirmDelete() {
+  try {
+    await deleteQuestionById(deleteTargetId);
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error deleting question: ' + err.message);
+  }
+  document.getElementById('deleteModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STUDENT — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderStudentQuestions() {
+  const filter = document.getElementById('sFilterTopic').value;
+  const grid = document.getElementById('studentQGrid');
+  const filtered = filter ? questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card" onclick="openQuestion('${q.id}')">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 140)}</div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openQuestion(id) {
+  selectedQuestion = questions.find(q => q.id === id);
+  if (!selectedQuestion) return;
+
+  document.getElementById('sQuestionList').style.display = 'none';
+  document.getElementById('sQuestionDetail').classList.add('visible');
+
+  document.getElementById('detailQuestion').innerHTML = selectedQuestion.text;
+
+  // Show images
+  const imgContainer = document.getElementById('detailImages');
+  if (selectedQuestion.images && selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
+
+  document.getElementById('detailMeta').innerHTML = `
+    <span class="tag tag-topic">${selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${selectedQuestion.marks} mark${selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
+
+  // Reset
+  document.getElementById('studentAnswer').value = '';
+  document.getElementById('feedbackContainer').classList.remove('visible');
+  document.getElementById('loadingSpinner').classList.remove('visible');
+  clearFile();
+  switchMode('type');
+
+  // MathJax render
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('detailQuestion')]);
+}
+
+function backToList() {
+  document.getElementById('sQuestionList').style.display = 'block';
+  document.getElementById('sQuestionDetail').classList.remove('visible');
+  selectedQuestion = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+function switchMode(mode) {
+  currentAnswerMode = mode;
+  document.getElementById('typeMode').style.display = mode === 'type' ? 'block' : 'none';
+  document.getElementById('uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('modeType').classList.toggle('active', mode === 'type');
+  document.getElementById('modeUpload').classList.toggle('active', mode === 'upload');
+}
+
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    uploadedText = result.value.trim();
+    document.getElementById('attachedFileName').textContent = file.name;
+    document.getElementById('fileAttached').classList.add('visible');
+    document.getElementById('uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
+
+function clearFile() {
+  uploadedText = '';
+  document.getElementById('fileAttached').classList.remove('visible');
+  document.getElementById('uploadZone').style.display = 'block';
+  document.getElementById('docUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  CHECK ANSWER — AI
+// ═══════════════════════════════════════════════════
+async function checkAnswer() {
+  const answer = currentAnswerMode === 'type'
+    ? document.getElementById('studentAnswer').value.trim()
+    : uploadedText;
+
+  if (!answer) {
+    alert('Please write or upload your answer first.');
+    return;
+  }
+
+  if (!selectedQuestion) return;
+
+  document.getElementById('feedbackContainer').classList.remove('visible');
+  document.getElementById('loadingSpinner').classList.add('visible');
+  document.getElementById('checkBtn').disabled = true;
+
+  try {
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        system: `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`,
+        messages: [{ role: 'user', content: buildPrompt(selectedQuestion, answer) }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
+
+    renderFeedback(feedback, selectedQuestion);
+  } catch (err) {
+    renderFeedback({ error: true, raw: 'Network error. Please try again.' }, selectedQuestion);
+  }
+
+  document.getElementById('loadingSpinner').classList.remove('visible');
+  document.getElementById('checkBtn').disabled = false;
+}
+
+function buildPrompt(q, studentAnswer) {
+  return `You are marking a student's answer to the following A-level H2 Chemistry question.
+
+QUESTION: ${q.text}
+MARKS AVAILABLE: ${q.marks}
+MODEL ANSWER: ${q.model}
+${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
+
+STUDENT'S ANSWER: ${studentAnswer}
+
+Analyse the student's answer carefully and return ONLY a JSON object (no markdown, no backticks) with these exact keys:
+
+{
+  "overall": "Brief encouraging overall assessment in 1-2 sentences.",
+  "score_estimate": "e.g. 2/4 or 3/4",
+  "missing": "List any key chemistry points from the model answer that are absent from the student's answer. If nothing is missing, write null.",
+  "incorrect": "List any incorrect chemistry, misconceptions, or poor phrasing in the student's answer. If none, write null.",
+  "length_feedback": "Comment on whether the answer is appropriately detailed for ${q.marks} marks. E.g. too brief, too verbose, or well-matched.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve structure.' : 'Give 1-2 specific tips on how to structure answers to this type of question better.'}"
+}
+
+Be specific — reference actual chemistry content from the student's answer and model answer. Avoid vague comments.`;
+}
+
+function renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('scoreBadge').className = 'score-badge';
+    document.getElementById('feedbackContainer').classList.add('visible');
+    return;
+  }
+
+  // Score
+  const badge = document.getElementById('scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
+
+  // Missing
+  if (fb.missing) {
+    document.getElementById('fbMissing').style.display = 'block';
+    document.getElementById('fbMissingText').textContent = fb.missing;
+  } else {
+    document.getElementById('fbMissing').style.display = 'none';
+  }
+
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('fbIncorrect').style.display = 'block';
+    document.getElementById('fbIncorrectText').textContent = fb.incorrect;
+  } else {
+    document.getElementById('fbIncorrect').style.display = 'none';
+  }
+
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('fbLength').style.display = 'block';
+    document.getElementById('fbLengthText').textContent = fb.length_feedback;
+  } else {
+    document.getElementById('fbLength').style.display = 'none';
+  }
+
+  // Tips
+  if (fb.tips) {
+    document.getElementById('fbTips').style.display = 'block';
+    document.getElementById('fbTipsText').textContent = fb.tips;
+  } else {
+    document.getElementById('fbTips').style.display = 'none';
+  }
+
+  // Model Answer
+  document.getElementById('fbModelText').textContent = q.model;
+
+  // Answer images
+  const fbModelSection = document.getElementById('fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
+
+  document.getElementById('feedbackContainer').classList.add('visible');
+
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('feedbackContainer')]);
+  }
+
+  // Scroll to feedback
+  document.getElementById('feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function truncate(str, n) {
+  return str?.length > n ? str.slice(0, n) + '…' : str || '';
+}
+
+// ═══════════════════════════════════════════════════
+//  DOWNLOAD ANALYSIS
+// ═══════════════════════════════════════════════════
+function downloadAnalysis() {
+  if (!selectedQuestion) return;
+
+  const q = selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = currentAnswerMode === 'type'
+    ? document.getElementById('studentAnswer').value.trim()
+    : uploadedText;
+
+  const score    = document.getElementById('scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('fbMissing').style.display  !== 'none' ? document.getElementById('fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('fbIncorrect').style.display!== 'none' ? document.getElementById('fbIncorrectText').textContent : null;
+  const length   = document.getElementById('fbLength').style.display   !== 'none' ? document.getElementById('fbLengthText').textContent    : null;
+  const tips     = document.getElementById('fbTips').style.display     !== 'none' ? document.getElementById('fbTipsText').textContent      : null;
+  const model    = document.getElementById('fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
+    <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Topic filters populated after login via fetchQuestions()
+
+</script>
+</body>
+</html>

@@ -1129,6 +1129,7 @@
             <div class="answer-mode">
               <button class="mode-btn active" id="modeType" onclick="switchMode('type')">✏️ Type answer</button>
               <button class="mode-btn" id="modeUpload" onclick="switchMode('upload')">📄 Word doc</button>
+              <button class="mode-btn" id="modeImage" onclick="switchMode('image')">🖼️ Photo</button>
             </div>
 
             <!-- TYPE MODE -->
@@ -1153,6 +1154,19 @@
                 <span id="attachedFileName">document.docx</span>
                 <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="clearFile()">✕</span>
               </div>
+            </div>
+
+            <!-- IMAGE MODE -->
+            <div id="imageMode" style="display:none">
+              <div class="upload-zone" id="imgUploadZone" onclick="document.getElementById('imgUpload').click()"
+                   ondragover="event.preventDefault(); this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="handleImgDrop(event)">
+                <input type="file" id="imgUpload" accept="image/*" multiple onchange="handleImageUpload(this.files)">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
+              </div>
+              <div id="imgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
             </div>
 
             <div class="form-actions">
@@ -1719,6 +1733,9 @@ function openQuestion(id) {
   document.getElementById('feedbackContainer').classList.remove('visible');
   document.getElementById('loadingSpinner').classList.remove('visible');
   clearFile();
+  uploadedImages = [];
+  document.getElementById('imgPreviews').innerHTML = '';
+  document.getElementById('imgUploadZone').style.display = 'block';
   switchMode('type');
 
   // MathJax render
@@ -1736,12 +1753,59 @@ function backToList() {
 // ═══════════════════════════════════════════════════
 function switchMode(mode) {
   currentAnswerMode = mode;
-  document.getElementById('typeMode').style.display = mode === 'type' ? 'block' : 'none';
+  document.getElementById('typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
   document.getElementById('uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
-  document.getElementById('modeType').classList.toggle('active', mode === 'type');
+  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('modeType').classList.toggle('active',   mode === 'type');
   document.getElementById('modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
 }
 
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let uploadedImages = []; // array of { base64, mimeType, name }
+
+function handleImageUpload(files) {
+  const remaining = 3 - uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      renderImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  container.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative; display:inline-block;';
+    const el = document.createElement('img');
+    el.src = `data:${img.mimeType};base64,${img.base64}`;
+    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '✕';
+    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
+    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderImgPreviews(); };
+    wrap.appendChild(el);
+    wrap.appendChild(removeBtn);
+    container.appendChild(wrap);
+  });
+  // Show/hide upload zone based on count
+  document.getElementById('imgUploadZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+}
 
 // ═══════════════════════════════════════════════════
 //  FILE UPLOAD
@@ -1777,15 +1841,19 @@ function clearFile() {
 //  CHECK ANSWER — AI
 // ═══════════════════════════════════════════════════
 async function checkAnswer() {
+  const isImageMode = currentAnswerMode === 'image';
   const answer = currentAnswerMode === 'type'
     ? document.getElementById('studentAnswer').value.trim()
     : uploadedText;
 
-  if (!answer) {
+  if (!isImageMode && !answer) {
     alert('Please write or upload your answer first.');
     return;
   }
-
+  if (isImageMode && uploadedImages.length === 0) {
+    alert('Please upload at least one photo of your answer.');
+    return;
+  }
   if (!selectedQuestion) return;
 
   document.getElementById('feedbackContainer').classList.remove('visible');
@@ -1793,14 +1861,33 @@ async function checkAnswer() {
   document.getElementById('checkBtn').disabled = true;
 
   try {
+    // Build Qwen-compatible message content
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
+
+    let userContent;
+    if (isImageMode) {
+      // Multi-part message: images + text prompt
+      userContent = [
+        ...uploadedImages.map(img => ({
+          type: 'image_url',
+          image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
+        })),
+        { type: 'text', text: buildPrompt(selectedQuestion, '[See student answer in the uploaded image(s) above]') }
+      ];
+    } else {
+      userContent = buildPrompt(selectedQuestion, answer);
+    }
+
     const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'qwen-vl-plus',
         max_tokens: 1000,
-        system: `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`,
-        messages: [{ role: 'user', content: buildPrompt(selectedQuestion, answer) }]
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ]
       })
     });
 

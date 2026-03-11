@@ -1158,15 +1158,15 @@
 
             <!-- IMAGE MODE -->
             <div id="imageMode" style="display:none">
-              <div class="upload-zone" id="imgUploadZone" onclick="document.getElementById('imgUpload').click()"
+              <div class="upload-zone" id="studentImgZone" onclick="document.getElementById('studentImgUpload').click()"
                    ondragover="event.preventDefault(); this.classList.add('dragover')"
                    ondragleave="this.classList.remove('dragover')"
-                   ondrop="handleImgDrop(event)">
-                <input type="file" id="imgUpload" accept="image/*" multiple onchange="handleImageUpload(this.files)">
+                   ondrop="handleStudentImgDrop(event)">
+                <input type="file" id="studentImgUpload" accept="image/*" multiple onchange="handleImageUpload(this.files)">
                 <div class="upload-icon">🖼️</div>
                 <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
               </div>
-              <div id="imgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
+              <div id="studentImgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
             </div>
 
             <div class="form-actions">
@@ -1734,8 +1734,8 @@ function openQuestion(id) {
   document.getElementById('loadingSpinner').classList.remove('visible');
   clearFile();
   uploadedImages = [];
-  document.getElementById('imgPreviews').innerHTML = '';
-  document.getElementById('imgUploadZone').style.display = 'block';
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
   switchMode('type');
 
   // MathJax render
@@ -1780,14 +1780,14 @@ function handleImageUpload(files) {
   });
 }
 
-function handleImgDrop(e) {
+function handleStudentImgDrop(e) {
   e.preventDefault();
-  document.getElementById('imgUploadZone').classList.remove('dragover');
+  document.getElementById('studentImgZone').classList.remove('dragover');
   handleImageUpload(e.dataTransfer.files);
 }
 
 function renderImgPreviews() {
-  const container = document.getElementById('imgPreviews');
+  const container = document.getElementById('studentImgPreviews');
   container.innerHTML = '';
   uploadedImages.forEach((img, i) => {
     const wrap = document.createElement('div');
@@ -1804,7 +1804,7 @@ function renderImgPreviews() {
     container.appendChild(wrap);
   });
   // Show/hide upload zone based on count
-  document.getElementById('imgUploadZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
 }
 
 // ═══════════════════════════════════════════════════

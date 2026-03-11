@@ -1861,16 +1861,16 @@ async function checkAnswer() {
   document.getElementById('checkBtn').disabled = true;
 
   try {
-    // Build Qwen-compatible message content
+    // Build Claude-compatible message content
     const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
 
     let userContent;
     if (isImageMode) {
-      // Multi-part message: images + text prompt
+      // Multi-part message: images + text prompt (Claude format)
       userContent = [
         ...uploadedImages.map(img => ({
-          type: 'image_url',
-          image_url: { url: `data:${img.mimeType};base64,${img.base64}` }
+          type: 'image',
+          source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
         })),
         { type: 'text', text: buildPrompt(selectedQuestion, '[See student answer in the uploaded image(s) above]') }
       ];
@@ -1882,12 +1882,10 @@ async function checkAnswer() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'qwen-vl-plus',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 1000,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent }
-        ]
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userContent }]
       })
     });
 

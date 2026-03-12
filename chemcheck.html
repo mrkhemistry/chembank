@@ -1158,15 +1158,36 @@
 
             <!-- IMAGE MODE -->
             <div id="imageMode" style="display:none">
-              <div class="upload-zone" id="studentImgZone" onclick="document.getElementById('studentImgUpload').click()"
-                   ondragover="event.preventDefault(); this.classList.add('dragover')"
-                   ondragleave="this.classList.remove('dragover')"
-                   ondrop="handleStudentImgDrop(event)">
-                <input type="file" id="studentImgUpload" accept="image/*" multiple onchange="handleImageUpload(this.files)">
-                <div class="upload-icon">🖼️</div>
-                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
+
+              <!-- Step 1: Upload -->
+              <div id="imgStep1">
+                <div class="upload-zone" id="studentImgZone" onclick="document.getElementById('studentImgUpload').click()"
+                     ondragover="event.preventDefault(); this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="handleStudentImgDrop(event)">
+                  <input type="file" id="studentImgUpload" accept="image/*" multiple onchange="handleImageUpload(this.files)">
+                  <div class="upload-icon">🖼️</div>
+                  <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
+                </div>
+                <div id="studentImgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
+                <div class="form-actions" id="extractBtnWrap" style="display:none; margin-top:12px;">
+                  <button class="btn btn-secondary" onclick="extractText()">📝 Read my answer</button>
+                </div>
               </div>
-              <div id="studentImgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
+
+              <!-- Step 2: Confirm extracted text -->
+              <div id="imgStep2" style="display:none">
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
+                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
+                </div>
+                <div class="field">
+                  <textarea id="extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
+                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="resetImageMode()">Re-upload your photo</span>
+                </div>
+              </div>
+
             </div>
 
             <div class="form-actions">
@@ -1736,6 +1757,10 @@ function openQuestion(id) {
   uploadedImages = [];
   document.getElementById('studentImgPreviews').innerHTML = '';
   document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
   switchMode('type');
 
   // MathJax render
@@ -1803,8 +1828,56 @@ function renderImgPreviews() {
     wrap.appendChild(removeBtn);
     container.appendChild(wrap);
   });
-  // Show/hide upload zone based on count
   document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('extractBtnWrap').style.display = uploadedImages.length > 0 ? 'block' : 'none';
+}
+
+async function extractText() {
+  if (uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('extractedAnswer').value = extracted;
+    document.getElementById('imgStep1').style.display = 'none';
+    document.getElementById('imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function resetImageMode() {
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  document.getElementById('studentImgUpload').value = '';
 }
 
 // ═══════════════════════════════════════════════════
@@ -1842,16 +1915,18 @@ function clearFile() {
 // ═══════════════════════════════════════════════════
 async function checkAnswer() {
   const isImageMode = currentAnswerMode === 'image';
-  const answer = currentAnswerMode === 'type'
-    ? document.getElementById('studentAnswer').value.trim()
-    : uploadedText;
+  const answer = isImageMode
+    ? document.getElementById('extractedAnswer').value.trim()
+    : currentAnswerMode === 'type'
+      ? document.getElementById('studentAnswer').value.trim()
+      : uploadedText;
 
-  if (!isImageMode && !answer) {
-    alert('Please write or upload your answer first.');
-    return;
-  }
-  if (isImageMode && uploadedImages.length === 0) {
-    alert('Please upload at least one photo of your answer.');
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
     return;
   }
   if (!selectedQuestion) return;
@@ -1861,22 +1936,7 @@ async function checkAnswer() {
   document.getElementById('checkBtn').disabled = true;
 
   try {
-    // Build Claude-compatible message content
     const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
-
-    let userContent;
-    if (isImageMode) {
-      // Multi-part message: images + text prompt (Claude format)
-      userContent = [
-        ...uploadedImages.map(img => ({
-          type: 'image',
-          source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
-        })),
-        { type: 'text', text: buildPrompt(selectedQuestion, '[See student answer in the uploaded image(s) above]') }
-      ];
-    } else {
-      userContent = buildPrompt(selectedQuestion, answer);
-    }
 
     const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
       method: 'POST',
@@ -1885,7 +1945,7 @@ async function checkAnswer() {
         model: 'claude-sonnet-4-5-20250929',
         max_tokens: 1500,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userContent }]
+        messages: [{ role: 'user', content: buildPrompt(selectedQuestion, answer) }]
       })
     });
 
@@ -1924,9 +1984,10 @@ List every sentence or clause from the student's answer word-for-word. Do not pa
 
 STEP 2 — MATCH TO MARKING POINTS.
 Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
+- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
 
 STEP 3 — MISSING POINTS.
-List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams. Do not penalise a student for using diagrams to show ordering instead of words.
 
 STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
 - You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.

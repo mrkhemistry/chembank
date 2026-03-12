@@ -1917,21 +1917,29 @@ STUDENT'S ANSWER:
 ${studentAnswer}
 
 ---
-STEP 1 — READ THE STUDENT'S ANSWER CAREFULLY.
-Extract every sentence or clause from the student's answer exactly as written. Do not paraphrase or infer meaning beyond what is explicitly stated.
+MARKING INSTRUCTIONS:
 
-STEP 2 — MARK AGAINST THE MODEL ANSWER.
-For each marking point in the model answer, decide whether the student's answer contains it. Award marks only if the student has clearly stated the point. Do not award marks for points the student did not explicitly make.
+STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
+List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
 
-STEP 3 — IDENTIFY ERRORS (strict rules):
-- Only flag a phrase as incorrect if it DIRECTLY CONTRADICTS the model answer or contains a clear chemistry error.
-- Quote the EXACT phrase from the student's answer that is wrong. Do not paraphrase or reconstruct it.
-- Briefly explain why it is wrong, based strictly on the model answer — not your own knowledge.
-- Do NOT flag informal phrasing or incomplete explanations as misconceptions unless they are factually wrong.
-- If there are no errors, return null.
+STEP 2 — MATCH TO MARKING POINTS.
+Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
 
-STEP 4 — SCORE.
+STEP 3 — MISSING POINTS.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams.
+
+STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
+- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
+- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
+- Only flag it if it directly contradicts the model answer.
+- Explain why it is wrong using the model answer as the sole reference.
+- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+
+STEP 5 — SCORE.
 Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+STEP 6 — LENGTH.
+Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
 
 ---
 Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
@@ -1939,9 +1947,9 @@ Return ONLY a valid JSON object (no markdown, no backticks) with these exact key
 {
   "overall": "1-2 sentence encouraging summary of the student's performance.",
   "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
-  "missing": "List the specific marking points from the model answer that are absent from the student's answer. Quote the relevant part of the model answer for each. If nothing is missing, write null.",
-  "incorrect": "For each error: quote the exact phrase from the student's answer, then explain why it is wrong based on the model answer. If no errors, write null.",
-  "length_feedback": "Compare the student's answer length to the model answer length. If they are similar, say the length is appropriate.",
+  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
+  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
+  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
   "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
 }`;
 }

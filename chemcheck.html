@@ -1905,27 +1905,45 @@ async function checkAnswer() {
 }
 
 function buildPrompt(q, studentAnswer) {
-  return `You are marking a student's answer to the following A-level H2 Chemistry question.
+  return `You are marking a student's answer to an A-level H2 Chemistry question.
 
 QUESTION: ${q.text}
 MARKS AVAILABLE: ${q.marks}
-MODEL ANSWER: ${q.model}
+MODEL ANSWER (this is the sole marking authority):
+${q.model}
 ${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
 
-STUDENT'S ANSWER: ${studentAnswer}
+STUDENT'S ANSWER:
+${studentAnswer}
 
-Analyse the student's answer carefully and return ONLY a JSON object (no markdown, no backticks) with these exact keys:
+---
+STEP 1 — READ THE STUDENT'S ANSWER CAREFULLY.
+Extract every sentence or clause from the student's answer exactly as written. Do not paraphrase or infer meaning beyond what is explicitly stated.
+
+STEP 2 — MARK AGAINST THE MODEL ANSWER.
+For each marking point in the model answer, decide whether the student's answer contains it. Award marks only if the student has clearly stated the point. Do not award marks for points the student did not explicitly make.
+
+STEP 3 — IDENTIFY ERRORS (strict rules):
+- Only flag a phrase as incorrect if it DIRECTLY CONTRADICTS the model answer or contains a clear chemistry error.
+- Quote the EXACT phrase from the student's answer that is wrong. Do not paraphrase or reconstruct it.
+- Briefly explain why it is wrong, based strictly on the model answer — not your own knowledge.
+- Do NOT flag informal phrasing or incomplete explanations as misconceptions unless they are factually wrong.
+- If there are no errors, return null.
+
+STEP 4 — SCORE.
+Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+---
+Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
 
 {
-  "overall": "Brief encouraging overall assessment in 1-2 sentences.",
-  "score_estimate": "e.g. 2/4 or 3/4",
-  "missing": "List any key chemistry points from the model answer that are absent from the student's answer. If nothing is missing, write null.",
-  "incorrect": "List any incorrect chemistry, misconceptions, or poor phrasing in the student's answer. If none, write null.",
-  "length_feedback": "Comment on whether the answer is appropriately detailed for ${q.marks} marks. E.g. too brief, too verbose, or well-matched.",
-  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve structure.' : 'Give 1-2 specific tips on how to structure answers to this type of question better.'}"
-}
-
-Be specific — reference actual chemistry content from the student's answer and model answer. Avoid vague comments.`;
+  "overall": "1-2 sentence encouraging summary of the student's performance.",
+  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
+  "missing": "List the specific marking points from the model answer that are absent from the student's answer. Quote the relevant part of the model answer for each. If nothing is missing, write null.",
+  "incorrect": "For each error: quote the exact phrase from the student's answer, then explain why it is wrong based on the model answer. If no errors, write null.",
+  "length_feedback": "Compare the student's answer length to the model answer length. If they are similar, say the length is appropriate.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
+}`;
 }
 
 function renderFeedback(fb, q) {

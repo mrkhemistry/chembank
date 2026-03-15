@@ -966,7 +966,7 @@
     <div class="modal-sub" id="modalSub">Enter the password to continue.</div>
     <div class="field">
       <label>Password</label>
-      <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="new-password" onkeydown="if(event.key==='Enter')checkPassword()">
+      <input type="text" id="passwordInput" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')checkPassword()" style="-webkit-text-security:disc; font-family:monospace;">
       <div class="error-msg" id="passwordError">Incorrect password. Try again.</div>
     </div>
     <div class="form-actions">

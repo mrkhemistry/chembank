@@ -28,6 +28,12 @@
     --green: #4caf7d;
     --red: #f06060;
     --gold: #f0c040;
+    --purple: #a78bfa;
+    --purple-bg: #1e1530;
+    --purple-border: #4c3880;
+    --blue: #60a5fa;
+    --blue-bg: #0d1f35;
+    --blue-border: #1e4a7a;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -284,6 +290,9 @@
 
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
+  .tool-card:nth-child(3) { animation-delay: 0.19s; }
+  .tool-card:nth-child(4) { animation-delay: 0.26s; }
+  .tool-card:nth-child(2) { animation-delay: 0.12s; }
 
   .tool-card.j1 { border-color: var(--j1-border); }
   .tool-card.j2 { border-color: var(--j2-border); }
@@ -338,6 +347,18 @@
   .card-cta { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
   .tool-card.j1 .card-cta { color: var(--j1); }
   .tool-card.j2 .card-cta { color: var(--j2); }
+
+  .tool-card.purple { border-color: var(--purple-border); }
+  .tool-card.purple .card-header { background: var(--purple-bg); }
+  .tool-card.purple .card-tag { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+  .tool-card.purple .card-cta { color: var(--purple); }
+  .tool-card.purple:hover { border-color: var(--purple); box-shadow: 0 4px 24px rgba(167,139,250,0.15); transform: translateY(-3px); }
+
+  .tool-card.blue { border-color: var(--blue-border); }
+  .tool-card.blue .card-header { background: var(--blue-bg); }
+  .tool-card.blue .card-tag { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
+  .tool-card.blue .card-cta { color: var(--blue); }
+  .tool-card.blue:hover { border-color: var(--blue); box-shadow: 0 4px 24px rgba(96,165,250,0.15); transform: translateY(-3px); }
 
   /* ─── RESET VIEW ─── */
   #resetView {
@@ -436,7 +457,7 @@
     <div class="dash-logo">Mr <span>Khemistry</span></div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail">student@email.com</strong>
+        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea999e9f8e8f849eaa8f878b8386c4898587">[email&#160;protected]</a></strong>
         Student Portal
       </div>
       <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
@@ -476,6 +497,30 @@
         </div>
       </a>
 
+      <a class="tool-card purple" href="https://mrkhemistry.teachable.com/" target="_blank">
+        <div class="card-header">
+          <div class="card-icon">🎓</div>
+          <div class="card-name">Teachable</div>
+          <div class="card-tag">Lesson Recordings</div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
+          <div class="card-cta">Open Teachable →</div>
+        </div>
+      </a>
+
+      <a class="tool-card blue" href="https://classroom.google.com/" target="_blank">
+        <div class="card-header">
+          <div class="card-icon">📚</div>
+          <div class="card-name">Google Classroom</div>
+          <div class="card-tag">Notes</div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
+          <div class="card-cta">Open Classroom →</div>
+        </div>
+      </a>
+
     </div>
   </div>
 
@@ -484,9 +529,9 @@
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j'; // Replace with your sb_publishable_... key
+  const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY_HERE'; // Replace with your sb_publishable_... key
 
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -588,14 +633,4 @@
     const password = document.getElementById('resetEmail').value.trim();
     const { error } = await sb.auth.updateUser({ password });
     if (error) {
-      document.getElementById('resetError').textContent = error.message;
-      document.getElementById('resetError').classList.add('visible');
-    } else {
-      alert('Password updated! Please sign in.');
-      window.location.hash = '';
-      showLogin();
-    }
-  }
-</script>
-</body>
-</html>
+      document.getElementById('resetError').textContent = error.me

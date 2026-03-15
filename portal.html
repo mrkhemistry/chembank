@@ -420,12 +420,12 @@
       <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
     </div>
 
-    <button class="btn-primary" id="loginBtn" onclick="handleLogin()">Sign In</button>
+    <button class="btn-primary" id="loginBtn" >Sign In</button>
     <div class="error-msg" id="loginError"></div>
 
     <div class="login-footer">
       First time? Check your email for a setup link.<br><br>
-      <a href="#" onclick="showReset()">Forgot password?</a>
+      <a href="#" id="forgotLink">Forgot password?</a>
     </div>
   </div>
 </div>
@@ -441,12 +441,12 @@
       <input type="email" id="resetEmail" placeholder="you@example.com">
     </div>
 
-    <button class="btn-primary" id="resetBtn" onclick="handleReset()">Send Reset Link</button>
+    <button class="btn-primary" id="resetBtn" >Send Reset Link</button>
     <div class="success-msg" id="resetSuccess">Check your inbox! A reset link has been sent.</div>
     <div class="error-msg" id="resetError"></div>
 
     <div class="login-footer" style="margin-top:1.25rem;">
-      <a href="#" onclick="showLogin()">← Back to Sign In</a>
+      <a href="#" id="backToLogin">← Back to Sign In</a>
     </div>
   </div>
 </div>
@@ -460,7 +460,7 @@
         <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea999e9f8e8f849eaa8f878b8386c4898587">[email&#160;protected]</a></strong>
         Student Portal
       </div>
-      <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
+      <button class="btn-signout" >Sign Out</button>
     </div>
   </div>
 
@@ -545,6 +545,13 @@
   function showReset() { showView('resetView'); }
 
   window.addEventListener('DOMContentLoaded', async () => {
+    // Wire up all buttons via event listeners
+    document.getElementById('loginBtn').addEventListener('click', handleLogin);
+    document.getElementById('resetBtn').addEventListener('click', handleReset);
+    document.getElementById('forgotLink').addEventListener('click', (e) => { e.preventDefault(); showReset(); });
+    document.getElementById('backToLogin').addEventListener('click', (e) => { e.preventDefault(); showLogin(); });
+    document.querySelector('.btn-signout').addEventListener('click', handleSignOut);
+
     const { data: { session } } = await sb.auth.getSession();
     if (session) showDashboard(session.user);
 
@@ -556,7 +563,8 @@
       document.getElementById('resetEmail').type = 'password';
       document.getElementById('resetEmail').placeholder = 'New password';
       document.getElementById('resetBtn').textContent = 'Update Password';
-      document.getElementById('resetBtn').onclick = handleNewPassword;
+      document.getElementById('resetBtn').removeEventListener('click', handleReset);
+      document.getElementById('resetBtn').addEventListener('click', handleNewPassword);
     }
   });
 

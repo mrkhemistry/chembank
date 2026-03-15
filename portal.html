@@ -31,7 +31,7 @@
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── LOGIN ── */
+  /* LOGIN */
   #loginView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
   .login-logo { text-align: center; margin-bottom: 2rem; }
@@ -55,7 +55,7 @@
   .login-footer a:hover { text-decoration: underline; }
   .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 
-  /* ── DASHBOARD ── */
+  /* DASHBOARD */
   #dashboardView { flex-direction: column; min-height: 100vh; }
   .dash-header { background: #000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
   .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; letter-spacing: -0.01em; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -70,7 +70,7 @@
   .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
   .dash-welcome p { color: var(--text3); font-size: 1rem; margin-top: 0.5rem; }
 
-  /* ── CARDS — 2x2 grid with header strip ── */
+  /* CARDS */
   .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
   .tool-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: inherit; display: block; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; animation: fadeUp 0.4s ease forwards; opacity: 0; }
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
@@ -86,7 +86,7 @@
   .card-desc { font-size: 0.95rem; color: var(--text2); line-height: 1.6; margin-bottom: 1rem; }
   .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
 
-  /* ── RESET ── */
+  /* RESET */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
   .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
@@ -154,7 +154,7 @@
     <div class="dash-logo">Mr Khemistry</div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2152555445444f5561444c40484d0f424e4c">[email&#160;protected]</a></strong>
+        <strong id="userEmail">student@email.com</strong>
         Student Portal
       </div>
       <button class="btn-signout" id="signOutBtn">Sign Out</button>
@@ -167,61 +167,56 @@
       <p>Select a tool below to begin your revision.</p>
     </div>
     <div class="tools-grid">
-
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
         <div class="card-header">
-          <div class="card-icon">✅</div>
+          <div class="card-icon">&#9989;</div>
           <div class="card-name">ChemCheck</div>
           <div class="card-tag">AI Marking</div>
         </div>
         <div class="card-body">
           <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
-          <div class="card-cta">Open ChemCheck →</div>
+          <div class="card-cta">Open ChemCheck &rarr;</div>
         </div>
       </a>
-
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/" target="_blank">
         <div class="card-header">
-          <div class="card-icon">🧪</div>
+          <div class="card-icon">&#129514;</div>
           <div class="card-name">ChemBank</div>
           <div class="card-tag">Question Bank</div>
         </div>
         <div class="card-body">
           <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
-          <div class="card-cta">Open ChemBank →</div>
+          <div class="card-cta">Open ChemBank &rarr;</div>
         </div>
       </a>
-
       <a class="tool-card" href="https://mrkhemistry.teachable.com/" target="_blank">
         <div class="card-header">
-          <div class="card-icon">🎓</div>
+          <div class="card-icon">&#127891;</div>
           <div class="card-name">Teachable</div>
           <div class="card-tag">Lesson Recordings</div>
         </div>
         <div class="card-body">
           <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
-          <div class="card-cta">Open Teachable →</div>
+          <div class="card-cta">Open Teachable &rarr;</div>
         </div>
       </a>
-
       <a class="tool-card" href="https://classroom.google.com/" target="_blank">
         <div class="card-header">
-          <div class="card-icon">📚</div>
+          <div class="card-icon">&#128218;</div>
           <div class="card-name">Google Classroom</div>
           <div class="card-tag">Notes</div>
         </div>
         <div class="card-body">
           <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
-          <div class="card-cta">Open Classroom →</div>
+          <div class="card-cta">Open Classroom &rarr;</div>
         </div>
       </a>
-
     </div>
   </div>
-  <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal</div>
+  <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;&middot;&nbsp; Student Portal</div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -246,14 +241,12 @@
       showView('dashboardView');
     }
 
-    // Check existing session
     sb.auth.getSession().then(function(result) {
       if (result.data && result.data.session) {
         showDashboard(result.data.session.user);
       }
     }).catch(function(e) { console.error('Session check failed:', e); });
 
-    // Password recovery flow
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
@@ -263,7 +256,6 @@
       document.getElementById('resetBtn').textContent = 'Update Password';
     }
 
-    // Sign in
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
       var password = document.getElementById('loginPassword').value;
@@ -298,12 +290,10 @@
         });
     });
 
-    // Enter key triggers sign in
     document.getElementById('loginPassword').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { document.getElementById('loginBtn').click(); }
     });
 
-    // Sign out
     document.getElementById('signOutBtn').addEventListener('click', function() {
       sb.auth.signOut().then(function() {
         document.getElementById('loginEmail').value = '';
@@ -312,19 +302,16 @@
       });
     });
 
-    // Forgot password
     document.getElementById('forgotLink').addEventListener('click', function(e) {
       e.preventDefault();
       showView('resetView');
     });
 
-    // Back to login
     document.getElementById('backToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showView('loginView');
     });
 
-    // Reset / update password
     document.getElementById('resetBtn').addEventListener('click', function() {
       var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
       var btn = document.getElementById('resetBtn');
@@ -354,4 +341,19 @@
               document.getElementById('resetError').textContent = result.error.message;
               document.getElementById('resetError').classList.add('visible');
             } else {
-              document.getElementById('reset
+              document.getElementById('resetSuccess').classList.add('visible');
+            }
+          });
+      }
+    });
+  }
+
+  if (typeof supabase !== 'undefined') {
+    init();
+  } else {
+    window.addEventListener('load', init);
+  }
+})();
+</script>
+</body>
+</html>

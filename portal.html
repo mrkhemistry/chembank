@@ -8,30 +8,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #242840;
-    --surface2: #2c3150;
-    --surface3: #343a5a;
-    --border: #424868;
-    --border2: #505880;
-    --text: #e8eaf0;
-    --text2: #c8cde0;
-    --text3: #6b7290;
-    --j1: #00c9b1;
-    --j1-bg: #0d3330;
-    --j1-border: #1a6b62;
-    --j2: #ff8c42;
-    --j2-bg: #2e1a0a;
-    --j2-border: #7a4020;
-    --green: #4caf7d;
-    --red: #f06060;
-    --gold: #f0c040;
-    --purple: #a78bfa;
-    --purple-bg: #1e1530;
-    --purple-border: #4c3880;
-    --blue: #60a5fa;
-    --blue-bg: #0d1f35;
-    --blue-border: #1e4a7a;
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #2a2a2a;
+    --border2: #3a3a3a;
+    --text: #ffffff;
+    --text2: #cccccc;
+    --text3: #777777;
+    --cyan: #00e5ff;
+    --cyan-dim: rgba(0,229,255,0.08);
+    --cyan-border: rgba(0,229,255,0.25);
+    --red: #ff5555;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -43,92 +31,81 @@
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* LOGIN */
+  /* ── LOGIN ── */
   #loginView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
   .login-logo { text-align: center; margin-bottom: 2rem; }
-  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--text); }
-  .login-logo h1 span { color: var(--gold); }
-  .login-logo p { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; }
+  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: var(--text); letter-spacing: -0.02em; }
+  .login-logo h1 { background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .login-logo h1 span { -webkit-text-fill-color: transparent; }
+  .login-logo p { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem; }
+  .login-logo .divider { width: 40px; height: 2px; background: var(--cyan); margin: 0.9rem auto 0; }
   .form-group { margin-bottom: 1.1rem; }
-  label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
-  input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.92rem; outline: none; transition: border-color 0.15s; }
-  input:focus { border-color: var(--j1); }
-  .btn-primary { width: 100%; background: var(--j1); color: #0a1a18; border: none; border-radius: 8px; padding: 0.8rem; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; }
+  label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
+  input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: var(--cyan); }
+  .btn-primary { width: 100%; background: var(--cyan); color: #000000; border: none; border-radius: 4px; padding: 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.04em; text-transform: uppercase; }
   .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn-primary:active { transform: translateY(0); }
-  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-  .error-msg { background: rgba(240,96,96,0.1); border: 1px solid rgba(240,96,96,0.3); border-radius: 7px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--red); margin-top: 0.9rem; display: none; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .error-msg { background: rgba(255,85,85,0.08); border: 1px solid rgba(255,85,85,0.3); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--red); margin-top: 0.9rem; display: none; }
   .error-msg.visible { display: block; }
-  .success-msg { background: rgba(0,201,177,0.08); border: 1px solid var(--j1-border); border-radius: 7px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--j1); margin-top: 0.9rem; display: none; }
+  .success-msg { background: var(--cyan-dim); border: 1px solid var(--cyan-border); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--cyan); margin-top: 0.9rem; display: none; }
   .success-msg.visible { display: block; }
   .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text3); line-height: 1.6; }
-  .login-footer a { color: var(--j1); text-decoration: none; }
+  .login-footer a { color: var(--cyan); text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
-  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(10,26,24,0.3); border-top-color: #0a1a18; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 
-  /* DASHBOARD */
+  /* ── DASHBOARD ── */
   #dashboardView { flex-direction: column; min-height: 100vh; }
-  .dash-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 100; }
-  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
-  .dash-logo span { color: var(--gold); }
+  .dash-header { background: #000000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--text); letter-spacing: -0.01em; }
+  .dash-logo { background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .dash-logo span { -webkit-text-fill-color: transparent; }
   .dash-right { display: flex; align-items: center; gap: 1rem; }
   .dash-user { font-size: 0.75rem; color: var(--text3); text-align: right; }
   .dash-user strong { display: block; color: var(--text2); font-size: 0.82rem; font-weight: 500; }
-  .btn-signout { background: transparent; border: 1px solid var(--border); color: var(--text3); border-radius: 7px; padding: 0.38rem 0.85rem; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .btn-signout:hover { border-color: var(--red); color: var(--red); }
-  .dash-main { flex: 1; padding: 2.5rem 2rem; max-width: 860px; margin: 0 auto; width: 100%; }
+  .dash-main { flex: 1; padding: 3rem 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
   .dash-welcome { margin-bottom: 2.5rem; animation: fadeUp 0.4s ease forwards; }
-  .dash-welcome .eyebrow { font-size: 0.72rem; font-weight: 600; color: var(--j1); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.4rem; }
-  .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); line-height: 1.15; }
-  .dash-welcome p { color: var(--text3); font-size: 0.88rem; margin-top: 0.4rem; }
-  .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
-  .tool-card { border-radius: 10px; overflow: hidden; border: 1px solid; transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s; text-decoration: none; color: inherit; display: block; background: var(--surface); animation: fadeUp 0.4s ease forwards; opacity: 0; }
+  .dash-welcome .eyebrow { font-size: 0.7rem; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; }
+  .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
+  .dash-welcome p { color: var(--text3); font-size: 1rem; margin-top: 0.5rem; }
+
+  /* Tool cards */
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .tool-card { background: var(--surface); text-decoration: none; color: inherit; display: block; padding: 1.75rem; transition: background 0.15s; animation: fadeUp 0.4s ease forwards; opacity: 0; position: relative; }
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
   .tool-card:nth-child(3) { animation-delay: 0.19s; }
   .tool-card:nth-child(4) { animation-delay: 0.26s; }
-  .tool-card.j1 { border-color: var(--j1-border); }
-  .tool-card.j2 { border-color: var(--j2-border); }
-  .tool-card.purple { border-color: var(--purple-border); }
-  .tool-card.blue { border-color: var(--blue-border); }
-  .tool-card.j1:hover { border-color: var(--j1); box-shadow: 0 4px 24px rgba(0,201,177,0.15); transform: translateY(-3px); }
-  .tool-card.j2:hover { border-color: var(--j2); box-shadow: 0 4px 24px rgba(255,140,66,0.15); transform: translateY(-3px); }
-  .tool-card.purple:hover { border-color: var(--purple); box-shadow: 0 4px 24px rgba(167,139,250,0.15); transform: translateY(-3px); }
-  .tool-card.blue:hover { border-color: var(--blue); box-shadow: 0 4px 24px rgba(96,165,250,0.15); transform: translateY(-3px); }
-  .card-header { padding: 1rem 1.25rem 0.9rem; display: flex; align-items: center; gap: 0.75rem; }
-  .tool-card.j1 .card-header { background: var(--j1-bg); }
-  .tool-card.j2 .card-header { background: var(--j2-bg); }
-  .tool-card.purple .card-header { background: var(--purple-bg); }
-  .tool-card.blue .card-header { background: var(--blue-bg); }
-  .card-icon { font-size: 1.4rem; line-height: 1; }
-  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--text); }
-  .card-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; margin-left: auto; }
-  .tool-card.j1 .card-tag { background: var(--j1-bg); color: var(--j1); border: 1px solid var(--j1-border); }
-  .tool-card.j2 .card-tag { background: var(--j2-bg); color: var(--j2); border: 1px solid var(--j2-border); }
-  .tool-card.purple .card-tag { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
-  .tool-card.blue .card-tag { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
-  .card-body { padding: 1.1rem 1.25rem 1.25rem; }
-  .card-desc { font-size: 0.85rem; color: var(--text3); line-height: 1.55; margin-bottom: 1rem; }
-  .card-cta { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
-  .tool-card.j1 .card-cta { color: var(--j1); }
-  .tool-card.j2 .card-cta { color: var(--j2); }
-  .tool-card.purple .card-cta { color: var(--purple); }
-  .tool-card.blue .card-cta { color: var(--blue); }
+  .tool-card:hover { background: var(--surface2); }
+  .tool-card::after { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--cyan); opacity: 0; transition: opacity 0.15s; }
+  .tool-card:hover::after { opacity: 1; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+  .card-icon { font-size: 1.5rem; line-height: 1; }
+  .card-tag { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--text); margin-bottom: 0.5rem; }
+  .card-desc { font-size: 0.83rem; color: var(--text3); line-height: 1.55; margin-bottom: 1.25rem; }
+  .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 0.3rem; }
 
-  /* RESET */
+  /* ── RESET ── */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
-  .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.4rem; }
-  .reset-card p { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
-  .portal-footer { text-align: center; padding: 1.25rem; font-size: 0.75rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.03em; }
+  .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
+  .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
+  .reset-card p { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.55; }
+
+  .portal-footer { text-align: center; padding: 1.5rem; font-size: 0.72rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.05em; text-transform: uppercase; }
 
   @media (max-width: 480px) {
     .login-card, .reset-card { padding: 2rem 1.25rem; }
-    .dash-main { padding: 1.75rem 1rem; }
-    .dash-welcome h2 { font-size: 1.5rem; }
+    .dash-main { padding: 2rem 1rem; }
+    .dash-welcome h2 { font-size: 1.6rem; }
     .dash-header { padding: 0 1rem; }
     .dash-user { display: none; }
+    .tools-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -140,6 +117,7 @@
     <div class="login-logo">
       <h1>Mr <span>Khemistry</span></h1>
       <p>Student Portal</p>
+      <div class="divider"></div>
     </div>
     <div class="form-group">
       <label for="loginEmail">Email Address</label>
@@ -182,71 +160,69 @@
     <div class="dash-logo">Mr <span>Khemistry</span></div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail">student@email.com</strong>
+        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="681b1c1d0c0d061c280d05090104460b0705">[email&#160;protected]</a></strong>
         Student Portal
       </div>
       <button class="btn-signout" id="signOutBtn">Sign Out</button>
     </div>
   </div>
+
   <div class="dash-main">
     <div class="dash-welcome">
       <div class="eyebrow">Welcome back</div>
       <h2>Your Chemistry Tools</h2>
       <p>Select a tool below to begin your revision.</p>
     </div>
+
     <div class="tools-grid">
-      <a class="tool-card j1" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
-        <div class="card-header">
+      <a class="tool-card" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
+        <div class="card-top">
           <div class="card-icon">✅</div>
-          <div class="card-name">ChemCheck</div>
           <div class="card-tag">AI Marking</div>
         </div>
-        <div class="card-body">
-          <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
-          <div class="card-cta">Open ChemCheck →</div>
-        </div>
+        <div class="card-name">ChemCheck</div>
+        <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
+        <div class="card-cta">Open ChemCheck →</div>
       </a>
-      <a class="tool-card j2" href="https://mrkhemistry.github.io/chembank/" target="_blank">
-        <div class="card-header">
+
+      <a class="tool-card" href="https://mrkhemistry.github.io/chembank/" target="_blank">
+        <div class="card-top">
           <div class="card-icon">🧪</div>
-          <div class="card-name">ChemBank</div>
           <div class="card-tag">Question Bank</div>
         </div>
-        <div class="card-body">
-          <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
-          <div class="card-cta">Open ChemBank →</div>
-        </div>
+        <div class="card-name">ChemBank</div>
+        <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
+        <div class="card-cta">Open ChemBank →</div>
       </a>
-      <a class="tool-card purple" href="https://mrkhemistry.teachable.com/" target="_blank">
-        <div class="card-header">
+
+      <a class="tool-card" href="https://mrkhemistry.teachable.com/" target="_blank">
+        <div class="card-top">
           <div class="card-icon">🎓</div>
-          <div class="card-name">Teachable</div>
           <div class="card-tag">Lesson Recordings</div>
         </div>
-        <div class="card-body">
-          <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
-          <div class="card-cta">Open Teachable →</div>
-        </div>
+        <div class="card-name">Teachable</div>
+        <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
+        <div class="card-cta">Open Teachable →</div>
       </a>
-      <a class="tool-card blue" href="https://classroom.google.com/" target="_blank">
-        <div class="card-header">
+
+      <a class="tool-card" href="https://classroom.google.com/" target="_blank">
+        <div class="card-top">
           <div class="card-icon">📚</div>
-          <div class="card-name">Google Classroom</div>
           <div class="card-tag">Notes</div>
         </div>
-        <div class="card-body">
-          <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
-          <div class="card-cta">Open Classroom →</div>
-        </div>
+        <div class="card-name">Google Classroom</div>
+        <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
+        <div class="card-cta">Open Classroom →</div>
       </a>
     </div>
   </div>
+
   <div class="portal-footer">
     Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -270,14 +246,12 @@
       showView('dashboardView');
     }
 
-    // Check existing session
     sb.auth.getSession().then(function(result) {
       if (result.data && result.data.session) {
         showDashboard(result.data.session.user);
       }
     });
 
-    // Handle password recovery link
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
@@ -287,7 +261,6 @@
       document.getElementById('resetBtn').textContent = 'Update Password';
     }
 
-    // Login
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
       var password = document.getElementById('loginPassword').value;
@@ -318,12 +291,10 @@
       });
     });
 
-    // Enter key on login
     document.getElementById('loginPassword').addEventListener('keydown', function(e) {
       if (e.key === 'Enter') document.getElementById('loginBtn').click();
     });
 
-    // Sign out
     document.getElementById('signOutBtn').addEventListener('click', function() {
       sb.auth.signOut().then(function() {
         document.getElementById('loginEmail').value = '';
@@ -332,24 +303,20 @@
       });
     });
 
-    // Forgot password
     document.getElementById('forgotLink').addEventListener('click', function(e) {
       e.preventDefault();
       showView('resetView');
     });
 
-    // Back to login
     document.getElementById('backToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showView('loginView');
     });
 
-    // Send reset link
     document.getElementById('resetBtn').addEventListener('click', function() {
       var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
 
       if (isRecovery) {
-        // Set new password
         var newPassword = document.getElementById('resetEmail').value.trim();
         sb.auth.updateUser({ password: newPassword }).then(function(result) {
           if (result.error) {
@@ -362,7 +329,6 @@
           }
         });
       } else {
-        // Send reset email
         var email = document.getElementById('resetEmail').value.trim();
         var btn = document.getElementById('resetBtn');
         document.getElementById('resetError').classList.remove('visible');
@@ -377,20 +343,4 @@
             document.getElementById('resetError').textContent = result.error.message;
             document.getElementById('resetError').classList.add('visible');
           } else {
-            document.getElementById('resetSuccess').classList.add('visible');
-          }
-        });
-      }
-    });
-  }
-
-  // Wait for supabase library to be ready
-  if (typeof supabase !== 'undefined') {
-    init();
-  } else {
-    window.addEventListener('load', init);
-  }
-})();
-</script>
-</body>
-</html>
+            document.getElementById('r

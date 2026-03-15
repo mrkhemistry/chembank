@@ -22,7 +22,7 @@
     --red: #ff5555;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  body { font-family: 'DM Sans', sans-serif; font-size: 16px; background: var(--bg); color: var(--text); min-height: 100vh; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
@@ -33,26 +33,24 @@
 
   /* ── LOGIN ── */
   #loginView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
   .login-logo { text-align: center; margin-bottom: 2rem; }
-  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; color: var(--text); letter-spacing: -0.02em; }
-  .login-logo h1 { background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .login-logo h1 span { -webkit-text-fill-color: transparent; }
-  .login-logo p { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem; }
+  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 2.2rem; letter-spacing: -0.02em; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .login-logo p { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.15em; margin-top: 0.5rem; }
   .login-logo .divider { width: 40px; height: 2px; background: var(--cyan); margin: 0.9rem auto 0; }
   .form-group { margin-bottom: 1.1rem; }
-  label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
+  label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
   input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.15s; }
   input:focus { border-color: var(--cyan); }
   .btn-primary { width: 100%; background: var(--cyan); color: #000000; border: none; border-radius: 4px; padding: 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.04em; text-transform: uppercase; }
   .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn-primary:active { transform: translateY(0); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .error-msg { background: rgba(255,85,85,0.08); border: 1px solid rgba(255,85,85,0.3); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--red); margin-top: 0.9rem; display: none; }
+  .error-msg { background: rgba(255,85,85,0.08); border: 1px solid rgba(255,85,85,0.3); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.875rem; color: var(--red); margin-top: 0.9rem; display: none; }
   .error-msg.visible { display: block; }
-  .success-msg { background: var(--cyan-dim); border: 1px solid var(--cyan-border); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--cyan); margin-top: 0.9rem; display: none; }
+  .success-msg { background: var(--cyan-dim); border: 1px solid var(--cyan-border); border-radius: 4px; padding: 0.65rem 0.9rem; font-size: 0.875rem; color: var(--cyan); margin-top: 0.9rem; display: none; }
   .success-msg.visible { display: block; }
-  .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text3); line-height: 1.6; }
+  .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--text3); line-height: 1.6; }
   .login-footer a { color: var(--cyan); text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
   .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
@@ -60,17 +58,15 @@
   /* ── DASHBOARD ── */
   #dashboardView { flex-direction: column; min-height: 100vh; }
   .dash-header { background: #000000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
-  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.25rem; color: var(--text); letter-spacing: -0.01em; }
-  .dash-logo { background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .dash-logo span { -webkit-text-fill-color: transparent; }
+  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; letter-spacing: -0.01em; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .dash-right { display: flex; align-items: center; gap: 1rem; }
-  .dash-user { font-size: 0.75rem; color: var(--text3); text-align: right; }
-  .dash-user strong { display: block; color: var(--text2); font-size: 0.82rem; font-weight: 500; }
-  .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .dash-user { font-size: 0.8rem; color: var(--text3); text-align: right; }
+  .dash-user strong { display: block; color: var(--text2); font-size: 0.875rem; font-weight: 500; }
+  .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .btn-signout:hover { border-color: var(--red); color: var(--red); }
   .dash-main { flex: 1; padding: 3rem 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
   .dash-welcome { margin-bottom: 2.5rem; animation: fadeUp 0.4s ease forwards; }
-  .dash-welcome .eyebrow { font-size: 0.7rem; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; }
+  .dash-welcome .eyebrow { font-size: 0.75rem; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; }
   .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
   .dash-welcome p { color: var(--text3); font-size: 1rem; margin-top: 0.5rem; }
 
@@ -86,23 +82,23 @@
   .tool-card:hover::after { opacity: 1; }
   .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
   .card-icon { font-size: 1.5rem; line-height: 1; }
-  .card-tag { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+  .card-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
   .card-name { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--text); margin-bottom: 0.5rem; }
-  .card-desc { font-size: 0.83rem; color: var(--text3); line-height: 1.55; margin-bottom: 1.25rem; }
+  .card-desc { font-size: 0.95rem; color: var(--text3); line-height: 1.6; margin-bottom: 1.25rem; }
   .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 0.3rem; }
 
   /* ── RESET ── */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-  .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
-  .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
-  .reset-card p { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.55; }
+  .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
+  .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
+  .reset-card p { color: var(--text3); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.55; }
 
-  .portal-footer { text-align: center; padding: 1.5rem; font-size: 0.72rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.05em; text-transform: uppercase; }
+  .portal-footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.05em; text-transform: uppercase; }
 
   @media (max-width: 480px) {
     .login-card, .reset-card { padding: 2rem 1.25rem; }
     .dash-main { padding: 2rem 1rem; }
-    .dash-welcome h2 { font-size: 1.6rem; }
+    .dash-welcome h2 { font-size: 1.8rem; }
     .dash-header { padding: 0 1rem; }
     .dash-user { display: none; }
     .tools-grid { grid-template-columns: 1fr; }
@@ -115,13 +111,13 @@
 <div id="loginView" class="view active">
   <div class="login-card">
     <div class="login-logo">
-      <h1>Mr <span>Khemistry</span></h1>
+      <h1>Mr Khemistry</h1>
       <p>Student Portal</p>
       <div class="divider"></div>
     </div>
     <div class="form-group">
       <label for="loginEmail">Email Address</label>
-      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+      <input type="email" id="loginEmail" placeholder="you@school.edu.sg" autocomplete="email">
     </div>
     <div class="form-group">
       <label for="loginPassword">Password</label>
@@ -143,7 +139,7 @@
     <p>Enter your email and we will send you a link to reset your password.</p>
     <div class="form-group">
       <label for="resetEmail">Email Address</label>
-      <input type="email" id="resetEmail" placeholder="you@example.com">
+      <input type="email" id="resetEmail" placeholder="you@school.edu.sg">
     </div>
     <button class="btn-primary" id="resetBtn">Send Reset Link</button>
     <div class="success-msg" id="resetSuccess">Check your inbox! A reset link has been sent.</div>
@@ -157,23 +153,21 @@
 <!-- DASHBOARD -->
 <div id="dashboardView" class="view">
   <div class="dash-header">
-    <div class="dash-logo">Mr <span>Khemistry</span></div>
+    <div class="dash-logo">Mr Khemistry</div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="681b1c1d0c0d061c280d05090104460b0705">[email&#160;protected]</a></strong>
+        <strong id="userEmail">student@email.com</strong>
         Student Portal
       </div>
       <button class="btn-signout" id="signOutBtn">Sign Out</button>
     </div>
   </div>
-
   <div class="dash-main">
     <div class="dash-welcome">
       <div class="eyebrow">Welcome back</div>
       <h2>Your Chemistry Tools</h2>
       <p>Select a tool below to begin your revision.</p>
     </div>
-
     <div class="tools-grid">
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
         <div class="card-top">
@@ -184,7 +178,6 @@
         <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
         <div class="card-cta">Open ChemCheck →</div>
       </a>
-
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/" target="_blank">
         <div class="card-top">
           <div class="card-icon">🧪</div>
@@ -194,7 +187,6 @@
         <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
         <div class="card-cta">Open ChemBank →</div>
       </a>
-
       <a class="tool-card" href="https://mrkhemistry.teachable.com/" target="_blank">
         <div class="card-top">
           <div class="card-icon">🎓</div>
@@ -204,7 +196,6 @@
         <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
         <div class="card-cta">Open Teachable →</div>
       </a>
-
       <a class="tool-card" href="https://classroom.google.com/" target="_blank">
         <div class="card-top">
           <div class="card-icon">📚</div>
@@ -216,13 +207,10 @@
       </a>
     </div>
   </div>
-
-  <div class="portal-footer">
-    Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal
-  </div>
+  <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal</div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -232,7 +220,8 @@
     try {
       sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch(e) {
-      console.error('Supabase init failed:', e);
+      document.getElementById('loginError').textContent = 'Portal failed to load. Please refresh the page.';
+      document.getElementById('loginError').classList.add('visible');
       return;
     }
 
@@ -246,12 +235,22 @@
       showView('dashboardView');
     }
 
+    function showError(msg) {
+      var errEl = document.getElementById('loginError');
+      errEl.textContent = msg;
+      errEl.classList.add('visible');
+    }
+
+    // Check existing session
     sb.auth.getSession().then(function(result) {
       if (result.data && result.data.session) {
         showDashboard(result.data.session.user);
       }
+    }).catch(function(e) {
+      console.error('Session check failed:', e);
     });
 
+    // Password recovery flow
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
@@ -261,11 +260,14 @@
       document.getElementById('resetBtn').textContent = 'Update Password';
     }
 
+    // Sign in
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
       var password = document.getElementById('loginPassword').value;
       var btn = document.getElementById('loginBtn');
       var errEl = document.getElementById('loginError');
+
+      errEl.classList.remove('visible');
 
       if (!email || !password) {
         errEl.textContent = 'Please enter your email and password.';
@@ -273,28 +275,36 @@
         return;
       }
 
-      errEl.classList.remove('visible');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Signing in...';
 
-      sb.auth.signInWithPassword({ email: email, password: password }).then(function(result) {
-        if (result.error) {
-          errEl.textContent = result.error.message === 'Invalid login credentials'
-            ? 'Incorrect email or password. Please try again.'
-            : result.error.message;
+      sb.auth.signInWithPassword({ email: email, password: password })
+        .then(function(result) {
+          if (result.error) {
+            errEl.textContent = result.error.message === 'Invalid login credentials'
+              ? 'Incorrect email or password. Please try again.'
+              : result.error.message;
+            errEl.classList.add('visible');
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+          } else {
+            showDashboard(result.data.user);
+          }
+        })
+        .catch(function(err) {
+          errEl.textContent = 'Something went wrong: ' + err.message;
           errEl.classList.add('visible');
           btn.disabled = false;
           btn.textContent = 'Sign In';
-        } else {
-          showDashboard(result.data.user);
-        }
-      });
+        });
     });
 
+    // Enter key triggers sign in
     document.getElementById('loginPassword').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+      if (e.key === 'Enter') { document.getElementById('loginBtn').click(); }
     });
 
+    // Sign out
     document.getElementById('signOutBtn').addEventListener('click', function() {
       sb.auth.signOut().then(function() {
         document.getElementById('loginEmail').value = '';
@@ -303,22 +313,26 @@
       });
     });
 
+    // Forgot password link
     document.getElementById('forgotLink').addEventListener('click', function(e) {
       e.preventDefault();
       showView('resetView');
     });
 
+    // Back to login link
     document.getElementById('backToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showView('loginView');
     });
 
+    // Reset / update password button
     document.getElementById('resetBtn').addEventListener('click', function() {
       var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
+      var btn = document.getElementById('resetBtn');
 
       if (isRecovery) {
-        var newPassword = document.getElementById('resetEmail').value.trim();
-        sb.auth.updateUser({ password: newPassword }).then(function(result) {
+        var newPass = document.getElementById('resetEmail').value.trim();
+        sb.auth.updateUser({ password: newPass }).then(function(result) {
           if (result.error) {
             document.getElementById('resetError').textContent = result.error.message;
             document.getElementById('resetError').classList.add('visible');
@@ -330,17 +344,33 @@
         });
       } else {
         var email = document.getElementById('resetEmail').value.trim();
-        var btn = document.getElementById('resetBtn');
         document.getElementById('resetError').classList.remove('visible');
         document.getElementById('resetSuccess').classList.remove('visible');
         btn.disabled = true;
         btn.textContent = 'Sending...';
 
-        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href }).then(function(result) {
-          btn.disabled = false;
-          btn.textContent = 'Send Reset Link';
-          if (result.error) {
-            document.getElementById('resetError').textContent = result.error.message;
-            document.getElementById('resetError').classList.add('visible');
-          } else {
-            document.getElementById('r
+        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
+          .then(function(result) {
+            btn.disabled = false;
+            btn.textContent = 'Send Reset Link';
+            if (result.error) {
+              document.getElementById('resetError').textContent = result.error.message;
+              document.getElementById('resetError').classList.add('visible');
+            } else {
+              document.getElementById('resetSuccess').classList.add('visible');
+            }
+          });
+      }
+    });
+  }
+
+  // Wait for Supabase library to be ready before running
+  if (typeof supabase !== 'undefined') {
+    init();
+  } else {
+    window.addEventListener('load', init);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1799,7 +1799,7 @@ function handleImageUpload(files) {
     reader.onload = e => {
       const base64 = e.target.result.split(',')[1];
       uploadedImages.push({ base64, mimeType: file.type, name: file.name });
-      renderImgPreviews();
+      renderStudentImgPreviews();
     };
     reader.readAsDataURL(file);
   });
@@ -1811,7 +1811,7 @@ function handleStudentImgDrop(e) {
   handleImageUpload(e.dataTransfer.files);
 }
 
-function renderImgPreviews() {
+function renderStudentImgPreviews() {
   const container = document.getElementById('studentImgPreviews');
   container.innerHTML = '';
   uploadedImages.forEach((img, i) => {
@@ -1823,7 +1823,7 @@ function renderImgPreviews() {
     const removeBtn = document.createElement('span');
     removeBtn.textContent = '✕';
     removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
-    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderImgPreviews(); };
+    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
     wrap.appendChild(el);
     wrap.appendChild(removeBtn);
     container.appendChild(wrap);

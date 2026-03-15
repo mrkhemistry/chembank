@@ -18,7 +18,7 @@
     --text3: #777777;
     --cyan: #00e5ff;
     --cyan-dim: rgba(0,229,255,0.08);
-    --cyan-border: rgba(0,229,255,0.25);
+    --cyan-border: rgba(0,229,255,0.2);
     --red: #ff5555;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,7 +42,7 @@
   label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.45rem; }
   input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.15s; }
   input:focus { border-color: var(--cyan); }
-  .btn-primary { width: 100%; background: var(--cyan); color: #000000; border: none; border-radius: 4px; padding: 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.04em; text-transform: uppercase; }
+  .btn-primary { width: 100%; background: var(--cyan); color: #000; border: none; border-radius: 4px; padding: 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.04em; text-transform: uppercase; }
   .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn-primary:active { transform: translateY(0); }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
@@ -57,7 +57,7 @@
 
   /* ── DASHBOARD ── */
   #dashboardView { flex-direction: column; min-height: 100vh; }
-  .dash-header { background: #000000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .dash-header { background: #000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
   .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; letter-spacing: -0.01em; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .dash-right { display: flex; align-items: center; gap: 1rem; }
   .dash-user { font-size: 0.8rem; color: var(--text3); text-align: right; }
@@ -70,38 +70,36 @@
   .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
   .dash-welcome p { color: var(--text3); font-size: 1rem; margin-top: 0.5rem; }
 
-  /* Tool cards */
-  .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
-  .tool-card { background: var(--surface); text-decoration: none; color: inherit; display: block; padding: 1.75rem; transition: background 0.15s; animation: fadeUp 0.4s ease forwards; opacity: 0; position: relative; }
+  /* ── CARDS — 2x2 grid with header strip ── */
+  .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+  .tool-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: inherit; display: block; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; animation: fadeUp 0.4s ease forwards; opacity: 0; }
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
   .tool-card:nth-child(3) { animation-delay: 0.19s; }
   .tool-card:nth-child(4) { animation-delay: 0.26s; }
-  .tool-card:hover { background: var(--surface2); }
-  .tool-card::after { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--cyan); opacity: 0; transition: opacity 0.15s; }
-  .tool-card:hover::after { opacity: 1; }
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
-  .card-icon { font-size: 1.5rem; line-height: 1; }
-  .card-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 2px; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
-  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.35rem; color: var(--text); margin-bottom: 0.5rem; }
-  .card-desc { font-size: 0.95rem; color: var(--text3); line-height: 1.6; margin-bottom: 1.25rem; }
-  .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 0.3rem; }
+  .tool-card:hover { border-color: var(--cyan); box-shadow: 0 4px 24px rgba(0,229,255,0.1); transform: translateY(-3px); }
+  .card-header { padding: 1rem 1.25rem 0.9rem; display: flex; align-items: center; gap: 0.75rem; background: var(--cyan-dim); border-bottom: 1px solid var(--cyan-border); }
+  .card-icon { font-size: 1.4rem; line-height: 1; }
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
+  .card-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; margin-left: auto; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+  .card-body { padding: 1.1rem 1.25rem 1.25rem; }
+  .card-desc { font-size: 0.95rem; color: var(--text3); line-height: 1.6; margin-bottom: 1rem; }
+  .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* ── RESET ── */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
   .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
   .reset-card p { color: var(--text3); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.55; }
-
   .portal-footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.05em; text-transform: uppercase; }
 
-  @media (max-width: 480px) {
+  @media (max-width: 600px) {
+    .tools-grid { grid-template-columns: 1fr; }
     .login-card, .reset-card { padding: 2rem 1.25rem; }
     .dash-main { padding: 2rem 1rem; }
     .dash-welcome h2 { font-size: 1.8rem; }
     .dash-header { padding: 0 1rem; }
     .dash-user { display: none; }
-    .tools-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -169,42 +167,55 @@
       <p>Select a tool below to begin your revision.</p>
     </div>
     <div class="tools-grid">
+
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
-        <div class="card-top">
+        <div class="card-header">
           <div class="card-icon">✅</div>
+          <div class="card-name">ChemCheck</div>
           <div class="card-tag">AI Marking</div>
         </div>
-        <div class="card-name">ChemCheck</div>
-        <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
-        <div class="card-cta">Open ChemCheck →</div>
+        <div class="card-body">
+          <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
+          <div class="card-cta">Open ChemCheck →</div>
+        </div>
       </a>
+
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/" target="_blank">
-        <div class="card-top">
+        <div class="card-header">
           <div class="card-icon">🧪</div>
+          <div class="card-name">ChemBank</div>
           <div class="card-tag">Question Bank</div>
         </div>
-        <div class="card-name">ChemBank</div>
-        <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
-        <div class="card-cta">Open ChemBank →</div>
+        <div class="card-body">
+          <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
+          <div class="card-cta">Open ChemBank →</div>
+        </div>
       </a>
+
       <a class="tool-card" href="https://mrkhemistry.teachable.com/" target="_blank">
-        <div class="card-top">
+        <div class="card-header">
           <div class="card-icon">🎓</div>
+          <div class="card-name">Teachable</div>
           <div class="card-tag">Lesson Recordings</div>
         </div>
-        <div class="card-name">Teachable</div>
-        <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
-        <div class="card-cta">Open Teachable →</div>
+        <div class="card-body">
+          <div class="card-desc">Access your enrolled courses, video lessons, and course materials from Mr Khemistry.</div>
+          <div class="card-cta">Open Teachable →</div>
+        </div>
       </a>
+
       <a class="tool-card" href="https://classroom.google.com/" target="_blank">
-        <div class="card-top">
+        <div class="card-header">
           <div class="card-icon">📚</div>
+          <div class="card-name">Google Classroom</div>
           <div class="card-tag">Notes</div>
         </div>
-        <div class="card-name">Google Classroom</div>
-        <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
-        <div class="card-cta">Open Classroom →</div>
+        <div class="card-body">
+          <div class="card-desc">View assignments, submit work, and stay updated on class announcements from Mr Khemistry.</div>
+          <div class="card-cta">Open Classroom →</div>
+        </div>
       </a>
+
     </div>
   </div>
   <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal</div>
@@ -235,20 +246,12 @@
       showView('dashboardView');
     }
 
-    function showError(msg) {
-      var errEl = document.getElementById('loginError');
-      errEl.textContent = msg;
-      errEl.classList.add('visible');
-    }
-
     // Check existing session
     sb.auth.getSession().then(function(result) {
       if (result.data && result.data.session) {
         showDashboard(result.data.session.user);
       }
-    }).catch(function(e) {
-      console.error('Session check failed:', e);
-    });
+    }).catch(function(e) { console.error('Session check failed:', e); });
 
     // Password recovery flow
     if (window.location.hash && window.location.hash.includes('type=recovery')) {
@@ -266,18 +269,14 @@
       var password = document.getElementById('loginPassword').value;
       var btn = document.getElementById('loginBtn');
       var errEl = document.getElementById('loginError');
-
       errEl.classList.remove('visible');
-
       if (!email || !password) {
         errEl.textContent = 'Please enter your email and password.';
         errEl.classList.add('visible');
         return;
       }
-
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Signing in...';
-
       sb.auth.signInWithPassword({ email: email, password: password })
         .then(function(result) {
           if (result.error) {
@@ -313,23 +312,22 @@
       });
     });
 
-    // Forgot password link
+    // Forgot password
     document.getElementById('forgotLink').addEventListener('click', function(e) {
       e.preventDefault();
       showView('resetView');
     });
 
-    // Back to login link
+    // Back to login
     document.getElementById('backToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showView('loginView');
     });
 
-    // Reset / update password button
+    // Reset / update password
     document.getElementById('resetBtn').addEventListener('click', function() {
       var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
       var btn = document.getElementById('resetBtn');
-
       if (isRecovery) {
         var newPass = document.getElementById('resetEmail').value.trim();
         sb.auth.updateUser({ password: newPass }).then(function(result) {
@@ -348,7 +346,6 @@
         document.getElementById('resetSuccess').classList.remove('visible');
         btn.disabled = true;
         btn.textContent = 'Sending...';
-
         sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
           .then(function(result) {
             btn.disabled = false;
@@ -364,7 +361,6 @@
     });
   }
 
-  // Wait for Supabase library to be ready before running
   if (typeof supabase !== 'undefined') {
     init();
   } else {

@@ -18,11 +18,9 @@
     --text2: #c8cde0;
     --text3: #6b7290;
     --j1: #00c9b1;
-    --j1-dim: #00796b;
     --j1-bg: #0d3330;
     --j1-border: #1a6b62;
     --j2: #ff8c42;
-    --j2-dim: #b85c1a;
     --j2-bg: #2e1a0a;
     --j2-border: #7a4020;
     --green: #4caf7d;
@@ -35,361 +33,95 @@
     --blue-bg: #0d1f35;
     --blue-border: #1e4a7a;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-
   .view { display: none; }
   .view.active { display: flex; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ─── LOGIN VIEW ─── */
-  #loginView {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-  }
-
-  .login-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 2.5rem 2rem;
-    width: 100%;
-    max-width: 400px;
-    animation: fadeUp 0.4s ease forwards;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .login-logo {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .login-logo h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.8rem;
-    color: var(--text);
-  }
-
+  /* LOGIN */
+  #loginView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
+  .login-logo { text-align: center; margin-bottom: 2rem; }
+  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; color: var(--text); }
   .login-logo h1 span { color: var(--gold); }
-
-  .login-logo p {
-    font-size: 0.78rem;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 0.4rem;
-  }
-
+  .login-logo p { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; }
   .form-group { margin-bottom: 1.1rem; }
-
-  label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.4rem;
-  }
-
-  input[type="email"],
-  input[type="password"] {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
+  label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+  input[type="email"], input[type="password"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.92rem; outline: none; transition: border-color 0.15s; }
   input:focus { border-color: var(--j1); }
-
-  .btn-primary {
-    width: 100%;
-    background: var(--j1);
-    color: #0a1a18;
-    border: none;
-    border-radius: 8px;
-    padding: 0.8rem;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: opacity 0.15s, transform 0.1s;
-  }
-
+  .btn-primary { width: 100%; background: var(--j1); color: #0a1a18; border: none; border-radius: 8px; padding: 0.8rem; font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s, transform 0.1s; }
   .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn-primary:active { transform: translateY(0); }
   .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
-
-  .error-msg {
-    background: rgba(240,96,96,0.1);
-    border: 1px solid rgba(240,96,96,0.3);
-    border-radius: 7px;
-    padding: 0.65rem 0.9rem;
-    font-size: 0.83rem;
-    color: var(--red);
-    margin-top: 0.9rem;
-    display: none;
-  }
-
+  .error-msg { background: rgba(240,96,96,0.1); border: 1px solid rgba(240,96,96,0.3); border-radius: 7px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--red); margin-top: 0.9rem; display: none; }
   .error-msg.visible { display: block; }
-
-  .success-msg {
-    background: rgba(0,201,177,0.08);
-    border: 1px solid var(--j1-border);
-    border-radius: 7px;
-    padding: 0.65rem 0.9rem;
-    font-size: 0.83rem;
-    color: var(--j1);
-    margin-top: 0.9rem;
-    display: none;
-  }
-
+  .success-msg { background: rgba(0,201,177,0.08); border: 1px solid var(--j1-border); border-radius: 7px; padding: 0.65rem 0.9rem; font-size: 0.83rem; color: var(--j1); margin-top: 0.9rem; display: none; }
   .success-msg.visible { display: block; }
-
-  .login-footer {
-    text-align: center;
-    margin-top: 1.25rem;
-    font-size: 0.8rem;
-    color: var(--text3);
-    line-height: 1.6;
-  }
-
+  .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.8rem; color: var(--text3); line-height: 1.6; }
   .login-footer a { color: var(--j1); text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(10,26,24,0.3); border-top-color: #0a1a18; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 
-  .spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(10,26,24,0.3);
-    border-top-color: #0a1a18;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ─── DASHBOARD VIEW ─── */
+  /* DASHBOARD */
   #dashboardView { flex-direction: column; min-height: 100vh; }
-
-  .dash-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 58px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .dash-logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.2rem;
-    color: var(--text);
-  }
-
+  .dash-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 100; }
+  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
   .dash-logo span { color: var(--gold); }
-
   .dash-right { display: flex; align-items: center; gap: 1rem; }
-
   .dash-user { font-size: 0.75rem; color: var(--text3); text-align: right; }
   .dash-user strong { display: block; color: var(--text2); font-size: 0.82rem; font-weight: 500; }
-
-  .btn-signout {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text3);
-    border-radius: 7px;
-    padding: 0.38rem 0.85rem;
-    font-size: 0.78rem;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-  }
-
+  .btn-signout { background: transparent; border: 1px solid var(--border); color: var(--text3); border-radius: 7px; padding: 0.38rem 0.85rem; font-size: 0.78rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .btn-signout:hover { border-color: var(--red); color: var(--red); }
-
-  .dash-main {
-    flex: 1;
-    padding: 2.5rem 2rem;
-    max-width: 860px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .dash-welcome {
-    margin-bottom: 2.5rem;
-    animation: fadeUp 0.4s ease forwards;
-  }
-
-  .dash-welcome .eyebrow {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--j1);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 0.4rem;
-  }
-
-  .dash-welcome h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.9rem;
-    color: var(--text);
-    line-height: 1.15;
-  }
-
+  .dash-main { flex: 1; padding: 2.5rem 2rem; max-width: 860px; margin: 0 auto; width: 100%; }
+  .dash-welcome { margin-bottom: 2.5rem; animation: fadeUp 0.4s ease forwards; }
+  .dash-welcome .eyebrow { font-size: 0.72rem; font-weight: 600; color: var(--j1); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.4rem; }
+  .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 1.9rem; color: var(--text); line-height: 1.15; }
   .dash-welcome p { color: var(--text3); font-size: 0.88rem; margin-top: 0.4rem; }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .tool-card {
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid;
-    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    background: var(--surface);
-    animation: fadeUp 0.4s ease forwards;
-    opacity: 0;
-  }
-
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+  .tool-card { border-radius: 10px; overflow: hidden; border: 1px solid; transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s; text-decoration: none; color: inherit; display: block; background: var(--surface); animation: fadeUp 0.4s ease forwards; opacity: 0; }
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
   .tool-card:nth-child(2) { animation-delay: 0.12s; }
   .tool-card:nth-child(3) { animation-delay: 0.19s; }
   .tool-card:nth-child(4) { animation-delay: 0.26s; }
-  .tool-card:nth-child(2) { animation-delay: 0.12s; }
-
   .tool-card.j1 { border-color: var(--j1-border); }
   .tool-card.j2 { border-color: var(--j2-border); }
-
-  .tool-card.j1:hover {
-    border-color: var(--j1);
-    box-shadow: 0 4px 24px rgba(0,201,177,0.15);
-    transform: translateY(-3px);
-  }
-
-  .tool-card.j2:hover {
-    border-color: var(--j2);
-    box-shadow: 0 4px 24px rgba(255,140,66,0.15);
-    transform: translateY(-3px);
-  }
-
-  .card-header {
-    padding: 1rem 1.25rem 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
+  .tool-card.purple { border-color: var(--purple-border); }
+  .tool-card.blue { border-color: var(--blue-border); }
+  .tool-card.j1:hover { border-color: var(--j1); box-shadow: 0 4px 24px rgba(0,201,177,0.15); transform: translateY(-3px); }
+  .tool-card.j2:hover { border-color: var(--j2); box-shadow: 0 4px 24px rgba(255,140,66,0.15); transform: translateY(-3px); }
+  .tool-card.purple:hover { border-color: var(--purple); box-shadow: 0 4px 24px rgba(167,139,250,0.15); transform: translateY(-3px); }
+  .tool-card.blue:hover { border-color: var(--blue); box-shadow: 0 4px 24px rgba(96,165,250,0.15); transform: translateY(-3px); }
+  .card-header { padding: 1rem 1.25rem 0.9rem; display: flex; align-items: center; gap: 0.75rem; }
   .tool-card.j1 .card-header { background: var(--j1-bg); }
   .tool-card.j2 .card-header { background: var(--j2-bg); }
-
+  .tool-card.purple .card-header { background: var(--purple-bg); }
+  .tool-card.blue .card-header { background: var(--blue-bg); }
   .card-icon { font-size: 1.4rem; line-height: 1; }
-
-  .card-name {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.15rem;
-    color: var(--text);
-  }
-
-  .card-tag {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    margin-left: auto;
-  }
-
+  .card-name { font-family: 'DM Serif Display', serif; font-size: 1.15rem; color: var(--text); }
+  .card-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 4px; margin-left: auto; }
   .tool-card.j1 .card-tag { background: var(--j1-bg); color: var(--j1); border: 1px solid var(--j1-border); }
   .tool-card.j2 .card-tag { background: var(--j2-bg); color: var(--j2); border: 1px solid var(--j2-border); }
-
+  .tool-card.purple .card-tag { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+  .tool-card.blue .card-tag { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
   .card-body { padding: 1.1rem 1.25rem 1.25rem; }
-
   .card-desc { font-size: 0.85rem; color: var(--text3); line-height: 1.55; margin-bottom: 1rem; }
-
   .card-cta { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
   .tool-card.j1 .card-cta { color: var(--j1); }
   .tool-card.j2 .card-cta { color: var(--j2); }
-
-  .tool-card.purple { border-color: var(--purple-border); }
-  .tool-card.purple .card-header { background: var(--purple-bg); }
-  .tool-card.purple .card-tag { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
   .tool-card.purple .card-cta { color: var(--purple); }
-  .tool-card.purple:hover { border-color: var(--purple); box-shadow: 0 4px 24px rgba(167,139,250,0.15); transform: translateY(-3px); }
-
-  .tool-card.blue { border-color: var(--blue-border); }
-  .tool-card.blue .card-header { background: var(--blue-bg); }
-  .tool-card.blue .card-tag { background: var(--blue-bg); color: var(--blue); border: 1px solid var(--blue-border); }
   .tool-card.blue .card-cta { color: var(--blue); }
-  .tool-card.blue:hover { border-color: var(--blue); box-shadow: 0 4px 24px rgba(96,165,250,0.15); transform: translateY(-3px); }
 
-  /* ─── RESET VIEW ─── */
-  #resetView {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-  }
-
-  .reset-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 2.5rem 2rem;
-    width: 100%;
-    max-width: 400px;
-    animation: fadeUp 0.4s ease forwards;
-  }
-
+  /* RESET */
+  #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+  .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 2rem; width: 100%; max-width: 400px; animation: fadeUp 0.4s ease forwards; }
   .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.4rem; }
   .reset-card p { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
-
-  .portal-footer {
-    text-align: center;
-    padding: 1.25rem;
-    font-size: 0.75rem;
-    color: var(--text3);
-    border-top: 1px solid var(--border);
-    letter-spacing: 0.03em;
-  }
+  .portal-footer { text-align: center; padding: 1.25rem; font-size: 0.75rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.03em; }
 
   @media (max-width: 480px) {
     .login-card, .reset-card { padding: 2rem 1.25rem; }
@@ -402,27 +134,23 @@
 </head>
 <body>
 
-<!-- ─── LOGIN VIEW ─── -->
+<!-- LOGIN -->
 <div id="loginView" class="view active">
   <div class="login-card">
     <div class="login-logo">
       <h1>Mr <span>Khemistry</span></h1>
       <p>Student Portal</p>
     </div>
-
     <div class="form-group">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+      <label for="loginEmail">Email Address</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
     </div>
-
     <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
     </div>
-
-    <button class="btn-primary" id="loginBtn" >Sign In</button>
+    <button class="btn-primary" id="loginBtn">Sign In</button>
     <div class="error-msg" id="loginError"></div>
-
     <div class="login-footer">
       First time? Check your email for a setup link.<br><br>
       <a href="#" id="forgotLink">Forgot password?</a>
@@ -430,49 +158,43 @@
   </div>
 </div>
 
-<!-- ─── RESET PASSWORD VIEW ─── -->
+<!-- RESET -->
 <div id="resetView" class="view">
   <div class="reset-card">
     <h2>Reset Password</h2>
-    <p>Enter your email and we'll send you a link to reset your password.</p>
-
+    <p>Enter your email and we will send you a link to reset your password.</p>
     <div class="form-group">
       <label for="resetEmail">Email Address</label>
       <input type="email" id="resetEmail" placeholder="you@example.com">
     </div>
-
-    <button class="btn-primary" id="resetBtn" >Send Reset Link</button>
+    <button class="btn-primary" id="resetBtn">Send Reset Link</button>
     <div class="success-msg" id="resetSuccess">Check your inbox! A reset link has been sent.</div>
     <div class="error-msg" id="resetError"></div>
-
     <div class="login-footer" style="margin-top:1.25rem;">
-      <a href="#" id="backToLogin">← Back to Sign In</a>
+      <a href="#" id="backToLogin">Back to Sign In</a>
     </div>
   </div>
 </div>
 
-<!-- ─── DASHBOARD VIEW ─── -->
+<!-- DASHBOARD -->
 <div id="dashboardView" class="view">
   <div class="dash-header">
     <div class="dash-logo">Mr <span>Khemistry</span></div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ea999e9f8e8f849eaa8f878b8386c4898587">[email&#160;protected]</a></strong>
+        <strong id="userEmail">student@email.com</strong>
         Student Portal
       </div>
-      <button class="btn-signout" >Sign Out</button>
+      <button class="btn-signout" id="signOutBtn">Sign Out</button>
     </div>
   </div>
-
   <div class="dash-main">
     <div class="dash-welcome">
-      <div class="eyebrow">Welcome back 👋</div>
+      <div class="eyebrow">Welcome back</div>
       <h2>Your Chemistry Tools</h2>
       <p>Select a tool below to begin your revision.</p>
     </div>
-
     <div class="tools-grid">
-
       <a class="tool-card j1" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
         <div class="card-header">
           <div class="card-icon">✅</div>
@@ -484,7 +206,6 @@
           <div class="card-cta">Open ChemCheck →</div>
         </div>
       </a>
-
       <a class="tool-card j2" href="https://mrkhemistry.github.io/chembank/" target="_blank">
         <div class="card-header">
           <div class="card-icon">🧪</div>
@@ -496,7 +217,6 @@
           <div class="card-cta">Open ChemBank →</div>
         </div>
       </a>
-
       <a class="tool-card purple" href="https://mrkhemistry.teachable.com/" target="_blank">
         <div class="card-header">
           <div class="card-icon">🎓</div>
@@ -508,7 +228,6 @@
           <div class="card-cta">Open Teachable →</div>
         </div>
       </a>
-
       <a class="tool-card blue" href="https://classroom.google.com/" target="_blank">
         <div class="card-header">
           <div class="card-icon">📚</div>
@@ -520,125 +239,158 @@
           <div class="card-cta">Open Classroom →</div>
         </div>
       </a>
-
     </div>
   </div>
-
   <div class="portal-footer">
     Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-  const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j'; // Replace with your sb_publishable_... key
+<script>
+(function() {
+  var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
 
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+  function init() {
+    var sb;
+    try {
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {
+      console.error('Supabase init failed:', e);
+      return;
+    }
 
-  function showView(id) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-  }
+    function showView(id) {
+      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById(id).classList.add('active');
+    }
 
-  function showLogin() { showView('loginView'); }
-  function showReset() { showView('resetView'); }
+    function showDashboard(user) {
+      document.getElementById('userEmail').textContent = user.email;
+      showView('dashboardView');
+    }
 
-  window.addEventListener('DOMContentLoaded', async () => {
-    // Wire up all buttons via event listeners
-    document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    document.getElementById('resetBtn').addEventListener('click', handleReset);
-    document.getElementById('forgotLink').addEventListener('click', (e) => { e.preventDefault(); showReset(); });
-    document.getElementById('backToLogin').addEventListener('click', (e) => { e.preventDefault(); showLogin(); });
-    document.querySelector('.btn-signout').addEventListener('click', handleSignOut);
+    // Check existing session
+    sb.auth.getSession().then(function(result) {
+      if (result.data && result.data.session) {
+        showDashboard(result.data.session.user);
+      }
+    });
 
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) showDashboard(session.user);
-
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
+    // Handle password recovery link
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
       document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
       document.getElementById('resetEmail').type = 'password';
       document.getElementById('resetEmail').placeholder = 'New password';
       document.getElementById('resetBtn').textContent = 'Update Password';
-      document.getElementById('resetBtn').removeEventListener('click', handleReset);
-      document.getElementById('resetBtn').addEventListener('click', handleNewPassword);
-    }
-  });
-
-  async function handleLogin() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const btn = document.getElementById('loginBtn');
-    const errEl = document.getElementById('loginError');
-
-    errEl.classList.remove('visible');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Signing in...';
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      errEl.textContent = error.message === 'Invalid login credentials'
-        ? 'Incorrect email or password. Please try again.'
-        : error.message;
-      errEl.classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = 'Sign In';
-      return;
     }
 
-    showDashboard(data.user);
-  }
+    // Login
+    document.getElementById('loginBtn').addEventListener('click', function() {
+      var email = document.getElementById('loginEmail').value.trim();
+      var password = document.getElementById('loginPassword').value;
+      var btn = document.getElementById('loginBtn');
+      var errEl = document.getElementById('loginError');
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && document.getElementById('loginView').classList.contains('active')) {
-      handleLogin();
-    }
-  });
+      if (!email || !password) {
+        errEl.textContent = 'Please enter your email and password.';
+        errEl.classList.add('visible');
+        return;
+      }
 
-  function showDashboard(user) {
-    document.getElementById('userEmail').textContent = user.email;
-    showView('dashboardView');
-  }
+      errEl.classList.remove('visible');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Signing in...';
 
-  async function handleSignOut() {
-    await sb.auth.signOut();
-    document.getElementById('email').value = '';
-    document.getElementById('password').value = '';
-    showView('loginView');
-  }
-
-  async function handleReset() {
-    const email = document.getElementById('resetEmail').value.trim();
-    const btn = document.getElementById('resetBtn');
-    const errEl = document.getElementById('resetError');
-    const successEl = document.getElementById('resetSuccess');
-
-    errEl.classList.remove('visible');
-    successEl.classList.remove('visible');
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href
+      sb.auth.signInWithPassword({ email: email, password: password }).then(function(result) {
+        if (result.error) {
+          errEl.textContent = result.error.message === 'Invalid login credentials'
+            ? 'Incorrect email or password. Please try again.'
+            : result.error.message;
+          errEl.classList.add('visible');
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+        } else {
+          showDashboard(result.data.user);
+        }
+      });
     });
 
-    btn.disabled = false;
-    btn.textContent = 'Send Reset Link';
+    // Enter key on login
+    document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
 
-    if (error) {
-      errEl.textContent = error.message;
-      errEl.classList.add('visible');
-    } else {
-      successEl.classList.add('visible');
-    }
+    // Sign out
+    document.getElementById('signOutBtn').addEventListener('click', function() {
+      sb.auth.signOut().then(function() {
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        showView('loginView');
+      });
+    });
+
+    // Forgot password
+    document.getElementById('forgotLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      showView('resetView');
+    });
+
+    // Back to login
+    document.getElementById('backToLogin').addEventListener('click', function(e) {
+      e.preventDefault();
+      showView('loginView');
+    });
+
+    // Send reset link
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
+
+      if (isRecovery) {
+        // Set new password
+        var newPassword = document.getElementById('resetEmail').value.trim();
+        sb.auth.updateUser({ password: newPassword }).then(function(result) {
+          if (result.error) {
+            document.getElementById('resetError').textContent = result.error.message;
+            document.getElementById('resetError').classList.add('visible');
+          } else {
+            alert('Password updated! Please sign in.');
+            window.location.hash = '';
+            showView('loginView');
+          }
+        });
+      } else {
+        // Send reset email
+        var email = document.getElementById('resetEmail').value.trim();
+        var btn = document.getElementById('resetBtn');
+        document.getElementById('resetError').classList.remove('visible');
+        document.getElementById('resetSuccess').classList.remove('visible');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href }).then(function(result) {
+          btn.disabled = false;
+          btn.textContent = 'Send Reset Link';
+          if (result.error) {
+            document.getElementById('resetError').textContent = result.error.message;
+            document.getElementById('resetError').classList.add('visible');
+          } else {
+            document.getElementById('resetSuccess').classList.add('visible');
+          }
+        });
+      }
+    });
   }
 
-  async function handleNewPassword() {
-    const password = document.getElementById('resetEmail').value.trim();
-    const { error } = await sb.auth.updateUser({ password });
-    if (error) {
-      document.getElementById('resetError').textContent = error.me
+  // Wait for supabase library to be ready
+  if (typeof supabase !== 'undefined') {
+    init();
+  } else {
+    window.addEventListener('load', init);
+  }
+})();
+</script>
+</body>
+</html>

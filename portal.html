@@ -83,7 +83,7 @@
   .card-name { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--text); }
   .card-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; margin-left: auto; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
   .card-body { padding: 1.1rem 1.25rem 1.25rem; }
-  .card-desc { font-size: 0.95rem; color: var(--text3); line-height: 1.6; margin-bottom: 1rem; }
+  .card-desc { font-size: 0.95rem; color: var(--text2); line-height: 1.6; margin-bottom: 1rem; }
   .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
 
   /* ── RESET ── */
@@ -154,7 +154,7 @@
     <div class="dash-logo">Mr Khemistry</div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail">student@email.com</strong>
+        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2152555445444f5561444c40484d0f424e4c">[email&#160;protected]</a></strong>
         Student Portal
       </div>
       <button class="btn-signout" id="signOutBtn">Sign Out</button>
@@ -221,7 +221,7 @@
   <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;·&nbsp; Student Portal</div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -354,19 +354,4 @@
               document.getElementById('resetError').textContent = result.error.message;
               document.getElementById('resetError').classList.add('visible');
             } else {
-              document.getElementById('resetSuccess').classList.add('visible');
-            }
-          });
-      }
-    });
-  }
-
-  if (typeof supabase !== 'undefined') {
-    init();
-  } else {
-    window.addEventListener('load', init);
-  }
-})();
-</script>
-</body>
-</html>
+              document.getElementById('reset

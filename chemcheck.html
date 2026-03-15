@@ -1032,6 +1032,19 @@
           </div>
 
           <div class="field">
+            <label>Question Images (optional — up to 5)</label>
+            <div class="img-upload-zone" id="imgUploadZone" onclick="document.getElementById('imgFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleImgDrop(event)">
+              <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this.files)">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
+              <div class="upload-text"><strong>Click to upload images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+            </div>
+            <div id="imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+          </div>
+
+          <div class="field">
             <label>Model Answer</label>
             <textarea id="qModel" rows="6" placeholder="Type the full model answer here. Include all marking points."></textarea>
           </div>
@@ -1052,19 +1065,6 @@
           <div class="field">
             <label>Answer Template / Tip (optional)</label>
             <textarea id="qTip" rows="4" placeholder="e.g. For 'explain' questions: always state → reason → link to effect. For ionisation energy trends: charge → shielding → distance."></textarea>
-          </div>
-
-          <div class="field">
-            <label>Question Images (optional — up to 5)</label>
-            <div class="img-upload-zone" id="imgUploadZone" onclick="document.getElementById('imgFileInput').click()"
-                 ondragover="event.preventDefault(); this.classList.add('dragover')"
-                 ondragleave="this.classList.remove('dragover')"
-                 ondrop="handleImgDrop(event)">
-              <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this.files)">
-              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
-              <div class="upload-text"><strong>Click to upload images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
-            </div>
-            <div id="imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
           </div>
 
           <div class="form-actions">

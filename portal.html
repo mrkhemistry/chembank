@@ -4,65 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mr Khemistry — Student Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #0d0f14;
-    --surface: #161a22;
-    --surface2: #1e2330;
-    --border: #2a3040;
-    --teal: #2dd4bf;
-    --teal-dim: rgba(45, 212, 191, 0.12);
-    --amber: #fbbf24;
-    --amber-dim: rgba(251, 191, 36, 0.12);
+    --bg: #0f1117;
+    --surface: #242840;
+    --surface2: #2c3150;
+    --surface3: #343a5a;
+    --border: #424868;
+    --border2: #505880;
     --text: #e8eaf0;
-    --muted: #7a8499;
-    --error: #f87171;
+    --text2: #c8cde0;
+    --text3: #6b7290;
+    --j1: #00c9b1;
+    --j1-dim: #00796b;
+    --j1-bg: #0d3330;
+    --j1-border: #1a6b62;
+    --j2: #ff8c42;
+    --j2-dim: #b85c1a;
+    --j2-bg: #2e1a0a;
+    --j2-border: #7a4020;
+    --green: #4caf7d;
+    --red: #f06060;
+    --gold: #f0c040;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
+    font-family: 'DM Sans', sans-serif;
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow-x: hidden;
   }
 
-  /* Background grid */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(45,212,191,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45,212,191,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
-  /* Glow orb */
-  body::after {
-    content: '';
-    position: fixed;
-    top: -20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(45,212,191,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .view { display: none; width: 100%; }
+  .view { display: none; }
   .view.active { display: flex; }
 
   /* ─── LOGIN VIEW ─── */
@@ -72,72 +53,54 @@
     justify-content: center;
     min-height: 100vh;
     padding: 2rem;
-    position: relative;
-    z-index: 1;
   }
 
   .login-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3rem 2.5rem;
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
     width: 100%;
-    max-width: 420px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.4);
-    animation: fadeUp 0.5s ease forwards;
+    max-width: 400px;
+    animation: fadeUp 0.4s ease forwards;
   }
 
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .logo-area {
+  .login-logo {
     text-align: center;
     margin-bottom: 2rem;
   }
 
-  .logo-icon {
-    width: 64px;
-    height: 64px;
-    background: var(--teal-dim);
-    border: 1px solid rgba(45,212,191,0.3);
-    border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
+  .login-logo h1 {
+    font-family: 'DM Serif Display', serif;
     font-size: 1.8rem;
-  }
-
-  .logo-area h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 800;
     color: var(--text);
-    letter-spacing: -0.02em;
   }
 
-  .logo-area h1 span { color: var(--teal); }
+  .login-logo h1 span { color: var(--gold); }
 
-  .logo-area p {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 0.3rem;
+  .login-logo p {
+    font-size: 0.78rem;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.4rem;
   }
 
-  .form-group {
-    margin-bottom: 1.25rem;
-  }
+  .form-group { margin-bottom: 1.1rem; }
 
   label {
     display: block;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text3);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
   }
 
   input[type="email"],
@@ -145,276 +108,79 @@
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    transition: border-color 0.2s;
-    outline: none;
-  }
-
-  input:focus {
-    border-color: var(--teal);
-  }
-
-  .btn-login {
-    width: 100%;
-    background: var(--teal);
-    color: #0d0f14;
-    border: none;
-    border-radius: 10px;
-    padding: 0.9rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    transition: opacity 0.2s, transform 0.1s;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-login:hover { opacity: 0.9; transform: translateY(-1px); }
-  .btn-login:active { transform: translateY(0); }
-  .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  .error-msg {
-    background: rgba(248,113,113,0.1);
-    border: 1px solid rgba(248,113,113,0.3);
     border-radius: 8px;
     padding: 0.75rem 1rem;
-    font-size: 0.85rem;
-    color: var(--error);
-    margin-top: 1rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus { border-color: var(--j1); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--j1);
+    color: #0a1a18;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .error-msg {
+    background: rgba(240,96,96,0.1);
+    border: 1px solid rgba(240,96,96,0.3);
+    border-radius: 7px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.83rem;
+    color: var(--red);
+    margin-top: 0.9rem;
     display: none;
   }
 
   .error-msg.visible { display: block; }
 
+  .success-msg {
+    background: rgba(0,201,177,0.08);
+    border: 1px solid var(--j1-border);
+    border-radius: 7px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.83rem;
+    color: var(--j1);
+    margin-top: 0.9rem;
+    display: none;
+  }
+
+  .success-msg.visible { display: block; }
+
   .login-footer {
     text-align: center;
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
     font-size: 0.8rem;
-    color: var(--muted);
+    color: var(--text3);
+    line-height: 1.6;
   }
 
-  /* ─── DASHBOARD VIEW ─── */
-  #dashboardView {
-    flex-direction: column;
-    min-height: 100vh;
-    position: relative;
-    z-index: 1;
-  }
+  .login-footer a { color: var(--j1); text-decoration: none; }
+  .login-footer a:hover { text-decoration: underline; }
 
-  /* Top nav */
-  .top-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 2rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(13,15,20,0.8);
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .nav-brand {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-  }
-
-  .nav-brand span { color: var(--teal); }
-
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .nav-user {
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  .nav-user strong {
-    color: var(--text);
-    display: block;
-    font-size: 0.88rem;
-  }
-
-  .btn-signout {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 8px;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.8rem;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-  }
-
-  .btn-signout:hover {
-    border-color: var(--error);
-    color: var(--error);
-  }
-
-  /* Main content */
-  .dashboard-main {
-    flex: 1;
-    padding: 3rem 2rem;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .welcome-block {
-    margin-bottom: 3rem;
-    animation: fadeUp 0.5s ease forwards;
-  }
-
-  .welcome-block .greeting {
-    font-size: 0.8rem;
-    color: var(--teal);
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-  }
-
-  .welcome-block h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-  }
-
-  .welcome-block p {
-    color: var(--muted);
-    margin-top: 0.5rem;
-    font-size: 0.95rem;
-  }
-
-  /* Tool cards */
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-  }
-
-  .tool-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2rem;
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    animation: fadeUp 0.5s ease forwards;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .tool-card:nth-child(2) { animation-delay: 0.1s; opacity: 0; }
-  .tool-card:first-child { animation-delay: 0.05s; opacity: 0; }
-
-  .tool-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s;
-    border-radius: 20px;
-  }
-
-  .tool-card.teal::before {
-    background: var(--teal-dim);
-  }
-
-  .tool-card.amber::before {
-    background: var(--amber-dim);
-  }
-
-  .tool-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.3);
-  }
-
-  .tool-card.teal:hover { border-color: rgba(45,212,191,0.4); }
-  .tool-card.amber:hover { border-color: rgba(251,191,36,0.4); }
-  .tool-card:hover::before { opacity: 1; }
-
-  .card-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 1.25rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .teal .card-icon {
-    background: var(--teal-dim);
-    border: 1px solid rgba(45,212,191,0.25);
-  }
-
-  .amber .card-icon {
-    background: var(--amber-dim);
-    border: 1px solid rgba(251,191,36,0.25);
-  }
-
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .teal .card-title { color: var(--teal); }
-  .amber .card-title { color: var(--amber); }
-
-  .card-desc {
-    font-size: 0.875rem;
-    color: var(--muted);
-    line-height: 1.55;
-    position: relative;
-    z-index: 1;
-  }
-
-  .card-arrow {
-    margin-top: 1.5rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .teal .card-arrow { color: var(--teal); }
-  .amber .card-arrow { color: var(--amber); }
-
-  /* Loading spinner */
   .spinner {
     display: inline-block;
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(13,15,20,0.3);
-    border-top-color: #0d0f14;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(10,26,24,0.3);
+    border-top-color: #0a1a18;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     vertical-align: middle;
@@ -423,69 +189,193 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Reset password view */
+  /* ─── DASHBOARD VIEW ─── */
+  #dashboardView { flex-direction: column; min-height: 100vh; }
+
+  .dash-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .dash-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--text);
+  }
+
+  .dash-logo span { color: var(--gold); }
+
+  .dash-right { display: flex; align-items: center; gap: 1rem; }
+
+  .dash-user { font-size: 0.75rem; color: var(--text3); text-align: right; }
+  .dash-user strong { display: block; color: var(--text2); font-size: 0.82rem; font-weight: 500; }
+
+  .btn-signout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    border-radius: 7px;
+    padding: 0.38rem 0.85rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  .dash-main {
+    flex: 1;
+    padding: 2.5rem 2rem;
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .dash-welcome {
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.4s ease forwards;
+  }
+
+  .dash-welcome .eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--j1);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.4rem;
+  }
+
+  .dash-welcome h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  .dash-welcome p { color: var(--text3); font-size: 0.88rem; margin-top: 0.4rem; }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .tool-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    background: var(--surface);
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  .tool-card:nth-child(1) { animation-delay: 0.05s; }
+  .tool-card:nth-child(2) { animation-delay: 0.12s; }
+
+  .tool-card.j1 { border-color: var(--j1-border); }
+  .tool-card.j2 { border-color: var(--j2-border); }
+
+  .tool-card.j1:hover {
+    border-color: var(--j1);
+    box-shadow: 0 4px 24px rgba(0,201,177,0.15);
+    transform: translateY(-3px);
+  }
+
+  .tool-card.j2:hover {
+    border-color: var(--j2);
+    box-shadow: 0 4px 24px rgba(255,140,66,0.15);
+    transform: translateY(-3px);
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .tool-card.j1 .card-header { background: var(--j1-bg); }
+  .tool-card.j2 .card-header { background: var(--j2-bg); }
+
+  .card-icon { font-size: 1.4rem; line-height: 1; }
+
+  .card-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    color: var(--text);
+  }
+
+  .card-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-left: auto;
+  }
+
+  .tool-card.j1 .card-tag { background: var(--j1-bg); color: var(--j1); border: 1px solid var(--j1-border); }
+  .tool-card.j2 .card-tag { background: var(--j2-bg); color: var(--j2); border: 1px solid var(--j2-border); }
+
+  .card-body { padding: 1.1rem 1.25rem 1.25rem; }
+
+  .card-desc { font-size: 0.85rem; color: var(--text3); line-height: 1.55; margin-bottom: 1rem; }
+
+  .card-cta { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+  .tool-card.j1 .card-cta { color: var(--j1); }
+  .tool-card.j2 .card-cta { color: var(--j2); }
+
+  /* ─── RESET VIEW ─── */
   #resetView {
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     padding: 2rem;
-    position: relative;
-    z-index: 1;
   }
 
   .reset-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3rem 2.5rem;
+    border-radius: 14px;
+    padding: 2.5rem 2rem;
     width: 100%;
-    max-width: 420px;
-    animation: fadeUp 0.5s ease forwards;
+    max-width: 400px;
+    animation: fadeUp 0.4s ease forwards;
   }
 
-  .reset-card h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-  }
+  .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .reset-card p { color: var(--text3); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
 
-  .reset-card p {
-    color: var(--muted);
-    font-size: 0.875rem;
-    margin-bottom: 2rem;
-    line-height: 1.5;
-  }
-
-  .success-msg {
-    background: rgba(45,212,191,0.1);
-    border: 1px solid rgba(45,212,191,0.3);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.85rem;
-    color: var(--teal);
-    margin-top: 1rem;
-    display: none;
-  }
-
-  .success-msg.visible { display: block; }
-
-  /* Footer */
   .portal-footer {
     text-align: center;
-    padding: 1.5rem;
-    font-size: 0.78rem;
-    color: var(--muted);
+    padding: 1.25rem;
+    font-size: 0.75rem;
+    color: var(--text3);
     border-top: 1px solid var(--border);
+    letter-spacing: 0.03em;
   }
 
   @media (max-width: 480px) {
-    .login-card, .reset-card { padding: 2rem 1.5rem; }
-    .dashboard-main { padding: 2rem 1rem; }
-    .welcome-block h2 { font-size: 1.5rem; }
-    .top-nav { padding: 1rem; }
-    .nav-user { display: none; }
+    .login-card, .reset-card { padding: 2rem 1.25rem; }
+    .dash-main { padding: 1.75rem 1rem; }
+    .dash-welcome h2 { font-size: 1.5rem; }
+    .dash-header { padding: 0 1rem; }
+    .dash-user { display: none; }
   }
 </style>
 </head>
@@ -494,10 +384,9 @@
 <!-- ─── LOGIN VIEW ─── -->
 <div id="loginView" class="view active">
   <div class="login-card">
-    <div class="logo-area">
-      <div class="logo-icon">⚗️</div>
+    <div class="login-logo">
       <h1>Mr <span>Khemistry</span></h1>
-      <p>Student Portal — Sign in to continue</p>
+      <p>Student Portal</p>
     </div>
 
     <div class="form-group">
@@ -510,13 +399,12 @@
       <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
     </div>
 
-    <button class="btn-login" id="loginBtn" onclick="handleLogin()">Sign In</button>
-
+    <button class="btn-primary" id="loginBtn" onclick="handleLogin()">Sign In</button>
     <div class="error-msg" id="loginError"></div>
 
     <div class="login-footer">
-      First time? Check your email for a setup link from Mr Khemistry.<br><br>
-      <a href="#" onclick="showReset()" style="color: var(--teal); text-decoration: none;">Forgot password?</a>
+      First time? Check your email for a setup link.<br><br>
+      <a href="#" onclick="showReset()">Forgot password?</a>
     </div>
   </div>
 </div>
@@ -532,50 +420,62 @@
       <input type="email" id="resetEmail" placeholder="you@example.com">
     </div>
 
-    <button class="btn-login" onclick="handleReset()">Send Reset Link</button>
+    <button class="btn-primary" id="resetBtn" onclick="handleReset()">Send Reset Link</button>
     <div class="success-msg" id="resetSuccess">Check your inbox! A reset link has been sent.</div>
     <div class="error-msg" id="resetError"></div>
 
-    <div class="login-footer" style="margin-top:1.5rem;">
-      <a href="#" onclick="showLogin()" style="color: var(--teal); text-decoration: none;">← Back to Sign In</a>
+    <div class="login-footer" style="margin-top:1.25rem;">
+      <a href="#" onclick="showLogin()">← Back to Sign In</a>
     </div>
   </div>
 </div>
 
 <!-- ─── DASHBOARD VIEW ─── -->
 <div id="dashboardView" class="view">
-  <nav class="top-nav">
-    <div class="nav-brand">Mr <span>Khemistry</span></div>
-    <div class="nav-right">
-      <div class="nav-user">
+  <div class="dash-header">
+    <div class="dash-logo">Mr <span>Khemistry</span></div>
+    <div class="dash-right">
+      <div class="dash-user">
         <strong id="userEmail">student@email.com</strong>
-        Student
+        Student Portal
       </div>
       <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
     </div>
-  </nav>
+  </div>
 
-  <div class="dashboard-main">
-    <div class="welcome-block">
-      <div class="greeting">Welcome back 👋</div>
-      <h2>Your Chemistry<br>Tools</h2>
-      <p>Pick a tool below to get started with your revision.</p>
+  <div class="dash-main">
+    <div class="dash-welcome">
+      <div class="eyebrow">Welcome back 👋</div>
+      <h2>Your Chemistry Tools</h2>
+      <p>Select a tool below to begin your revision.</p>
     </div>
 
     <div class="tools-grid">
-      <a class="tool-card teal" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
-        <div class="card-icon">✅</div>
-        <div class="card-title">ChemCheck</div>
-        <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Great for practising explanation questions before your exams.</div>
-        <div class="card-arrow">Open ChemCheck →</div>
+
+      <a class="tool-card j1" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
+        <div class="card-header">
+          <div class="card-icon">✅</div>
+          <div class="card-name">ChemCheck</div>
+          <div class="card-tag">AI Marking</div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
+          <div class="card-cta">Open ChemCheck →</div>
+        </div>
       </a>
 
-      <a class="tool-card amber" href="https://mrkhemistry.github.io/chembank/" target="_blank">
-        <div class="card-icon">🧪</div>
-        <div class="card-title">ChemBank</div>
-        <div class="card-desc">Access the full question bank, take practice quizzes by topic, and download worksheets assigned by Mr Khemistry.</div>
-        <div class="card-arrow">Open ChemBank →</div>
+      <a class="tool-card j2" href="https://mrkhemistry.github.io/chembank/" target="_blank">
+        <div class="card-header">
+          <div class="card-icon">🧪</div>
+          <div class="card-name">ChemBank</div>
+          <div class="card-tag">Question Bank</div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
+          <div class="card-cta">Open ChemBank →</div>
+        </div>
       </a>
+
     </div>
   </div>
 
@@ -591,7 +491,6 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // ─── VIEW HELPERS ───
   function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -600,26 +499,22 @@
   function showLogin() { showView('loginView'); }
   function showReset() { showView('resetView'); }
 
-  // ─── ON LOAD: check if already logged in ───
   window.addEventListener('DOMContentLoaded', async () => {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      showDashboard(session.user);
-    }
+    if (session) showDashboard(session.user);
 
-    // Handle password reset deep link
     const hash = window.location.hash;
     if (hash.includes('type=recovery')) {
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
       document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-      document.getElementById('resetEmail').style.display = 'none';
-      document.querySelector('#resetView .btn-login').textContent = 'Update Password';
-      document.querySelector('#resetView .btn-login').onclick = handleNewPassword;
+      document.getElementById('resetEmail').type = 'password';
+      document.getElementById('resetEmail').placeholder = 'New password';
+      document.getElementById('resetBtn').textContent = 'Update Password';
+      document.getElementById('resetBtn').onclick = handleNewPassword;
     }
   });
 
-  // ─── LOGIN ───
   async function handleLogin() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
@@ -645,31 +540,27 @@
     showDashboard(data.user);
   }
 
-  // Allow Enter key to trigger login
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && document.getElementById('loginView').classList.contains('active')) {
       handleLogin();
     }
   });
 
-  // ─── DASHBOARD ───
   function showDashboard(user) {
     document.getElementById('userEmail').textContent = user.email;
     showView('dashboardView');
   }
 
-  // ─── SIGN OUT ───
   async function handleSignOut() {
     await sb.auth.signOut();
-    showView('loginView');
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
+    showView('loginView');
   }
 
-  // ─── FORGOT PASSWORD ───
   async function handleReset() {
     const email = document.getElementById('resetEmail').value.trim();
-    const btn = document.querySelector('#resetView .btn-login');
+    const btn = document.getElementById('resetBtn');
     const errEl = document.getElementById('resetError');
     const successEl = document.getElementById('resetSuccess');
 
@@ -693,7 +584,6 @@
     }
   }
 
-  // ─── SET NEW PASSWORD (after reset link) ───
   async function handleNewPassword() {
     const password = document.getElementById('resetEmail').value.trim();
     const { error } = await sb.auth.updateUser({ password });

@@ -2753,179 +2753,86 @@ Option D" required></textarea>
                 </div>
             </div><!-- end studentWorksheetsPanel -->
             <div id="studentCheckPanel" style="display:none;">
+              <div class="content-area">
+<!-- QUESTIONS TAB -->
+      <div id="tPanel-questions">
+        <div class="page-title">Question Bank</div>
+        <p class="page-sub">All structured questions available to students.</p>
 
-  <div class="main-layout">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-section-label">Student</div>
-      <div class="nav-item active" onclick="switchStudentTab('browse')" id="sNav-browse">
-        <span class="nav-icon">📖</span> Questions
-      </div>
-      <div class="sidebar-footer">
-        <button class="signout-btn" onclick="signOut()">← Sign Out</button>
-      </div>
-    </div>
-    <!-- Content -->
-    <div class="content-area">
-
-      <!-- BROWSE -->
-      <div id="sPanel-browse">
-
-        <!-- Question List -->
-        <div id="cc_sQuestionList">
-          <div class="page-title">Practice Questions</div>
-          <p class="page-sub">Choose a question to check your answer against the model.</p>
-
-          <div class="filter-bar">
-            <select id="cc_sFilterTopic" onchange="cc_renderStudentQuestions()">
-              <option value="">All Topics</option>
-            </select>
-          </div>
-
-          <div class="q-grid" id="cc_studentQGrid"></div>
+        <div class="filter-bar">
+          <select id="tFilterTopic" onchange="renderTeacherQuestions()">
+            <option value="">All Topics</option>
+          </select>
         </div>
 
-        <!-- Question Detail (answer submission) -->
-        <div id="cc_sQuestionDetail" class="q-detail">
-          <div class="q-detail-header">
-            <button class="back-btn" onclick="cc_backToList()">← Back to questions</button>
-          </div>
-
-          <div class="panel">
-            <div id="cc_detailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:16px;"></div>
-            <div id="cc_detailImages" class="question-images"></div>
-            <div id="cc_detailMeta" class="q-meta" style="margin-top:12px;"></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title"><span class="dot"></span> Your Answer</div>
-
-            <div class="answer-mode">
-              <button class="mode-btn active" id="cc_modeType" onclick="cc_cc_switchMode('type')">✏️ Type answer</button>
-              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">📄 Word doc</button>
-              <button class="mode-btn" id="cc_modeImage" onclick="cc_switchMode('image')">🖼️ Photo</button>
-            </div>
-
-            <!-- TYPE MODE -->
-            <div id="cc_typeMode">
-              <div class="field">
-                <textarea id="cc_studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
-              </div>
-            </div>
-
-            <!-- WORD DOC MODE -->
-            <div id="cc_uploadMode" style="display:none">
-              <div class="upload-zone" id="cc_uploadZone" onclick="document.getElementById('cc_docUpload').click()"
-                   ondragover="event.preventDefault(); this.classList.add('dragover')"
-                   ondragleave="this.classList.remove('dragover')"
-                   ondrop="cc_handleDrop(event)">
-                <input type="file" id="cc_docUpload" accept=".docx" onchange="cc_handleFileUpload(this.files[0])">
-                <div class="upload-icon">📄</div>
-                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
-              </div>
-              <div class="file-attached" id="cc_fileAttached">
-                <span>📎</span>
-                <span id="cc_attachedFileName">document.docx</span>
-                <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_cc_clearFile()">✕</span>
-              </div>
-            </div>
-
-            <!-- IMAGE MODE -->
-            <div id="cc_imageMode" style="display:none">
-
-              <!-- Step 1: Upload -->
-              <div id="cc_imgStep1">
-                <div class="upload-zone" id="cc_studentImgZone" onclick="document.getElementById('cc_studentImgUpload').click()"
-                     ondragover="event.preventDefault(); this.classList.add('dragover')"
-                     ondragleave="this.classList.remove('dragover')"
-                     ondrop="cc_handleStudentImgDrop(event)">
-                  <input type="file" id="cc_studentImgUpload" accept="image/*" multiple onchange="cc_handleImageUpload(this.files)">
-                  <div class="upload-icon">🖼️</div>
-                  <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
-                </div>
-                <div id="cc_studentImgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
-                <div class="form-actions" id="cc_extractBtnWrap" style="display:none; margin-top:12px;">
-                  <button class="btn btn-secondary" onclick="cc_extractText()">📝 Read my answer</button>
-                </div>
-              </div>
-
-              <!-- Step 2: Confirm extracted text -->
-              <div id="cc_imgStep2" style="display:none">
-                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
-                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
-                </div>
-                <div class="field">
-                  <textarea id="cc_extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
-                </div>
-                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
-                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="cc_resetImageMode()">Re-upload your photo</span>
-                </div>
-              </div>
-
-            </div>
-
-            <div class="form-actions">
-              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">🔍 Check My Answer</button>
-            </div>
-          </div>
-
-          <!-- Loading -->
-          <div class="loading-spinner" id="cc_loadingSpinner">
-            <div class="spinner-ring"></div>
-            <div>Analysing your answer...</div>
-            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">This usually takes 5–10 seconds</div>
-          </div>
-
-          <!-- Feedback -->
-          <div class="feedback-container" id="cc_feedbackContainer">
-
-            <div class="panel" style="border-color: rgba(74,240,176,0.2);">
-              <div id="cc_scoreBadge" class="score-badge pulse">⏳ Checking...</div>
-
-              <div id="cc_fbMissing" class="feedback-section feedback-missing" style="display:none">
-                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
-                <div class="feedback-body" id="cc_fbMissingText"></div>
-              </div>
-
-              <div id="cc_fbIncorrect" class="feedback-section feedback-incorrect" style="display:none">
-                <div class="feedback-label incorrect-label">❌ Incorrect Phrasing / Misconceptions</div>
-                <div class="feedback-body" id="cc_fbIncorrectText"></div>
-              </div>
-
-              <div id="cc_fbLength" class="feedback-section feedback-length" style="display:none">
-                <div class="feedback-label length-label">📏 Answer Length</div>
-                <div class="feedback-body" id="cc_fbLengthText"></div>
-              </div>
-
-              <div id="cc_fbTips" class="feedback-section feedback-tips" style="display:none">
-                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
-                <div class="feedback-body" id="cc_fbTipsText"></div>
-              </div>
-
-              <div class="divider"></div>
-
-              <div class="feedback-section feedback-model">
-                <div class="feedback-label model-label">📋 Model Answer</div>
-                <div class="feedback-body" id="cc_fbModelText"></div>
-              </div>
-
-              <div class="divider"></div>
-
-              <div style="text-align:center; padding-top:4px;">
-                <button class="btn btn-secondary" onclick="cc_downloadAnalysis()" style="gap:8px;">
-                  ⬇️ Download Analysis
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
+        <div class="q-grid" id="teacherQGrid"></div>
       </div>
 
-    </div>
-  </div>
+      <!-- ADD QUESTION TAB -->
+      <div id="tPanel-add" style="display:none">
+        <div class="page-title" id="addPanelTitle">Add Question</div>
+        <p class="page-sub">Fill in the question details. Model answer is used by the AI for feedback.</p>
 
+        <div class="panel">
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Topic / Concept</label>
+              <input type="text" id="qTopic" placeholder="e.g. Periodicity — Ionisation Energy">
+            </div>
+            <div class="field">
+              <label>Marks</label>
+              <input type="number" id="qMarks" placeholder="e.g. 4" min="1" max="20">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Question Text</label>
+            <textarea id="qText" rows="4" placeholder="Type the full question here. You may use LaTeX e.g. \(H_2O\)"></textarea>
+          </div>
+
+          <div class="field">
+            <label>Question Images (optional — up to 5)</label>
+            <div class="img-upload-zone" id="imgUploadZone" onclick="document.getElementById('imgFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleImgDrop(event)">
+              <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this.files)">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
+              <div class="upload-text"><strong>Click to upload images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+            </div>
+            <div id="imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+          </div>
+
+          <div class="field">
+            <label>Model Answer</label>
+            <textarea id="qModel" rows="6" placeholder="Type the full model answer here. Include all marking points."></textarea>
+          </div>
+
+          <div class="field">
+            <label>Model Answer Images (optional — up to 5)</label>
+            <div class="img-upload-zone" id="ansImgUploadZone" onclick="document.getElementById('ansImgFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('dragover')"
+                 ondragleave="this.classList.remove('dragover')"
+                 ondrop="handleAnsImgDrop(event)">
+              <input type="file" id="ansImgFileInput" accept="image/*" multiple style="display:none" onchange="handleAnsImgSelect(this.files)">
+              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
+              <div class="upload-text"><strong>Click to upload answer images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+            </div>
+            <div id="ansImgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+          </div>
+
+          <div class="field">
+            <label>Answer Template / Tip (optional)</label>
+            <textarea id="qTip" rows="4" placeholder="e.g. For 'explain' questions: always state → reason → link to effect. For ionisation energy trends: charge → shielding → distance."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="saveQuestion()" id="saveQBtn">Save Question</button>
+            <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
+          </div>
+        </div>
+      </div>
+              </div>
             </div><!-- end studentCheckPanel -->
 
         </div><!-- end studentView outer -->
@@ -5407,7 +5314,7 @@ Option D" required></textarea>
             quizPanel.style.display = 'none';
             wsPanel.style.display = 'none';
             checkPanel.style.display = 'none';
-            [tabQuiz, tabWs, tabCheck].forEach(t => t.classList.remove('active'));
+            [tabQuiz, tabWs, tabCheck].forEach(t => t && t.classList.remove('active'));
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
@@ -6480,7 +6387,9 @@ Option D" required></textarea>
         }
 
         // ═══ CHEMCHECK TAB ═══
-        // ═══ CHEMCHECK STATE ═══
+        // ═══════════════════════════════════════════════════
+        //  CHEMCHECK TAB — STATE
+        // ═══════════════════════════════════════════════════
         let cc_questions = [];
         let cc_selectedQuestion = null;
         let cc_uploadedText = '';
@@ -6488,8 +6397,8 @@ Option D" required></textarea>
         let cc_uploadedImages = [];
         let cc_loaded = false;
 
-        async function cc_fetchQuestions() {
-  const { data, error } = await sb
+async function cc_fetchQuestions() {
+  const { data, error } = await supabaseClient
     .from('chemcheck_questions')
     .select('*')
     .eq('is_visible', true)
@@ -6509,7 +6418,7 @@ Option D" required></textarea>
   }));
 }
 
-        function cc_populateTopicFilter(selectId) {
+function cc_populateTopicFilter(selectId) {
   const sel = document.getElementById(selectId);
   const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
   const current = sel.value;
@@ -6522,7 +6431,11 @@ Option D" required></textarea>
   if (current) sel.value = current;
 }
 
-        function cc_openQuestion(id) {
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+
+function cc_openQuestion(id) {
   cc_selectedQuestion = cc_questions.find(q => q.id === id);
   if (!cc_selectedQuestion) return;
 
@@ -6566,13 +6479,17 @@ Option D" required></textarea>
   if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
 }
 
-        function cc_backToList() {
+function cc_backToList() {
   document.getElementById('cc_sQuestionList').style.display = 'block';
   document.getElementById('cc_sQuestionDetail').classList.remove('visible');
   cc_selectedQuestion = null;
 }
 
-        function cc_switchMode(mode) {
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+
+function cc_switchMode(mode) {
   cc_currentAnswerMode = mode;
   document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
   document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
@@ -6582,7 +6499,12 @@ Option D" required></textarea>
   document.getElementById('cc_modeImage').classList.toggle('active',  mode === 'image');
 }
 
-        function cc_handleFileUpload(file) {
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let cc_cc_uploadedImages = []; // array of { base64, mimeType, name }
+
+function cc_handleFileUpload(file) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async e => {
@@ -6595,15 +6517,15 @@ Option D" required></textarea>
   reader.readAsArrayBuffer(file);
 }
 
-        function cc_handleDrop(e) {
+function cc_handleDrop(e) {
   e.preventDefault();
   document.getElementById('cc_uploadZone').classList.remove('dragover');
   const file = e.dataTransfer.files[0];
   if (file && file.name.endsWith('.docx')) handleFileUpload(file);
 }
 
-        async function cc_checkAnswer() {
-  const isImageMode = cc_cc_cc_currentAnswerMode === 'image';
+async function cc_checkAnswer() {
+  const isImageMode = cc_cc_currentAnswerMode === 'image';
   const answer = isImageMode
     ? document.getElementById('cc_extractedAnswer').value.trim()
     : cc_cc_currentAnswerMode === 'type'
@@ -6653,7 +6575,7 @@ Option D" required></textarea>
   document.getElementById('cc_checkBtn').disabled = false;
 }
 
-        function cc_renderFeedback(fb, q) {
+function cc_renderFeedback(fb, q) {
   if (fb.error) {
     document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
     document.getElementById('cc_scoreBadge').className = 'score-badge';
@@ -6726,7 +6648,11 @@ Option D" required></textarea>
   document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-        function cc_downloadAnalysis() {
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+
+function cc_downloadAnalysis() {
   if (!cc_selectedQuestion) return;
 
   const q = selectedQuestion;
@@ -6819,6 +6745,80 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// Topic filters populated after login via fetchQuestions()
+
+function cc_handleImageUpload(files) {
+  const remaining = 3 - cc_uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      cc_uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      cc_renderStudentImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function cc_handleStudentImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_studentImgZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+async function cc_extractText() {
+  if (cc_uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...cc_uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('cc_extractedAnswer').value = extracted;
+    document.getElementById('cc_imgStep1').style.display = 'none';
+    document.getElementById('cc_imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function cc_resetImageMode() {
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
+  document.getElementById('cc_studentImgUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

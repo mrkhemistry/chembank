@@ -1595,6 +1595,8 @@ function renderTeacherQuestions() {
       </div>
     </div>
   `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
 }
 
 // ═══════════════════════════════════════════════════
@@ -1721,6 +1723,8 @@ function renderStudentQuestions() {
       </div>
     </div>
   `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
 }
 
 function openQuestion(id) {
@@ -1763,8 +1767,8 @@ function openQuestion(id) {
   document.getElementById('extractedAnswer').value = '';
   switchMode('type');
 
-  // MathJax render
-  if (window.MathJax) MathJax.typesetPromise([document.getElementById('detailQuestion')]);
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('sQuestionDetail')]);
 }
 
 function backToList() {
@@ -2031,7 +2035,7 @@ function renderFeedback(fb, q) {
   // Missing
   if (fb.missing) {
     document.getElementById('fbMissing').style.display = 'block';
-    document.getElementById('fbMissingText').textContent = fb.missing;
+    document.getElementById('fbMissingText').innerHTML = fb.missing;
   } else {
     document.getElementById('fbMissing').style.display = 'none';
   }
@@ -2039,7 +2043,7 @@ function renderFeedback(fb, q) {
   // Incorrect
   if (fb.incorrect) {
     document.getElementById('fbIncorrect').style.display = 'block';
-    document.getElementById('fbIncorrectText').textContent = fb.incorrect;
+    document.getElementById('fbIncorrectText').innerHTML = fb.incorrect;
   } else {
     document.getElementById('fbIncorrect').style.display = 'none';
   }
@@ -2047,7 +2051,7 @@ function renderFeedback(fb, q) {
   // Length
   if (fb.length_feedback) {
     document.getElementById('fbLength').style.display = 'block';
-    document.getElementById('fbLengthText').textContent = fb.length_feedback;
+    document.getElementById('fbLengthText').innerHTML = fb.length_feedback;
   } else {
     document.getElementById('fbLength').style.display = 'none';
   }
@@ -2055,13 +2059,13 @@ function renderFeedback(fb, q) {
   // Tips
   if (fb.tips) {
     document.getElementById('fbTips').style.display = 'block';
-    document.getElementById('fbTipsText').textContent = fb.tips;
+    document.getElementById('fbTipsText').innerHTML = fb.tips;
   } else {
     document.getElementById('fbTips').style.display = 'none';
   }
 
   // Model Answer
-  document.getElementById('fbModelText').textContent = q.model;
+  document.getElementById('fbModelText').innerHTML = q.model;
 
   // Answer images
   const fbModelSection = document.getElementById('fbModelText').parentElement;

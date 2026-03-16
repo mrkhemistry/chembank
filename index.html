@@ -4772,7 +4772,7 @@ Option D" required></textarea>
         let editingExplanationImageUrl = null;
 
         async function editQuestion(id) {
-            showLoading('Loading question...');
+            document.getElementById('loadingOverlay').style.display = 'flex';
             let q;
             try {
                 const { data, error } = await supabaseClient
@@ -4783,11 +4783,11 @@ Option D" required></textarea>
                 if (error) throw error;
                 q = data;
             } catch (err) {
-                hideLoading();
+                document.getElementById('loadingOverlay').style.display = 'none';
                 alert('Error loading question: ' + err.message);
                 return;
             }
-            hideLoading();
+            document.getElementById('loadingOverlay').style.display = 'none';
             if (!q) { alert('Question not found.'); return; }
 
             editingQuestionId = id;

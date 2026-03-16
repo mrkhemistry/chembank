@@ -1531,6 +1531,21 @@ Option D" required></textarea>
                             <option value="Other">Other</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label>Filter by ID Range</label>
+                        <div style="display:flex; gap:0.5rem; align-items:center;">
+                            <input type="number" id="filterIdFrom" placeholder="From" min="1" style="width:90px;">
+                            <span style="opacity:0.6;">–</span>
+                            <input type="number" id="filterIdTo" placeholder="To" min="1" style="width:90px;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; align-items:center; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="applyAdminFilters()" style="padding:0.6rem 1.4rem;">🔍 Search</button>
+                    <button class="btn btn-secondary" onclick="clearAdminFilters()" style="padding:0.6rem 1.2rem;">Clear</button>
+                    <span id="filterResultInfo" style="font-size:0.85rem; opacity:0.7; margin-left:0.5rem;"></span>
                 </div>
                 
                 <div id="questionList"></div>
@@ -2810,6 +2825,7 @@ Option D" required></textarea>
         // DATA MANAGEMENT
         // ============================================
         let questionBank = [];
+        let totalQuestionCount = 0;
         let currentQuiz = [];
         let currentQuestionIndex = 0;
         let userAnswers = [];
@@ -2819,25 +2835,84 @@ Option D" required></textarea>
         async function loadQuestionsFromSupabase() {
             try {
                 console.log('Loading questions from Supabase...');
-                const { data, error } = await supabaseClient
+
+                // Step 1: get total count and prelim school list (lightweight — no body data)
+                const { count, error: countError } = await supabaseClient
                     .from('questions')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(1000); // Limit to 1000 most recent questions for faster loading
-                
-                if (error) throw error;
-                
-                console.log('Questions loaded:', data?.length || 0);
-                questionBank = data || [];
-                displayQuestions();
+                    .select('*', { count: 'exact', head: true });
+                if (countError) throw countError;
+                totalQuestionCount = count || 0;
                 updateQuestionCount();
-                buildPrelimSchoolFilters(); // Build school filters
+
+                // Step 2: load prelim school metadata (id, source, source_year, school only)
+                const { data: metaData, error: metaError } = await supabaseClient
+                    .from('questions')
+                    .select('id, source, source_year, school')
+                    .eq('source', 'Prelim');
+                if (metaError) throw metaError;
+                questionBank = metaData || []; // used only for buildPrelimSchoolFilters
+                buildPrelimSchoolFilters();
+
+                // Step 3: load 10 most recent questions for display
+                await applyAdminFilters();
+
                 document.getElementById('loadingOverlay').style.display = 'none';
             } catch (error) {
                 console.error('Error loading questions:', error);
                 alert('Error loading questions: ' + error.message);
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
+        }
+
+        // Server-side filtered fetch for the Teacher Portal question list
+        async function applyAdminFilters() {
+            const filterTopic = document.getElementById('filterTopic').value;
+            const filterDifficulty = document.getElementById('filterDifficulty').value;
+            const filterSource = document.getElementById('filterSource').value;
+            const filterIdFrom = document.getElementById('filterIdFrom').value;
+            const filterIdTo = document.getElementById('filterIdTo').value;
+
+            const hasFilters = filterTopic || filterDifficulty || filterSource || filterIdFrom || filterIdTo;
+
+            try {
+                let query = supabaseClient
+                    .from('questions')
+                    .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                    .order('id', { ascending: false })
+                    .limit(hasFilters ? 200 : 10);
+
+                if (filterTopic) query = query.contains('topics', [filterTopic]);
+                if (filterDifficulty) query = query.eq('difficulty', filterDifficulty);
+                if (filterSource) query = query.eq('source', filterSource);
+                if (filterIdFrom) query = query.gte('id', parseInt(filterIdFrom));
+                if (filterIdTo) query = query.lte('id', parseInt(filterIdTo));
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                const results = data || [];
+                const infoEl = document.getElementById('filterResultInfo');
+
+                if (!hasFilters) {
+                    infoEl.textContent = `Showing 10 most recent — use filters + Search to find more`;
+                } else {
+                    infoEl.textContent = `${results.length} question${results.length !== 1 ? 's' : ''} found`;
+                }
+
+                displayQuestionsFromData(results);
+            } catch (error) {
+                console.error('Error fetching questions:', error);
+                alert('Error fetching questions: ' + error.message);
+            }
+        }
+
+        function clearAdminFilters() {
+            document.getElementById('filterTopic').value = '';
+            document.getElementById('filterDifficulty').value = '';
+            document.getElementById('filterSource').value = '';
+            document.getElementById('filterIdFrom').value = '';
+            document.getElementById('filterIdTo').value = '';
+            applyAdminFilters();
         }
 
         function buildPrelimSchoolFilters() {
@@ -3327,28 +3402,20 @@ Option D" required></textarea>
             }
         });
 
-        // Filter handlers
-        document.getElementById('filterTopic').addEventListener('change', displayQuestions);
-        document.getElementById('filterDifficulty').addEventListener('change', displayQuestions);
-        document.getElementById('filterSource').addEventListener('change', displayQuestions);
+        // Filter handlers — now trigger server-side search
+        document.getElementById('filterTopic').addEventListener('change', () => {});
+        document.getElementById('filterDifficulty').addEventListener('change', () => {});
+        document.getElementById('filterSource').addEventListener('change', () => {});
 
         // ============================================
         // DISPLAY FUNCTIONS
         // ============================================
         function displayQuestions() {
-            const filterTopic = document.getElementById('filterTopic').value;
-            const filterDifficulty = document.getElementById('filterDifficulty').value;
-            const filterSource = document.getElementById('filterSource').value;
-            
-            let filtered = questionBank.filter(q => {
-                // Topic filter: check topics array first, fall back to topic string
-                const topicMatch = !filterTopic || 
-                    (Array.isArray(q.topics) && q.topics.length > 0 ? q.topics.includes(filterTopic) : q.topic === filterTopic);
-                const difficultyMatch = !filterDifficulty || q.difficulty === filterDifficulty;
-                const sourceMatch = !filterSource || q.source === filterSource;
-                return topicMatch && difficultyMatch && sourceMatch;
-            });
-            
+            // Legacy call — now delegates to server-side fetch
+            applyAdminFilters();
+        }
+
+        function displayQuestionsFromData(filtered) {
             const questionList = document.getElementById('questionList');
             
             if (filtered.length === 0) {
@@ -3387,6 +3454,7 @@ Option D" required></textarea>
                 <div class="question-item">
                     <div class="question-header">
                         <div class="tag-container">
+                            <span class="tag" style="background:rgba(255,255,255,0.08); color:var(--accent); font-family:monospace; font-size:0.8rem;">ID ${question.id}</span>
                             ${topicTags}
                             <span class="tag tag-difficulty ${question.difficulty.toLowerCase()}">${question.difficulty}</span>
                             ${sourceTag}
@@ -3418,7 +3486,7 @@ Option D" required></textarea>
         }
 
         function updateQuestionCount() {
-            document.getElementById('questionCount').textContent = questionBank.length;
+            document.getElementById('questionCount').textContent = totalQuestionCount;
         }
 
         // ============================================

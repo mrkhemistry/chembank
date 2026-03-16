@@ -5899,6 +5899,2792 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
 
 // Topic filters populated after login via fetchQuestions()
 
+
+
+function cc_renderStudentQuestions()═══════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2anFzb2hoaXRwbmt2Zmlyb3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MDI5OTUsImV4cCI6MjA4NjE3ODk5NX0.EysWH7XML4y-ezkoc0NJ_IYExFA4kvtBpx2DrqylgCU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const TEACHER_PASSWORD = 'mrkhemistry';
+const STUDENT_PASSWORD = 'chem2026';
+
+let currentPortal = null;
+let pendingPortal = null;
+let questions = [];
+let editingId = null;
+let deleteTargetId = null;
+let cc_selectedQuestion = null;
+let cc_uploadedText = '';
+let cc_currentAnswerMode = 'type';
+
+// ═══════════════════════════════════════════════════
+//  SUPABASE HELPERS
+// ═══════════════════════════════════════════════════
+async function fetchQuestions() {
+  const { data, error } = await sb
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  cc_questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
+
+async function insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { data, error } = await sb.from('chemcheck_questions').insert([{
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateQuestion(id, topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { error } = await sb.from('chemcheck_questions').update({
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteQuestionById(id) {
+  const { error } = await sb.from('chemcheck_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — QUESTION IMAGES
+// ═══════════════════════════════════════════════════
+let pendingImages = [];
+
+function handleImgSelect(files) {
+  const remaining = 5 - pendingImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderImgPreviews();
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImgSelect(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Image ${i+1}">
+      <button class="img-remove" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = pendingImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeImg(i) {
+  if (pendingImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingImages[i].storagePath]);
+  pendingImages.splice(i, 1);
+  renderImgPreviews();
+}
+
+async function uploadPendingImages() {
+  for (let i = 0; i < pendingImages.length; i++) {
+    const img = pendingImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `questions/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingImages[i] = { ...pendingImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearImgPreviews() {
+  pendingImages = [];
+  renderImgPreviews();
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — ANSWER IMAGES
+// ═══════════════════════════════════════════════════
+let pendingAnsImages = [];
+
+function handleAnsImgSelect(files) {
+  const remaining = 5 - pendingAnsImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingAnsImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderAnsImgPreviews();
+}
+
+function handleAnsImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('ansImgUploadZone').classList.remove('dragover');
+  handleAnsImgSelect(e.dataTransfer.files);
+}
+
+function renderAnsImgPreviews() {
+  const container = document.getElementById('ansImgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingAnsImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Answer Image ${i+1}">
+      <button class="img-remove" onclick="removeAnsImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = pendingAnsImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeAnsImg(i) {
+  if (pendingAnsImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingAnsImages[i].storagePath]);
+  pendingAnsImages.splice(i, 1);
+  renderAnsImgPreviews();
+}
+
+async function uploadPendingAnsImages() {
+  for (let i = 0; i < pendingAnsImages.length; i++) {
+    const img = pendingAnsImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `answers/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingAnsImages[i] = { ...pendingAnsImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingAnsImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearAnsImgPreviews() {
+  pendingAnsImages = [];
+  renderAnsImgPreviews();
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function enterPortal(portal) {
+  pendingPortal = portal;
+  const modal = document.getElementById('passwordModal');
+  document.getElementById('modalTitle').textContent = portal === 'teacher' ? 'Teacher Access' : 'Student Access';
+  document.getElementById('modalSub').textContent = 'Enter the password to continue.';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').style.display = 'none';
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value.trim();
+  const correct = pendingPortal === 'teacher' ? TEACHER_PASSWORD : STUDENT_PASSWORD;
+  if (val === correct) {
+    closeModal();
+    loadPortal(pendingPortal);
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function loadPortal(portal) {
+  currentPortal = portal;
+  document.getElementById('welcomeView').classList.remove('active');
+  const badge = document.getElementById('headerBadge');
+  badge.style.display = 'block';
+
+  await fetchQuestions();
+
+  if (portal === 'teacher') {
+    badge.className = 'portal-badge badge-teacher';
+    badge.textContent = 'Teacher';
+    document.getElementById('teacherView').classList.add('active');
+    populateTopicFilter('tFilterTopic');
+    renderTeacherQuestions();
+    switchTeacherTab('questions');
+  } else {
+    badge.className = 'portal-badge badge-student';
+    badge.textContent = 'Student';
+    document.getElementById('studentView').classList.add('active');
+    populateTopicFilter('sFilterTopic');
+    cc_renderStudentQuestions();
+  }
+}
+
+function signOut() {
+  currentPortal = null;
+  document.getElementById('teacherView').classList.remove('active');
+  document.getElementById('studentView').classList.remove('active');
+  document.getElementById('welcomeView').classList.add('active');
+  document.getElementById('headerBadge').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function switchTeacherTab(tab) {
+  ['questions','add'].forEach(t => {
+    document.getElementById(`tPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tNav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'add' && !editingId) {
+    clearAddForm();
+    document.getElementById('addPanelTitle').textContent = 'Add Question';
+    document.getElementById('saveQBtn').textContent = 'Save Question';
+  }
+}
+
+function switchStudentTab(tab) {
+  document.getElementById(`sNav-${tab}`)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOPIC FILTER
+// ═══════════════════════════════════════════════════
+function populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderTeacherQuestions() {
+  const filter = document.getElementById('tFilterTopic').value;
+  const grid = document.getElementById('teacherQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 120)}</div>
+        <div class="q-card-actions">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════
+async function saveQuestion() {
+  const topic = document.getElementById('qTopic').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value);
+  const text = document.getElementById('qText').value.trim();
+  const model = document.getElementById('qModel').value.trim();
+  const tip = document.getElementById('qTip').value.trim();
+
+  if (!topic || !text || !model || isNaN(marks)) {
+    alert('Please fill in Topic, Marks, Question Text, and Model Answer.');
+    return;
+  }
+
+  document.getElementById('saveQBtn').disabled = true;
+  document.getElementById('saveQBtn').textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadPendingImages();
+    const ansImageUrls = await uploadPendingAnsImages();
+    document.getElementById('saveQBtn').textContent = 'Saving...';
+
+    if (editingId) {
+      await updateQuestion(editingId, topic, marks, text, model, tip, imageUrls, ansImageUrls);
+      editingId = null;
+    } else {
+      await insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls);
+    }
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    clearAddForm();
+    clearImgPreviews();
+    clearAnsImgPreviews();
+    switchTeacherTab('questions');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error saving question: ' + err.message);
+  }
+
+  document.getElementById('saveQBtn').disabled = false;
+  document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
+}
+
+function editQuestion(id) {
+  const q = cc_questions.find(q => q.id === id);
+  if (!q) return;
+  editingId = id;
+  document.getElementById('qTopic').value = q.topic || '';
+  document.getElementById('qMarks').value = q.marks || '';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qModel').value = q.model || '';
+  document.getElementById('qTip').value = q.tip || '';
+  // Pre-load existing images
+  pendingImages = (q.images || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderImgPreviews();
+  pendingAnsImages = (q.ansImages || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderAnsImgPreviews();
+  document.getElementById('addPanelTitle').textContent = 'Edit Question';
+  document.getElementById('saveQBtn').textContent = 'Update Question';
+  switchTeacherTab('add');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearAddForm();
+  clearImgPreviews();
+  clearAnsImgPreviews();
+  switchTeacherTab('questions');
+}
+
+function clearAddForm() {
+  ['qTopic','qMarks','qText','qModel','qTip'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteQuestion(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+async function confirmDelete() {
+  try {
+    await deleteQuestionById(deleteTargetId);
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error deleting question: ' + err.message);
+  }
+  document.getElementById('deleteModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STUDENT — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function cc_renderStudentQuestions() {
+  const filter = document.getElementById('cc_sFilterTopic').value;
+  const grid = document.getElementById('cc_studentQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card" onclick="cc_openQuestion('${q.id}')">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 140)}</div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+function openQuestion(id) {
+  cc_selectedQuestion = cc_questions.find(q => q.id === id);
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_sQuestionList').style.display = 'none';
+  document.getElementById('cc_sQuestionDetail').classList.add('visible');
+
+  document.getElementById('cc_detailQuestion').innerHTML = cc_selectedQuestion.text;
+
+  // Show images
+  const imgContainer = document.getElementById('cc_detailImages');
+  if (cc_selectedQuestion.images && cc_selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = cc_selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
+
+  document.getElementById('cc_detailMeta').innerHTML = `
+    <span class="tag tag-topic">${cc_selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
+
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  cc_clearFile();
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  switchMode('type');
+
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+}
+
+function backToList() {
+  document.getElementById('cc_sQuestionList').style.display = 'block';
+  document.getElementById('cc_sQuestionDetail').classList.remove('visible');
+  cc_selectedQuestion = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+function switchMode(mode) {
+  cc_currentAnswerMode = mode;
+  document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
+  document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
+  document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let uploadedImages = []; // array of { base64, mimeType, name }
+
+function handleImageUpload(files) {
+  const remaining = 3 - uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      renderStudentImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleStudentImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('studentImgZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderStudentImgPreviews() {
+  const container = document.getElementById('studentImgPreviews');
+  container.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative; display:inline-block;';
+    const el = document.createElement('img');
+    el.src = `data:${img.mimeType};base64,${img.base64}`;
+    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '✕';
+    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
+    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
+    wrap.appendChild(el);
+    wrap.appendChild(removeBtn);
+    container.appendChild(wrap);
+  });
+  document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('extractBtnWrap').style.display = uploadedImages.length > 0 ? 'block' : 'none';
+}
+
+async function extractText() {
+  if (uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('extractedAnswer').value = extracted;
+    document.getElementById('imgStep1').style.display = 'none';
+    document.getElementById('imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function resetImageMode() {
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  document.getElementById('studentImgUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    cc_uploadedText = result.value.trim();
+    document.getElementById('cc_attachedFileName').textContent = file.name;
+    document.getElementById('cc_fileAttached').classList.add('visible');
+    document.getElementById('cc_uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
+
+function cc_clearFile() {
+  cc_uploadedText = '';
+  document.getElementById('cc_fileAttached').classList.remove('visible');
+  document.getElementById('cc_uploadZone').style.display = 'block';
+  document.getElementById('cc_docUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  CHECK ANSWER — AI
+// ═══════════════════════════════════════════════════
+async function checkAnswer() {
+  const isImageMode = cc_cc_currentAnswerMode === 'image';
+  const answer = isImageMode
+    ? document.getElementById('extractedAnswer').value.trim()
+    : cc_cc_currentAnswerMode === 'type'
+      ? document.getElementById('cc_studentAnswer').value.trim()
+      : cc_uploadedText;
+
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
+    return;
+  }
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.add('visible');
+  document.getElementById('cc_checkBtn').disabled = true;
+
+  try {
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cc_buildPrompt(cc_selectedQuestion, answer) }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
+
+    renderFeedback(feedback, cc_selectedQuestion);
+  } catch (err) {
+    renderFeedback({ error: true, raw: 'Network error. Please try again.' }, cc_selectedQuestion);
+  }
+
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  document.getElementById('cc_checkBtn').disabled = false;
+}
+
+function cc_buildPrompt(q, studentAnswer) {
+  return `You are marking a student's answer to an A-level H2 Chemistry question.
+
+QUESTION: ${q.text}
+MARKS AVAILABLE: ${q.marks}
+MODEL ANSWER (this is the sole marking authority):
+${q.model}
+${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
+
+STUDENT'S ANSWER:
+${studentAnswer}
+
+---
+MARKING INSTRUCTIONS:
+
+STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
+List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
+
+STEP 2 — MATCH TO MARKING POINTS.
+Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
+- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
+
+STEP 3 — MISSING POINTS.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams. Do not penalise a student for using diagrams to show ordering instead of words.
+
+STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
+- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
+- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
+- Only flag it if it directly contradicts the model answer.
+- Explain why it is wrong using the model answer as the sole reference.
+- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+
+STEP 5 — SCORE.
+Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+STEP 6 — LENGTH.
+Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
+
+---
+Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
+
+{
+  "overall": "1-2 sentence encouraging summary of the student's performance.",
+  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
+  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
+  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
+  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
+}`;
+}
+
+function renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').className = 'score-badge';
+    document.getElementById('cc_feedbackContainer').classList.add('visible');
+    return;
+  }
+
+  // Score
+  const badge = document.getElementById('cc_scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
+
+  // Missing
+  if (fb.missing) {
+    document.getElementById('cc_fbMissing').style.display = 'block';
+    document.getElementById('cc_fbMissingText').innerHTML = fb.missing;
+  } else {
+    document.getElementById('cc_fbMissing').style.display = 'none';
+  }
+
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('cc_fbIncorrect').style.display = 'block';
+    document.getElementById('cc_fbIncorrectText').innerHTML = fb.incorrect;
+  } else {
+    document.getElementById('cc_fbIncorrect').style.display = 'none';
+  }
+
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('cc_fbLength').style.display = 'block';
+    document.getElementById('cc_fbLengthText').innerHTML = fb.length_feedback;
+  } else {
+    document.getElementById('cc_fbLength').style.display = 'none';
+  }
+
+  // Tips
+  if (fb.tips) {
+    document.getElementById('cc_fbTips').style.display = 'block';
+    document.getElementById('cc_fbTipsText').innerHTML = fb.tips;
+  } else {
+    document.getElementById('cc_fbTips').style.display = 'none';
+  }
+
+  // Model Answer
+  document.getElementById('cc_fbModelText').innerHTML = q.model;
+
+  // Answer images
+  const fbModelSection = document.getElementById('cc_fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
+
+  document.getElementById('cc_feedbackContainer').classList.add('visible');
+
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('cc_feedbackContainer')]);
+  }
+
+  // Scroll to feedback
+  document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function truncate(str, n) {
+  return str?.length > n ? str.slice(0, n) + '…' : str || '';
+}
+
+// ═══════════════════════════════════════════════════
+//  DOWNLOAD ANALYSIS
+// ═══════════════════════════════════════════════════
+function downloadAnalysis() {
+  if (!cc_selectedQuestion) return;
+
+  const q = selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = cc_cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
+
+  const score    = document.getElementById('cc_scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('cc_fbMissing').style.display  !== 'none' ? document.getElementById('cc_fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('cc_fbIncorrect').style.display!== 'none' ? document.getElementById('cc_fbIncorrectText').textContent : null;
+  const length   = document.getElementById('cc_fbLength').style.display   !== 'none' ? document.getElementById('cc_fbLengthText').textContent    : null;
+  const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
+  const model    = document.getElementById('cc_fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
+    <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Topic filters populated after login via fetchQuestions()
+
+</script
+
+function cc_clearFile()════════════════════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2anFzb2hoaXRwbmt2Zmlyb3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MDI5OTUsImV4cCI6MjA4NjE3ODk5NX0.EysWH7XML4y-ezkoc0NJ_IYExFA4kvtBpx2DrqylgCU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const TEACHER_PASSWORD = 'mrkhemistry';
+const STUDENT_PASSWORD = 'chem2026';
+
+let currentPortal = null;
+let pendingPortal = null;
+let questions = [];
+let editingId = null;
+let deleteTargetId = null;
+let cc_selectedQuestion = null;
+let cc_uploadedText = '';
+let cc_currentAnswerMode = 'type';
+
+// ═══════════════════════════════════════════════════
+//  SUPABASE HELPERS
+// ═══════════════════════════════════════════════════
+async function fetchQuestions() {
+  const { data, error } = await sb
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  cc_questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
+
+async function insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { data, error } = await sb.from('chemcheck_questions').insert([{
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateQuestion(id, topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { error } = await sb.from('chemcheck_questions').update({
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteQuestionById(id) {
+  const { error } = await sb.from('chemcheck_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — QUESTION IMAGES
+// ═══════════════════════════════════════════════════
+let pendingImages = [];
+
+function handleImgSelect(files) {
+  const remaining = 5 - pendingImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderImgPreviews();
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImgSelect(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Image ${i+1}">
+      <button class="img-remove" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = pendingImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeImg(i) {
+  if (pendingImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingImages[i].storagePath]);
+  pendingImages.splice(i, 1);
+  renderImgPreviews();
+}
+
+async function uploadPendingImages() {
+  for (let i = 0; i < pendingImages.length; i++) {
+    const img = pendingImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `questions/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingImages[i] = { ...pendingImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearImgPreviews() {
+  pendingImages = [];
+  renderImgPreviews();
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — ANSWER IMAGES
+// ═══════════════════════════════════════════════════
+let pendingAnsImages = [];
+
+function handleAnsImgSelect(files) {
+  const remaining = 5 - pendingAnsImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingAnsImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderAnsImgPreviews();
+}
+
+function handleAnsImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('ansImgUploadZone').classList.remove('dragover');
+  handleAnsImgSelect(e.dataTransfer.files);
+}
+
+function renderAnsImgPreviews() {
+  const container = document.getElementById('ansImgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingAnsImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Answer Image ${i+1}">
+      <button class="img-remove" onclick="removeAnsImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = pendingAnsImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeAnsImg(i) {
+  if (pendingAnsImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingAnsImages[i].storagePath]);
+  pendingAnsImages.splice(i, 1);
+  renderAnsImgPreviews();
+}
+
+async function uploadPendingAnsImages() {
+  for (let i = 0; i < pendingAnsImages.length; i++) {
+    const img = pendingAnsImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `answers/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingAnsImages[i] = { ...pendingAnsImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingAnsImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearAnsImgPreviews() {
+  pendingAnsImages = [];
+  renderAnsImgPreviews();
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function enterPortal(portal) {
+  pendingPortal = portal;
+  const modal = document.getElementById('passwordModal');
+  document.getElementById('modalTitle').textContent = portal === 'teacher' ? 'Teacher Access' : 'Student Access';
+  document.getElementById('modalSub').textContent = 'Enter the password to continue.';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').style.display = 'none';
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value.trim();
+  const correct = pendingPortal === 'teacher' ? TEACHER_PASSWORD : STUDENT_PASSWORD;
+  if (val === correct) {
+    closeModal();
+    loadPortal(pendingPortal);
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function loadPortal(portal) {
+  currentPortal = portal;
+  document.getElementById('welcomeView').classList.remove('active');
+  const badge = document.getElementById('headerBadge');
+  badge.style.display = 'block';
+
+  await fetchQuestions();
+
+  if (portal === 'teacher') {
+    badge.className = 'portal-badge badge-teacher';
+    badge.textContent = 'Teacher';
+    document.getElementById('teacherView').classList.add('active');
+    populateTopicFilter('tFilterTopic');
+    renderTeacherQuestions();
+    switchTeacherTab('questions');
+  } else {
+    badge.className = 'portal-badge badge-student';
+    badge.textContent = 'Student';
+    document.getElementById('studentView').classList.add('active');
+    populateTopicFilter('sFilterTopic');
+    cc_renderStudentQuestions();
+  }
+}
+
+function signOut() {
+  currentPortal = null;
+  document.getElementById('teacherView').classList.remove('active');
+  document.getElementById('studentView').classList.remove('active');
+  document.getElementById('welcomeView').classList.add('active');
+  document.getElementById('headerBadge').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function switchTeacherTab(tab) {
+  ['questions','add'].forEach(t => {
+    document.getElementById(`tPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tNav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'add' && !editingId) {
+    clearAddForm();
+    document.getElementById('addPanelTitle').textContent = 'Add Question';
+    document.getElementById('saveQBtn').textContent = 'Save Question';
+  }
+}
+
+function switchStudentTab(tab) {
+  document.getElementById(`sNav-${tab}`)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOPIC FILTER
+// ═══════════════════════════════════════════════════
+function populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderTeacherQuestions() {
+  const filter = document.getElementById('tFilterTopic').value;
+  const grid = document.getElementById('teacherQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 120)}</div>
+        <div class="q-card-actions">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════
+async function saveQuestion() {
+  const topic = document.getElementById('qTopic').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value);
+  const text = document.getElementById('qText').value.trim();
+  const model = document.getElementById('qModel').value.trim();
+  const tip = document.getElementById('qTip').value.trim();
+
+  if (!topic || !text || !model || isNaN(marks)) {
+    alert('Please fill in Topic, Marks, Question Text, and Model Answer.');
+    return;
+  }
+
+  document.getElementById('saveQBtn').disabled = true;
+  document.getElementById('saveQBtn').textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadPendingImages();
+    const ansImageUrls = await uploadPendingAnsImages();
+    document.getElementById('saveQBtn').textContent = 'Saving...';
+
+    if (editingId) {
+      await updateQuestion(editingId, topic, marks, text, model, tip, imageUrls, ansImageUrls);
+      editingId = null;
+    } else {
+      await insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls);
+    }
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    clearAddForm();
+    clearImgPreviews();
+    clearAnsImgPreviews();
+    switchTeacherTab('questions');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error saving question: ' + err.message);
+  }
+
+  document.getElementById('saveQBtn').disabled = false;
+  document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
+}
+
+function editQuestion(id) {
+  const q = cc_questions.find(q => q.id === id);
+  if (!q) return;
+  editingId = id;
+  document.getElementById('qTopic').value = q.topic || '';
+  document.getElementById('qMarks').value = q.marks || '';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qModel').value = q.model || '';
+  document.getElementById('qTip').value = q.tip || '';
+  // Pre-load existing images
+  pendingImages = (q.images || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderImgPreviews();
+  pendingAnsImages = (q.ansImages || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderAnsImgPreviews();
+  document.getElementById('addPanelTitle').textContent = 'Edit Question';
+  document.getElementById('saveQBtn').textContent = 'Update Question';
+  switchTeacherTab('add');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearAddForm();
+  clearImgPreviews();
+  clearAnsImgPreviews();
+  switchTeacherTab('questions');
+}
+
+function clearAddForm() {
+  ['qTopic','qMarks','qText','qModel','qTip'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteQuestion(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+async function confirmDelete() {
+  try {
+    await deleteQuestionById(deleteTargetId);
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error deleting question: ' + err.message);
+  }
+  document.getElementById('deleteModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STUDENT — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function cc_renderStudentQuestions() {
+  const filter = document.getElementById('cc_sFilterTopic').value;
+  const grid = document.getElementById('cc_studentQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card" onclick="cc_openQuestion('${q.id}')">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 140)}</div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+function openQuestion(id) {
+  cc_selectedQuestion = cc_questions.find(q => q.id === id);
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_sQuestionList').style.display = 'none';
+  document.getElementById('cc_sQuestionDetail').classList.add('visible');
+
+  document.getElementById('cc_detailQuestion').innerHTML = cc_selectedQuestion.text;
+
+  // Show images
+  const imgContainer = document.getElementById('cc_detailImages');
+  if (cc_selectedQuestion.images && cc_selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = cc_selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
+
+  document.getElementById('cc_detailMeta').innerHTML = `
+    <span class="tag tag-topic">${cc_selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
+
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  cc_clearFile();
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  switchMode('type');
+
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+}
+
+function backToList() {
+  document.getElementById('cc_sQuestionList').style.display = 'block';
+  document.getElementById('cc_sQuestionDetail').classList.remove('visible');
+  cc_selectedQuestion = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+function switchMode(mode) {
+  cc_currentAnswerMode = mode;
+  document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
+  document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
+  document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let uploadedImages = []; // array of { base64, mimeType, name }
+
+function handleImageUpload(files) {
+  const remaining = 3 - uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      renderStudentImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleStudentImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('studentImgZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderStudentImgPreviews() {
+  const container = document.getElementById('studentImgPreviews');
+  container.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative; display:inline-block;';
+    const el = document.createElement('img');
+    el.src = `data:${img.mimeType};base64,${img.base64}`;
+    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '✕';
+    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
+    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
+    wrap.appendChild(el);
+    wrap.appendChild(removeBtn);
+    container.appendChild(wrap);
+  });
+  document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('extractBtnWrap').style.display = uploadedImages.length > 0 ? 'block' : 'none';
+}
+
+async function extractText() {
+  if (uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('extractedAnswer').value = extracted;
+    document.getElementById('imgStep1').style.display = 'none';
+    document.getElementById('imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function resetImageMode() {
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  document.getElementById('studentImgUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    cc_uploadedText = result.value.trim();
+    document.getElementById('cc_attachedFileName').textContent = file.name;
+    document.getElementById('cc_fileAttached').classList.add('visible');
+    document.getElementById('cc_uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
+
+function cc_clearFile() {
+  cc_uploadedText = '';
+  document.getElementById('cc_fileAttached').classList.remove('visible');
+  document.getElementById('cc_uploadZone').style.display = 'block';
+  document.getElementById('cc_docUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  CHECK ANSWER — AI
+// ═══════════════════════════════════════════════════
+async function checkAnswer() {
+  const isImageMode = cc_cc_currentAnswerMode === 'image';
+  const answer = isImageMode
+    ? document.getElementById('extractedAnswer').value.trim()
+    : cc_cc_currentAnswerMode === 'type'
+      ? document.getElementById('cc_studentAnswer').value.trim()
+      : cc_uploadedText;
+
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
+    return;
+  }
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.add('visible');
+  document.getElementById('cc_checkBtn').disabled = true;
+
+  try {
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cc_buildPrompt(cc_selectedQuestion, answer) }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
+
+    renderFeedback(feedback, cc_selectedQuestion);
+  } catch (err) {
+    renderFeedback({ error: true, raw: 'Network error. Please try again.' }, cc_selectedQuestion);
+  }
+
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  document.getElementById('cc_checkBtn').disabled = false;
+}
+
+function cc_buildPrompt(q, studentAnswer) {
+  return `You are marking a student's answer to an A-level H2 Chemistry question.
+
+QUESTION: ${q.text}
+MARKS AVAILABLE: ${q.marks}
+MODEL ANSWER (this is the sole marking authority):
+${q.model}
+${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
+
+STUDENT'S ANSWER:
+${studentAnswer}
+
+---
+MARKING INSTRUCTIONS:
+
+STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
+List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
+
+STEP 2 — MATCH TO MARKING POINTS.
+Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
+- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
+
+STEP 3 — MISSING POINTS.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams. Do not penalise a student for using diagrams to show ordering instead of words.
+
+STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
+- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
+- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
+- Only flag it if it directly contradicts the model answer.
+- Explain why it is wrong using the model answer as the sole reference.
+- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+
+STEP 5 — SCORE.
+Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+STEP 6 — LENGTH.
+Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
+
+---
+Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
+
+{
+  "overall": "1-2 sentence encouraging summary of the student's performance.",
+  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
+  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
+  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
+  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
+}`;
+}
+
+function renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').className = 'score-badge';
+    document.getElementById('cc_feedbackContainer').classList.add('visible');
+    return;
+  }
+
+  // Score
+  const badge = document.getElementById('cc_scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
+
+  // Missing
+  if (fb.missing) {
+    document.getElementById('cc_fbMissing').style.display = 'block';
+    document.getElementById('cc_fbMissingText').innerHTML = fb.missing;
+  } else {
+    document.getElementById('cc_fbMissing').style.display = 'none';
+  }
+
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('cc_fbIncorrect').style.display = 'block';
+    document.getElementById('cc_fbIncorrectText').innerHTML = fb.incorrect;
+  } else {
+    document.getElementById('cc_fbIncorrect').style.display = 'none';
+  }
+
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('cc_fbLength').style.display = 'block';
+    document.getElementById('cc_fbLengthText').innerHTML = fb.length_feedback;
+  } else {
+    document.getElementById('cc_fbLength').style.display = 'none';
+  }
+
+  // Tips
+  if (fb.tips) {
+    document.getElementById('cc_fbTips').style.display = 'block';
+    document.getElementById('cc_fbTipsText').innerHTML = fb.tips;
+  } else {
+    document.getElementById('cc_fbTips').style.display = 'none';
+  }
+
+  // Model Answer
+  document.getElementById('cc_fbModelText').innerHTML = q.model;
+
+  // Answer images
+  const fbModelSection = document.getElementById('cc_fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
+
+  document.getElementById('cc_feedbackContainer').classList.add('visible');
+
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('cc_feedbackContainer')]);
+  }
+
+  // Scroll to feedback
+  document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function truncate(str, n) {
+  return str?.length > n ? str.slice(0, n) + '…' : str || '';
+}
+
+// ═══════════════════════════════════════════════════
+//  DOWNLOAD ANALYSIS
+// ═══════════════════════════════════════════════════
+function downloadAnalysis() {
+  if (!cc_selectedQuestion) return;
+
+  const q = selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = cc_cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
+
+  const score    = document.getElementById('cc_scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('cc_fbMissing').style.display  !== 'none' ? document.getElementById('cc_fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('cc_fbIncorrect').style.display!== 'none' ? document.getElementById('cc_fbIncorrectText').textContent : null;
+  const length   = document.getElementById('cc_fbLength').style.display   !== 'none' ? document.getElementById('cc_fbLengthText').textContent    : null;
+  const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
+  const model    = document.getElementById('cc_fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
+    <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Topic filters populated after login via fetchQuestions()
+
+</script
+
+function cc_buildPrompt(q══════════════════════════════════════════
+//  SUPABASE
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2anFzb2hoaXRwbmt2Zmlyb3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MDI5OTUsImV4cCI6MjA4NjE3ODk5NX0.EysWH7XML4y-ezkoc0NJ_IYExFA4kvtBpx2DrqylgCU';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+const TEACHER_PASSWORD = 'mrkhemistry';
+const STUDENT_PASSWORD = 'chem2026';
+
+let currentPortal = null;
+let pendingPortal = null;
+let questions = [];
+let editingId = null;
+let deleteTargetId = null;
+let cc_selectedQuestion = null;
+let cc_uploadedText = '';
+let cc_currentAnswerMode = 'type';
+
+// ═══════════════════════════════════════════════════
+//  SUPABASE HELPERS
+// ═══════════════════════════════════════════════════
+async function fetchQuestions() {
+  const { data, error } = await sb
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  cc_questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
+
+async function insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { data, error } = await sb.from('chemcheck_questions').insert([{
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateQuestion(id, topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { error } = await sb.from('chemcheck_questions').update({
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteQuestionById(id) {
+  const { error } = await sb.from('chemcheck_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — QUESTION IMAGES
+// ═══════════════════════════════════════════════════
+let pendingImages = [];
+
+function handleImgSelect(files) {
+  const remaining = 5 - pendingImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderImgPreviews();
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImgSelect(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Image ${i+1}">
+      <button class="img-remove" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = pendingImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeImg(i) {
+  if (pendingImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingImages[i].storagePath]);
+  pendingImages.splice(i, 1);
+  renderImgPreviews();
+}
+
+async function uploadPendingImages() {
+  for (let i = 0; i < pendingImages.length; i++) {
+    const img = pendingImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `questions/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingImages[i] = { ...pendingImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearImgPreviews() {
+  pendingImages = [];
+  renderImgPreviews();
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — ANSWER IMAGES
+// ═══════════════════════════════════════════════════
+let pendingAnsImages = [];
+
+function handleAnsImgSelect(files) {
+  const remaining = 5 - pendingAnsImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingAnsImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderAnsImgPreviews();
+}
+
+function handleAnsImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('ansImgUploadZone').classList.remove('dragover');
+  handleAnsImgSelect(e.dataTransfer.files);
+}
+
+function renderAnsImgPreviews() {
+  const container = document.getElementById('ansImgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingAnsImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Answer Image ${i+1}">
+      <button class="img-remove" onclick="removeAnsImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = pendingAnsImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeAnsImg(i) {
+  if (pendingAnsImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingAnsImages[i].storagePath]);
+  pendingAnsImages.splice(i, 1);
+  renderAnsImgPreviews();
+}
+
+async function uploadPendingAnsImages() {
+  for (let i = 0; i < pendingAnsImages.length; i++) {
+    const img = pendingAnsImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `answers/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingAnsImages[i] = { ...pendingAnsImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingAnsImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearAnsImgPreviews() {
+  pendingAnsImages = [];
+  renderAnsImgPreviews();
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function enterPortal(portal) {
+  pendingPortal = portal;
+  const modal = document.getElementById('passwordModal');
+  document.getElementById('modalTitle').textContent = portal === 'teacher' ? 'Teacher Access' : 'Student Access';
+  document.getElementById('modalSub').textContent = 'Enter the password to continue.';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').style.display = 'none';
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value.trim();
+  const correct = pendingPortal === 'teacher' ? TEACHER_PASSWORD : STUDENT_PASSWORD;
+  if (val === correct) {
+    closeModal();
+    loadPortal(pendingPortal);
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function loadPortal(portal) {
+  currentPortal = portal;
+  document.getElementById('welcomeView').classList.remove('active');
+  const badge = document.getElementById('headerBadge');
+  badge.style.display = 'block';
+
+  await fetchQuestions();
+
+  if (portal === 'teacher') {
+    badge.className = 'portal-badge badge-teacher';
+    badge.textContent = 'Teacher';
+    document.getElementById('teacherView').classList.add('active');
+    populateTopicFilter('tFilterTopic');
+    renderTeacherQuestions();
+    switchTeacherTab('questions');
+  } else {
+    badge.className = 'portal-badge badge-student';
+    badge.textContent = 'Student';
+    document.getElementById('studentView').classList.add('active');
+    populateTopicFilter('sFilterTopic');
+    cc_renderStudentQuestions();
+  }
+}
+
+function signOut() {
+  currentPortal = null;
+  document.getElementById('teacherView').classList.remove('active');
+  document.getElementById('studentView').classList.remove('active');
+  document.getElementById('welcomeView').classList.add('active');
+  document.getElementById('headerBadge').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function switchTeacherTab(tab) {
+  ['questions','add'].forEach(t => {
+    document.getElementById(`tPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tNav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'add' && !editingId) {
+    clearAddForm();
+    document.getElementById('addPanelTitle').textContent = 'Add Question';
+    document.getElementById('saveQBtn').textContent = 'Save Question';
+  }
+}
+
+function switchStudentTab(tab) {
+  document.getElementById(`sNav-${tab}`)?.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  TOPIC FILTER
+// ═══════════════════════════════════════════════════
+function populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderTeacherQuestions() {
+  const filter = document.getElementById('tFilterTopic').value;
+  const grid = document.getElementById('teacherQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 120)}</div>
+        <div class="q-card-actions">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════
+async function saveQuestion() {
+  const topic = document.getElementById('qTopic').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value);
+  const text = document.getElementById('qText').value.trim();
+  const model = document.getElementById('qModel').value.trim();
+  const tip = document.getElementById('qTip').value.trim();
+
+  if (!topic || !text || !model || isNaN(marks)) {
+    alert('Please fill in Topic, Marks, Question Text, and Model Answer.');
+    return;
+  }
+
+  document.getElementById('saveQBtn').disabled = true;
+  document.getElementById('saveQBtn').textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadPendingImages();
+    const ansImageUrls = await uploadPendingAnsImages();
+    document.getElementById('saveQBtn').textContent = 'Saving...';
+
+    if (editingId) {
+      await updateQuestion(editingId, topic, marks, text, model, tip, imageUrls, ansImageUrls);
+      editingId = null;
+    } else {
+      await insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls);
+    }
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    clearAddForm();
+    clearImgPreviews();
+    clearAnsImgPreviews();
+    switchTeacherTab('questions');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error saving question: ' + err.message);
+  }
+
+  document.getElementById('saveQBtn').disabled = false;
+  document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
+}
+
+function editQuestion(id) {
+  const q = cc_questions.find(q => q.id === id);
+  if (!q) return;
+  editingId = id;
+  document.getElementById('qTopic').value = q.topic || '';
+  document.getElementById('qMarks').value = q.marks || '';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qModel').value = q.model || '';
+  document.getElementById('qTip').value = q.tip || '';
+  // Pre-load existing images
+  pendingImages = (q.images || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderImgPreviews();
+  pendingAnsImages = (q.ansImages || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderAnsImgPreviews();
+  document.getElementById('addPanelTitle').textContent = 'Edit Question';
+  document.getElementById('saveQBtn').textContent = 'Update Question';
+  switchTeacherTab('add');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearAddForm();
+  clearImgPreviews();
+  clearAnsImgPreviews();
+  switchTeacherTab('questions');
+}
+
+function clearAddForm() {
+  ['qTopic','qMarks','qText','qModel','qTip'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteQuestion(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+async function confirmDelete() {
+  try {
+    await deleteQuestionById(deleteTargetId);
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    populateTopicFilter('sFilterTopic');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error deleting question: ' + err.message);
+  }
+  document.getElementById('deleteModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STUDENT — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function cc_renderStudentQuestions() {
+  const filter = document.getElementById('cc_sFilterTopic').value;
+  const grid = document.getElementById('cc_studentQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card" onclick="cc_openQuestion('${q.id}')">
+      <div class="q-card-header">
+        <div class="q-card-text">${truncate(q.text, 140)}</div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+function openQuestion(id) {
+  cc_selectedQuestion = cc_questions.find(q => q.id === id);
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_sQuestionList').style.display = 'none';
+  document.getElementById('cc_sQuestionDetail').classList.add('visible');
+
+  document.getElementById('cc_detailQuestion').innerHTML = cc_selectedQuestion.text;
+
+  // Show images
+  const imgContainer = document.getElementById('cc_detailImages');
+  if (cc_selectedQuestion.images && cc_selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = cc_selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
+
+  document.getElementById('cc_detailMeta').innerHTML = `
+    <span class="tag tag-topic">${cc_selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
+
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  cc_clearFile();
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  switchMode('type');
+
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+}
+
+function backToList() {
+  document.getElementById('cc_sQuestionList').style.display = 'block';
+  document.getElementById('cc_sQuestionDetail').classList.remove('visible');
+  cc_selectedQuestion = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+function switchMode(mode) {
+  cc_currentAnswerMode = mode;
+  document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
+  document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
+  document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let uploadedImages = []; // array of { base64, mimeType, name }
+
+function handleImageUpload(files) {
+  const remaining = 3 - uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      renderStudentImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleStudentImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('studentImgZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderStudentImgPreviews() {
+  const container = document.getElementById('studentImgPreviews');
+  container.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative; display:inline-block;';
+    const el = document.createElement('img');
+    el.src = `data:${img.mimeType};base64,${img.base64}`;
+    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '✕';
+    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
+    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
+    wrap.appendChild(el);
+    wrap.appendChild(removeBtn);
+    container.appendChild(wrap);
+  });
+  document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('extractBtnWrap').style.display = uploadedImages.length > 0 ? 'block' : 'none';
+}
+
+async function extractText() {
+  if (uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('extractedAnswer').value = extracted;
+    document.getElementById('imgStep1').style.display = 'none';
+    document.getElementById('imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function resetImageMode() {
+  uploadedImages = [];
+  document.getElementById('studentImgPreviews').innerHTML = '';
+  document.getElementById('studentImgZone').style.display = 'block';
+  document.getElementById('extractBtnWrap').style.display = 'none';
+  document.getElementById('imgStep1').style.display = 'block';
+  document.getElementById('imgStep2').style.display = 'none';
+  document.getElementById('extractedAnswer').value = '';
+  document.getElementById('studentImgUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
+function handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    cc_uploadedText = result.value.trim();
+    document.getElementById('cc_attachedFileName').textContent = file.name;
+    document.getElementById('cc_fileAttached').classList.add('visible');
+    document.getElementById('cc_uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
+
+function cc_clearFile() {
+  cc_uploadedText = '';
+  document.getElementById('cc_fileAttached').classList.remove('visible');
+  document.getElementById('cc_uploadZone').style.display = 'block';
+  document.getElementById('cc_docUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  CHECK ANSWER — AI
+// ═══════════════════════════════════════════════════
+async function checkAnswer() {
+  const isImageMode = cc_cc_currentAnswerMode === 'image';
+  const answer = isImageMode
+    ? document.getElementById('extractedAnswer').value.trim()
+    : cc_cc_currentAnswerMode === 'type'
+      ? document.getElementById('cc_studentAnswer').value.trim()
+      : cc_uploadedText;
+
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
+    return;
+  }
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.add('visible');
+  document.getElementById('cc_checkBtn').disabled = true;
+
+  try {
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cc_buildPrompt(cc_selectedQuestion, answer) }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
+
+    renderFeedback(feedback, cc_selectedQuestion);
+  } catch (err) {
+    renderFeedback({ error: true, raw: 'Network error. Please try again.' }, cc_selectedQuestion);
+  }
+
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  document.getElementById('cc_checkBtn').disabled = false;
+}
+
+function cc_buildPrompt(q, studentAnswer) {
+  return `You are marking a student's answer to an A-level H2 Chemistry question.
+
+QUESTION: ${q.text}
+MARKS AVAILABLE: ${q.marks}
+MODEL ANSWER (this is the sole marking authority):
+${q.model}
+${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
+
+STUDENT'S ANSWER:
+${studentAnswer}
+
+---
+MARKING INSTRUCTIONS:
+
+STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
+List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
+
+STEP 2 — MATCH TO MARKING POINTS.
+Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
+- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
+
+STEP 3 — MISSING POINTS.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams. Do not penalise a student for using diagrams to show ordering instead of words.
+
+STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
+- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
+- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
+- Only flag it if it directly contradicts the model answer.
+- Explain why it is wrong using the model answer as the sole reference.
+- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+
+STEP 5 — SCORE.
+Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+STEP 6 — LENGTH.
+Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
+
+---
+Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
+
+{
+  "overall": "1-2 sentence encouraging summary of the student's performance.",
+  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
+  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
+  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
+  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
+}`;
+}
+
+function renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').className = 'score-badge';
+    document.getElementById('cc_feedbackContainer').classList.add('visible');
+    return;
+  }
+
+  // Score
+  const badge = document.getElementById('cc_scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
+
+  // Missing
+  if (fb.missing) {
+    document.getElementById('cc_fbMissing').style.display = 'block';
+    document.getElementById('cc_fbMissingText').innerHTML = fb.missing;
+  } else {
+    document.getElementById('cc_fbMissing').style.display = 'none';
+  }
+
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('cc_fbIncorrect').style.display = 'block';
+    document.getElementById('cc_fbIncorrectText').innerHTML = fb.incorrect;
+  } else {
+    document.getElementById('cc_fbIncorrect').style.display = 'none';
+  }
+
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('cc_fbLength').style.display = 'block';
+    document.getElementById('cc_fbLengthText').innerHTML = fb.length_feedback;
+  } else {
+    document.getElementById('cc_fbLength').style.display = 'none';
+  }
+
+  // Tips
+  if (fb.tips) {
+    document.getElementById('cc_fbTips').style.display = 'block';
+    document.getElementById('cc_fbTipsText').innerHTML = fb.tips;
+  } else {
+    document.getElementById('cc_fbTips').style.display = 'none';
+  }
+
+  // Model Answer
+  document.getElementById('cc_fbModelText').innerHTML = q.model;
+
+  // Answer images
+  const fbModelSection = document.getElementById('cc_fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
+
+  document.getElementById('cc_feedbackContainer').classList.add('visible');
+
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('cc_feedbackContainer')]);
+  }
+
+  // Scroll to feedback
+  document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+function truncate(str, n) {
+  return str?.length > n ? str.slice(0, n) + '…' : str || '';
+}
+
+// ═══════════════════════════════════════════════════
+//  DOWNLOAD ANALYSIS
+// ═══════════════════════════════════════════════════
+function downloadAnalysis() {
+  if (!cc_selectedQuestion) return;
+
+  const q = selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = cc_cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
+
+  const score    = document.getElementById('cc_scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('cc_fbMissing').style.display  !== 'none' ? document.getElementById('cc_fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('cc_fbIncorrect').style.display!== 'none' ? document.getElementById('cc_fbIncorrectText').textContent : null;
+  const length   = document.getElementById('cc_fbLength').style.display   !== 'none' ? document.getElementById('cc_fbLengthText').textContent    : null;
+  const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
+  const model    = document.getElementById('cc_fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
+    <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Topic filters populated after login via fetchQuestions()
+
+</script
+
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             updateNavigation();

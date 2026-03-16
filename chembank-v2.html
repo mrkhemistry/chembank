@@ -1122,44 +1122,916 @@
         .auth-mode .container {
             display: none;
         }
-        /* ═══ CHEMCHECK TAB STYLES ═══ */
-        .cc-q-grid { display: grid; gap: 14px; }
-        .cc-q-card { background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; padding: 18px 20px; cursor: pointer; transition: all 0.2s; }
-        .cc-q-card:hover { border-color: var(--primary); transform: translateX(4px); }
-        .cc-q-card-text { font-size: 0.9rem; line-height: 1.5; margin-bottom: 10px; color: var(--light); }
-        .cc-q-detail { display: none; }
-        .cc-q-detail.visible { display: block; }
-        .cc-back-btn { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: rgba(240,244,248,0.5); font-size: 0.875rem; transition: color 0.15s; background: none; border: none; padding: 0 0 16px 0; }
-        .cc-back-btn:hover { color: var(--primary); }
-        .cc-answer-mode { display: flex; gap: 2px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; width: fit-content; margin-bottom: 16px; }
-        .cc-mode-btn { padding: 7px 16px; border-radius: 6px; border: none; background: transparent; color: rgba(240,244,248,0.5); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
-        .cc-mode-btn.active { background: var(--mid-dark); color: var(--light); }
-        .cc-upload-zone { border: 2px dashed rgba(0,217,255,0.3); border-radius: 8px; padding: 28px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
-        .cc-upload-zone:hover, .cc-upload-zone.dragover { border-color: var(--primary); background: rgba(0,217,255,0.05); }
-        .cc-upload-zone input { display: none; }
-        .cc-file-attached { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(0,217,255,0.08); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; font-size: 0.875rem; color: var(--primary); }
-        .cc-file-attached.visible { display: flex; }
-        .cc-feedback-container { display: none; margin-top: 20px; }
-        .cc-feedback-container.visible { display: block; }
-        .cc-score-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(6,255,165,0.1); border: 1px solid rgba(6,255,165,0.25); border-radius: 30px; font-size: 0.9rem; color: var(--success); margin-bottom: 20px; }
-        .cc-feedback-section { border-radius: 8px; padding: 18px; margin-bottom: 12px; border-left: 3px solid; }
-        .cc-fb-missing  { background: rgba(240,164,74,0.08); border-color: #f0a44a; }
-        .cc-fb-incorrect{ background: rgba(240,100,100,0.08); border-color: var(--danger); }
-        .cc-fb-length   { background: rgba(124,111,247,0.08); border-color: #7c6ff7; }
-        .cc-fb-tips     { background: rgba(6,255,165,0.06); border-color: var(--success); }
-        .cc-fb-model    { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); }
-        .cc-fb-label { font-size: 0.68rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
-        .cc-fb-body { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; color: var(--light); }
-        .cc-loading { display: none; text-align: center; padding: 40px; color: rgba(240,244,248,0.5); }
-        .cc-loading.visible { display: block; }
-        .cc-spinner { width: 38px; height: 38px; border: 3px solid rgba(0,217,255,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
-        .cc-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 16px 0; }
-        .cc-filter-bar { display: flex; gap: 10px; margin-bottom: 18px; }
-        .cc-filter-bar select { background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; padding: 8px 14px; color: var(--light); font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; }
-        .cc-filter-bar select:focus { border-color: var(--primary); }
-        .cc-empty { text-align: center; padding: 60px 20px; color: rgba(240,244,248,0.4); font-size: 0.9rem; }
-        .cc-answer-textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; padding: 12px; color: var(--light); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.6; }
-        .cc-answer-textarea:focus { border-color: var(--primary); }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e28;
+    --surface3: #222636;
+    --border: #2a2f42;
+    --accent: #4af0b0;
+    --accent2: #7c6ff7;
+    --warn: #f0a44a;
+    --danger: #f06464;
+    --text: #e8eaf0;
+    --text-muted: #7a82a0;
+    --text-dim: #4a5070;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,240,176,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,240,176,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ═══ HEADER ═══ */
+  header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,15,20,0.8);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .portal-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .badge-teacher {
+    background: rgba(124,111,247,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,111,247,0.3);
+  }
+
+  .badge-student {
+    background: rgba(74,240,176,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(74,240,176,0.25);
+  }
+
+  /* ═══ VIEWS ═══ */
+  .view { display: none; position: relative; z-index: 1; }
+  .view.active { display: block; }
+
+  /* ═══ WELCOME ═══ */
+  #welcomeView {
+    min-height: calc(100vh - 73px);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  #welcomeView.active {
+    display: flex;
+  }
+
+  .welcome-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.1s forwards;
+  }
+
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: 0px;
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.2s forwards;
+  }
+
+  .welcome-title .highlight {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .welcome-sub {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 60px;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.3s forwards;
+  }
+
+  .portal-cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.5s ease 0.4s forwards;
+  }
+
+  .portal-card {
+    width: 280px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .portal-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .portal-card:hover::before { opacity: 1; }
+  .portal-card:hover {
+    border-color: var(--card-accent);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+
+  .portal-card.teacher { --card-accent: var(--accent2); }
+  .portal-card.student { --card-accent: var(--accent); }
+
+  .card-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 20px;
+  }
+
+  .teacher .card-icon { background: rgba(124,111,247,0.15); }
+  .student .card-icon { background: rgba(74,240,176,0.1); }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 24px; right: 24px;
+    color: var(--card-accent);
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+  }
+
+  .portal-card:hover .card-arrow { transform: translate(4px, -4px); }
+
+  /* ═══ PASSWORD MODAL ═══ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    width: 360px;
+    max-width: 90vw;
+    animation: scaleIn 0.25s ease;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+  }
+
+  .modal-sub {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 24px;
+  }
+
+  /* ═══ INPUTS ═══ */
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field textarea { resize: vertical; min-height: 100px; }
+
+  .field select option { background: var(--surface3); }
+
+  .error-msg {
+    color: var(--danger);
+    font-size: 0.8rem;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ═══ BUTTONS ═══ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0f14;
+  }
+  .btn-primary:hover { background: #3dd9a0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--text-muted); color: var(--text); }
+
+  .btn-purple {
+    background: var(--accent2);
+    color: white;
+  }
+  .btn-purple:hover { background: #6c5fe6; transform: translateY(-1px); }
+
+  .btn-danger {
+    background: rgba(240,100,100,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(240,100,100,0.2);
+  }
+  .btn-danger:hover { background: rgba(240,100,100,0.2); }
+
+  .btn-full { width: 100%; justify-content: center; }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .main-layout {
+    display: flex;
+    min-height: calc(100vh - 73px);
+  }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 12px 10px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: all 0.15s;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--surface3); color: var(--text); }
+  .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .signout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    width: 100%;
+    background: none;
+    border: none;
+  }
+  .signout-btn:hover { color: var(--danger); background: rgba(240,100,100,0.08); }
+
+  /* ═══ CONTENT AREA ═══ */
+  .content-area {
+    flex: 1;
+    padding: 36px 40px;
+    overflow-y: auto;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .page-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+
+  /* ═══ PANELS ═══ */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ═══ QUESTION CARDS ═══ */
+  .q-grid {
+    display: grid;
+    gap: 14px;
+  }
+
+  .q-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .q-card:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .q-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .q-card-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .q-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .q-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-topic {
+    background: rgba(74,240,176,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(74,240,176,0.2);
+  }
+
+  .tag-marks {
+    background: rgba(124,111,247,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(124,111,247,0.2);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.9rem; }
+
+  /* ═══ FEEDBACK AREA ═══ */
+  .feedback-container {
+    display: none;
+  }
+
+  .feedback-container.visible { display: block; }
+
+  .feedback-section {
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    border-left: 3px solid;
+  }
+
+  .feedback-missing {
+    background: rgba(240,164,74,0.08);
+    border-color: var(--warn);
+  }
+
+  .feedback-incorrect {
+    background: rgba(240,100,100,0.08);
+    border-color: var(--danger);
+  }
+
+  .feedback-length {
+    background: rgba(124,111,247,0.08);
+    border-color: var(--accent2);
+  }
+
+  .feedback-tips {
+    background: rgba(74,240,176,0.08);
+    border-color: var(--accent);
+  }
+
+  .feedback-model {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--border);
+  }
+
+  .feedback-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .missing-label { color: var(--warn); }
+  .incorrect-label { color: var(--danger); }
+  .length-label { color: var(--accent2); }
+  .tips-label { color: var(--accent); }
+  .model-label { color: var(--text-muted); }
+
+  .feedback-body {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+  }
+
+  .loading-spinner.visible { display: block; }
+
+  .spinner-ring {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  /* ═══ FORM GRID ═══ */
+  .form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  /* ═══ UPLOAD ZONE ═══ */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface3);
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(74,240,176,0.05);
+  }
+
+  .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(74,240,176,0.08);
+  }
+
+  .upload-zone .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+
+  .upload-zone .upload-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .upload-zone .upload-text strong { color: var(--accent); }
+
+  .upload-zone input { display: none; }
+
+  .file-attached {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(74,240,176,0.1);
+    border: 1px solid rgba(74,240,176,0.25);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--accent);
+  }
+
+  .file-attached.visible { display: flex; }
+
+  /* ═══ QUESTION DETAIL (Student) ═══ */
+  .q-detail {
+    display: none;
+  }
+  .q-detail.visible { display: block; }
+
+  .q-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .back-btn:hover { color: var(--accent); }
+
+  /* ═══ DIVIDER ═══ */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* ═══ ANSWER MODE TOGGLE ═══ */
+  .answer-mode {
+    display: flex;
+    gap: 2px;
+    background: var(--surface3);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+    width: fit-content;
+    margin-bottom: 16px;
+  }
+
+  .mode-btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mode-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+
+  /* ═══ SCORE BADGE ═══ */
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: rgba(74,240,176,0.1);
+    border: 1px solid rgba(74,240,176,0.25);
+    border-radius: 30px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+
+  /* ═══ FILTER BAR ═══ */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar select, .filter-bar input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .filter-bar select:focus, .filter-bar input:focus {
+    border-color: var(--accent);
+  }
+
+  /* ═══ ANIMATIONS ═══ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.94); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .pulse { animation: pulse 2s ease infinite; }
+
+  .img-upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface3);
+  }
+
+  .img-upload-zone:hover, .img-upload-zone.dragover {
+    border-color: var(--accent2);
+    background: rgba(124,111,247,0.05);
+  }
+
+  .img-preview-item {
+    position: relative;
+    width: 100px; height: 100px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .img-preview-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .img-preview-item .img-remove {
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    border: none;
+    line-height: 1;
+  }
+
+  .img-preview-item .img-remove:hover { background: var(--danger); }
+
+  .img-uploading {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: white;
+  }
+
+  /* Student image display */
+  .question-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .question-images img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .question-images img:hover { opacity: 0.85; }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+
+  .lightbox.active { display: flex; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius); }
+  @media (max-width: 768px) {
+    header { padding: 16px 20px; }
+    .main-layout { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 12px; }
+    .sidebar-section-label, .sidebar-footer { display: none; }
+    .content-area { padding: 20px; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+  }
 
     </style>
 </head>
@@ -1881,98 +2753,179 @@ Option D" required></textarea>
                 </div>
             </div><!-- end studentWorksheetsPanel -->
             <div id="studentCheckPanel" style="display:none;">
-                <div id="ccQuestionList">
-                    <div class="panel-header" style="margin-bottom:1rem;"><span>Check My Answer</span></div>
-                    <p style="color:rgba(240,244,248,0.6); font-size:0.9rem; margin-bottom:1.25rem;">Select a question, type your answer, and get instant AI feedback.</p>
-                    <div class="cc-filter-bar">
-                        <select id="ccFilterTopic" onchange="ccRenderQuestions()">
-                            <option value="">All Topics</option>
-                        </select>
-                    </div>
-                    <div class="cc-q-grid" id="ccQGrid"></div>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section-label">Student</div>
+      <div class="nav-item active" onclick="switchStudentTab('browse')" id="sNav-browse">
+        <span class="nav-icon">📖</span> Questions
+      </div>
+      <div class="sidebar-footer">
+        <button class="signout-btn" onclick="signOut()">← Sign Out</button>
+      </div>
+    </div>
+    <!-- Content -->
+    <div class="content-area">
+
+      <!-- BROWSE -->
+      <div id="sPanel-browse">
+
+        <!-- Question List -->
+        <div id="cc_sQuestionList">
+          <div class="page-title">Practice Questions</div>
+          <p class="page-sub">Choose a question to check your answer against the model.</p>
+
+          <div class="filter-bar">
+            <select id="cc_sFilterTopic" onchange="cc_renderStudentQuestions()">
+              <option value="">All Topics</option>
+            </select>
+          </div>
+
+          <div class="q-grid" id="cc_studentQGrid"></div>
+        </div>
+
+        <!-- Question Detail (answer submission) -->
+        <div id="cc_sQuestionDetail" class="q-detail">
+          <div class="q-detail-header">
+            <button class="back-btn" onclick="cc_backToList()">← Back to questions</button>
+          </div>
+
+          <div class="panel">
+            <div id="cc_detailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:16px;"></div>
+            <div id="cc_detailImages" class="question-images"></div>
+            <div id="cc_detailMeta" class="q-meta" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span> Your Answer</div>
+
+            <div class="answer-mode">
+              <button class="mode-btn active" id="cc_modeType" onclick="cc_cc_switchMode('type')">✏️ Type answer</button>
+              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">📄 Word doc</button>
+              <button class="mode-btn" id="cc_modeImage" onclick="cc_switchMode('image')">🖼️ Photo</button>
+            </div>
+
+            <!-- TYPE MODE -->
+            <div id="cc_typeMode">
+              <div class="field">
+                <textarea id="cc_studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
+              </div>
+            </div>
+
+            <!-- WORD DOC MODE -->
+            <div id="cc_uploadMode" style="display:none">
+              <div class="upload-zone" id="cc_uploadZone" onclick="document.getElementById('cc_docUpload').click()"
+                   ondragover="event.preventDefault(); this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="cc_handleDrop(event)">
+                <input type="file" id="cc_docUpload" accept=".docx" onchange="cc_handleFileUpload(this.files[0])">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
+              </div>
+              <div class="file-attached" id="cc_fileAttached">
+                <span>📎</span>
+                <span id="cc_attachedFileName">document.docx</span>
+                <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_cc_clearFile()">✕</span>
+              </div>
+            </div>
+
+            <!-- IMAGE MODE -->
+            <div id="cc_imageMode" style="display:none">
+
+              <!-- Step 1: Upload -->
+              <div id="cc_imgStep1">
+                <div class="upload-zone" id="cc_studentImgZone" onclick="document.getElementById('cc_studentImgUpload').click()"
+                     ondragover="event.preventDefault(); this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="cc_handleStudentImgDrop(event)">
+                  <input type="file" id="cc_studentImgUpload" accept="image/*" multiple onchange="cc_handleImageUpload(this.files)">
+                  <div class="upload-icon">🖼️</div>
+                  <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Photo of your written answer (JPG, PNG) — up to 3 images</span></div>
                 </div>
-
-                <div id="ccQuestionDetail" class="cc-q-detail">
-                    <button class="cc-back-btn" onclick="ccBackToList()">← Back to questions</button>
-
-                    <div class="panel" style="margin-bottom:1rem;">
-                        <div id="ccDetailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:14px;"></div>
-                        <div id="ccDetailImages" class="question-images" style="display:none;"></div>
-                        <div id="ccDetailMeta" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
-                    </div>
-
-                    <div class="panel">
-                        <div class="panel-header" style="margin-bottom:1rem;"><span>Your Answer</span></div>
-                        <div class="cc-answer-mode">
-                            <button class="cc-mode-btn active" id="ccModeType" onclick="ccSwitchMode('type')">✏️ Type answer</button>
-                            <button class="cc-mode-btn" id="ccModeUpload" onclick="ccSwitchMode('upload')">📄 Word doc</button>
-                        </div>
-
-                        <div id="ccTypeMode">
-                            <textarea id="ccStudentAnswer" class="cc-answer-textarea" rows="7" placeholder="Write your answer here..."></textarea>
-                        </div>
-
-                        <div id="ccUploadMode" style="display:none;">
-                            <div class="cc-upload-zone" id="ccUploadZone" onclick="document.getElementById('ccDocUpload').click()"
-                                 ondragover="event.preventDefault(); this.classList.add('dragover')"
-                                 ondragleave="this.classList.remove('dragover')"
-                                 ondrop="ccHandleDrop(event)">
-                                <input type="file" id="ccDocUpload" accept=".docx" onchange="ccHandleFileUpload(this.files[0])">
-                                <div style="font-size:2rem; margin-bottom:8px;">📄</div>
-                                <div style="font-size:0.9rem; color:rgba(240,244,248,0.5);"><strong style="color:var(--primary);">Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;">Word documents (.docx) only</span></div>
-                            </div>
-                            <div class="cc-file-attached" id="ccFileAttached">
-                                <span>📎</span>
-                                <span id="ccAttachedFileName">document.docx</span>
-                                <span style="margin-left:auto; cursor:pointer; color:rgba(240,244,248,0.4);" onclick="ccClearFile()">✕</span>
-                            </div>
-                        </div>
-
-                        <div style="margin-top:16px;">
-                            <button class="btn btn-primary" id="ccCheckBtn" onclick="ccCheckAnswer()">🔍 Check My Answer</button>
-                        </div>
-                    </div>
-
-                    <div class="cc-loading" id="ccLoading">
-                        <div class="cc-spinner"></div>
-                        <div>Analysing your answer...</div>
-                        <div style="font-size:0.8rem; margin-top:4px; color:rgba(240,244,248,0.4);">This usually takes 5–10 seconds</div>
-                    </div>
-
-                    <div class="cc-feedback-container" id="ccFeedbackContainer">
-                        <div class="panel" style="border-color:rgba(6,255,165,0.2);">
-                            <div id="ccScoreBadge" class="cc-score-badge">⏳ Checking...</div>
-
-                            <div id="ccFbMissing" class="cc-feedback-section cc-fb-missing" style="display:none;">
-                                <div class="cc-fb-label" style="color:#f0a44a;">⚠️ Missing Key Points</div>
-                                <div class="cc-fb-body" id="ccFbMissingText"></div>
-                            </div>
-                            <div id="ccFbIncorrect" class="cc-feedback-section cc-fb-incorrect" style="display:none;">
-                                <div class="cc-fb-label" style="color:var(--danger);">❌ Incorrect Phrasing / Misconceptions</div>
-                                <div class="cc-fb-body" id="ccFbIncorrectText"></div>
-                            </div>
-                            <div id="ccFbLength" class="cc-feedback-section cc-fb-length" style="display:none;">
-                                <div class="cc-fb-label" style="color:#7c6ff7;">📏 Answer Length</div>
-                                <div class="cc-fb-body" id="ccFbLengthText"></div>
-                            </div>
-                            <div id="ccFbTips" class="cc-feedback-section cc-fb-tips" style="display:none;">
-                                <div class="cc-fb-label" style="color:var(--success);">💡 Tips & Answer Template</div>
-                                <div class="cc-fb-body" id="ccFbTipsText"></div>
-                            </div>
-                            <div class="cc-divider"></div>
-                            <div class="cc-feedback-section cc-fb-model">
-                                <div class="cc-fb-label" style="color:rgba(240,244,248,0.4);">📋 Model Answer</div>
-                                <div class="cc-fb-body" id="ccFbModelText"></div>
-                                <div id="ccFbModelImages" class="question-images" style="margin-top:12px;"></div>
-                            </div>
-                            <div class="cc-divider"></div>
-                            <div style="text-align:center; padding-top:4px;">
-                                <button class="btn btn-secondary" onclick="ccDownloadAnalysis()">⬇️ Download Analysis</button>
-                            </div>
-                        </div>
-                    </div>
-
+                <div id="cc_studentImgPreviews" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;"></div>
+                <div class="form-actions" id="cc_extractBtnWrap" style="display:none; margin-top:12px;">
+                  <button class="btn btn-secondary" onclick="cc_extractText()">📝 Read my answer</button>
                 </div>
+              </div>
+
+              <!-- Step 2: Confirm extracted text -->
+              <div id="cc_imgStep2" style="display:none">
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
+                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
+                </div>
+                <div class="field">
+                  <textarea id="cc_extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
+                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="cc_resetImageMode()">Re-upload your photo</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">🔍 Check My Answer</button>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div class="loading-spinner" id="cc_loadingSpinner">
+            <div class="spinner-ring"></div>
+            <div>Analysing your answer...</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">This usually takes 5–10 seconds</div>
+          </div>
+
+          <!-- Feedback -->
+          <div class="feedback-container" id="cc_feedbackContainer">
+
+            <div class="panel" style="border-color: rgba(74,240,176,0.2);">
+              <div id="cc_scoreBadge" class="score-badge pulse">⏳ Checking...</div>
+
+              <div id="cc_fbMissing" class="feedback-section feedback-missing" style="display:none">
+                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
+                <div class="feedback-body" id="cc_fbMissingText"></div>
+              </div>
+
+              <div id="cc_fbIncorrect" class="feedback-section feedback-incorrect" style="display:none">
+                <div class="feedback-label incorrect-label">❌ Incorrect Phrasing / Misconceptions</div>
+                <div class="feedback-body" id="cc_fbIncorrectText"></div>
+              </div>
+
+              <div id="cc_fbLength" class="feedback-section feedback-length" style="display:none">
+                <div class="feedback-label length-label">📏 Answer Length</div>
+                <div class="feedback-body" id="cc_fbLengthText"></div>
+              </div>
+
+              <div id="cc_fbTips" class="feedback-section feedback-tips" style="display:none">
+                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
+                <div class="feedback-body" id="cc_fbTipsText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="feedback-section feedback-model">
+                <div class="feedback-label model-label">📋 Model Answer</div>
+                <div class="feedback-body" id="cc_fbModelText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div style="text-align:center; padding-top:4px;">
+                <button class="btn btn-secondary" onclick="cc_downloadAnalysis()" style="gap:8px;">
+                  ⬇️ Download Analysis
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
             </div><!-- end studentCheckPanel -->
 
         </div><!-- end studentView outer -->
@@ -3682,7 +4635,6 @@ Option D" required></textarea>
             if (viewName === 'student') {
                 const quizPanel = document.getElementById('studentQuizPanel');
                 const wsPanel = document.getElementById('studentWorksheetsPanel');
-                const checkPanel = document.getElementById('studentCheckPanel');
                 const tabQuiz = document.getElementById('tabQuiz');
                 const tabWs = document.getElementById('tabWorksheets');
                 if (quizPanel) quizPanel.style.display = 'block';
@@ -4452,13 +5404,10 @@ Option D" required></textarea>
             const tabQuiz = document.getElementById('tabQuiz');
             const tabWs = document.getElementById('tabWorksheets');
             const tabCheck = document.getElementById('tabCheckAnswer');
-            // Hide all panels, deactivate all tabs
             quizPanel.style.display = 'none';
             wsPanel.style.display = 'none';
             checkPanel.style.display = 'none';
-            tabQuiz.classList.remove('active');
-            tabWs.classList.remove('active');
-            tabCheck.classList.remove('active');
+            [tabQuiz, tabWs, tabCheck].forEach(t => t.classList.remove('active'));
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
@@ -4469,7 +5418,13 @@ Option D" required></textarea>
             } else if (tab === 'check') {
                 checkPanel.style.display = 'block';
                 tabCheck.classList.add('active');
-                ccLoadQuestions();
+                if (!cc_loaded) {
+                    cc_fetchQuestions().then(() => {
+                        cc_loaded = true;
+                        cc_populateTopicFilter('cc_sFilterTopic');
+                        cc_renderStudentQuestions();
+                    });
+                }
             }
         }
 
@@ -5524,337 +6479,346 @@ Option D" required></textarea>
             document.getElementById('analyticsOverview').style.display = 'block';
         }
 
+        // ═══ CHEMCHECK TAB ═══
+        // ═══ CHEMCHECK STATE ═══
+        let cc_questions = [];
+        let cc_selectedQuestion = null;
+        let cc_uploadedText = '';
+        let cc_currentAnswerMode = 'type';
+        let cc_uploadedImages = [];
+        let cc_loaded = false;
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK TAB — VARIABLES
-        // ═══════════════════════════════════════════════════
-        let ccQuestions = [];
-        let ccSelectedQuestion = null;
-        let ccCurrentMode = 'type';
-        let ccUploadedText = '';
-        let ccLoaded = false;
+        async function cc_fetchQuestions() {
+  const { data, error } = await sb
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  cc_questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK — LOAD QUESTIONS FROM SUPABASE
-        // ═══════════════════════════════════════════════════
-        async function ccLoadQuestions() {
-            if (ccLoaded) { ccRenderQuestions(); return; }
-            document.getElementById('ccQGrid').innerHTML = '<div class="cc-empty">Loading questions...</div>';
-            try {
-                const { data, error } = await supabaseClient
-                    .from('chemcheck_questions')
-                    .select('*')
-                    .eq('is_visible', true)
-                    .order('created_at', { ascending: false });
-                if (error) throw error;
-                ccQuestions = (data || []).map(q => ({
-                    id: String(q.id),
-                    topic: q.topic,
-                    marks: q.marks,
-                    text: q.question_text,
-                    model: q.model_answer,
-                    tip: q.answer_tip || '',
-                    images: q.image_urls || [],
-                    ansImages: q.answer_image_urls || []
-                }));
-                ccLoaded = true;
-                ccPopulateTopicFilter();
-                ccRenderQuestions();
-            } catch(err) {
-                document.getElementById('ccQGrid').innerHTML = '<div class="cc-empty">Could not load questions. Please try again.</div>';
-            }
-        }
+        function cc_populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
 
-        function ccPopulateTopicFilter() {
-            const sel = document.getElementById('ccFilterTopic');
-            const topics = [...new Set(ccQuestions.map(q => q.topic).filter(Boolean))].sort();
-            sel.innerHTML = '<option value="">All Topics</option>';
-            topics.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t; opt.textContent = t;
-                sel.appendChild(opt);
-            });
-        }
+        function cc_openQuestion(id) {
+  cc_selectedQuestion = cc_questions.find(q => q.id === id);
+  if (!cc_selectedQuestion) return;
 
-        function ccRenderQuestions() {
-            const filter = document.getElementById('ccFilterTopic').value;
-            const grid = document.getElementById('ccQGrid');
-            const filtered = filter ? ccQuestions.filter(q => q.topic === filter) : ccQuestions;
-            if (!filtered.length) {
-                grid.innerHTML = '<div class="cc-empty">No questions available yet.</div>';
-                return;
-            }
-            grid.innerHTML = filtered.map(q => `
-                <div class="cc-q-card" onclick="ccOpenQuestion('${q.id}')">
-                    <div class="cc-q-card-text">${q.text.length > 140 ? q.text.slice(0,140)+'...' : q.text}</div>
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <span class="quiz-tag">${q.topic || 'No topic'}</span>
-                        <span class="quiz-tag" style="background:rgba(124,111,247,0.1); border-color:rgba(124,111,247,0.3);">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-            `).join('');
-            if (window.MathJax) MathJax.typesetPromise([grid]);
-        }
+  document.getElementById('cc_sQuestionList').style.display = 'none';
+  document.getElementById('cc_sQuestionDetail').classList.add('visible');
 
-        function ccOpenQuestion(id) {
-            ccSelectedQuestion = ccQuestions.find(q => q.id === id);
-            if (!ccSelectedQuestion) return;
-            document.getElementById('ccQuestionList').style.display = 'none';
-            document.getElementById('ccQuestionDetail').classList.add('visible');
-            document.getElementById('ccDetailQuestion').innerHTML = ccSelectedQuestion.text;
-            // Images
-            const imgEl = document.getElementById('ccDetailImages');
-            if (ccSelectedQuestion.images && ccSelectedQuestion.images.length > 0) {
-                imgEl.innerHTML = ccSelectedQuestion.images.map(url =>
-                    `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')" style="max-height:280px; border-radius:6px; cursor:zoom-in;">`
-                ).join('');
-                imgEl.style.display = 'flex';
-            } else {
-                imgEl.innerHTML = ''; imgEl.style.display = 'none';
-            }
-            document.getElementById('ccDetailMeta').innerHTML = `
-                <span class="quiz-tag">${ccSelectedQuestion.topic}</span>
-                <span class="quiz-tag" style="background:rgba(124,111,247,0.1); border-color:rgba(124,111,247,0.3);">${ccSelectedQuestion.marks} mark${ccSelectedQuestion.marks != 1 ? 's' : ''}</span>
-            `;
-            // Reset form
-            document.getElementById('ccStudentAnswer').value = '';
-            document.getElementById('ccFeedbackContainer').classList.remove('visible');
-            document.getElementById('ccLoading').classList.remove('visible');
-            ccClearFile();
-            ccSwitchMode('type');
-            if (window.MathJax) MathJax.typesetPromise([document.getElementById('ccQuestionDetail')]);
-        }
+  document.getElementById('cc_detailQuestion').innerHTML = cc_selectedQuestion.text;
 
-        function ccBackToList() {
-            document.getElementById('ccQuestionList').style.display = 'block';
-            document.getElementById('ccQuestionDetail').classList.remove('visible');
-            ccSelectedQuestion = null;
-        }
+  // Show images
+  const imgContainer = document.getElementById('cc_detailImages');
+  if (cc_selectedQuestion.images && cc_selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = cc_selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK — ANSWER MODE
-        // ═══════════════════════════════════════════════════
-        function ccSwitchMode(mode) {
-            ccCurrentMode = mode;
-            document.getElementById('ccTypeMode').style.display   = mode === 'type'   ? 'block' : 'none';
-            document.getElementById('ccUploadMode').style.display = mode === 'upload' ? 'block' : 'none';
-            document.getElementById('ccModeType').classList.toggle('active',   mode === 'type');
-            document.getElementById('ccModeUpload').classList.toggle('active', mode === 'upload');
-        }
+  document.getElementById('cc_detailMeta').innerHTML = `
+    <span class="tag tag-topic">${cc_selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK — FILE UPLOAD
-        // ═══════════════════════════════════════════════════
-        function ccHandleFileUpload(file) {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async e => {
-                const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
-                ccUploadedText = result.value.trim();
-                document.getElementById('ccAttachedFileName').textContent = file.name;
-                document.getElementById('ccFileAttached').classList.add('visible');
-                document.getElementById('ccUploadZone').style.display = 'none';
-            };
-            reader.readAsArrayBuffer(file);
-        }
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  cc_clearFile();
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
+  cc_switchMode('type');
 
-        function ccHandleDrop(e) {
-            e.preventDefault();
-            document.getElementById('ccUploadZone').classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.name.endsWith('.docx')) ccHandleFileUpload(file);
-        }
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+}
 
-        function ccClearFile() {
-            ccUploadedText = '';
-            const fa = document.getElementById('ccFileAttached');
-            const uz = document.getElementById('ccUploadZone');
-            if (fa) fa.classList.remove('visible');
-            if (uz) uz.style.display = 'block';
-            const di = document.getElementById('ccDocUpload');
-            if (di) di.value = '';
-        }
+        function cc_backToList() {
+  document.getElementById('cc_sQuestionList').style.display = 'block';
+  document.getElementById('cc_sQuestionDetail').classList.remove('visible');
+  cc_selectedQuestion = null;
+}
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK — AI MARKING
-        // ═══════════════════════════════════════════════════
-        async function ccCheckAnswer() {
-            const answer = ccCurrentMode === 'type'
-                ? document.getElementById('ccStudentAnswer').value.trim()
-                : ccUploadedText;
+        function cc_switchMode(mode) {
+  cc_currentAnswerMode = mode;
+  document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
+  document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('cc_imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
+  document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('cc_modeImage').classList.toggle('active',  mode === 'image');
+}
 
-            if (!answer) { alert('Please write or upload your answer first.'); return; }
-            if (!ccSelectedQuestion) return;
+        function cc_handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    cc_uploadedText = result.value.trim();
+    document.getElementById('cc_attachedFileName').textContent = file.name;
+    document.getElementById('cc_fileAttached').classList.add('visible');
+    document.getElementById('cc_uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
 
-            document.getElementById('ccFeedbackContainer').classList.remove('visible');
-            document.getElementById('ccLoading').classList.add('visible');
-            document.getElementById('ccCheckBtn').disabled = true;
+        function cc_handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
 
-            try {
-                const systemPrompt = 'You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.';
-                const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-5-20250929',
-                        max_tokens: 1500,
-                        system: systemPrompt,
-                        messages: [{ role: 'user', content: ccBuildPrompt(ccSelectedQuestion, answer) }]
-                    })
-                });
-                const data = await response.json();
-                const raw = data.content?.[0]?.text || '{}';
-                let feedback;
-                try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
-                catch { feedback = { error: true, raw }; }
-                ccRenderFeedback(feedback, ccSelectedQuestion);
-            } catch(err) {
-                ccRenderFeedback({ error: true, raw: 'Network error. Please try again.' }, ccSelectedQuestion);
-            }
+        async function cc_checkAnswer() {
+  const isImageMode = cc_cc_cc_currentAnswerMode === 'image';
+  const answer = isImageMode
+    ? document.getElementById('cc_extractedAnswer').value.trim()
+    : cc_cc_currentAnswerMode === 'type'
+      ? document.getElementById('cc_studentAnswer').value.trim()
+      : cc_uploadedText;
 
-            document.getElementById('ccLoading').classList.remove('visible');
-            document.getElementById('ccCheckBtn').disabled = false;
-        }
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
+    return;
+  }
+  if (!cc_selectedQuestion) return;
 
-        function ccBuildPrompt(q, studentAnswer) {
-            return `You are marking a student's answer to an A-level H2 Chemistry question.
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.add('visible');
+  document.getElementById('cc_checkBtn').disabled = true;
 
-QUESTION: ${q.text}
-MARKS AVAILABLE: ${q.marks}
-MODEL ANSWER (this is the sole marking authority):
-${q.model}
-${q.tip ? 'ANSWER TIPS/TEMPLATE: ' + q.tip : ''}
+  try {
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
 
-STUDENT'S ANSWER:
-${studentAnswer}
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cc_buildPrompt(cc_selectedQuestion, answer) }]
+      })
+    });
 
----
-MARKING INSTRUCTIONS:
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
 
-STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
-List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
+    cc_renderFeedback(feedback, cc_selectedQuestion);
+  } catch (err) {
+    cc_renderFeedback({ error: true, raw: 'Network error. Please try again.' }, cc_selectedQuestion);
+  }
 
-STEP 2 — MATCH TO MARKING POINTS.
-Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
-- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  document.getElementById('cc_checkBtn').disabled = false;
+}
 
-STEP 3 — MISSING POINTS.
-List only the marking points from the model answer that are clearly absent from the student's extracted sentences.
+        function cc_renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').className = 'score-badge';
+    document.getElementById('cc_feedbackContainer').classList.add('visible');
+    return;
+  }
 
-STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
-- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
-- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
-- Only flag it if it directly contradicts the model answer.
-- Explain why it is wrong using the model answer as the sole reference.
-- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+  // Score
+  const badge = document.getElementById('cc_scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
 
-STEP 5 — SCORE.
-Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+  // Missing
+  if (fb.missing) {
+    document.getElementById('cc_fbMissing').style.display = 'block';
+    document.getElementById('cc_fbMissingText').innerHTML = fb.missing;
+  } else {
+    document.getElementById('cc_fbMissing').style.display = 'none';
+  }
 
-STEP 6 — LENGTH.
-Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('cc_fbIncorrect').style.display = 'block';
+    document.getElementById('cc_fbIncorrectText').innerHTML = fb.incorrect;
+  } else {
+    document.getElementById('cc_fbIncorrect').style.display = 'none';
+  }
 
----
-Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('cc_fbLength').style.display = 'block';
+    document.getElementById('cc_fbLengthText').innerHTML = fb.length_feedback;
+  } else {
+    document.getElementById('cc_fbLength').style.display = 'none';
+  }
 
-{
-  "overall": "1-2 sentence encouraging summary of the student's performance.",
-  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
-  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
-  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
-  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
-  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
-}`;
-        }
+  // Tips
+  if (fb.tips) {
+    document.getElementById('cc_fbTips').style.display = 'block';
+    document.getElementById('cc_fbTipsText').innerHTML = fb.tips;
+  } else {
+    document.getElementById('cc_fbTips').style.display = 'none';
+  }
 
-        function ccRenderFeedback(fb, q) {
-            if (fb.error) {
-                document.getElementById('ccScoreBadge').innerHTML = '⚠️ Error getting feedback';
-                document.getElementById('ccFeedbackContainer').classList.add('visible');
-                return;
-            }
-            document.getElementById('ccScoreBadge').innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px;">${fb.score_estimate || ''}</strong>`;
+  // Model Answer
+  document.getElementById('cc_fbModelText').innerHTML = q.model;
 
-            const show = (id, textId, val) => {
-                document.getElementById(id).style.display = val ? 'block' : 'none';
-                if (val) document.getElementById(textId).innerHTML = val;
-            };
-            show('ccFbMissing',   'ccFbMissingText',   fb.missing);
-            show('ccFbIncorrect', 'ccFbIncorrectText', fb.incorrect);
-            show('ccFbLength',    'ccFbLengthText',    fb.length_feedback);
-            show('ccFbTips',      'ccFbTipsText',      fb.tips);
+  // Answer images
+  const fbModelSection = document.getElementById('cc_fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
 
-            document.getElementById('ccFbModelText').innerHTML = q.model;
-            const modelImgEl = document.getElementById('ccFbModelImages');
-            modelImgEl.innerHTML = '';
-            if (q.ansImages && q.ansImages.length > 0) {
-                modelImgEl.innerHTML = q.ansImages.map(url =>
-                    `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')" style="max-height:240px; border-radius:6px; cursor:zoom-in;">`
-                ).join('');
-            }
+  document.getElementById('cc_feedbackContainer').classList.add('visible');
 
-            document.getElementById('ccFeedbackContainer').classList.add('visible');
-            if (window.MathJax) MathJax.typesetPromise([document.getElementById('ccFeedbackContainer')]);
-            document.getElementById('ccFeedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('cc_feedbackContainer')]);
+  }
 
-        // ═══════════════════════════════════════════════════
-        //  CHEMCHECK — DOWNLOAD ANALYSIS
-        // ═══════════════════════════════════════════════════
-        function ccDownloadAnalysis() {
-            if (!ccSelectedQuestion) return;
-            const q = ccSelectedQuestion;
-            const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
-            const studentAns = ccCurrentMode === 'type'
-                ? document.getElementById('ccStudentAnswer').value.trim()
-                : ccUploadedText;
-            const score     = document.getElementById('ccScoreBadge').innerText.replace('✅','').trim();
-            const missing   = document.getElementById('ccFbMissing').style.display   !== 'none' ? document.getElementById('ccFbMissingText').textContent   : null;
-            const incorrect = document.getElementById('ccFbIncorrect').style.display !== 'none' ? document.getElementById('ccFbIncorrectText').textContent : null;
-            const length    = document.getElementById('ccFbLength').style.display    !== 'none' ? document.getElementById('ccFbLengthText').textContent    : null;
-            const tips      = document.getElementById('ccFbTips').style.display      !== 'none' ? document.getElementById('ccFbTipsText').textContent      : null;
-            const model     = document.getElementById('ccFbModelText').textContent;
+  // Scroll to feedback
+  document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
-            const section = (colour, emoji, label, text) => text ? `
+        function cc_downloadAnalysis() {
+  if (!cc_selectedQuestion) return;
+
+  const q = selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = cc_cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
+
+  const score    = document.getElementById('cc_scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('cc_fbMissing').style.display  !== 'none' ? document.getElementById('cc_fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('cc_fbIncorrect').style.display!== 'none' ? document.getElementById('cc_fbIncorrectText').textContent : null;
+  const length   = document.getElementById('cc_fbLength').style.display   !== 'none' ? document.getElementById('cc_fbLengthText').textContent    : null;
+  const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
+  const model    = document.getElementById('cc_fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
     <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
       <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
       <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
     </div>` : '';
 
-            const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>ChemCheck Analysis</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-<style>* { box-sizing:border-box; margin:0; padding:0; } body { font-family:'DM Sans',sans-serif; color:#1a1a2e; background:#fff; padding:48px; max-width:800px; margin:0 auto; }
-@media print { body { padding:20px; } .no-print { display:none; } }
-.header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; border-bottom:2px solid #e8eaf0; padding-bottom:20px; }
-.logo { font-size:1.4rem; font-weight:700; color:#1a1a2e; } .logo span { color:#0ea572; }
-.meta { text-align:right; font-size:0.8rem; color:#7a82a0; line-height:1.6; }
-.section-title { font-weight:700; font-size:1rem; margin-bottom:10px; margin-top:20px; }
-.box { background:#f8f9fc; border:1px solid #e8eaf0; border-radius:10px; padding:16px 20px; font-size:0.9rem; line-height:1.7; white-space:pre-wrap; }
-.score { display:inline-flex; align-items:center; gap:10px; background:#e6faf3; border:1px solid #0ea572; border-radius:30px; padding:8px 20px; font-size:0.9rem; color:#0ea572; font-weight:500; margin:16px 0; }
-.footer { margin-top:40px; padding-top:16px; border-top:1px solid #e8eaf0; font-size:0.75rem; color:#aab0c8; text-align:center; }
-.print-btn { display:inline-flex; align-items:center; gap:8px; margin-top:24px; padding:10px 22px; background:#0ea572; color:white; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.9rem; cursor:pointer; }
-</style></head><body>
-<div class="header"><div class="logo">Chem<span>Check</span></div><div class="meta">Mr Khemistry Tuition Centre<br>${date}</div></div>
-<div class="section-title">Question</div><div class="box">${q.text}</div>
-<div class="section-title">Your Answer</div><div class="box">${studentAns || '(Word doc submitted)'}</div>
-<div class="section-title">Feedback</div><div class="score">✅ ${score}</div>
-${section('#e8a020','⚠️','Missing Key Points', missing)}
-${section('#e05050','❌','Incorrect Phrasing / Misconceptions', incorrect)}
-${section('#6c5fe6','📏','Answer Length', length)}
-${section('#0ea572','💡','Tips & Answer Template', tips)}
-${section('#7a82a0','📋','Model Answer', model)}
-<div class="no-print" style="text-align:center;"><button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button></div>
-<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
-</body></html>`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
 
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ChemCheck_' + q.topic.replace(/[^a-zA-Z0-9]/g, '_') + '_' + Date.now() + '.html';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

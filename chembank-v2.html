@@ -1943,84 +1943,142 @@ Option D" required></textarea>
             </div><!-- end studentWorksheetsPanel -->
             <div id="studentCheckPanel" style="display:none;">
               <div class="content-area">
-<!-- QUESTIONS TAB -->
-      <div id="tPanel-questions">
-        <div class="page-title">Question Bank</div>
-        <p class="page-sub">All structured questions available to students.</p>
+<!-- BROWSE -->
+      <div id="sPanel-browse">
 
-        <div class="filter-bar">
-          <select id="tFilterTopic" onchange="renderTeacherQuestions()">
-            <option value="">All Topics</option>
-          </select>
+        <!-- Question List -->
+        <div id="cc_sQuestionList">
+          <div class="page-title">Practice Questions</div>
+          <p class="page-sub">Choose a question to check your answer against the model.</p>
+
+          <div class="filter-bar">
+            <select id="cc_sFilterTopic" onchange="cc_renderStudentQuestions()">
+              <option value="">All Topics</option>
+            </select>
+          </div>
+
+          <div class="q-grid" id="cc_studentQGrid"></div>
         </div>
 
-        <div class="q-grid" id="teacherQGrid"></div>
-      </div>
+        <!-- Question Detail (answer submission) -->
+        <div id="cc_sQuestionDetail" class="q-detail">
+          <div class="q-detail-header">
+            <button class="back-btn" onclick="cc_backToList()">← Back to questions</button>
+          </div>
 
-      <!-- ADD QUESTION TAB -->
-      <div id="tPanel-add" style="display:none">
-        <div class="page-title" id="addPanelTitle">Add Question</div>
-        <p class="page-sub">Fill in the question details. Model answer is used by the AI for feedback.</p>
+          <div class="panel">
+            <div id="cc_detailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:16px;"></div>
+            <div id="cc_detailImages" class="question-images"></div>
+            <div id="cc_detailMeta" class="q-meta" style="margin-top:12px;"></div>
+          </div>
 
-        <div class="panel">
-          <div class="form-grid-2">
-            <div class="field">
-              <label>Topic / Concept</label>
-              <input type="text" id="qTopic" placeholder="e.g. Periodicity — Ionisation Energy">
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span> Your Answer</div>
+
+            <div class="answer-mode">
+              <button class="mode-btn active" id="cc_modeType" onclick="cc_switchMode('type')">✏️ Type answer</button>
+              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">📄 Word doc</button>
+              </div>
+
+            <!-- TYPE MODE -->
+            <div id="cc_typeMode">
+              <div class="field">
+                <textarea id="cc_studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
+              </div>
             </div>
-            <div class="field">
-              <label>Marks</label>
-              <input type="number" id="qMarks" placeholder="e.g. 4" min="1" max="20">
+
+            <!-- WORD DOC MODE -->
+            <div id="cc_uploadMode" style="display:none">
+              <div class="upload-zone" id="cc_uploadZone" onclick="document.getElementById('cc_docUpload').click()"
+                   ondragover="event.preventDefault(); this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="cc_handleDrop(event)">
+                <input type="file" id="cc_docUpload" accept=".docx" onchange="cc_handleFileUpload(this.files[0])">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
+              </div>
+              <div class="file-attached" id="cc_fileAttached">
+                <span>📎</span>
+                <span id="cc_attachedFileName">document.docx</span>
+                <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_clearFile()">✕</span>
+              </div>
+            </div>
+<!-- Step 2: Confirm extracted text -->
+              <div id="imgStep2" style="display:none">
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
+                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
+                </div>
+                <div class="field">
+                  <textarea id="extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
+                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="resetImageMode()">Re-upload your photo</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">🔍 Check My Answer</button>
             </div>
           </div>
 
-          <div class="field">
-            <label>Question Text</label>
-            <textarea id="qText" rows="4" placeholder="Type the full question here. You may use LaTeX e.g. \(H_2O\)"></textarea>
+          <!-- Loading -->
+          <div class="loading-spinner" id="cc_loadingSpinner">
+            <div class="spinner-ring"></div>
+            <div>Analysing your answer...</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">This usually takes 5–10 seconds</div>
           </div>
 
-          <div class="field">
-            <label>Question Images (optional — up to 5)</label>
-            <div class="img-upload-zone" id="imgUploadZone" onclick="document.getElementById('imgFileInput').click()"
-                 ondragover="event.preventDefault(); this.classList.add('dragover')"
-                 ondragleave="this.classList.remove('dragover')"
-                 ondrop="handleImgDrop(event)">
-              <input type="file" id="imgFileInput" accept="image/*" multiple style="display:none" onchange="handleImgSelect(this.files)">
-              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
-              <div class="upload-text"><strong>Click to upload images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
+          <!-- Feedback -->
+          <div class="feedback-container" id="cc_feedbackContainer">
+
+            <div class="panel" style="border-color: rgba(74,240,176,0.2);">
+              <div id="cc_scoreBadge" class="score-badge pulse">⏳ Checking...</div>
+
+              <div id="cc_fbMissing" class="feedback-section feedback-missing" style="display:none">
+                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
+                <div class="feedback-body" id="cc_fbMissingText"></div>
+              </div>
+
+              <div id="cc_fbIncorrect" class="feedback-section feedback-incorrect" style="display:none">
+                <div class="feedback-label incorrect-label">❌ Incorrect Phrasing / Misconceptions</div>
+                <div class="feedback-body" id="cc_fbIncorrectText"></div>
+              </div>
+
+              <div id="cc_fbLength" class="feedback-section feedback-length" style="display:none">
+                <div class="feedback-label length-label">📏 Answer Length</div>
+                <div class="feedback-body" id="cc_fbLengthText"></div>
+              </div>
+
+              <div id="cc_fbTips" class="feedback-section feedback-tips" style="display:none">
+                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
+                <div class="feedback-body" id="cc_fbTipsText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="feedback-section feedback-model">
+                <div class="feedback-label model-label">📋 Model Answer</div>
+                <div class="feedback-body" id="cc_fbModelText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div style="text-align:center; padding-top:4px;">
+                <button class="btn btn-secondary" onclick="cc_downloadAnalysis()" style="gap:8px;">
+                  ⬇️ Download Analysis
+                </button>
+              </div>
             </div>
-            <div id="imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
+
           </div>
 
-          <div class="field">
-            <label>Model Answer</label>
-            <textarea id="qModel" rows="6" placeholder="Type the full model answer here. Include all marking points."></textarea>
-          </div>
-
-          <div class="field">
-            <label>Model Answer Images (optional — up to 5)</label>
-            <div class="img-upload-zone" id="ansImgUploadZone" onclick="document.getElementById('ansImgFileInput').click()"
-                 ondragover="event.preventDefault(); this.classList.add('dragover')"
-                 ondragleave="this.classList.remove('dragover')"
-                 ondrop="handleAnsImgDrop(event)">
-              <input type="file" id="ansImgFileInput" accept="image/*" multiple style="display:none" onchange="handleAnsImgSelect(this.files)">
-              <div style="font-size:1.8rem; margin-bottom:6px;">🖼️</div>
-              <div class="upload-text"><strong>Click to upload answer images</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">PNG, JPG, GIF — up to 5 images</span></div>
-            </div>
-            <div id="ansImgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px;"></div>
-          </div>
-
-          <div class="field">
-            <label>Answer Template / Tip (optional)</label>
-            <textarea id="qTip" rows="4" placeholder="e.g. For 'explain' questions: always state → reason → link to effect. For ionisation energy trends: charge → shielding → distance."></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn btn-primary" onclick="saveQuestion()" id="saveQBtn">Save Question</button>
-            <button class="btn btn-secondary" onclick="cancelEdit()">Cancel</button>
-          </div>
         </div>
       </div>
+
+    </div>
+  </div>
               </div>
             </div><!-- end studentCheckPanel -->
 

@@ -4771,8 +4771,23 @@ Option D" required></textarea>
         let editingOptionImageUrl = null;
         let editingExplanationImageUrl = null;
 
-        function editQuestion(id) {
-            const q = questionBank.find(q => q.id === id);
+        async function editQuestion(id) {
+            showLoading('Loading question...');
+            let q;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                if (error) throw error;
+                q = data;
+            } catch (err) {
+                hideLoading();
+                alert('Error loading question: ' + err.message);
+                return;
+            }
+            hideLoading();
             if (!q) { alert('Question not found.'); return; }
 
             editingQuestionId = id;

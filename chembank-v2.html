@@ -3081,7 +3081,7 @@ Option D" required></textarea>
             try {
                 console.log('Loading questions from Supabase...');
 
-                // Step 1: get total count and prelim school list (lightweight — no body data)
+                // Step 1: get total count
                 const { count, error: countError } = await supabaseClient
                     .from('questions')
                     .select('*', { count: 'exact', head: true });
@@ -3089,17 +3089,32 @@ Option D" required></textarea>
                 totalQuestionCount = count || 0;
                 updateQuestionCount();
 
-                // Step 2: load prelim school metadata (id, source, source_year, school only)
+                // Step 2: load prelim school metadata for building school filters
                 const { data: metaData, error: metaError } = await supabaseClient
                     .from('questions')
                     .select('id, source, source_year, school')
                     .eq('source', 'Prelim');
                 if (metaError) throw metaError;
-                questionBank = metaData || []; // used only for buildPrelimSchoolFilters
+                const prelimMeta = metaData || [];
+                // Use a temp copy for building filters without overwriting questionBank
+                const savedBank = questionBank;
+                questionBank = prelimMeta;
                 buildPrelimSchoolFilters();
+                questionBank = savedBank;
 
-                // Step 3: load 10 most recent questions for display
-                await applyAdminFilters();
+                // Step 3: for students, load ALL questions upfront for quiz filtering
+                if (userRole === 'student' || userRole === 'premium_student') {
+                    const { data: allData, error: allError } = await supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .order('id', { ascending: false });
+                    if (allError) throw allError;
+                    questionBank = allData || [];
+                    console.log('Student question bank loaded:', questionBank.length, 'questions');
+                } else {
+                    // Step 4: for admin/teacher, load recent questions for display
+                    await applyAdminFilters();
+                }
 
                 document.getElementById('loadingOverlay').style.display = 'none';
             } catch (error) {

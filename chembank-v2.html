@@ -5989,7 +5989,7 @@ function cc_populateTopicFilter(selectId) {
 function renderTeacherQuestions() {
   const filter = document.getElementById('tFilterTopic').value;
   const grid = document.getElementById('teacherQGrid');
-  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
@@ -5999,7 +5999,7 @@ function renderTeacherQuestions() {
   grid.innerHTML = filtered.map(q => `
     <div class="q-card">
       <div class="q-card-header">
-        <div class="q-card-text">${cc_truncate(q.text, 120)}</div>
+        <div class="q-card-text">${q.text.length > 120 ? q.text.slice(0,120) + '…' : q.text}</div>
         <div class="q-card-actions">
           <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
           <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
@@ -6122,7 +6122,7 @@ async function confirmDelete() {
 function cc_renderStudentQuestions() {
   const filter = document.getElementById('cc_sFilterTopic').value;
   const grid = document.getElementById('cc_studentQGrid');
-  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : questions;
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
 
   if (!filtered.length) {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
@@ -6132,7 +6132,7 @@ function cc_renderStudentQuestions() {
   grid.innerHTML = filtered.map(q => `
     <div class="q-card" onclick="cc_openQuestion('${q.id}')">
       <div class="q-card-header">
-        <div class="q-card-text">${truncate(q.text, 140)}</div>
+        <div class="q-card-text">${q.text.length > 140 ? q.text.slice(0,140) + '…' : q.text}</div>
       </div>
       <div class="q-meta">
         <span class="tag tag-topic">${q.topic || 'No topic'}</span>

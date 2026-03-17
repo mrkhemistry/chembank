@@ -10,6 +10,7 @@
     
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     
     <style>
         /* Import distinctive fonts */
@@ -1116,11 +1117,102 @@
             font-size: 0.95rem;
         }
         
+
+        /* ── TIMER TOGGLE ── */
+        .timer-toggle-track {
+            width: 44px; height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .timer-toggle-track.on { background: var(--primary); border-color: var(--primary); }
+        .timer-toggle-thumb {
+            width: 18px; height: 18px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px; left: 2px;
+            transition: transform 0.2s;
+        }
+        .timer-toggle-track.on .timer-toggle-thumb { transform: translateX(20px); }
+        @keyframes timerBlink {
+            0%, 100% { opacity: 1; background: rgba(255,0,110,0.2); border-color: var(--danger); color: var(--danger); }
+            50% { opacity: 0.6; background: rgba(255,0,110,0.05); }
+        }
+        .timer-warning { animation: timerBlink 0.6s ease infinite !important; }
+
         /* Hide header and container when on auth pages */
         .auth-mode header,
         .auth-mode .container {
             display: none;
         }
+
+        /* ═══ CHEMCHECK PANEL — scoped styles ═══ */
+        #studentCheckPanel .feedback-container { display: none; }
+        #studentCheckPanel .feedback-container.visible { display: block; }
+        #studentCheckPanel .feedback-section { border-radius: 8px; padding: 20px; margin-bottom: 14px; border-left: 3px solid; }
+        #studentCheckPanel .feedback-missing  { background: rgba(240,164,74,0.08); border-color: #f0a44a; }
+        #studentCheckPanel .feedback-incorrect { background: rgba(240,100,100,0.08); border-color: var(--danger); }
+        #studentCheckPanel .feedback-length   { background: rgba(124,111,247,0.08); border-color: #7c6ff7; }
+        #studentCheckPanel .feedback-tips     { background: rgba(6,255,165,0.06);   border-color: var(--success); }
+        #studentCheckPanel .feedback-model    { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); }
+        #studentCheckPanel .feedback-label    { font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; font-weight: 500; }
+        #studentCheckPanel .missing-label   { color: #f0a44a; }
+        #studentCheckPanel .incorrect-label { color: var(--danger); }
+        #studentCheckPanel .length-label    { color: #7c6ff7; }
+        #studentCheckPanel .tips-label      { color: var(--success); }
+        #studentCheckPanel .model-label     { color: rgba(240,244,248,0.5); }
+        #studentCheckPanel .feedback-body   { font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+        #studentCheckPanel .loading-spinner { display: none; text-align: center; padding: 40px; color: rgba(240,244,248,0.5); width: auto; height: auto; border: none; border-radius: 0; animation: none; }
+        #studentCheckPanel .loading-spinner.visible { display: block; }
+        #studentCheckPanel .spinner-ring    { width: 40px; height: 40px; border: 3px solid rgba(0,217,255,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        #studentCheckPanel .score-badge     { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(6,255,165,0.1); border: 1px solid rgba(6,255,165,0.25); border-radius: 30px; font-size: 0.9rem; color: var(--success); margin-bottom: 20px; }
+        #studentCheckPanel .answer-mode     { display: flex; gap: 2px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; width: fit-content; margin-bottom: 16px; }
+        #studentCheckPanel .mode-btn        { padding: 7px 16px; border-radius: 6px; border: none; background: transparent; color: rgba(240,244,248,0.5); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+        #studentCheckPanel .mode-btn.active { background: var(--mid-dark); color: var(--light); }
+        #studentCheckPanel .upload-zone     { border: 2px dashed rgba(0,217,255,0.3); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
+        #studentCheckPanel .upload-zone:hover, #studentCheckPanel .upload-zone.dragover { border-color: var(--primary); background: rgba(0,217,255,0.05); }
+        #studentCheckPanel .upload-zone input { display: none; }
+        #studentCheckPanel .upload-icon    { font-size: 2rem; margin-bottom: 8px; }
+        #studentCheckPanel .upload-text    { font-size: 0.9rem; color: rgba(240,244,248,0.5); }
+        #studentCheckPanel .upload-text strong { color: var(--primary); }
+        #studentCheckPanel .file-attached  { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(0,217,255,0.08); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; font-size: 0.875rem; color: var(--primary); }
+        #studentCheckPanel .file-attached.visible { display: flex; }
+        #studentCheckPanel .q-detail       { display: none; }
+        #studentCheckPanel .q-detail.visible { display: block; }
+        #studentCheckPanel .q-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+        #studentCheckPanel .back-btn       { display: flex; align-items: center; gap: 6px; cursor: pointer; color: rgba(240,244,248,0.5); font-size: 0.875rem; transition: color 0.15s; background: none; border: none; padding: 0; }
+        #studentCheckPanel .back-btn:hover { color: var(--primary); }
+        #studentCheckPanel .divider        { height: 1px; background: rgba(255,255,255,0.1); margin: 20px 0; }
+        #studentCheckPanel .q-grid         { display: grid; gap: 14px; }
+        #studentCheckPanel .q-card         { background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; padding: 20px; cursor: pointer; transition: all 0.2s; }
+        #studentCheckPanel .q-card:hover   { border-color: var(--primary); transform: translateX(4px); }
+        #studentCheckPanel .q-card-header  { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+        #studentCheckPanel .q-card-text    { font-size: 0.9rem; line-height: 1.5; flex: 1; }
+        #studentCheckPanel .q-meta         { display: flex; gap: 8px; flex-wrap: wrap; }
+        #studentCheckPanel .tag            { font-size: 0.65rem; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+        #studentCheckPanel .tag-topic      { background: rgba(6,255,165,0.1); color: var(--success); border: 1px solid rgba(6,255,165,0.2); }
+        #studentCheckPanel .tag-marks      { background: rgba(124,111,247,0.1); color: #7c6ff7; border: 1px solid rgba(124,111,247,0.2); }
+        #studentCheckPanel .filter-bar     { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        #studentCheckPanel .filter-bar select { background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; padding: 8px 14px; color: var(--light); font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; }
+        #studentCheckPanel .filter-bar select:focus { border-color: var(--primary); }
+        #studentCheckPanel .empty-state    { text-align: center; padding: 60px 20px; color: rgba(240,244,248,0.4); }
+        #studentCheckPanel .page-title     { font-family: 'Archivo Black', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem; }
+        #studentCheckPanel .page-sub       { color: rgba(240,244,248,0.6); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        #studentCheckPanel .panel-title    { font-weight: 600; font-size: 1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        #studentCheckPanel .panel-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+        #studentCheckPanel .field textarea { width: 100%; background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 8px; padding: 12px; color: var(--light); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; resize: vertical; outline: none; line-height: 1.6; min-height: 160px; }
+        #studentCheckPanel .field textarea:focus { border-color: var(--primary); }
+        #studentCheckPanel .form-actions   { display: flex; gap: 10px; margin-top: 20px; }
+        #studentCheckPanel .question-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+        #studentCheckPanel .question-images img { max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0,217,255,0.2); cursor: pointer; transition: opacity 0.2s; }
+        #studentCheckPanel .question-images img:hover { opacity: 0.85; }
+        #studentCheckPanel .pulse { animation: pulse 2s ease infinite; }
+
     </style>
 </head>
 <body>
@@ -1558,6 +1650,7 @@ Option D" required></textarea>
             <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; border-bottom: 2px solid rgba(0,217,255,0.2); padding-bottom:0;">
                 <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">🧪 Practice Quiz</button>
                 <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">📄 Worksheets</button>
+                <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">🔍 Check My Answer</button>
             </div>
 
             <!-- Quiz Panel -->
@@ -1775,6 +1868,15 @@ Option D" required></textarea>
                         <label>Number of Questions</label>
                         <input type="number" id="numQuestions" min="1" max="50" value="10">
                     </div>
+                    <div class="form-group">
+                        <label>Timed Mode <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(2 min per question)</span></label>
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:6px;">
+                            <div class="timer-toggle-track" id="timerToggleTrack" onclick="toggleTimerMode()">
+                                <div class="timer-toggle-thumb" id="timerToggleThumb"></div>
+                            </div>
+                            <span id="timerToggleLabel" style="font-size:0.85rem; color:rgba(240,244,248,0.5);">Off</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
@@ -1839,6 +1941,146 @@ Option D" required></textarea>
                     </div>
                 </div>
             </div><!-- end studentWorksheetsPanel -->
+            <div id="studentCheckPanel" style="display:none;">
+              <div class="content-area">
+<!-- BROWSE -->
+      <div id="sPanel-browse">
+
+        <!-- Question List -->
+        <div id="cc_sQuestionList">
+          <div class="page-title">Practice Questions</div>
+          <p class="page-sub">Choose a question to check your answer against the model.</p>
+
+          <div class="filter-bar">
+            <select id="cc_sFilterTopic" onchange="cc_renderStudentQuestions()">
+              <option value="">All Topics</option>
+            </select>
+          </div>
+
+          <div class="q-grid" id="cc_studentQGrid"></div>
+        </div>
+
+        <!-- Question Detail (answer submission) -->
+        <div id="cc_sQuestionDetail" class="q-detail">
+          <div class="q-detail-header">
+            <button class="back-btn" onclick="cc_backToList()">← Back to questions</button>
+          </div>
+
+          <div class="panel">
+            <div id="cc_detailQuestion" style="font-size:1rem; line-height:1.6; margin-bottom:16px;"></div>
+            <div id="cc_detailImages" class="question-images"></div>
+            <div id="cc_detailMeta" class="q-meta" style="margin-top:12px;"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title"><span class="dot"></span> Your Answer</div>
+
+            <div class="answer-mode">
+              <button class="mode-btn active" id="cc_modeType" onclick="cc_switchMode('type')">✏️ Type answer</button>
+              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">📄 Word doc</button>
+              </div>
+
+            <!-- TYPE MODE -->
+            <div id="cc_typeMode">
+              <div class="field">
+                <textarea id="cc_studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
+              </div>
+            </div>
+
+            <!-- WORD DOC MODE -->
+            <div id="cc_uploadMode" style="display:none">
+              <div class="upload-zone" id="cc_uploadZone" onclick="document.getElementById('cc_docUpload').click()"
+                   ondragover="event.preventDefault(); this.classList.add('dragover')"
+                   ondragleave="this.classList.remove('dragover')"
+                   ondrop="cc_handleDrop(event)">
+                <input type="file" id="cc_docUpload" accept=".docx" onchange="cc_handleFileUpload(this.files[0])">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
+              </div>
+              <div class="file-attached" id="cc_fileAttached">
+                <span>📎</span>
+                <span id="cc_attachedFileName">document.docx</span>
+                <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_clearFile()">✕</span>
+              </div>
+            </div>
+<!-- Step 2: Confirm extracted text -->
+              <div id="imgStep2" style="display:none">
+                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
+                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
+                </div>
+                <div class="field">
+                  <textarea id="extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
+                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="resetImageMode()">Re-upload your photo</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">🔍 Check My Answer</button>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div class="loading-spinner" id="cc_loadingSpinner">
+            <div class="spinner-ring"></div>
+            <div>Analysing your answer...</div>
+            <div style="font-size:0.8rem; color:var(--text-dim); margin-top:4px;">This usually takes 5–10 seconds</div>
+          </div>
+
+          <!-- Feedback -->
+          <div class="feedback-container" id="cc_feedbackContainer">
+
+            <div class="panel" style="border-color: rgba(74,240,176,0.2);">
+              <div id="cc_scoreBadge" class="score-badge pulse">⏳ Checking...</div>
+
+              <div id="cc_fbMissing" class="feedback-section feedback-missing" style="display:none">
+                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
+                <div class="feedback-body" id="cc_fbMissingText"></div>
+              </div>
+
+              <div id="cc_fbIncorrect" class="feedback-section feedback-incorrect" style="display:none">
+                <div class="feedback-label incorrect-label">❌ Incorrect Phrasing / Misconceptions</div>
+                <div class="feedback-body" id="cc_fbIncorrectText"></div>
+              </div>
+
+              <div id="cc_fbLength" class="feedback-section feedback-length" style="display:none">
+                <div class="feedback-label length-label">📏 Answer Length</div>
+                <div class="feedback-body" id="cc_fbLengthText"></div>
+              </div>
+
+              <div id="cc_fbTips" class="feedback-section feedback-tips" style="display:none">
+                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
+                <div class="feedback-body" id="cc_fbTipsText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="feedback-section feedback-model">
+                <div class="feedback-label model-label">📋 Model Answer</div>
+                <div class="feedback-body" id="cc_fbModelText"></div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div style="text-align:center; padding-top:4px;">
+                <button class="btn btn-secondary" onclick="cc_downloadAnalysis()" style="gap:8px;">
+                  ⬇️ Download Analysis
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+              </div>
+            </div><!-- end studentCheckPanel -->
 
         </div><!-- end studentView outer -->
 
@@ -1851,6 +2093,9 @@ Option D" required></textarea>
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
                     <span id="totalQuestions">of 10</span>
+                </div>
+                <div id="quizTimerBar" style="display:none; text-align:center; margin-bottom:0.75rem;">
+                    <span id="quizTimerDisplay" style="font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:700; color:var(--success); background:rgba(6,255,165,0.1); border:1px solid rgba(6,255,165,0.25); padding:6px 20px; border-radius:20px; letter-spacing:2px;">20:00</span>
                 </div>
                 
                 <div class="quiz-question">
@@ -2836,7 +3081,7 @@ Option D" required></textarea>
             try {
                 console.log('Loading questions from Supabase...');
 
-                // Step 1: get total count and prelim school list (lightweight — no body data)
+                // Step 1: get total count
                 const { count, error: countError } = await supabaseClient
                     .from('questions')
                     .select('*', { count: 'exact', head: true });
@@ -2844,17 +3089,32 @@ Option D" required></textarea>
                 totalQuestionCount = count || 0;
                 updateQuestionCount();
 
-                // Step 2: load prelim school metadata (id, source, source_year, school only)
+                // Step 2: load prelim school metadata for building school filters
                 const { data: metaData, error: metaError } = await supabaseClient
                     .from('questions')
                     .select('id, source, source_year, school')
                     .eq('source', 'Prelim');
                 if (metaError) throw metaError;
-                questionBank = metaData || []; // used only for buildPrelimSchoolFilters
+                const prelimMeta = metaData || [];
+                // Use a temp copy for building filters without overwriting questionBank
+                const savedBank = questionBank;
+                questionBank = prelimMeta;
                 buildPrelimSchoolFilters();
+                questionBank = savedBank;
 
-                // Step 3: load 10 most recent questions for display
-                await applyAdminFilters();
+                // Step 3: for students, load ALL questions upfront for quiz filtering
+                if (userRole === 'student' || userRole === 'premium_student') {
+                    const { data: allData, error: allError } = await supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .order('id', { ascending: false });
+                    if (allError) throw allError;
+                    questionBank = allData || [];
+                    console.log('Student question bank loaded:', questionBank.length, 'questions');
+                } else {
+                    // Step 4: for admin/teacher, load recent questions for display
+                    await applyAdminFilters();
+                }
 
                 document.getElementById('loadingOverlay').style.display = 'none';
             } catch (error) {
@@ -3840,6 +4100,7 @@ Option D" required></textarea>
             
             showView('quiz');
             displayQuizQuestion();
+            if (timerModeEnabled) startQuizTimer(currentQuiz.length);
         }
 
         function displayQuizQuestion() {
@@ -3974,6 +4235,7 @@ Option D" required></textarea>
         }
 
         function submitQuiz() {
+            clearQuizTimer();
             const unanswered = userAnswers.filter(a => a === null).length;
             if (unanswered > 0) {
                 if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
@@ -4312,19 +4574,33 @@ Option D" required></textarea>
         function switchStudentTab(tab) {
             const quizPanel = document.getElementById('studentQuizPanel');
             const wsPanel = document.getElementById('studentWorksheetsPanel');
+            const checkPanel = document.getElementById('studentCheckPanel');
             const tabQuiz = document.getElementById('tabQuiz');
             const tabWs = document.getElementById('tabWorksheets');
+            const tabCheck = document.getElementById('tabCheckAnswer');
+            quizPanel.style.display = 'none';
+            wsPanel.style.display = 'none';
+            checkPanel.style.display = 'none';
+            [tabQuiz, tabWs, tabCheck].forEach(t => t && t.classList.remove('active'));
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
-                wsPanel.style.display = 'none';
                 tabQuiz.classList.add('active');
-                tabWs.classList.remove('active');
-            } else {
-                quizPanel.style.display = 'none';
+            } else if (tab === 'worksheets') {
                 wsPanel.style.display = 'block';
-                tabQuiz.classList.remove('active');
                 tabWs.classList.add('active');
                 loadWorksheets();
+            } else if (tab === 'check') {
+                checkPanel.style.display = 'block';
+                tabCheck.classList.add('active');
+                if (!cc_loaded) {
+                    cc_fetchQuestions().then(() => {
+                        cc_loaded = true;
+                        cc_populateTopicFilter('cc_sFilterTopic');
+                        cc_renderStudentQuestions();
+                    });
+                } else {
+                    cc_renderStudentQuestions();
+                }
             }
         }
 
@@ -5378,6 +5654,961 @@ Option D" required></textarea>
             document.getElementById('analyticsDrilldown').style.display = 'none';
             document.getElementById('analyticsOverview').style.display = 'block';
         }
+
+
+        // ── TIMER STATE ──
+        let timerModeEnabled = false;
+        let quizTimerInterval = null;
+        let quizTimeRemaining = 0;
+
+        function toggleTimerMode() {
+            timerModeEnabled = !timerModeEnabled;
+            const track = document.getElementById('timerToggleTrack');
+            const label = document.getElementById('timerToggleLabel');
+            track.classList.toggle('on', timerModeEnabled);
+            label.textContent = timerModeEnabled ? 'On' : 'Off';
+            label.style.color = timerModeEnabled ? 'var(--primary)' : 'rgba(240,244,248,0.5)';
+        }
+
+        function startQuizTimer(totalQuestions) {
+            clearQuizTimer();
+            quizTimeRemaining = totalQuestions * 120; // 2 mins per question
+            const display = document.getElementById('quizTimerDisplay');
+            const bar = document.getElementById('quizTimerBar');
+            bar.style.display = 'block';
+            updateTimerDisplay();
+            quizTimerInterval = setInterval(function() {
+                quizTimeRemaining--;
+                updateTimerDisplay();
+                if (quizTimeRemaining <= 10) {
+                    display.classList.add('timer-warning');
+                }
+                if (quizTimeRemaining <= 0) {
+                    clearQuizTimer();
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(quizTimeRemaining / 60);
+            const secs = quizTimeRemaining % 60;
+            document.getElementById('quizTimerDisplay').textContent =
+                String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        }
+
+        function clearQuizTimer() {
+            if (quizTimerInterval) {
+                clearInterval(quizTimerInterval);
+                quizTimerInterval = null;
+            }
+            const display = document.getElementById('quizTimerDisplay');
+            const bar = document.getElementById('quizTimerBar');
+            if (display) display.classList.remove('timer-warning');
+            if (bar) bar.style.display = 'none';
+        }
+
+        // ═══ CHEMCHECK TAB ═══
+        let cc_questions = [];
+        let cc_selectedQuestion = null;
+        let cc_uploadedText = '';
+        let cc_currentAnswerMode = 'type';
+        let cc_loaded = false;
+
+async function cc_fetchQuestions() {
+  const { data, error } = await supabaseClient
+    .from('chemcheck_questions')
+    .select('*')
+    .eq('is_visible', true)
+    .order('created_at', { ascending: false });
+  if (error) { console.error('Fetch error:', error); return; }
+  // Normalise field names to match existing code (text, model, tip)
+  cc_questions = (data || []).map(q => ({
+    id: String(q.id),
+    topic: q.topic,
+    marks: q.marks,
+    text: q.question_text,
+    model: q.model_answer,
+    tip: q.answer_tip || '',
+    images: q.image_urls || [],
+    ansImages: q.answer_image_urls || [],
+    createdAt: q.created_at
+  }));
+}
+
+async function insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { data, error } = await sb.from('chemcheck_questions').insert([{
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }]).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateQuestion(id, topic, marks, text, model, tip, imageUrls, ansImageUrls) {
+  const { error } = await sb.from('chemcheck_questions').update({
+    topic, marks,
+    question_text: text,
+    model_answer: model,
+    answer_tip: tip || null,
+    image_urls: imageUrls || [],
+    answer_image_urls: ansImageUrls || []
+  }).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteQuestionById(id) {
+  const { error } = await sb.from('chemcheck_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — QUESTION IMAGES
+// ═══════════════════════════════════════════════════
+let pendingImages = [];
+
+function handleImgSelect(files) {
+  const remaining = 5 - pendingImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderImgPreviews();
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgUploadZone').classList.remove('dragover');
+  handleImgSelect(e.dataTransfer.files);
+}
+
+function renderImgPreviews() {
+  const container = document.getElementById('imgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Image ${i+1}">
+      <button class="img-remove" onclick="removeImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = pendingImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeImg(i) {
+  if (pendingImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingImages[i].storagePath]);
+  pendingImages.splice(i, 1);
+  renderImgPreviews();
+}
+
+async function uploadPendingImages() {
+  for (let i = 0; i < pendingImages.length; i++) {
+    const img = pendingImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `questions/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingImages[i] = { ...pendingImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearImgPreviews() {
+  pendingImages = [];
+  renderImgPreviews();
+  const zone = document.getElementById('imgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD — ANSWER IMAGES
+// ═══════════════════════════════════════════════════
+let pendingAnsImages = [];
+
+function handleAnsImgSelect(files) {
+  const remaining = 5 - pendingAnsImages.length;
+  Array.from(files).slice(0, remaining).forEach(file => {
+    pendingAnsImages.push({ file, previewUrl: URL.createObjectURL(file), uploaded: false, storagePath: null, publicUrl: null });
+  });
+  renderAnsImgPreviews();
+}
+
+function handleAnsImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('ansImgUploadZone').classList.remove('dragover');
+  handleAnsImgSelect(e.dataTransfer.files);
+}
+
+function renderAnsImgPreviews() {
+  const container = document.getElementById('ansImgPreviews');
+  if (!container) return;
+  container.innerHTML = pendingAnsImages.map((img, i) => `
+    <div class="img-preview-item">
+      <img src="${img.publicUrl || img.previewUrl}" alt="Answer Image ${i+1}">
+      <button class="img-remove" onclick="removeAnsImg(${i})">✕</button>
+    </div>
+  `).join('');
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = pendingAnsImages.length >= 5 ? 'none' : 'block';
+}
+
+function removeAnsImg(i) {
+  if (pendingAnsImages[i].storagePath) sb.storage.from('chemcheck-images').remove([pendingAnsImages[i].storagePath]);
+  pendingAnsImages.splice(i, 1);
+  renderAnsImgPreviews();
+}
+
+async function uploadPendingAnsImages() {
+  for (let i = 0; i < pendingAnsImages.length; i++) {
+    const img = pendingAnsImages[i];
+    if (img.uploaded) continue;
+    const ext = img.file.name.split('.').pop();
+    const path = `answers/${Date.now()}_${i}.${ext}`;
+    const { error } = await sb.storage.from('chemcheck-images').upload(path, img.file, { upsert: true });
+    if (error) throw error;
+    const { data } = sb.storage.from('chemcheck-images').getPublicUrl(path);
+    pendingAnsImages[i] = { ...pendingAnsImages[i], uploaded: true, storagePath: path, publicUrl: data.publicUrl };
+  }
+  return pendingAnsImages.map(img => img.publicUrl).filter(Boolean);
+}
+
+function clearAnsImgPreviews() {
+  pendingAnsImages = [];
+  renderAnsImgPreviews();
+  const zone = document.getElementById('ansImgUploadZone');
+  if (zone) zone.style.display = 'block';
+}
+
+function openLightbox(url) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+function enterPortal(portal) {
+  pendingPortal = portal;
+  const modal = document.getElementById('passwordModal');
+  document.getElementById('modalTitle').textContent = portal === 'teacher' ? 'Teacher Access' : 'Student Access';
+  document.getElementById('modalSub').textContent = 'Enter the password to continue.';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').style.display = 'none';
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+}
+
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value.trim();
+  const correct = pendingPortal === 'teacher' ? TEACHER_PASSWORD : STUDENT_PASSWORD;
+  if (val === correct) {
+    closeModal();
+    loadPortal(pendingPortal);
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+function closeModal() {
+  document.getElementById('passwordModal').classList.remove('active');
+}
+
+async function loadPortal(portal) {
+  currentPortal = portal;
+  document.getElementById('welcomeView').classList.remove('active');
+  const badge = document.getElementById('headerBadge');
+  badge.style.display = 'block';
+
+  await fetchQuestions();
+
+  if (portal === 'teacher') {
+    badge.className = 'portal-badge badge-teacher';
+    badge.textContent = 'Teacher';
+    document.getElementById('teacherView').classList.add('active');
+    populateTopicFilter('tFilterTopic');
+    renderTeacherQuestions();
+    switchTeacherTab('questions');
+  } else {
+    badge.className = 'portal-badge badge-student';
+    badge.textContent = 'Student';
+    document.getElementById('studentView').classList.add('active');
+    cc_populateTopicFilter('cc_sFilterTopic');
+    cc_renderStudentQuestions();
+  }
+}
+
+function signOut() {
+  currentPortal = null;
+  document.getElementById('teacherView').classList.remove('active');
+  document.getElementById('studentView').classList.remove('active');
+  document.getElementById('welcomeView').classList.add('active');
+  document.getElementById('headerBadge').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function switchTeacherTab(tab) {
+  ['questions','add'].forEach(t => {
+    document.getElementById(`tPanel-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.getElementById(`tNav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'add' && !editingId) {
+    clearAddForm();
+    document.getElementById('addPanelTitle').textContent = 'Add Question';
+    document.getElementById('saveQBtn').textContent = 'Save Question';
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+//  TOPIC FILTER
+// ═══════════════════════════════════════════════════
+
+function cc_populateTopicFilter(selectId) {
+  const sel = document.getElementById(selectId);
+  const topics = [...new Set(cc_questions.map(q => q.topic).filter(Boolean))].sort();
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All Topics</option>';
+  topics.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = t;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+function renderTeacherQuestions() {
+  const filter = document.getElementById('tFilterTopic').value;
+  const grid = document.getElementById('teacherQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card">
+      <div class="q-card-header">
+        <div class="q-card-text">${q.text.length > 120 ? q.text.slice(0,120) + '…' : q.text}</div>
+        <div class="q-card-actions">
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+// ═══════════════════════════════════════════════════
+//  TEACHER — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════
+async function saveQuestion() {
+  const topic = document.getElementById('qTopic').value.trim();
+  const marks = parseInt(document.getElementById('qMarks').value);
+  const text = document.getElementById('qText').value.trim();
+  const model = document.getElementById('qModel').value.trim();
+  const tip = document.getElementById('qTip').value.trim();
+
+  if (!topic || !text || !model || isNaN(marks)) {
+    alert('Please fill in Topic, Marks, Question Text, and Model Answer.');
+    return;
+  }
+
+  document.getElementById('saveQBtn').disabled = true;
+  document.getElementById('saveQBtn').textContent = 'Uploading images...';
+
+  try {
+    const imageUrls = await uploadPendingImages();
+    const ansImageUrls = await uploadPendingAnsImages();
+    document.getElementById('saveQBtn').textContent = 'Saving...';
+
+    if (editingId) {
+      await updateQuestion(editingId, topic, marks, text, model, tip, imageUrls, ansImageUrls);
+      editingId = null;
+    } else {
+      await insertQuestion(topic, marks, text, model, tip, imageUrls, ansImageUrls);
+    }
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    cc_populateTopicFilter('cc_sFilterTopic');
+    clearAddForm();
+    clearImgPreviews();
+    clearAnsImgPreviews();
+    switchTeacherTab('questions');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error saving question: ' + err.message);
+  }
+
+  document.getElementById('saveQBtn').disabled = false;
+  document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
+}
+
+function editQuestion(id) {
+  const q = cc_questions.find(q => q.id === id);
+  if (!q) return;
+  editingId = id;
+  document.getElementById('qTopic').value = q.topic || '';
+  document.getElementById('qMarks').value = q.marks || '';
+  document.getElementById('qText').value = q.text || '';
+  document.getElementById('qModel').value = q.model || '';
+  document.getElementById('qTip').value = q.tip || '';
+  // Pre-load existing images
+  pendingImages = (q.images || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderImgPreviews();
+  pendingAnsImages = (q.ansImages || []).map(url => ({
+    file: null, previewUrl: url, uploaded: true, storagePath: null, publicUrl: url
+  }));
+  renderAnsImgPreviews();
+  document.getElementById('addPanelTitle').textContent = 'Edit Question';
+  document.getElementById('saveQBtn').textContent = 'Update Question';
+  switchTeacherTab('add');
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearAddForm();
+  clearImgPreviews();
+  clearAnsImgPreviews();
+  switchTeacherTab('questions');
+}
+
+function clearAddForm() {
+  ['qTopic','qMarks','qText','qModel','qTip'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteQuestion(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+async function confirmDelete() {
+  try {
+    await deleteQuestionById(deleteTargetId);
+    await fetchQuestions();
+    populateTopicFilter('tFilterTopic');
+    cc_populateTopicFilter('cc_sFilterTopic');
+    renderTeacherQuestions();
+  } catch(err) {
+    alert('Error deleting question: ' + err.message);
+  }
+  document.getElementById('deleteModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  STUDENT — RENDER QUESTIONS
+// ═══════════════════════════════════════════════════
+
+function cc_renderStudentQuestions() {
+  const filter = document.getElementById('cc_sFilterTopic').value;
+  const grid = document.getElementById('cc_studentQGrid');
+  const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(q => `
+    <div class="q-card" onclick="cc_openQuestion('${q.id}')">
+      <div class="q-card-header">
+        <div class="q-card-text">${q.text.length > 140 ? q.text.slice(0,140) + '…' : q.text}</div>
+      </div>
+      <div class="q-meta">
+        <span class="tag tag-topic">${q.topic || 'No topic'}</span>
+        <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+      </div>
+    </div>
+  `).join('');
+
+  if (window.MathJax) MathJax.typesetPromise([grid]);
+}
+
+function cc_openQuestion(id) {
+  cc_selectedQuestion = cc_questions.find(q => q.id === id);
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_sQuestionList').style.display = 'none';
+  document.getElementById('cc_sQuestionDetail').classList.add('visible');
+
+  document.getElementById('cc_detailQuestion').innerHTML = cc_selectedQuestion.text;
+
+  // Show images
+  const imgContainer = document.getElementById('cc_detailImages');
+  if (cc_selectedQuestion.images && cc_selectedQuestion.images.length > 0) {
+    imgContainer.innerHTML = cc_selectedQuestion.images.map(url =>
+      `<img src="${url}" alt="Question image" onclick="openLightbox('${url}')">`
+    ).join('');
+    imgContainer.style.display = 'flex';
+  } else {
+    imgContainer.innerHTML = '';
+    imgContainer.style.display = 'none';
+  }
+
+  document.getElementById('cc_detailMeta').innerHTML = `
+    <span class="tag tag-topic">${cc_selectedQuestion.topic}</span>
+    <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
+  `;
+
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  cc_clearFile();
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
+  cc_switchMode('type');
+
+  // MathJax render — cover full detail panel
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+}
+
+function cc_backToList() {
+  document.getElementById('cc_sQuestionList').style.display = 'block';
+  document.getElementById('cc_sQuestionDetail').classList.remove('visible');
+  cc_selectedQuestion = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  ANSWER MODE
+// ═══════════════════════════════════════════════════
+
+function cc_switchMode(mode) {
+  cc_currentAnswerMode = mode;
+  document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
+  document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
+  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
+  document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
+  document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
+}
+
+// ═══════════════════════════════════════════════════
+//  IMAGE UPLOAD (student answer photos)
+// ═══════════════════════════════════════════════════
+let cc_uploadedImages = []; // array of { base64, mimeType, name }
+
+function handleImageUpload(files) {
+  const remaining = 3 - cc_uploadedImages.length;
+  const toLoad = Array.from(files).slice(0, remaining);
+  toLoad.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      cc_uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      renderStudentImgPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleStudentImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_studentImgZone').classList.remove('dragover');
+  handleImageUpload(e.dataTransfer.files);
+}
+
+function renderStudentImgPreviews() {
+  const container = document.getElementById('cc_studentImgPreviews');
+  container.innerHTML = '';
+  cc_uploadedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative; display:inline-block;';
+    const el = document.createElement('img');
+    el.src = `data:${img.mimeType};base64,${img.base64}`;
+    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
+    const removeBtn = document.createElement('span');
+    removeBtn.textContent = '✕';
+    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
+    removeBtn.onclick = () => { cc_uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
+    wrap.appendChild(el);
+    wrap.appendChild(removeBtn);
+    container.appendChild(wrap);
+  });
+  document.getElementById('cc_studentImgZone').style.display = cc_uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = cc_uploadedImages.length > 0 ? 'block' : 'none';
+}
+
+async function extractText() {
+  if (cc_uploadedImages.length === 0) return;
+
+  const btn = document.querySelector('#extractBtnWrap button');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reading your answer...';
+
+  try {
+    const userContent = [
+      ...cc_uploadedImages.map(img => ({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
+      })),
+      { type: 'text', text: 'Please transcribe all the handwritten text in these images exactly as written.' }
+    ];
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [{ role: 'user', content: userContent }] })
+    });
+
+    const data = await response.json();
+    const extracted = data.text || '';
+
+    document.getElementById('cc_extractedAnswer').value = extracted;
+    document.getElementById('cc_imgStep1').style.display = 'none';
+    document.getElementById('cc_imgStep2').style.display = 'block';
+
+  } catch (err) {
+    alert('Could not read the image. Please try again or type your answer instead.');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📝 Read my answer';
+}
+
+function resetImageMode() {
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
+  document.getElementById('cc_studentImgUpload').value = '';
+}
+
+// ═══════════════════════════════════════════════════
+//  FILE UPLOAD
+// ═══════════════════════════════════════════════════
+
+function cc_handleFileUpload(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+    cc_uploadedText = result.value.trim();
+    document.getElementById('cc_attachedFileName').textContent = file.name;
+    document.getElementById('cc_fileAttached').classList.add('visible');
+    document.getElementById('cc_uploadZone').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function cc_handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('cc_uploadZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+}
+
+
+function cc_clearFile() {
+  cc_uploadedText = '';
+  document.getElementById('cc_fileAttached').classList.remove('visible');
+  document.getElementById('cc_uploadZone').style.display = 'block';
+  document.getElementById('cc_docUpload').value = '';
+}
+
+async function cc_checkAnswer() {
+  const isImageMode = cc_currentAnswerMode === 'image';
+  const answer = isImageMode
+    ? document.getElementById('cc_extractedAnswer').value.trim()
+    : cc_currentAnswerMode === 'type'
+      ? document.getElementById('cc_studentAnswer').value.trim()
+      : cc_uploadedText;
+
+  if (!answer) {
+    if (isImageMode) {
+      alert('Please upload a photo and confirm the extracted text first.');
+    } else {
+      alert('Please write or upload your answer first.');
+    }
+    return;
+  }
+  if (!cc_selectedQuestion) return;
+
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.add('visible');
+  document.getElementById('cc_checkBtn').disabled = true;
+
+  try {
+    const systemPrompt = `You are an expert A-level H2 Chemistry marker based in Singapore. Your role is to give precise, constructive feedback on student answers to structured Chemistry questions. Always be encouraging but honest. Return ONLY valid JSON with no preamble or markdown.`;
+
+    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: cc_buildPrompt(cc_selectedQuestion, answer) }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '{}';
+    let feedback;
+    try { feedback = JSON.parse(raw.replace(/```json|```/g, '').trim()); }
+    catch { feedback = { error: true, raw }; }
+
+    cc_renderFeedback(feedback, cc_selectedQuestion);
+  } catch (err) {
+    cc_renderFeedback({ error: true, raw: 'Network error. Please try again.' }, cc_selectedQuestion);
+  }
+
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  document.getElementById('cc_checkBtn').disabled = false;
+}
+
+
+function cc_buildPrompt(q, studentAnswer) {
+  return `You are marking a student's answer to an A-level H2 Chemistry question.
+
+QUESTION: ${q.text}
+MARKS AVAILABLE: ${q.marks}
+MODEL ANSWER (this is the sole marking authority):
+${q.model}
+${q.tip ? `ANSWER TIPS/TEMPLATE: ${q.tip}` : ''}
+
+STUDENT'S ANSWER:
+${studentAnswer}
+
+---
+MARKING INSTRUCTIONS:
+
+STEP 1 — EXTRACT THE STUDENT'S SENTENCES.
+List every sentence or clause from the student's answer word-for-word. Do not paraphrase, infer, or add anything that is not explicitly written.
+
+STEP 2 — MATCH TO MARKING POINTS.
+Compare the extracted sentences to the model answer. Award a mark only if the student has explicitly stated the marking point. Do not infer that the student meant something they did not write.
+- Diagrams or chemical structures with ">" or "<" symbols are a fully valid way to show ordering or comparisons. If the student shows the correct order using a diagram, treat this as equivalent to writing it out in words. Do not penalise for absence of a written ordering statement.
+
+STEP 3 — MISSING POINTS.
+List only the marking points from the model answer that are clearly absent from the student's extracted sentences. Do not penalise diagram comparisons if the model answer also uses diagrams. Do not penalise a student for using diagrams to show ordering instead of words.
+
+STEP 4 — INCORRECT PHRASING / MISCONCEPTIONS (STRICT RULES):
+- You MUST copy-paste the exact phrase from the student's answer verbatim before flagging it.
+- Do NOT reconstruct, paraphrase, or combine phrases — only use text that appears word-for-word in the student's answer.
+- Only flag it if it directly contradicts the model answer.
+- Explain why it is wrong using the model answer as the sole reference.
+- If you cannot find an exact verbatim phrase that is wrong, return null. Do not invent one.
+
+STEP 5 — SCORE.
+Follow the marking scheme in the model answer exactly. Only use half marks if the model answer itself uses half marks.
+
+STEP 6 — LENGTH.
+Compare the student's answer length to the model answer length. Return one of these three verdicts only: "Too brief", "Acceptable", or "Too lengthy". Add one sentence of explanation.
+
+---
+Return ONLY a valid JSON object (no markdown, no backticks) with these exact keys:
+
+{
+  "overall": "1-2 sentence encouraging summary of the student's performance.",
+  "score_estimate": "e.g. 2/3 — follow the model answer marking scheme exactly",
+  "missing": "Specific marking points from the model answer absent from the student's answer. If nothing missing, write null.",
+  "incorrect": "For each error: the EXACT verbatim phrase from the student's answer (must exist word-for-word), then why it is wrong per the model answer. If none, write null.",
+  "length_feedback": "One of: Too brief / Acceptable / Too lengthy. Then one sentence of explanation.",
+  "tips": "${q.tip ? 'Reference the answer template and give specific advice on how to improve.' : 'Give 1-2 specific tips on how to structure this type of answer better.'}"
+}`;
+}
+
+function cc_renderFeedback(fb, q) {
+  if (fb.error) {
+    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').className = 'score-badge';
+    document.getElementById('cc_feedbackContainer').classList.add('visible');
+    return;
+  }
+
+  // Score
+  const badge = document.getElementById('cc_scoreBadge');
+  badge.className = 'score-badge';
+  badge.innerHTML = `✅ ${fb.overall || ''} <strong style="margin-left:8px; font-family:'DM Mono',monospace">${fb.score_estimate || ''}</strong>`;
+
+  // Missing
+  if (fb.missing) {
+    document.getElementById('cc_fbMissing').style.display = 'block';
+    document.getElementById('cc_fbMissingText').innerHTML = fb.missing;
+  } else {
+    document.getElementById('cc_fbMissing').style.display = 'none';
+  }
+
+  // Incorrect
+  if (fb.incorrect) {
+    document.getElementById('cc_fbIncorrect').style.display = 'block';
+    document.getElementById('cc_fbIncorrectText').innerHTML = fb.incorrect;
+  } else {
+    document.getElementById('cc_fbIncorrect').style.display = 'none';
+  }
+
+  // Length
+  if (fb.length_feedback) {
+    document.getElementById('cc_fbLength').style.display = 'block';
+    document.getElementById('cc_fbLengthText').innerHTML = fb.length_feedback;
+  } else {
+    document.getElementById('cc_fbLength').style.display = 'none';
+  }
+
+  // Tips
+  if (fb.tips) {
+    document.getElementById('cc_fbTips').style.display = 'block';
+    document.getElementById('cc_fbTipsText').innerHTML = fb.tips;
+  } else {
+    document.getElementById('cc_fbTips').style.display = 'none';
+  }
+
+  // Model Answer
+  document.getElementById('cc_fbModelText').innerHTML = q.model;
+
+  // Answer images
+  const fbModelSection = document.getElementById('cc_fbModelText').parentElement;
+  const existingAnsImgs = fbModelSection.querySelector('.ans-images');
+  if (existingAnsImgs) existingAnsImgs.remove();
+  if (q.ansImages && q.ansImages.length > 0) {
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'question-images ans-images';
+    imgDiv.style.marginTop = '12px';
+    imgDiv.innerHTML = q.ansImages.map(url =>
+      `<img src="${url}" alt="Answer image" onclick="openLightbox('${url}')">`
+    ).join('');
+    fbModelSection.appendChild(imgDiv);
+  }
+
+  document.getElementById('cc_feedbackContainer').classList.add('visible');
+
+  // Render MathJax in feedback
+  if (window.MathJax) {
+    MathJax.typesetPromise([document.getElementById('cc_feedbackContainer')]);
+  }
+
+  // Scroll to feedback
+  document.getElementById('cc_feedbackContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════
+
+function cc_downloadAnalysis() {
+  if (!cc_selectedQuestion) return;
+
+  const q = cc_selectedQuestion;
+  const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
+  const studentAns = cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
+
+  const score    = document.getElementById('cc_scoreBadge').innerText.replace('✅','').trim();
+  const missing  = document.getElementById('cc_fbMissing').style.display  !== 'none' ? document.getElementById('cc_fbMissingText').textContent  : null;
+  const incorrect= document.getElementById('cc_fbIncorrect').style.display!== 'none' ? document.getElementById('cc_fbIncorrectText').textContent : null;
+  const length   = document.getElementById('cc_fbLength').style.display   !== 'none' ? document.getElementById('cc_fbLengthText').textContent    : null;
+  const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
+  const model    = document.getElementById('cc_fbModelText').textContent;
+
+  const section = (colour, emoji, label, text) => text ? `
+    <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
+      <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ChemCheck Analysis — ${q.topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; color: #1a1a2e; background: #fff; padding: 48px; max-width: 800px; margin: 0 auto; }
+  @media print { body { padding: 20px; } .no-print { display: none; } }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; border-bottom: 2px solid #e8eaf0; padding-bottom: 20px; }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 700; color: #1a1a2e; }
+  .logo span { color: #0ea572; }
+  .meta { text-align: right; font-size: 0.8rem; color: #7a82a0; line-height: 1.6; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+  .box { background: #f8f9fc; border: 1px solid #e8eaf0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; font-size: 0.9rem; line-height: 1.7; white-space: pre-wrap; }
+  .score { display: inline-flex; align-items: center; gap: 10px; background: #e6faf3; border: 1px solid #0ea572; border-radius: 30px; padding: 8px 20px; font-size: 0.9rem; color: #0ea572; font-weight: 500; margin-bottom: 20px; }
+  .score strong { font-family: 'DM Mono', monospace; }
+  .tags { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+  .tag-topic { background: #e6faf3; color: #0ea572; border: 1px solid #b2edd8; }
+  .tag-marks { background: #eeecff; color: #6c5fe6; border: 1px solid #c5bfff; }
+  .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e8eaf0; font-size: 0.75rem; color: #aab0c8; text-align: center; }
+  .print-btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; padding: 10px 22px; background: #0ea572; color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer; }
+  .print-btn:hover { background: #0c8f63; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Chem<span>Check</span></div>
+  <div class="meta">Mr Khemistry Tuition Centre<br>${date}</div>
+</div>
+
+<div class="tags">
+  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
+</div>
+
+<div class="section-title">Question</div>
+<div class="box">${q.text}</div>
+
+<div class="section-title">Your Answer</div>
+<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+
+<div class="section-title">Feedback</div>
+<div class="score">✅ ${score}</div>
+
+${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
+${section('#6c5fe6', '📏', 'Answer Length', length)}
+${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '📋', 'Model Answer', model)}
+
+<div class="no-print" style="text-align:center;">
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+</div>
+
+<div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ChemCheck_${q.topic.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Topic filters populated after login via fetchQuestions()
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

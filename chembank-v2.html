@@ -6175,13 +6175,13 @@ function cc_openQuestion(id) {
   document.getElementById('cc_feedbackContainer').classList.remove('visible');
   document.getElementById('cc_loadingSpinner').classList.remove('visible');
   cc_clearFile();
-  uploadedImages = [];
-  document.getElementById('studentImgPreviews').innerHTML = '';
-  document.getElementById('studentImgZone').style.display = 'block';
-  document.getElementById('extractBtnWrap').style.display = 'none';
-  document.getElementById('imgStep1').style.display = 'block';
-  document.getElementById('imgStep2').style.display = 'none';
-  document.getElementById('extractedAnswer').value = '';
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
   cc_switchMode('type');
 
   // MathJax render — cover full detail panel
@@ -6211,16 +6211,16 @@ function cc_switchMode(mode) {
 // ═══════════════════════════════════════════════════
 //  IMAGE UPLOAD (student answer photos)
 // ═══════════════════════════════════════════════════
-let uploadedImages = []; // array of { base64, mimeType, name }
+let cc_uploadedImages = []; // array of { base64, mimeType, name }
 
 function handleImageUpload(files) {
-  const remaining = 3 - uploadedImages.length;
+  const remaining = 3 - cc_uploadedImages.length;
   const toLoad = Array.from(files).slice(0, remaining);
   toLoad.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       const base64 = e.target.result.split(',')[1];
-      uploadedImages.push({ base64, mimeType: file.type, name: file.name });
+      cc_uploadedImages.push({ base64, mimeType: file.type, name: file.name });
       renderStudentImgPreviews();
     };
     reader.readAsDataURL(file);
@@ -6229,14 +6229,14 @@ function handleImageUpload(files) {
 
 function handleStudentImgDrop(e) {
   e.preventDefault();
-  document.getElementById('studentImgZone').classList.remove('dragover');
+  document.getElementById('cc_studentImgZone').classList.remove('dragover');
   handleImageUpload(e.dataTransfer.files);
 }
 
 function renderStudentImgPreviews() {
-  const container = document.getElementById('studentImgPreviews');
+  const container = document.getElementById('cc_studentImgPreviews');
   container.innerHTML = '';
-  uploadedImages.forEach((img, i) => {
+  cc_uploadedImages.forEach((img, i) => {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:relative; display:inline-block;';
     const el = document.createElement('img');
@@ -6245,17 +6245,17 @@ function renderStudentImgPreviews() {
     const removeBtn = document.createElement('span');
     removeBtn.textContent = '✕';
     removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
-    removeBtn.onclick = () => { uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
+    removeBtn.onclick = () => { cc_uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
     wrap.appendChild(el);
     wrap.appendChild(removeBtn);
     container.appendChild(wrap);
   });
-  document.getElementById('studentImgZone').style.display = uploadedImages.length >= 3 ? 'none' : 'block';
-  document.getElementById('extractBtnWrap').style.display = uploadedImages.length > 0 ? 'block' : 'none';
+  document.getElementById('cc_studentImgZone').style.display = cc_uploadedImages.length >= 3 ? 'none' : 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = cc_uploadedImages.length > 0 ? 'block' : 'none';
 }
 
 async function extractText() {
-  if (uploadedImages.length === 0) return;
+  if (cc_uploadedImages.length === 0) return;
 
   const btn = document.querySelector('#extractBtnWrap button');
   btn.disabled = true;
@@ -6263,7 +6263,7 @@ async function extractText() {
 
   try {
     const userContent = [
-      ...uploadedImages.map(img => ({
+      ...cc_uploadedImages.map(img => ({
         type: 'image',
         source: { type: 'base64', media_type: img.mimeType, data: img.base64 }
       })),
@@ -6279,9 +6279,9 @@ async function extractText() {
     const data = await response.json();
     const extracted = data.text || '';
 
-    document.getElementById('extractedAnswer').value = extracted;
-    document.getElementById('imgStep1').style.display = 'none';
-    document.getElementById('imgStep2').style.display = 'block';
+    document.getElementById('cc_extractedAnswer').value = extracted;
+    document.getElementById('cc_imgStep1').style.display = 'none';
+    document.getElementById('cc_imgStep2').style.display = 'block';
 
   } catch (err) {
     alert('Could not read the image. Please try again or type your answer instead.');
@@ -6292,14 +6292,14 @@ async function extractText() {
 }
 
 function resetImageMode() {
-  uploadedImages = [];
-  document.getElementById('studentImgPreviews').innerHTML = '';
-  document.getElementById('studentImgZone').style.display = 'block';
-  document.getElementById('extractBtnWrap').style.display = 'none';
-  document.getElementById('imgStep1').style.display = 'block';
-  document.getElementById('imgStep2').style.display = 'none';
-  document.getElementById('extractedAnswer').value = '';
-  document.getElementById('studentImgUpload').value = '';
+  cc_uploadedImages = [];
+  document.getElementById('cc_studentImgPreviews').innerHTML = '';
+  document.getElementById('cc_studentImgZone').style.display = 'block';
+  document.getElementById('cc_extractBtnWrap').style.display = 'none';
+  document.getElementById('cc_imgStep1').style.display = 'block';
+  document.getElementById('cc_imgStep2').style.display = 'none';
+  document.getElementById('cc_extractedAnswer').value = '';
+  document.getElementById('cc_studentImgUpload').value = '';
 }
 
 // ═══════════════════════════════════════════════════
@@ -6335,10 +6335,10 @@ function cc_clearFile() {
 }
 
 async function cc_checkAnswer() {
-  const isImageMode = cc_cc_currentAnswerMode === 'image';
+  const isImageMode = cc_currentAnswerMode === 'image';
   const answer = isImageMode
-    ? document.getElementById('extractedAnswer').value.trim()
-    : cc_cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_extractedAnswer').value.trim()
+    : cc_currentAnswerMode === 'type'
       ? document.getElementById('cc_studentAnswer').value.trim()
       : cc_uploadedText;
 
@@ -6517,9 +6517,9 @@ function cc_renderFeedback(fb, q) {
 function cc_downloadAnalysis() {
   if (!cc_selectedQuestion) return;
 
-  const q = selectedQuestion;
+  const q = cc_selectedQuestion;
   const date = new Date().toLocaleDateString('en-SG', { day: 'numeric', month: 'long', year: 'numeric' });
-  const studentAns = cc_cc_currentAnswerMode === 'type'
+  const studentAns = cc_currentAnswerMode === 'type'
     ? document.getElementById('cc_studentAnswer').value.trim()
     : cc_uploadedText;
 

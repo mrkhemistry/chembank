@@ -64,21 +64,19 @@
   .dash-user strong { display: block; color: var(--text2); font-size: 0.875rem; font-weight: 500; }
   .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
   .btn-signout:hover { border-color: var(--red); color: var(--red); }
-  .dash-main { flex: 1; padding: 3rem 2rem; max-width: 960px; margin: 0 auto; width: 100%; }
+  .dash-main { flex: 1; padding: 3rem 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
   .dash-welcome { margin-bottom: 2.5rem; animation: fadeUp 0.4s ease forwards; }
   .dash-welcome .eyebrow { font-size: 0.75rem; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; }
   .dash-welcome h2 { font-family: 'DM Serif Display', serif; font-size: 2.6rem; color: var(--text); line-height: 1.1; letter-spacing: -0.02em; }
   .dash-welcome p { color: var(--text3); font-size: 1rem; margin-top: 0.5rem; }
 
   /* CARDS */
-  .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-  .tools-grid-bottom { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; margin-top: 1.25rem; }
+  .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
   .tool-card { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: inherit; display: block; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; animation: fadeUp 0.4s ease forwards; opacity: 0; }
   .tool-card:nth-child(1) { animation-delay: 0.05s; }
-  .tool-card:nth-child(2) { animation-delay: 0.10s; }
-  .tool-card:nth-child(3) { animation-delay: 0.15s; }
-  .tools-grid-bottom .tool-card:nth-child(1) { animation-delay: 0.20s; }
-  .tools-grid-bottom .tool-card:nth-child(2) { animation-delay: 0.25s; }
+  .tool-card:nth-child(2) { animation-delay: 0.12s; }
+  .tool-card:nth-child(3) { animation-delay: 0.19s; }
+  .tool-card:nth-child(4) { animation-delay: 0.26s; }
   .tool-card:hover { border-color: var(--cyan); box-shadow: 0 4px 24px rgba(0,229,255,0.1); transform: translateY(-3px); }
   .card-header { padding: 1rem 1.25rem 0.9rem; display: flex; align-items: center; gap: 0.75rem; background: var(--cyan-dim); border-bottom: 1px solid var(--cyan-border); }
   .card-icon { font-size: 1.4rem; line-height: 1; }
@@ -95,9 +93,8 @@
   .reset-card p { color: var(--text3); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.55; }
   .portal-footer { text-align: center; padding: 1.5rem; font-size: 0.75rem; color: var(--text3); border-top: 1px solid var(--border); letter-spacing: 0.05em; text-transform: uppercase; }
 
-  @media (max-width: 700px) {
+  @media (max-width: 600px) {
     .tools-grid { grid-template-columns: 1fr; }
-    .tools-grid-bottom { grid-template-columns: 1fr; }
     .login-card, .reset-card { padding: 2rem 1.25rem; }
     .dash-main { padding: 2rem 1rem; }
     .dash-welcome h2 { font-size: 1.8rem; }
@@ -169,20 +166,7 @@
       <h2>Your Chemistry Tools</h2>
       <p>Select a tool below to begin your revision.</p>
     </div>
-
-    <!-- Top row: 3 cards -->
     <div class="tools-grid">
-      <a class="tool-card" href="https://mrkhemistry.github.io/chembank/chemcheck.html" target="_blank">
-        <div class="card-header">
-          <div class="card-icon">&#9989;</div>
-          <div class="card-name">ChemCheck</div>
-          <div class="card-tag">AI Marking</div>
-        </div>
-        <div class="card-body">
-          <div class="card-desc">Submit your written answers and get instant AI-powered feedback. Ideal for practising explanation questions before your exams.</div>
-          <div class="card-cta">Open ChemCheck &rarr;</div>
-        </div>
-      </a>
 
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/" target="_blank">
         <div class="card-header">
@@ -191,7 +175,7 @@
           <div class="card-tag">Question Bank</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">Access the full question bank, take practice quizzes by topic, and view worksheets assigned by Mr Khemistry.</div>
+          <div class="card-desc">Access the full question bank, take practice quizzes by topic, check your answers with AI feedback, and view worksheets.</div>
           <div class="card-cta">Open ChemBank &rarr;</div>
         </div>
       </a>
@@ -207,10 +191,7 @@
           <div class="card-cta">Open NotebookLM &rarr;</div>
         </div>
       </a>
-    </div>
 
-    <!-- Bottom row: 2 cards -->
-    <div class="tools-grid-bottom">
       <a class="tool-card" href="https://mrkhemistry.teachable.com/" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#127891;</div>
@@ -234,8 +215,8 @@
           <div class="card-cta">Open Classroom &rarr;</div>
         </div>
       </a>
-    </div>
 
+    </div>
   </div>
   <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;&middot;&nbsp; Student Portal</div>
 </div>

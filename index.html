@@ -1806,40 +1806,44 @@ Option D" required></textarea>
                             <div>
                                 <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">TYS (Ten Year Series)</div>
                                 <div class="checkbox-group">
+                                    <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
+                                        <input type="checkbox" id="selectAllTYS" onchange="toggleAllTYS(this)">
+                                        <span style="color: var(--primary); font-weight: 600;">✓ All TYS</span>
+                                    </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2025">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2025">
                                         <span>2025</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2024">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2024">
                                         <span>2024</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2023">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2023">
                                         <span>2023</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2022">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2022">
                                         <span>2022</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2021">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2021">
                                         <span>2021</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2020">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2020">
                                         <span>2020</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2019">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2019">
                                         <span>2019</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2018">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2018">
                                         <span>2018</span>
                                     </label>
                                     <label class="checkbox-label">
-                                        <input type="checkbox" class="source-checkbox" data-source="TYS" data-year="2017">
+                                        <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2017">
                                         <span>2017</span>
                                     </label>
                                 </div>
@@ -3222,6 +3226,12 @@ Option D" required></textarea>
                         <div class="checkbox-group" style="margin-left: 1rem;">
                 `;
                 
+                html += `
+                        <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
+                            <input type="checkbox" onchange="toggleAllSchoolsForYear(this, 'Prelim', ${year})">
+                            <span style="color: var(--primary); font-weight: 600;">✓ All ${year}</span>
+                        </label>
+                `;
                 schools.forEach(school => {
                     html += `
                         <label class="checkbox-label">
@@ -3360,6 +3370,12 @@ Option D" required></textarea>
                         <div class="checkbox-group" style="margin-left: 1rem;">
                 `;
                 
+                html += `
+                        <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
+                            <input type="checkbox" onchange="toggleAllSchoolsForYear(this, 'Promos', ${year})">
+                            <span style="color: var(--primary); font-weight: 600;">✓ All ${year}</span>
+                        </label>
+                `;
                 schools.forEach(school => {
                     html += `
                         <label class="checkbox-label">
@@ -6758,6 +6774,19 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
 }
 
 // Topic filters populated after login via fetchQuestions()
+
+
+        function toggleAllTYS(masterCb) {
+            document.querySelectorAll('.tys-checkbox').forEach(cb => {
+                cb.checked = masterCb.checked;
+            });
+        }
+
+        function toggleAllSchoolsForYear(masterCb, source, year) {
+            document.querySelectorAll(`.source-checkbox[data-source="${source}"][data-year="${year}"]`).forEach(cb => {
+                cb.checked = masterCb.checked;
+            });
+        }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

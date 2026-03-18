@@ -1446,6 +1446,7 @@
                             <option value="">Select source...</option>
                             <option value="TYS">TYS (Ten Year Series)</option>
                             <option value="Prelim">Prelim</option>
+                            <option value="Promos">Promos</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -1620,6 +1621,7 @@ Option D" required></textarea>
                             <option value="">All Sources</option>
                             <option value="TYS">TYS</option>
                             <option value="Prelim">Prelim</option>
+                            <option value="Promos">Promos</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -1847,6 +1849,13 @@ Option D" required></textarea>
                             <div id="prelimFilters">
                                 <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">Prelim (by School & Year)</div>
                                 <div id="prelimSchoolsContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <div style="opacity: 0.7; font-size: 0.9rem;">Loading schools...</div>
+                                </div>
+                            </div>
+                            <!-- Promos Years & Schools - will be populated dynamically -->
+                            <div id="promosFilters">
+                                <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">Promos (by School & Year)</div>
+                                <div id="promosSchoolsContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
                                     <div style="opacity: 0.7; font-size: 0.9rem;">Loading schools...</div>
                                 </div>
                             </div>
@@ -3089,17 +3098,18 @@ Option D" required></textarea>
                 totalQuestionCount = count || 0;
                 updateQuestionCount();
 
-                // Step 2: load prelim school metadata for building school filters
+                // Step 2: load prelim + promos school metadata for building school filters
                 const { data: metaData, error: metaError } = await supabaseClient
                     .from('questions')
                     .select('id, source, source_year, school')
-                    .eq('source', 'Prelim');
+                    .in('source', ['Prelim', 'Promos']);
                 if (metaError) throw metaError;
-                const prelimMeta = metaData || [];
+                const schoolMeta = metaData || [];
                 // Use a temp copy for building filters without overwriting questionBank
                 const savedBank = questionBank;
-                questionBank = prelimMeta;
+                questionBank = schoolMeta;
                 buildPrelimSchoolFilters();
+                buildPromosSchoolFilters();
                 questionBank = savedBank;
 
                 // Step 3: for students, load ALL questions upfront for quiz filtering
@@ -3313,6 +3323,144 @@ Option D" required></textarea>
         // FORM HANDLING
         // ============================================
         
+        function buildPromosSchoolFilters() {
+            // Get unique school-year combinations from Prelim questions
+            const prelimQuestions = questionBank.filter(q => q.source === 'Promos' && q.school && q.source_year);
+            
+            // Group by year, then by school
+            const schoolsByYear = {};
+            prelimQuestions.forEach(q => {
+                const year = q.source_year;
+                const school = q.school;
+                
+                if (!schoolsByYear[year]) {
+                    schoolsByYear[year] = new Set();
+                }
+                schoolsByYear[year].add(school);
+            });
+            
+            // Build HTML
+            const container = document.getElementById('promosSchoolsContainer');
+            
+            if (Object.keys(schoolsByYear).length === 0) {
+                container.innerHTML = '<div style="opacity: 0.7; font-size: 0.9rem;">No Promos questions available yet</div>';
+                return;
+            }
+            
+            // Sort years descending
+            const years = Object.keys(schoolsByYear).map(Number).sort((a, b) => b - a);
+            
+            let html = '';
+            years.forEach(year => {
+                const schools = Array.from(schoolsByYear[year]).sort();
+                
+                html += `
+                    <div style="margin-bottom: 1rem;">
+                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; font-size: 0.95rem;">${year}</div>
+                        <div class="checkbox-group" style="margin-left: 1rem;">
+                `;
+                
+                schools.forEach(school => {
+                    html += `
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="source-checkbox" data-source="Promos" data-year="${year}" data-school="${escapeHtml(school)}">
+                            <span>${escapeHtml(school)}</span>
+                        </label>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        async function addQuestionToSupabase(question) {
+            if (!isConnected) {
+                alert('Not connected to database. Please check your connection.');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .insert([{
+                        text: question.text,
+                        topic: question.topic,
+                        topics: question.topics,
+                        difficulty: question.difficulty,
+                        options: question.options,
+                        correct_answer: question.correctAnswer,
+                        explanation: question.explanation,
+                        video_url: question.videoUrl,
+                        source: question.source,
+                        source_year: question.sourceYear,
+                        school: question.school,
+                        image_url: question.imageUrl,
+                        image_url_2: question.imageUrl2,
+                        option_image_url: question.optionImageUrl,
+                        explanation_image_url: question.explanationImageUrl
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                alert('Question added successfully!');
+                document.getElementById('questionForm').reset();
+                document.querySelectorAll('.upload-topic-checkbox').forEach(cb => cb.checked = false);
+                document.getElementById('yearGroup').style.display = 'none';
+                document.getElementById('schoolGroup').style.display = 'none';
+                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('existingImagePreview').style.display = 'none';
+                document.getElementById('imagePreview2').style.display = 'none';
+                document.getElementById('existingImage2Preview').style.display = 'none';
+                document.getElementById('optionImagePreview').style.display = 'none';
+                document.getElementById('existingOptionImagePreview').style.display = 'none';
+                document.getElementById('explanationImagePreview').style.display = 'none';
+                document.getElementById('existingExplanationImagePreview').style.display = 'none';
+                editingQuestionId = null;
+                editingImageUrl = null;
+                editingImageUrl2 = null;
+                editingOptionImageUrl = null;
+                editingExplanationImageUrl = null;
+                loadQuestionsFromSupabase();
+            } catch (error) {
+                console.error('Error adding question:', error);
+                alert('Error adding question to database: ' + error.message);
+            }
+        }
+
+        async function deleteQuestionFromSupabase(id) {
+            if (!isConnected) {
+                alert('Not connected to database. Please check your connection.');
+                return;
+            }
+            
+            if (confirm('Are you sure you want to delete this question?')) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('questions')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    alert('Question deleted successfully!');
+                    loadQuestionsFromSupabase();
+                } catch (error) {
+                    console.error('Error deleting question:', error);
+                    alert('Error deleting question from database.');
+                }
+            }
+        }
+
+        // ============================================
+        // FORM HANDLING
+        // ============================================
+        
         function previewQuestion() {
             // Get form values
             const questionText = document.getElementById('questionText').value.trim();
@@ -3365,7 +3513,7 @@ Option D" required></textarea>
             if (source) {
                 let sourceText = source;
                 if (year) sourceText += ` ${year}`;
-                if (school && source === 'Prelim') sourceText += ` - ${school}`;
+                if (school && (source === 'Prelim' || source === 'Promos')) sourceText += ` - ${school}`;
                 sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${escapeHtml(sourceText)}</span>`;
             }
             
@@ -3498,15 +3646,15 @@ Option D" required></textarea>
             const yearGroup = document.getElementById('yearGroup');
             const schoolGroup = document.getElementById('schoolGroup');
             
-            if (source === 'TYS' || source === 'Prelim') {
+            if (source === 'TYS' || source === 'Prelim' || source === 'Promos') {
                 yearGroup.style.display = 'block';
             } else {
                 yearGroup.style.display = 'none';
                 document.getElementById('questionYear').value = '';
             }
             
-            // Show school field only for Prelim
-            if (source === 'Prelim') {
+            // Show school field for Prelim and Promos
+            if (source === 'Prelim' || source === 'Promos') {
                 schoolGroup.style.display = 'block';
             } else {
                 schoolGroup.style.display = 'none';
@@ -3529,15 +3677,15 @@ Option D" required></textarea>
             const year = document.getElementById('questionYear').value;
             const school = document.getElementById('questionSchool').value.trim();
             
-            // Validate year if source is TYS or Prelim
-            if ((source === 'TYS' || source === 'Prelim') && !year) {
+            // Validate year if source is TYS, Prelim or Promos
+            if ((source === 'TYS' || source === 'Prelim' || source === 'Promos') && !year) {
                 alert('Please select a year for ' + source);
                 return;
             }
             
-            // Validate school if source is Prelim
-            if (source === 'Prelim' && !school) {
-                alert('School name is required for Prelim questions');
+            // Validate school if source is Prelim or Promos
+            if ((source === 'Prelim' || source === 'Promos') && !school) {
+                alert('School name is required for ' + source + ' questions');
                 return;
             }
             
@@ -3700,7 +3848,7 @@ Option D" required></textarea>
                 if (question.source) {
                     let sourceText = question.source;
                     if (question.source_year) sourceText += ` ${question.source_year}`;
-                    if (question.school && question.source === 'Prelim') sourceText += ` - ${question.school}`;
+                    if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) sourceText += ` - ${question.school}`;
                     sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
                 }
                 
@@ -3777,12 +3925,13 @@ Option D" required></textarea>
                 // Only admin can access everything (no restrictions)
             }
             
-            // Show/hide Prelim filters based on role
+            // Show/hide Prelim and Promos filters based on role
             if (viewName === 'student') {
+                const isPremium = userRole === 'premium_student' || userRole === 'admin';
                 const prelimSection = document.getElementById('prelimFilters');
-                if (prelimSection) {
-                    prelimSection.style.display = (userRole === 'premium_student' || userRole === 'admin') ? 'block' : 'none';
-                }
+                if (prelimSection) prelimSection.style.display = isPremium ? 'block' : 'none';
+                const promosSection = document.getElementById('promosFilters');
+                if (promosSection) promosSection.style.display = isPremium ? 'block' : 'none';
                 checkWeakQuestions(); // Show weak questions button if applicable
             }
 
@@ -3965,9 +4114,9 @@ Option D" required></textarea>
                 const wrongIds = [...new Set(wrongResponses.map(r => r.question_id))];
                 // Match against loaded question bank
                 let weakQuestions = questionBank.filter(q => wrongIds.includes(q.id));
-                // Apply Prelim restriction for regular students
+                // Apply Prelim/Promos restriction for regular students
                 if (userRole === 'student') {
-                    weakQuestions = weakQuestions.filter(q => q.source !== 'Prelim');
+                    weakQuestions = weakQuestions.filter(q => q.source !== 'Prelim' && q.source !== 'Promos');
                 }
                 if (weakQuestions.length === 0) {
                     alert('No weak questions available in the current question bank.');
@@ -4031,8 +4180,8 @@ Option D" required></textarea>
                 const topicMatch = selectedTopics.some(t => questionTopics.includes(t));
                 const difficultyMatch = selectedDifficulties.includes(q.difficulty);
 
-                // Regular students cannot access Prelim questions
-                if (userRole === 'student' && q.source === 'Prelim') return false;
+                // Regular students cannot access Prelim or Promos questions
+                if (userRole === 'student' && (q.source === 'Prelim' || q.source === 'Promos')) return false;
                 
                 // Source filtering logic
                 let sourceMatch = true;
@@ -4124,7 +4273,7 @@ Option D" required></textarea>
                 if (question.source_year) {
                     sourceText += ` ${question.source_year}`;
                 }
-                if (question.school && question.source === 'Prelim') {
+                if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) {
                     sourceText += ` - ${question.school}`;
                 }
                 sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
@@ -4374,7 +4523,7 @@ Option D" required></textarea>
                 if (question.source_year) {
                     sourceText += ` ${question.source_year}`;
                 }
-                if (question.school && question.source === 'Prelim') {
+                if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) {
                     sourceText += ` - ${question.school}`;
                 }
                 sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
@@ -5390,7 +5539,7 @@ Option D" required></textarea>
             event.stopPropagation();
             const newRole = upgrade ? 'premium_student' : 'student';
             const action = upgrade ? 'upgrade' : 'downgrade';
-            if (!confirm(`${upgrade ? 'Upgrade' : 'Downgrade'} "${studentName}" to ${upgrade ? 'Premium Student (TYS + Prelim access)' : 'Student (TYS only)'}?`)) return;
+            if (!confirm(`${upgrade ? 'Upgrade' : 'Downgrade'} "${studentName}" to ${upgrade ? 'Premium Student (TYS + Prelim + Promos access)' : 'Student (TYS only)'}?`)) return;
             try {
                 const { error } = await supabaseClient
                     .from('user_profiles')

@@ -1568,6 +1568,7 @@ Option D" required></textarea>
             <div class="panel">
                 <div class="panel-header">
                     <span>Question Bank (<span id="questionCount">0</span> questions)</span>
+                    <button class="btn btn-primary" onclick="exportBackup()" style="padding: 0.5rem 1rem;">📥 Export Backup</button>
                 </div>
                 
                 <div class="filters">
@@ -6786,6 +6787,67 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
             document.querySelectorAll(`.source-checkbox[data-source="${source}"][data-year="${year}"]`).forEach(cb => {
                 cb.checked = masterCb.checked;
             });
+        }
+
+        // ============================================
+        // BACKUP EXPORT FUNCTION
+        // ============================================
+        async function exportBackup() {
+            if (!isConnected) {
+                alert('Not connected to database. Please check your connection.');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Exporting...';
+                
+                // Fetch all questions from Supabase
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .select('*')
+                    .order('id', { ascending: true });
+                
+                if (error) throw error;
+                
+                // Create backup object with metadata
+                const backup = {
+                    export_date: new Date().toISOString(),
+                    total_questions: data.length,
+                    version: '1.0',
+                    questions: data
+                };
+                
+                // Convert to JSON
+                const jsonString = JSON.stringify(backup, null, 2);
+                
+                // Create blob and download
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `chembank_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Reset button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+                alert(`Backup exported successfully!\n${data.length} questions saved.`);
+            } catch (error) {
+                console.error('Error exporting backup:', error);
+                alert('Error exporting backup: ' + error.message);
+                // Reset button on error
+                const btn = event.target;
+                btn.disabled = false;
+                btn.innerHTML = '📥 Export Backup';
+            }
         }
 
         // Initialize

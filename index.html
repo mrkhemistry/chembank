@@ -2609,8 +2609,8 @@ Option D" required></textarea>
                 }
                 
                 if (!session) {
-                    console.log('No active session - showing login');
-                    showAuthView('login');
+                    console.log('No active session - redirecting to portal');
+                    window.location.href = 'portal.html';
                     return;
                 }
                 

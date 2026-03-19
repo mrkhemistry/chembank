@@ -88,6 +88,7 @@
 
   /* RESET */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+  #signupView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
   .reset-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2.5rem 2rem; width: 100%; max-width: 420px; animation: fadeUp 0.4s ease forwards; }
   .reset-card h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 0.4rem; letter-spacing: -0.02em; }
   .reset-card p { color: var(--text3); font-size: 1rem; margin-bottom: 1.5rem; line-height: 1.55; }
@@ -124,7 +125,7 @@
     <button class="btn-primary" id="loginBtn">Sign In</button>
     <div class="error-msg" id="loginError"></div>
     <div class="login-footer">
-      First time? Check your email for a setup link.<br><br>
+      <a href="#" id="signupLink">Student? Sign up here</a><br><br>
       <a href="#" id="forgotLink">Forgot password?</a>
     </div>
   </div>
@@ -148,13 +149,46 @@
   </div>
 </div>
 
+<!-- SIGNUP -->
+<div id="signupView" class="view">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>Mr Khemistry</h1>
+      <p>Create Account</p>
+      <div class="divider"></div>
+    </div>
+    <div class="form-group">
+      <label for="signupName">Full Name</label>
+      <input type="text" id="signupName" placeholder="John Tan">
+    </div>
+    <div class="form-group">
+      <label for="signupEmail">Email Address</label>
+      <input type="email" id="signupEmail" placeholder="you@school.edu.sg">
+    </div>
+    <div class="form-group">
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" placeholder="Minimum 6 characters">
+    </div>
+    <div class="form-group">
+      <label for="signupJoinCode">Join Code</label>
+      <input type="text" id="signupJoinCode" placeholder="Get this from your teacher" style="text-transform:uppercase;">
+    </div>
+    <button class="btn-primary" id="signupBtn">Create Account</button>
+    <div class="error-msg" id="signupError"></div>
+    <div class="success-msg" id="signupSuccess"></div>
+    <div class="login-footer" style="margin-top:1.25rem;">
+      <a href="#" id="backToLoginFromSignup">Already have an account? Sign In</a>
+    </div>
+  </div>
+</div>
+
 <!-- DASHBOARD -->
 <div id="dashboardView" class="view">
   <div class="dash-header">
     <div class="dash-logo">Mr Khemistry</div>
     <div class="dash-right">
       <div class="dash-user">
-        <strong id="userEmail">student@email.com</strong>
+        <strong id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1162656475747f6551747c70787d3f727e7c">[email&#160;protected]</a></strong>
         Student Portal
       </div>
       <button class="btn-signout" id="signOutBtn">Sign Out</button>
@@ -221,7 +255,7 @@
   <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;&middot;&nbsp; Student Portal</div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -246,28 +280,20 @@
       showView('dashboardView');
     }
 
-// Handle PASSWORD_RECOVERY event — fires when student clicks reset link
-sb.auth.onAuthStateChange(function(event, session) {
-  if (event === 'PASSWORD_RECOVERY') {
-    showView('resetView');
-    document.querySelector('.reset-card h2').textContent = 'Set New Password';
-    document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-    document.getElementById('resetEmail').type = 'password';
-    document.getElementById('resetEmail').placeholder = 'New password';
-    document.getElementById('resetBtn').textContent = 'Update Password';
-  } else if (event === 'SIGNED_IN' && session) {
-    if (!document.getElementById('resetView').classList.contains('active')) {
-      showDashboard(session.user);
-    }
-  }
-});
+    sb.auth.getSession().then(function(result) {
+      if (result.data && result.data.session) {
+        showDashboard(result.data.session.user);
+      }
+    }).catch(function(e) { console.error('Session check failed:', e); });
 
-// Check for existing session on load (returning users)
-sb.auth.getSession().then(function(result) {
-  if (result.data && result.data.session) {
-    showDashboard(result.data.session.user);
-  }
-}).catch(function(e) { console.error('Session check failed:', e); });
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+      showView('resetView');
+      document.querySelector('.reset-card h2').textContent = 'Set New Password';
+      document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
+      document.getElementById('resetEmail').type = 'password';
+      document.getElementById('resetEmail').placeholder = 'New password';
+      document.getElementById('resetBtn').textContent = 'Update Password';
+    }
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
@@ -313,6 +339,65 @@ sb.auth.getSession().then(function(result) {
         document.getElementById('loginPassword').value = '';
         showView('loginView');
       });
+    });
+
+    document.getElementById('signupLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      showView('signupView');
+    });
+
+    document.getElementById('backToLoginFromSignup').addEventListener('click', function(e) {
+      e.preventDefault();
+      showView('loginView');
+    });
+
+    document.getElementById('signupBtn').addEventListener('click', async function() {
+      var btn = this;
+      var name = document.getElementById('signupName').value.trim();
+      var email = document.getElementById('signupEmail').value.trim();
+      var password = document.getElementById('signupPassword').value;
+      var joinCode = document.getElementById('signupJoinCode').value.trim().toUpperCase();
+      var errEl = document.getElementById('signupError');
+      var successEl = document.getElementById('signupSuccess');
+      errEl.classList.remove('visible');
+      successEl.classList.remove('visible');
+      if (!name || !email || !password || !joinCode) {
+        errEl.textContent = 'Please fill in all fields.';
+        errEl.classList.add('visible');
+        return;
+      }
+      if (password.length < 6) {
+        errEl.textContent = 'Password must be at least 6 characters.';
+        errEl.classList.add('visible');
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Creating account...';
+      try {
+        // Validate join code
+        var codeResult = await sb.from('join_codes').select('*').eq('code', joinCode).eq('is_active', true).single();
+        if (codeResult.error || !codeResult.data) throw new Error('Invalid or expired join code.');
+        var codeData = codeResult.data;
+        if (codeData.max_uses && codeData.times_used >= codeData.max_uses) throw new Error('This join code has reached its maximum uses.');
+        // Create auth account
+        var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
+        if (signupResult.error) throw signupResult.error;
+        // Create user profile
+        var assignedRole = codeData.assigned_role || 'student';
+        await sb.from('user_profiles').insert([{ id: signupResult.data.user.id, email: email, full_name: name, role: assignedRole }]);
+        // Increment join code usage
+        await sb.from('join_codes').update({ times_used: (codeData.times_used || 0) + 1 }).eq('id', codeData.id);
+        successEl.textContent = 'Account created! You can now sign in.';
+        successEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+        setTimeout(function() { showView('loginView'); }, 2000);
+      } catch(err) {
+        errEl.textContent = err.message || 'Signup failed. Please try again.';
+        errEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
     });
 
     document.getElementById('forgotLink').addEventListener('click', function(e) {

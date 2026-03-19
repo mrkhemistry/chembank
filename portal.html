@@ -246,20 +246,28 @@
       showView('dashboardView');
     }
 
-    sb.auth.getSession().then(function(result) {
-      if (result.data && result.data.session) {
-        showDashboard(result.data.session.user);
-      }
-    }).catch(function(e) { console.error('Session check failed:', e); });
-
-    if (window.location.hash && window.location.hash.includes('type=recovery')) {
-      showView('resetView');
-      document.querySelector('.reset-card h2').textContent = 'Set New Password';
-      document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-      document.getElementById('resetEmail').type = 'password';
-      document.getElementById('resetEmail').placeholder = 'New password';
-      document.getElementById('resetBtn').textContent = 'Update Password';
+// Handle PASSWORD_RECOVERY event — fires when student clicks reset link
+sb.auth.onAuthStateChange(function(event, session) {
+  if (event === 'PASSWORD_RECOVERY') {
+    showView('resetView');
+    document.querySelector('.reset-card h2').textContent = 'Set New Password';
+    document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
+    document.getElementById('resetEmail').type = 'password';
+    document.getElementById('resetEmail').placeholder = 'New password';
+    document.getElementById('resetBtn').textContent = 'Update Password';
+  } else if (event === 'SIGNED_IN' && session) {
+    if (!document.getElementById('resetView').classList.contains('active')) {
+      showDashboard(session.user);
     }
+  }
+});
+
+// Check for existing session on load (returning users)
+sb.auth.getSession().then(function(result) {
+  if (result.data && result.data.session) {
+    showDashboard(result.data.session.user);
+  }
+}).catch(function(e) { console.error('Session check failed:', e); });
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();

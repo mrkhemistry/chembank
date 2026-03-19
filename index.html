@@ -2358,6 +2358,18 @@ Option D" required></textarea>
         </div>
     </div>
 
+    <!-- Name prompt modal for first-time invited students -->
+    <div id="namePromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,14,39,0.95); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:var(--dark); border:1px solid rgba(0,217,255,0.3); border-radius:12px; padding:2.5rem; max-width:420px; width:90%; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;">👋</div>
+            <h2 style="color:var(--primary); font-size:1.5rem; margin-bottom:0.5rem;">Welcome to ChemBank!</h2>
+            <p style="color:rgba(240,244,248,0.6); font-size:0.95rem; margin-bottom:1.5rem;">Please enter your full name to get started.</p>
+            <input type="text" id="namePromptInput" placeholder="e.g. John Tan" style="width:100%; background:var(--mid-dark); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:12px 16px; color:var(--light); font-family:'DM Sans',sans-serif; font-size:1rem; outline:none; margin-bottom:1rem;">
+            <button onclick="submitNamePrompt()" class="btn btn-primary" style="width:100%;">Continue →</button>
+            <div id="namePromptError" style="display:none; color:var(--danger); font-size:0.85rem; margin-top:0.75rem;"></div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // SUPABASE CONFIGURATION
@@ -2807,8 +2819,16 @@ Option D" required></textarea>
                 if (pdfCard) pdfCard.style.display = 'block';
                 showView('welcome');
             } else if (userRole === 'student' || userRole === 'premium_student') {
-                // Students go straight to student portal
-                showView('student');
+                // Check if student needs to set their name first
+                const name = userProfile && userProfile.full_name ? userProfile.full_name.trim() : '';
+                const isPlaceholder = !name || name === userProfile.email.split('@')[0];
+                if (isPlaceholder) {
+                    const modal = document.getElementById('namePromptModal');
+                    modal.style.display = 'flex';
+                    setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
+                } else {
+                    showView('student');
+                }
             }
         }
         
@@ -6847,6 +6867,31 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
                 const btn = event.target;
                 btn.disabled = false;
                 btn.innerHTML = '📥 Export Backup';
+            }
+        }
+
+        async function submitNamePrompt() {
+            const input = document.getElementById('namePromptInput');
+            const errEl = document.getElementById('namePromptError');
+            const name = input.value.trim();
+            if (!name) {
+                errEl.textContent = 'Please enter your full name.';
+                errEl.style.display = 'block';
+                return;
+            }
+            errEl.style.display = 'none';
+            try {
+                const { error } = await supabaseClient
+                    .from('user_profiles')
+                    .update({ full_name: name })
+                    .eq('id', currentUser.id);
+                if (error) throw error;
+                userProfile.full_name = name;
+                document.getElementById('namePromptModal').style.display = 'none';
+                showView('student');
+            } catch (err) {
+                errEl.textContent = 'Could not save name. Please try again.';
+                errEl.style.display = 'block';
             }
         }
 

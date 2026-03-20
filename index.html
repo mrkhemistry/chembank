@@ -6232,7 +6232,7 @@ function renderTeacherQuestions() {
       <div class="q-card-header">
         <div class="q-card-text">${q.text.length > 120 ? q.text.slice(0,120) + '…' : q.text}</div>
         <div class="q-card-actions">
-          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="editQuestion('${q.id}')">Edit</button>
+          <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem" onclick="cc_editQuestion('${q.id}')">Edit</button>
           <button class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem" onclick="deleteQuestion('${q.id}')">Delete</button>
         </div>
       </div>
@@ -6291,7 +6291,7 @@ async function saveQuestion() {
   document.getElementById('saveQBtn').textContent = editingId ? 'Update Question' : 'Save Question';
 }
 
-function editQuestion(id) {
+function cc_editQuestion(id) {
   const q = cc_questions.find(q => q.id === id);
   if (!q) return;
   editingId = id;

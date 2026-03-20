@@ -1785,16 +1785,20 @@ Option D" required></textarea>
                     <div class="form-group">
                         <label>Difficulties (Select multiple)</label>
                         <div class="checkbox-group" id="difficultyCheckboxes">
+                            <label class="checkbox-label" style="grid-column: 1 / -1; border-bottom: 1px solid rgba(0, 217, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                                <input type="checkbox" id="selectAllDifficulties" onchange="toggleAllDifficulties()">
+                                <span style="font-weight: 700; color: var(--accent);">✓ All Difficulties</span>
+                            </label>
                             <label class="checkbox-label">
-                                <input type="checkbox" value="Easy">
+                                <input type="checkbox" value="Easy" class="difficulty-checkbox">
                                 <span>Easy</span>
                             </label>
                             <label class="checkbox-label">
-                                <input type="checkbox" value="Medium">
+                                <input type="checkbox" value="Medium" class="difficulty-checkbox">
                                 <span>Medium</span>
                             </label>
                             <label class="checkbox-label">
-                                <input type="checkbox" value="Hard">
+                                <input type="checkbox" value="Hard" class="difficulty-checkbox">
                                 <span>Hard</span>
                             </label>
                         </div>
@@ -4100,8 +4104,15 @@ Option D" required></textarea>
         function toggleAllTopics() {
             const selectAll = document.getElementById('selectAllTopics');
             const topicCheckboxes = document.querySelectorAll('.topic-checkbox');
-            
             topicCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+
+        function toggleAllDifficulties() {
+            const selectAll = document.getElementById('selectAllDifficulties');
+            const diffCheckboxes = document.querySelectorAll('.difficulty-checkbox');
+            diffCheckboxes.forEach(checkbox => {
                 checkbox.checked = selectAll.checked;
             });
         }
@@ -4199,7 +4210,7 @@ Option D" required></textarea>
             shuffleMap = [];
             const selectedTopics = Array.from(document.querySelectorAll('.topic-checkbox:checked'))
                 .map(cb => cb.value);
-            const selectedDifficulties = Array.from(document.querySelectorAll('#difficultyCheckboxes input:checked'))
+            const selectedDifficulties = Array.from(document.querySelectorAll('.difficulty-checkbox:checked'))
                 .map(cb => cb.value);
             const selectedSources = Array.from(document.querySelectorAll('.source-checkbox:checked'))
                 .map(cb => ({

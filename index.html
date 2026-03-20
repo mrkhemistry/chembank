@@ -3137,14 +3137,24 @@ Option D" required></textarea>
                 buildPromosSchoolFilters();
                 questionBank = savedBank;
 
-                // Step 3: for students, load ALL questions upfront for quiz filtering
+                // Step 3: for students, load ALL questions upfront for quiz filtering (paginated)
                 if (userRole === 'student' || userRole === 'premium_student') {
-                    const { data: allData, error: allError } = await supabaseClient
-                        .from('questions')
-                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                        .order('id', { ascending: false });
-                    if (allError) throw allError;
-                    questionBank = allData || [];
+                    const PAGE_SIZE = 1000;
+                    let allData = [];
+                    let from = 0;
+                    while (true) {
+                        const { data: pageData, error: pageError } = await supabaseClient
+                            .from('questions')
+                            .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                            .order('id', { ascending: false })
+                            .range(from, from + PAGE_SIZE - 1);
+                        if (pageError) throw pageError;
+                        if (!pageData || pageData.length === 0) break;
+                        allData = allData.concat(pageData);
+                        if (pageData.length < PAGE_SIZE) break;
+                        from += PAGE_SIZE;
+                    }
+                    questionBank = allData;
                     console.log('Student question bank loaded:', questionBank.length, 'questions');
                 } else {
                     // Step 4: for admin/teacher, load recent questions for display
@@ -4149,9 +4159,14 @@ Option D" required></textarea>
                 }
                 // Get unique question IDs
                 const wrongIds = [...new Set(wrongResponses.map(r => r.question_id))];
-                // Match against loaded question bank
-                let weakQuestions = questionBank.filter(q => wrongIds.includes(q.id));
-                // Apply Prelim/Promos restriction for regular students
+                // Fetch weak questions directly from Supabase by ID
+                const { data: weakData, error: weakError } = await supabaseClient
+                    .from('questions')
+                    .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                    .in('id', wrongIds);
+                if (weakError) throw weakError;
+                let weakQuestions = weakData || [];
+                // Apply Prelim/Promos restriction for regular students (non-premium)
                 if (userRole === 'student') {
                     weakQuestions = weakQuestions.filter(q => q.source !== 'Prelim' && q.source !== 'Promos');
                 }
@@ -4179,7 +4194,7 @@ Option D" required></textarea>
             }
         }
 
-        function startQuiz() {
+        async function startQuiz() {
             isWeakQuizMode = false;
             shuffleMap = [];
             const selectedTopics = Array.from(document.querySelectorAll('.topic-checkbox:checked'))
@@ -4193,87 +4208,72 @@ Option D" required></textarea>
                     school: cb.getAttribute('data-school') || null
                 }));
             const numQuestions = parseInt(document.getElementById('numQuestions').value);
-            
-            console.log('=== QUIZ FILTER DEBUG ===');
-            console.log('Selected Topics:', selectedTopics);
-            console.log('Selected Difficulties:', selectedDifficulties);
-            console.log('Selected Sources:', selectedSources);
-            console.log('Total questions in bank:', questionBank.length);
-            
+
             if (selectedTopics.length === 0) {
                 alert('Please select at least one topic.');
                 return;
             }
-            
             if (selectedDifficulties.length === 0) {
                 alert('Please select at least one difficulty level.');
                 return;
             }
-            
-            // Filter questions
-            let availableQuestions = questionBank.filter(q => {
-                // Topic match: check topics array first, fall back to topic string
-                const questionTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
-                const topicMatch = selectedTopics.some(t => questionTopics.includes(t));
-                const difficultyMatch = selectedDifficulties.includes(q.difficulty);
 
-                // Regular students cannot access Prelim or Promos questions
-                if (userRole === 'student' && (q.source === 'Prelim' || q.source === 'Promos')) return false;
-                
-                // Source filtering logic
-                let sourceMatch = true;
-                if (selectedSources.length > 0) {
-                    sourceMatch = selectedSources.some(s => {
-                        // If no source specified in question, don't match
-                        if (!q.source) {
-                            console.log('Question has no source:', q.text.substring(0, 30));
-                            return false;
-                        }
-                        
-                        // Check source match
-                        if (s.source !== q.source) {
-                            console.log('Source mismatch:', s.source, '!==', q.source);
-                            return false;
-                        }
-                        
-                        // If year is specified in filter, check year match
-                        if (s.year !== null) {
-                            // Handle both number and string years
-                            const questionYear = parseInt(q.source_year);
-                            const filterYear = parseInt(s.year);
-                            console.log('Comparing years - Question:', questionYear, 'Filter:', filterYear, 'Match:', questionYear === filterYear);
-                            if (questionYear !== filterYear) return false;
-                        }
-                        
-                        // If school is specified in filter (Prelim), check school match
-                        if (s.school !== null && q.school !== s.school) return false;
-                        
-                        return true;
-                    });
+            // Show loading overlay while fetching
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                // Fetch all matching questions from Supabase (paginated)
+                const PAGE_SIZE = 1000;
+                let allData = [];
+                let from = 0;
+                while (true) {
+                    let query = supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .in('difficulty', selectedDifficulties)
+                        .range(from, from + PAGE_SIZE - 1);
+                    const { data: pageData, error: pageError } = await query;
+                    if (pageError) throw pageError;
+                    if (!pageData || pageData.length === 0) break;
+                    allData = allData.concat(pageData);
+                    if (pageData.length < PAGE_SIZE) break;
+                    from += PAGE_SIZE;
                 }
-                
-                const matches = topicMatch && difficultyMatch && sourceMatch;
-                if (matches) {
-                    console.log('✓ Question matched:', q.text.substring(0, 50), '- Source:', q.source, 'Year:', q.source_year);
+
+                // Client-side filtering for topics, sources and role restrictions
+                let availableQuestions = allData.filter(q => {
+                    const questionTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
+                    const topicMatch = selectedTopics.some(t => questionTopics.includes(t));
+                    if (!topicMatch) return false;
+
+                    // Regular students cannot access Prelim or Promos questions
+                    if (userRole === 'student' && (q.source === 'Prelim' || q.source === 'Promos')) return false;
+
+                    // Source filtering
+                    if (selectedSources.length > 0) {
+                        const sourceMatch = selectedSources.some(s => {
+                            if (!q.source) return false;
+                            if (s.source !== q.source) return false;
+                            if (s.year !== null && parseInt(q.source_year) !== parseInt(s.year)) return false;
+                            if (s.school !== null && q.school !== s.school) return false;
+                            return true;
+                        });
+                        if (!sourceMatch) return false;
+                    }
+                    return true;
+                });
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+
+                if (availableQuestions.length === 0) {
+                    alert('No questions available with the selected criteria.');
+                    return;
                 }
-                
-                return matches;
-            });
-            
-            console.log('Available questions after filter:', availableQuestions.length);
-            console.log('=== END DEBUG ===');
-            
-            if (availableQuestions.length === 0) {
-                alert('No questions available with the selected criteria.');
-                return;
-            }
-            
-            if (availableQuestions.length < numQuestions) {
-                alert(`Only ${availableQuestions.length} questions available. Starting quiz with ${availableQuestions.length} questions.`);
-            }
-            
-            // Shuffle and select questions
-            currentQuiz = shuffleArray(availableQuestions).slice(0, Math.min(numQuestions, availableQuestions.length));
+                if (availableQuestions.length < numQuestions) {
+                    alert(`Only ${availableQuestions.length} questions available. Starting quiz with ${availableQuestions.length} questions.`);
+                }
+
+                // Shuffle and select questions
+                currentQuiz = shuffleArray(availableQuestions).slice(0, Math.min(numQuestions, availableQuestions.length));
             currentQuestionIndex = 0;
             userAnswers = new Array(currentQuiz.length).fill(null);
             
@@ -4284,9 +4284,13 @@ Option D" required></textarea>
             document.getElementById('nextBtn').textContent = 'Next Question';
             document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
             
-            showView('quiz');
-            displayQuizQuestion();
-            if (timerModeEnabled) startQuizTimer(currentQuiz.length);
+                showView('quiz');
+                displayQuizQuestion();
+                if (timerModeEnabled) startQuizTimer(currentQuiz.length);
+            } catch (err) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error loading quiz questions: ' + err.message);
+            }
         }
 
         function displayQuizQuestion() {
@@ -4910,7 +4914,7 @@ Option D" required></textarea>
             if (!customTitle) { alert('Please enter a worksheet title before saving.'); return; }
 
             const numRequested = parseInt(document.getElementById('pdfNumQuestions').value) || 10;
-            const available = getPdfFilteredQuestions();
+            const available = await getPdfFilteredQuestions();
             if (available.length === 0) { alert('No questions found for the selected filters.'); return; }
 
             const count = Math.min(numRequested, available.length);
@@ -4979,25 +4983,49 @@ Option D" required></textarea>
             checkPdfAvailability();
         }
 
-        function getPdfFilteredQuestions() {
+        async function getPdfFilteredQuestions() {
             const selectedTopics = Array.from(document.querySelectorAll('.pdf-topic-cb:checked')).map(cb => cb.value);
             const selectedDiffs = Array.from(document.querySelectorAll('.pdf-diff-cb:checked')).map(cb => cb.value);
             if (selectedTopics.length === 0 || selectedDiffs.length === 0) return [];
-            return questionBank.filter(q => {
-                const questionTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
-                return selectedTopics.some(t => questionTopics.includes(t)) && selectedDiffs.includes(q.difficulty);
-            });
+
+            try {
+                // Paginate to retrieve all matching questions (Supabase max 1000 per request)
+                const PAGE_SIZE = 1000;
+                let allData = [];
+                let from = 0;
+                while (true) {
+                    const { data, error } = await supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .in('difficulty', selectedDiffs)
+                        .range(from, from + PAGE_SIZE - 1);
+                    if (error) throw error;
+                    if (!data || data.length === 0) break;
+                    allData = allData.concat(data);
+                    if (data.length < PAGE_SIZE) break; // last page
+                    from += PAGE_SIZE;
+                }
+
+                return allData.filter(q => {
+                    const questionTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
+                    return selectedTopics.some(t => questionTopics.includes(t));
+                });
+            } catch (err) {
+                console.error('Error fetching worksheet questions:', err);
+                return [];
+            }
         }
 
-        function checkPdfAvailability() {
+        async function checkPdfAvailability() {
             const selectedTopics = Array.from(document.querySelectorAll('.pdf-topic-cb:checked')).map(cb => cb.value);
             if (selectedTopics.length === 0) {
                 document.getElementById('pdfAvailableCount').style.display = 'none';
                 return;
             }
-            const available = getPdfFilteredQuestions();
             const countEl = document.getElementById('pdfAvailableCount');
             countEl.style.display = 'inline-block';
+            countEl.textContent = 'Checking...';
+            const available = await getPdfFilteredQuestions();
             countEl.textContent = `${available.length} question${available.length !== 1 ? 's' : ''} available with selected filters`;
 
             // Clamp max questions to what's available
@@ -5021,7 +5049,7 @@ Option D" required></textarea>
             }
         });
 
-        function generateAndPrintPdf() {
+        async function generateAndPrintPdf() {
             if (userRole !== 'admin' && userRole !== 'teacher') {
                 alert('Access denied. Only admins and teachers can generate worksheets.');
                 return;
@@ -5039,7 +5067,7 @@ Option D" required></textarea>
             if (selectedDiffs.length === 0) { alert('Please select at least one difficulty level.'); return; }
 
             const numRequested = parseInt(document.getElementById('pdfNumQuestions').value) || 10;
-            const available = getPdfFilteredQuestions();
+            const available = await getPdfFilteredQuestions();
 
             if (available.length === 0) {
                 alert('No questions found for the selected topics and difficulty. Please adjust your filters.');

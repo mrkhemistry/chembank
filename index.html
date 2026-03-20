@@ -2613,9 +2613,15 @@ Option D" required></textarea>
                 }
                 
                 if (!session) {
-                    console.log('No active session - redirecting to portal');
-                    window.location.href = 'portal.html';
-                    return;
+                    // Wait briefly and retry — session may still be restoring from localStorage on refresh
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    const { data: { session: retrySession } } = await supabaseClient.auth.getSession();
+                    if (!retrySession) {
+                        console.log('No active session after retry - redirecting to portal');
+                        window.location.href = 'portal.html';
+                        return;
+                    }
+                    session = retrySession;
                 }
                 
                 console.log('User ID from session:', session.user.id);

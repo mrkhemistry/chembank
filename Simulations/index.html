@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemistry Simulations — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0f1a; --surface: #111827; --surface2: #1a2236;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.15);
+    --text: #f0f4ff; --muted: #7a8aaa; --accent: #4f9cf9;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(79,156,249,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(79,156,249,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; }
+  .orb1 { width: 500px; height: 500px; background: #4f9cf9; top: -150px; left: -100px; }
+  .orb2 { width: 400px; height: 400px; background: #a78bfa; bottom: 100px; right: -100px; }
+
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; border-bottom: 1px solid var(--border);
+    background: rgba(11,15,26,0.8); backdrop-filter: blur(12px);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .nav-logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f9cf9, #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif; font-size: 18px; color: white;
+  }
+  .nav-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-back:hover { color: var(--accent); }
+
+  .hero { position: relative; z-index: 1; text-align: center; padding: 80px 40px 60px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(79,156,249,0.1); border: 1px solid rgba(79,156,249,0.25);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 12px; font-weight: 500; color: var(--accent);
+    margin-bottom: 24px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(36px, 5vw, 58px); font-weight: 400; line-height: 1.1; color: var(--text); margin-bottom: 18px; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub { font-size: 17px; color: var(--muted); max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+  .filter-bar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 40px 48px; flex-wrap: wrap; }
+  .filter-btn { padding: 7px 18px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+
+  .grid-wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 40px 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+  .sim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.3s; text-decoration: none; display: flex; flex-direction: column; position: relative; }
+  .sim-card:hover { border-color: var(--border-hover); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .sim-card.coming-soon { opacity: 0.5; pointer-events: none; }
+
+  .card-thumb { height: 150px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .card-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, var(--surface)); }
+  .thumb-sn2 { background: linear-gradient(135deg, #0c1f3a, #1a0a2e); }
+  .thumb-sn1 { background: linear-gradient(135deg, #1a1a0a, #2a200a); }
+  .thumb-na  { background: linear-gradient(135deg, #0a1f0f, #0f2820); }
+  .thumb-ea  { background: linear-gradient(135deg, #1f100a, #2a1a08); }
+  .thumb-es  { background: linear-gradient(135deg, #100a1f, #1a0a2a); }
+  .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
+
+  .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .tag-h2   { background: rgba(79,156,249,0.12);  color: #93c5fd; border: 1px solid rgba(79,156,249,0.2); }
+  .tag-org  { background: rgba(52,211,153,0.12);  color: #6ee7b7; border: 1px solid rgba(52,211,153,0.2); }
+  .tag-mech { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
+  .tag-new  { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
+
+  .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.2; }
+  .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .card-meta { font-size: 11px; color: var(--muted); }
+  .card-launch { display: flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--accent); transition: gap 0.2s; }
+  .sim-card:hover .card-launch { gap: 8px; }
+
+  .coming-label { position: absolute; top: 14px; right: 14px; font-size: 10px; font-weight: 600; background: var(--surface2); border: 1px solid var(--border); border-radius: 100px; padding: 3px 10px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; z-index: 2; }
+
+  footer { position: relative; z-index: 1; text-align: center; padding: 32px 40px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 50px 20px 40px; }
+    .filter-bar, .grid-wrap { padding-left: 20px; padding-right: 20px; }
+    .grid-wrap { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<nav>
+  <a href="#" class="nav-brand">
+    <div class="nav-logo">K</div>
+    <span class="nav-name">Mr Khemistry</span>
+  </a>
+  <a href="https://mrkhemistry.github.io" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+    Back to ChemBank
+  </a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><span></span>Interactive 3D Simulations</div>
+  <h1>See chemistry <em>in motion</em></h1>
+  <p class="hero-sub">3D interactive mechanism simulations for H2 Chemistry. Rotate, pause, and explore at your own pace.</p>
+</section>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="filterCards('all', this)">All</button>
+  <button class="filter-btn" onclick="filterCards('substitution', this)">Substitution</button>
+  <button class="filter-btn" onclick="filterCards('addition', this)">Addition</button>
+  <button class="filter-btn" onclick="filterCards('aromatic', this)">Aromatic</button>
+</div>
+
+<div class="grid-wrap" id="cardGrid">
+
+  <!-- SN2 — LIVE -->
+  <a href="./sn2.html" class="sim-card" data-tags="substitution">
+    <div class="card-thumb thumb-sn2">
+      <div class="card-thumb-icon">⚛️</div>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Halogenoalkane</span>
+        <span class="tag tag-mech">Nucleophilic</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">S<sub>N</sub>2 Mechanism</div>
+      <div class="card-desc">Backside attack of OH⁻ on 2-bromobutane. Watch the Walden inversion in real-time 3D with transition state pause.</div>
+      <div class="card-footer">
+        <span class="card-meta">Halogenoalkane · 3D</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- SN1 — COMING SOON -->
+  <div class="sim-card coming-soon" data-tags="substitution">
+    <span class="coming-label">Coming soon</span>
+    <div class="card-thumb thumb-sn1">
+      <div class="card-thumb-icon">🔄</div>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Halogenoalkane</span>
+        <span class="tag tag-mech">Nucleophilic</span>
+      </div>
+      <div class="card-title">S<sub>N</sub>1 Mechanism</div>
+      <div class="card-desc">Two-step ionisation via a carbocation intermediate — and why SN1 gives racemisation rather than inversion.</div>
+      <div class="card-footer"><span class="card-meta">Halogenoalkane · 3D</span></div>
+    </div>
+  </div>
+
+  <!-- Nucleophilic Addition — COMING SOON -->
+  <div class="sim-card coming-soon" data-tags="addition">
+    <span class="coming-label">Coming soon</span>
+    <div class="card-thumb thumb-na">
+      <div class="card-thumb-icon">🧪</div>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Carbonyl</span>
+        <span class="tag tag-mech">Nucleophilic</span>
+      </div>
+      <div class="card-title">Nucleophilic Addition</div>
+      <div class="card-desc">Attack of CN⁻ on a carbonyl group — how the nucleophile targets the electrophilic C=O carbon.</div>
+      <div class="card-footer"><span class="card-meta">Carbonyl Compound · 3D</span></div>
+    </div>
+  </div>
+
+  <!-- Electrophilic Addition — COMING SOON -->
+  <div class="sim-card coming-soon" data-tags="addition">
+    <span class="coming-label">Coming soon</span>
+    <div class="card-thumb thumb-ea">
+      <div class="card-thumb-icon">⚡</div>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Alkene</span>
+        <span class="tag tag-mech">Electrophilic</span>
+      </div>
+      <div class="card-title">Electrophilic Addition</div>
+      <div class="card-desc">Addition of HBr to an alkene — pi bond attack, carbocation intermediate, and Markovnikov's rule.</div>
+      <div class="card-footer"><span class="card-meta">Alkene · 3D</span></div>
+    </div>
+  </div>
+
+  <!-- Electrophilic Substitution — COMING SOON -->
+  <div class="sim-card coming-soon" data-tags="substitution aromatic">
+    <span class="coming-label">Coming soon</span>
+    <div class="card-thumb thumb-es">
+      <div class="card-thumb-icon">💎</div>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Arene</span>
+        <span class="tag tag-mech">Electrophilic</span>
+      </div>
+      <div class="card-title">Electrophilic Substitution</div>
+      <div class="card-desc">Nitration of benzene — how the electrophile attacks the aromatic ring while preserving delocalisation.</div>
+      <div class="card-footer"><span class="card-meta">Arene · 3D</span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Built for <a href="https://mrkhemistry.github.io">Mr Khemistry Tuition Centre</a> · H2 Chemistry Singapore
+</footer>
+
+<script>
+function filterCards(tag, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.sim-card').forEach(card => {
+    const tags = card.getAttribute('data-tags') || '';
+    card.style.display = (tag === 'all' || tags.includes(tag)) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

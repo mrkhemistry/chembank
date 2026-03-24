@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nucleophilic Addition — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0b0f1a; --surface:#111827; --border:rgba(255,255,255,0.07); --text:#f0f4ff; --muted:#7a8aaa; --accent:#4f9cf9; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(79,156,249,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,156,249,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  nav { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:16px 32px; border-bottom:1px solid var(--border); background:rgba(11,15,26,0.9); backdrop-filter:blur(12px); flex-shrink:0; }
+  .nav-left { display:flex; align-items:center; gap:16px; }
+  .nav-back { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+  .nav-back:hover { color:var(--accent); }
+  .nav-title { font-family:'DM Serif Display',serif; font-size:18px; font-weight:400; color:var(--text); }
+  .nav-tags { display:flex; gap:6px; }
+  .ntag { font-size:10px; font-weight:600; padding:3px 9px; border-radius:100px; letter-spacing:0.05em; text-transform:uppercase; }
+  .ntag-h2  { background:rgba(79,156,249,0.12); color:#93c5fd; border:1px solid rgba(79,156,249,0.2); }
+  .ntag-org { background:rgba(52,211,153,0.12); color:#6ee7b7; border:1px solid rgba(52,211,153,0.2); }
+  .main { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:24px 32px; gap:20px; max-width:1200px; width:100%; margin:0 auto; }
+  #simw { width:100%; background:#0f172a; border-radius:16px; overflow:hidden; border:1px solid var(--border); font-family:sans-serif; display:flex; flex-direction:column; }
+  #topRow { display:flex; height:520px; }
+  #cWrap { flex:1; position:relative; }
+  #chemCanvas { display:block; width:100%; height:100%; cursor:move; }
+  #sidePanel { width:240px; background:#0a1628; border-left:1px solid #1e293b; display:flex; flex-direction:column; }
+  #eBox { padding:14px; border-bottom:1px solid #1e293b; }
+  #eBox p { font-size:9px; color:#475569; margin:0 0 6px; }
+  #stepPanel { flex:1; padding:10px; display:flex; flex-direction:column; gap:6px; overflow:hidden; }
+  .si { border-radius:8px; padding:9px 11px; border:1px solid #1e293b; transition:all 0.3s; }
+  .si.active { border-color:#3b82f6; background:#0c1f3a; }
+  .sn { font-size:9px; color:#475569; margin-bottom:2px; }
+  .si.active .sn { color:#93c5fd; }
+  .st { font-size:12px; font-weight:600; color:#64748b; }
+  .si.active .st { color:#e2e8f0; }
+  .sd { font-size:10px; color:#475569; margin-top:4px; line-height:1.5; display:none; }
+  .si.active .sd { display:block; color:#7dd3fc; }
+  #botBar { background:#060e1c; border-top:1px solid #1e293b; padding:10px 16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .bp { background:#2563eb; color:#fff; border:none; border-radius:6px; padding:6px 16px; font-size:12px; cursor:pointer; font-family:sans-serif; }
+  .bp:hover { background:#3b82f6; }
+  .bs { background:#1e293b; color:#94a3b8; border:none; border-radius:6px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:sans-serif; }
+  .bs:hover { background:#334155; }
+  .bs.av { background:#334155; color:#fff; }
+  #resumeBtn { display:none; background:#f59e0b; color:#000; border:none; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer; font-weight:600; font-family:sans-serif; }
+  #resumeBtn:hover { background:#fbbf24; }
+  #statusBadge { margin-left:auto; font-size:10px; font-family:monospace; color:#7dd3fc; background:#0c2340; border:1px solid #1e4070; border-radius:4px; padding:3px 8px; }
+  .notes-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+  .note-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .note-card h3 { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .note-card h3::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .note-card p { font-size:13px; color:var(--muted); line-height:1.7; }
+  .note-card strong { color:var(--text); font-weight:500; }
+  footer { position:relative; z-index:1; text-align:center; padding:24px 32px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
+  footer a { color:var(--accent); text-decoration:none; }
+  @media(max-width:700px){
+    nav,.main{padding-left:16px;padding-right:16px;}
+    #topRow{flex-direction:column;height:auto;}
+    #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;}
+    #cWrap{height:360px;}
+    #stepPanel{flex-direction:row;overflow-x:auto;gap:8px;}
+    .si{min-width:150px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="./index.html" class="nav-back">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+      Simulations
+    </a>
+    <div style="width:1px;height:20px;background:var(--border);"></div>
+    <span class="nav-title">Nucleophilic Addition</span>
+  </div>
+  <div class="nav-tags">
+    <span class="ntag ntag-h2">H2</span>
+    <span class="ntag ntag-org">Carbonyl</span>
+  </div>
+</nav>
+
+<div class="main">
+  <div id="simw">
+    <div id="topRow">
+      <div id="cWrap"><canvas id="chemCanvas"></canvas></div>
+      <div id="sidePanel">
+        <div id="eBox">
+          <p>Potential energy profile</p>
+          <canvas id="eCanvas" width="210" height="88"></canvas>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:#334155;margin-top:2px;">
+            <span>Reactants</span><span>Int.</span><span>Product</span>
+          </div>
+        </div>
+        <div id="stepPanel">
+          <div class="si active" id="s0"><div class="sn">Step 0</div><div class="st">Ready</div><div class="sd">Ethanal (CH&#8323;CHO) — the carbonyl C is &#948;+ due to the electronegative O. CN&#8315; nucleophile is ready to attack.</div></div>
+          <div class="si" id="s1"><div class="sn">Step 1 — slow</div><div class="st">CN&#8315; attacks C=O</div><div class="sd">CN&#8315; donates a lone pair to the &#948;+ carbonyl carbon. The C=O &#960; bond breaks — both electrons shift to oxygen.</div></div>
+          <div class="si" id="s2"><div class="sn">Intermediate</div><div class="st">Anionic intermediate</div><div class="sd">Tetrahedral anionic intermediate — carbon is now sp&#179;. Oxygen carries a negative charge (O&#8315;). Simulation paused.</div></div>
+          <div class="si" id="s3"><div class="sn">Step 2 — fast</div><div class="st">Protonation by HCN</div><div class="sd">O&#8315; abstracts a proton from HCN (Br&#248;nsted acid). HCN regenerates CN&#8315; — a catalytic cycle.</div></div>
+          <div class="si" id="s4"><div class="sn">Product</div><div class="st">Cyanohydrin formed</div><div class="sd">Hydroxynitrile (cyanohydrin) product: CH&#8323;CH(OH)CN. Carbon centre is tetrahedral.</div></div>
+        </div>
+      </div>
+    </div>
+    <div id="botBar">
+      <button class="bp" id="startBtn">Start</button>
+      <button class="bs" id="resetBtn">Reset</button>
+      <button id="resumeBtn">Resume</button>
+      <button class="bs" id="step2Btn">Skip to Step 2</button>
+      <div style="width:1px;height:20px;background:#1e293b;"></div>
+      <span style="font-size:11px;color:#64748b;">View:</span>
+      <button class="bs av" id="v0" onclick="setView(0)">Side</button>
+      <button class="bs" id="v1" onclick="setView(1)">Top</button>
+      <button class="bs" id="v2" onclick="setView(2)">Free</button>
+      <div style="width:1px;height:20px;background:#1e293b;"></div>
+      <span style="font-size:11px;color:#64748b;">Speed:</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0&#215;</span>
+      <span id="statusBadge">Ready</span>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <h3>Why CN&#8315; attacks C</h3>
+      <p>The carbonyl carbon is <strong>&#948;+</strong> due to the electronegative oxygen pulling electron density away. CN&#8315; acts as a nucleophile, donating its lone pair to this electron-deficient carbon.</p>
+    </div>
+    <div class="note-card">
+      <h3>C=O &#960; bond breaks</h3>
+      <p>As CN&#8315; forms a bond with C, the <strong>C=O &#960; bond breaks heterolytically</strong>. Both electrons shift to oxygen, giving it a negative charge. Carbon rehybridises from sp&#178; to <strong>sp&#179;</strong>.</p>
+    </div>
+    <div class="note-card">
+      <h3>Protonation step</h3>
+      <p>The anionic O&#8315; intermediate is <strong>protonated by HCN</strong> (acting as a Br&#248;nsted acid). This regenerates CN&#8315;, making KCN a <strong>catalyst</strong> — only a trace amount is needed.</p>
+    </div>
+    <div class="note-card">
+      <h3>Product: cyanohydrin</h3>
+      <p>The product is a <strong>hydroxynitrile (cyanohydrin)</strong>: CH&#8323;CH(OH)CN. The reaction adds both OH and CN across the C=O bond. The product carbon is <strong>tetrahedral</strong> (sp&#179;).</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="./index.html">&#8592; Back to all simulations</a> &nbsp;&#183;&nbsp;
+  <a href="https://mrkhemistry.github.io/chembank/">Mr Khemistry Tuition Centre</a>
+</footer>
+
+<script>
+(function(){
+const canvas=document.getElementById('chemCanvas');
+const ctx=canvas.getContext('2d');
+const ec=document.getElementById('eCanvas');
+const eCtx=ec.getContext('2d');
+const wrap=document.getElementById('cWrap');
+
+let W,H,state=0,prog=0,arrowProg=0,straightProg=0,eraseProg=0,arrow3Prog=0,straight3Prog=0,erase3Prog=0,cnLpProg=0,speed=1,paused=false;
+let aX=0.25,aY=0.5,dragging=false,lx,ly;
+const BL=90;
+
+// Colours
+const COLS={
+  C:'#f97316',   // orange — carbonyl carbon
+  O:'#ef4444',   // red — oxygen
+  CN:'#22d3ee',  // cyan — CN group
+  CH3:'#4ade80', // green — methyl
+  H:'#94a3b8',   // grey — hydrogen
+  HCN:'#a78bfa', // purple — HCN molecule
+  Oneg:'#f87171' // bright red — O- intermediate
+};
+
+// --- GEOMETRY ---
+// Reactant: ethanal is planar (sp2 carbonyl carbon)
+// C at origin. In sp2: C=O along +Y, CH3 along -X, H along lower direction
+// Trigonal planar angles: 120 deg apart in XY plane
+const SP2={
+  O:   {x:0,       y:BL,      z:0},   // C=O double bond, up
+  CH3: {x:-BL*0.866, y:-BL*0.5, z:0}, // methyl, lower-left
+  H:   {x: BL*0.866, y:-BL*0.5, z:0}  // H, lower-right
+};
+
+// Product/intermediate: tetrahedral sp3 carbon
+// CN attacks from -Z axis (backside, below the plane)
+// After attack: O moves to tetrahedral position, CN at -Z, CH3 and H spread out
+const SP3={
+  O:   {x: BL*0.33,  y: BL*0.82,  z: BL*0.33},
+  CH3: {x:-BL*0.82,  y:-BL*0.33,  z: BL*0.33},
+  H:   {x: BL*0.6,   y:-BL*0.6,   z: BL*0.33},
+  CN:  {x: 0,        y: 0,        z:-BL}       // CN on -Z
+};
+
+// CN nucleophile starting position — approaches from -Z axis
+const CN_START={x:0, y:0, z:-BL*2.8};
+const CN_END  ={x:0, y:0, z:-BL};
+
+// HCN molecule — approaches from the right after intermediate
+const HCN_START={x:BL*3.2, y:BL*0.9, z:0};
+const HCN_END  ={x:BL*1.5, y:BL*0.9, z:0};
+
+function lerp(a,b,t){return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t};}
+function lerpV(a,b,t){return a+(b-a)*t;}
+
+const views=[{aX:0.25,aY:0.5},{aX:1.52,aY:0.0},null];
+let curView=0;
+window.setView=function(i){
+  curView=i;
+  document.querySelectorAll('.bs').forEach(b=>b.classList.remove('av'));
+  document.getElementById('v'+i).classList.add('av');
+  if(i!==2){aX=views[i].aX;aY=views[i].aY;}
+};
+
+function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight;}
+
+function proj(x,y,z){
+  let x1=x*Math.cos(aY)+z*Math.sin(aY);
+  let z1=z*Math.cos(aY)-x*Math.sin(aY);
+  let y2=y*Math.cos(aX)-z1*Math.sin(aX);
+  let z2=z1*Math.cos(aX)+y*Math.sin(aX);
+  const s=700/(700+z2);
+  return{x:W/2+x1*s,y:H/2+y2*s,z:z2,s:s};
+}
+
+// Two-hump energy: reactants->TS1->intermediate->TS2->product
+function drawEnergy(t){
+  eCtx.clearRect(0,0,210,88);
+  eCtx.beginPath();eCtx.strokeStyle='#334155';eCtx.lineWidth=2;
+  eCtx.moveTo(8,72);
+  eCtx.bezierCurveTo(28,72,38,16,52,16);
+  eCtx.bezierCurveTo(66,16,78,52,95,52);
+  eCtx.bezierCurveTo(112,52,122,24,136,24);
+  eCtx.bezierCurveTo(150,24,162,76,202,76);
+  eCtx.stroke();
+  let bx,by;
+  if(t<0.35){const u=t/0.35;bx=8+44*u;by=72+(16-72)*Math.sin(u*Math.PI/2);}
+  else if(t<0.5){const u=(t-0.35)/0.15;bx=52+43*u;by=16+(52-16)*u;}
+  else if(t<0.65){const u=(t-0.5)/0.15;bx=95+41*u;by=52+(24-52)*u;}
+  else{const u=(t-0.65)/0.35;bx=136+66*u;by=24+(76-24)*u;}
+  eCtx.beginPath();eCtx.arc(bx,by,5,0,Math.PI*2);
+  eCtx.fillStyle='#fbbf24';eCtx.fill();
+}
+
+function drawAtom(p,r,col,lbl){
+  const rad=Math.max(9,r*p.s);
+  ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);
+  ctx.fillStyle=col;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle='#fff';
+  ctx.font='bold '+Math.max(8,Math.round(10*p.s))+'px Arial';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(lbl,p.x,p.y);
+}
+
+function drawBond(p1,p2,dashed,col,double){
+  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<2)return;
+  const nx=-dy/len*3,ny=dx/len*3;
+  ctx.setLineDash(dashed?[5,5]:[]);
+  ctx.lineWidth=Math.max(1.5,2*Math.min(p1.s,p2.s));
+  ctx.strokeStyle=col||'rgba(255,255,255,0.22)';
+  if(double){
+    ctx.beginPath();ctx.moveTo(p1.x+nx,p1.y+ny);ctx.lineTo(p2.x+nx,p2.y+ny);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(p1.x-nx,p1.y-ny);ctx.lineTo(p2.x-nx,p2.y-ny);ctx.stroke();
+  } else {
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function drawArrow(p1,p2,col){
+  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<5)return;
+  const ux=dx/len,uy=dy/len;
+  const ex=p1.x+dx*0.42,ey=p1.y+dy*0.42;
+  ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(ex,ey);
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-ux*9-uy*5,ey-uy*9+ux*5);
+  ctx.lineTo(ex-ux*9+uy*5,ey-uy*9-ux*5);
+  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+}
+
+// Draw two dots representing a lone pair, offset from atom in direction (dx,dy)
+function drawLonePair(p, dx, dy, col){
+  const r=4, gap=10;
+  const ox=p.x+dx, oy=p.y+dy;
+  ctx.fillStyle=col||'#fff';
+  ctx.beginPath();ctx.arc(ox-gap/2,oy,r,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(ox+gap/2,oy,r,0,Math.PI*2);ctx.fill();
+}
+
+// Draw only a segment of a bezier from startT to endT (for erase effect)
+function drawPartialCurveSegment(x1,y1,x2,y2,cpx,cpy,startT,endT,col){
+  const steps=60;
+  const s=Math.floor(steps*startT);
+  const e=Math.floor(steps*endT);
+  if(e<=s)return;
+  ctx.beginPath();
+  ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([]);
+  for(let i=s;i<=e;i++){
+    const u=i/steps;
+    const bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2;
+    const by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;
+    if(i===s)ctx.moveTo(bx,by); else ctx.lineTo(bx,by);
+  }
+  ctx.stroke();
+  // arrowhead only when endT is near 1
+  if(endT>0.9){
+    const alpha=Math.min(1,(endT-0.9)/0.1);
+    const u1=0.97;
+    const bx1=(1-u1)*(1-u1)*x1+2*(1-u1)*u1*cpx+u1*u1*x2;
+    const by1=(1-u1)*(1-u1)*y1+2*(1-u1)*u1*cpy+u1*u1*y2;
+    const dx=x2-bx1,dy=y2-by1,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len,uy=dy/len;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ux*12-uy*6,y2-uy*12+ux*6);
+    ctx.lineTo(x2-ux*12+uy*6,y2-uy*12-ux*6);
+    ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+// Draw a curly arrow progressively — t goes 0 to 1
+function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
+  col=col||'#fff';
+  t=t===undefined?1:Math.min(1,Math.max(0,t));
+  const steps=60;
+  const end=Math.floor(steps*t);
+  if(end<1)return;
+  ctx.beginPath();
+  ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([]);
+  for(let i=0;i<=end;i++){
+    const u=i/steps;
+    const bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2;
+    const by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;
+    if(i===0)ctx.moveTo(bx,by); else ctx.lineTo(bx,by);
+  }
+  ctx.stroke();
+  // arrowhead fades in when near complete
+  if(t>0.88){
+    const alpha=Math.min(1,(t-0.88)/0.12);
+    const u1=0.97;
+    const bx1=(1-u1)*(1-u1)*x1+2*(1-u1)*u1*cpx+u1*u1*x2;
+    const by1=(1-u1)*(1-u1)*y1+2*(1-u1)*u1*cpy+u1*u1*y2;
+    const dx=x2-bx1, dy=y2-by1, len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len, uy=dy/len;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ux*12-uy*6,y2-uy*12+ux*6);
+    ctx.lineTo(x2-ux*12+uy*6,y2-uy*12-ux*6);
+    ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+function setStep(n){
+  for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('active',i===n);
+  const lbs=['Ready','CN\u207B attacks C=O','Anionic intermediate','Protonation by HCN','Cyanohydrin formed'];
+  document.getElementById('statusBadge').textContent=lbs[n];
+}
+
+function drawIntermediateLabel(pO){
+  ctx.font='bold 20px Arial';ctx.textAlign='center';
+  ctx.fillStyle='#f87171';
+  ctx.fillText('\u207B',pO.x+Math.round(22*pO.s),pO.y-Math.round(22*pO.s));
+}
+
+function drawLoop(){
+  if(!paused){
+    if(state===1){
+      prog+=0.003*speed;
+      arrowProg=Math.min(1,arrowProg+0.008*speed);
+      if(arrowProg>=1){
+        straightProg=Math.min(1,straightProg+0.009*speed);
+        eraseProg=Math.min(1,eraseProg+0.009*speed);
+      }
+      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
+    }
+    else if(state===3){
+      prog+=0.004*speed;
+      arrow3Prog=Math.min(1,arrow3Prog+0.009*speed);
+      if(arrow3Prog>=1){
+        straight3Prog=Math.min(1,straight3Prog+0.009*speed);
+      }
+      if(straight3Prog>=1){
+        erase3Prog=Math.min(1,erase3Prog+0.009*speed);
+        if(erase3Prog>=1) cnLpProg=Math.min(1,cnLpProg+0.011*speed);
+      }
+      if(prog>=1){state=4;prog=1;setStep(4);}
+    }
+    else if(state===4){
+      // Keep incrementing cnLpProg so CN- finishes moving after state transition
+      cnLpProg=Math.min(1,cnLpProg+0.011*speed);
+    }
+  }
+
+  ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
+
+  let energyT=0;
+  if(state===0) energyT=0;
+  else if(state===1) energyT=prog*0.5;
+  else if(state===2&&paused) energyT=0.5;
+  else if(state===3) energyT=0.5+prog*0.5;
+  else if(state===4) energyT=1;
+  drawEnergy(energyT);
+
+  // sp2->sp3 hybridisation progress
+  // state 1: 0->1 as CN approaches
+  // state 2+: fully sp3
+  let hybT=0;
+  if(state===1) hybT=prog;
+  else if(state>=2) hybT=1;
+
+  // Current positions of substituents (lerp sp2 -> sp3)
+  const oPos  =lerp(SP2.O,  SP3.O,  hybT);
+  const ch3Pos=lerp(SP2.CH3,SP3.CH3,hybT);
+  const hPos  =lerp(SP2.H,  SP3.H,  hybT);
+
+  // CN position: approaches from CN_START to CN_END during state 1
+  let cnPos;
+  if(state===0) cnPos=CN_START;
+  else if(state===1) cnPos=lerp(CN_START,CN_END,prog);
+  else cnPos=CN_END;
+
+  // === STATE 3 sub-phases ===
+  // phase 0-0.33: HCN approaches O-
+  // phase 0.33-0.66: H transfers from HCN to O- (visible movement), arrow from O- to H
+  // phase 0.66-1.0: CN- departs away, OH forms on molecule
+  const p3=state===3?prog:(state===4?1:0);
+
+  // HCN body position: approaches during phase 0-0.33, stays put 0.33-1.0
+  const hcnApproachT=Math.min(1,p3/0.33);
+  const hcnPos=state>=3?lerp(HCN_START,HCN_END,hcnApproachT):HCN_START;
+
+  // H atom: starts attached to HCN, transfers to O during phase 0.33-0.66
+  // H only moves after curly arrow has connected AND straightened into O-H bond
+  const hTransferT=state===3?Math.max(0,Math.min(1,(straight3Prog-0.8)/0.2)):
+                   state===4?1:0;
+  // H start = HCN_END + offset, H end = oPos
+  const H_ON_HCN={x:hcnPos.x-30, y:hcnPos.y, z:hcnPos.z};
+  // H stays at its bonded position — no movement after arrow straightens
+  const H_ON_O  ={x:HCN_END.x-30, y:HCN_END.y, z:0};
+  const hTransPos=lerp(H_ON_HCN,H_ON_O,hTransferT);
+
+  // CN- departs gradually using cnLpProg — starts after erase3Prog completes
+  const cnDepartT=state===3?Math.max(0,Math.min(1,cnLpProg)):
+                  state===4?cnLpProg:0;
+  // CN- ends up above and slightly right of the product molecule
+  const CN_DEPART={x:BL*2.0, y:BL*0.82, z:0};
+  // HCN C and N depart together once H has left
+  const hcnBodyPos=lerp(HCN_END,CN_DEPART,cnDepartT);
+
+  const showHCNbody=state===3||state===4;
+  const showOH=state===4||(state===3&&hTransferT>=1);
+  const showTransferringH=(state===3&&hTransferT>0&&hTransferT<1);
+  const showHonHCN=(state===3&&hTransferT===0)||state<3;
+
+  // Project all
+  const pC  =proj(0,0,0);
+  const pO  =proj(oPos.x,oPos.y,oPos.z);
+  const pCH3=proj(ch3Pos.x,ch3Pos.y,ch3Pos.z);
+  const pH  =proj(hPos.x,hPos.y,hPos.z);
+  const pCN =proj(cnPos.x,cnPos.y,cnPos.z);
+
+  // Pi bond fades out as curly arrow finishes tracing
+  // Double bond until curly arrow finishes, then single bond only
+  const showPi=(state===0)||(state===1&&arrowProg<1);
+  drawBond(pC,pO,false,'rgba(239,68,68,0.7)',showPi);
+  drawBond(pC,pCH3,false,'rgba(74,222,128,0.6)');
+  drawBond(pC,pH,false,'rgba(148,163,184,0.5)');
+  // CN bond: fades in as arrow straightens, fully shown from state 2
+  if(state===1&&straightProg>0){
+    const alpha=straightProg*0.7;
+    drawBond(pC,pCN,false,'rgba(34,211,238,'+alpha+')');
+  }
+  if(state>=2) drawBond(pC,pCN,false,'rgba(34,211,238,0.7)');
+
+  // HCN body (C and N atoms)
+  if(showHCNbody){
+    const pHCN_C=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_N=proj(hcnBodyPos.x+30,hcnBodyPos.y,hcnBodyPos.z);
+    drawBond(pHCN_C,pHCN_N,false,'rgba(167,139,250,0.5)',true);
+    // H still on HCN before transfer — H is now on the left (-30)
+    if(showHonHCN){
+      const pHCN_H=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
+      drawBond(pHCN_H,pHCN_C,false,'rgba(167,139,250,0.5)');
+      drawAtom(pHCN_H,10,COLS.HCN,'H');
+    }
+    // curly arrow drawn separately in the curly arrows section below
+    drawAtom(pHCN_C,14,COLS.HCN,'C');
+    drawAtom(pHCN_N,12,COLS.HCN,'N');
+  }
+
+  // Transferring H atom (moves from HCN to O)
+  if(showTransferringH){
+    const pHt=proj(hTransPos.x,hTransPos.y,hTransPos.z);
+    drawAtom(pHt,10,COLS.H,'H');
+  }
+
+  // OH hydrogen once on O
+  if(showOH){
+    const ohH=proj(H_ON_O.x,H_ON_O.y,H_ON_O.z);
+    drawBond(pO,ohH,false,'rgba(148,163,184,0.5)');
+    drawAtom(ohH,10,COLS.H,'H');
+  }
+
+  // delta labels — show in state 0 and during state 1 until CN fully bonds
+  if(state===0||(state===1)){
+    ctx.font='bold 16px Arial';
+    // delta+ beside C — closer to atom
+    ctx.textAlign='left';
+    ctx.fillStyle='rgba(251,146,60,0.95)';
+    ctx.fillText('\u03b4+',pC.x+Math.round(16*pC.s),pC.y-Math.round(16*pC.s));
+    // delta- beside O — closer to atom
+    ctx.textAlign='right';
+    ctx.fillStyle='rgba(239,68,68,0.95)';
+    ctx.fillText('\u03b4\u207B',pO.x-Math.round(16*pO.s),pO.y-Math.round(16*pO.s));
+  }
+  if(state===0){
+    ctx.font='11px Arial';ctx.textAlign='center';
+    ctx.fillStyle='#22d3ee';
+    ctx.fillText('CN\u207B  nucleophile',pCN.x,pCN.y-Math.round(26*pCN.s));
+  }
+
+  // depth-sort and draw atoms
+  const atoms=[
+    {p:pC,  r:22,col:COLS.C,  lbl:'C',  show:true},
+    {p:pO,  r:20,col:(state===2&&paused)||state===3?COLS.Oneg:COLS.O, lbl:'O', show:true},
+    {p:pCH3,r:18,col:COLS.CH3,lbl:'CH\u2083',show:true},
+    {p:pH,  r:14,col:COLS.H,  lbl:'H',  show:true},
+    {p:pCN, r:20,col:COLS.CN, lbl:'CN\u207B',show:state===0||state===1}
+  ].filter(a=>a.show);
+  atoms.sort((a,b)=>b.p.z-a.p.z);
+  atoms.forEach(a=>drawAtom(a.p,a.r,a.col,a.lbl));
+
+  // CN label once bonded (state >= 2)
+  if(state>=2){
+    drawAtom(pCN,20,COLS.CN,'CN');
+  }
+
+  // === CURLY ARROWS AND LONE PAIRS — drawn after atoms so they appear on top ===
+
+  // STATE 0 & STATE 1: CN- lone pair dots + curly arrow to C
+  if(state===0||state===1){
+    // Direction from C to CN fully in screen space
+    const dirX=pCN.x-pC.x, dirY=pCN.y-pC.y;
+    const dirLen=Math.sqrt(dirX*dirX+dirY*dirY)||1;
+    const normX=dirX/dirLen, normY=dirY/dirLen;
+    // Place lone pair 28px beyond CN atom surface in screen space (fixed px, not scaled)
+    const lpX=pCN.x+normX*28, lpY=pCN.y+normY*28;
+    // Lone pair fades out as arrow draws (electrons leaving CN-)
+    ctx.globalAlpha=state===1?Math.max(0,1-arrowProg):1;
+    drawLonePair({x:lpX,y:lpY},0,0,'#22d3ee');
+    ctx.globalAlpha=1;
+    if(state===1){
+      const perpX=-normY*60, perpY=normX*60;
+      const midX=(lpX+pC.x)/2, midY=(lpY+pC.y)/2;
+      // Curved control point
+      const curveCpX=midX+perpX, curveCpY=midY+perpY;
+      // Straight control point = midpoint of lpX->pC (no curve)
+      const straightCpX=midX, straightCpY=midY;
+      // Lerp between curved and straight based on straightProg
+      const cpX=curveCpX+(straightCpX-curveCpX)*straightProg;
+      const cpY=curveCpY+(straightCpY-curveCpY)*straightProg;
+      // Once fully straight, hide arrow and let bond take over
+      if(straightProg<1){
+        drawCurlyArrow(lpX,lpY,pC.x,pC.y,cpX,cpY,'#ffffff',arrowProg);
+      }
+    }
+  }
+
+  // STATE 1: C=O pi bond curly arrow → O, then retracts and lone pair fades in
+  if(state===1){
+    const midX=(pC.x+pO.x)/2, midY=(pC.y+pO.y)/2;
+    const cpX=midX+35, cpY=midY-35;
+    if(eraseProg<1){
+      // Draw partial curve: from startT to 1 (tail erases as eraseProg increases)
+      const startT=eraseProg;
+      const endT=arrowProg;
+      if(endT>startT) drawPartialCurveSegment(midX,midY,pO.x,pO.y,cpX,cpY,startT,endT,'#ffffff');
+    }
+    // Lone pair dots + O- charge fade in as eraseProg increases
+    if(eraseProg>0){
+      const oDirX2=pO.x-pC.x, oDirY2=pO.y-pC.y;
+      const oDirLen2=Math.sqrt(oDirX2*oDirX2+oDirY2*oDirY2)||1;
+      const oLpX2=pO.x+(oDirX2/oDirLen2)*28;
+      const oLpY2=pO.y+(oDirY2/oDirLen2)*28;
+      ctx.globalAlpha=eraseProg;
+      drawLonePair({x:oLpX2,y:oLpY2},0,0,'#f87171');
+      // O- charge label
+      ctx.font='bold 20px Arial';ctx.textAlign='center';
+      ctx.fillStyle='#f87171';
+      ctx.fillText('⁻',pO.x+Math.round(22*pO.s),pO.y-Math.round(22*pO.s));
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // STATE 2 paused: O- lone pairs — fixed 28px from O away from C
+  if(state===2&&paused){
+    const oDirX2=pO.x-pC.x, oDirY2=pO.y-pC.y;
+    const oDirLen2=Math.sqrt(oDirX2*oDirX2+oDirY2*oDirY2)||1;
+    const oLpX2=pO.x+(oDirX2/oDirLen2)*28;
+    const oLpY2=pO.y+(oDirY2/oDirLen2)*28;
+    drawLonePair({x:oLpX2,y:oLpY2},0,0,'#f87171');
+  }
+
+  // STATE 3: curly arrows — same technique as step 1
+  if(state===3){
+    const pHCN_C_pos=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_H_pos=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
+
+    // O- lone pair position — away from C
+    const oDirX=pO.x-pC.x, oDirY=pO.y-pC.y;
+    const oDirLen=Math.sqrt(oDirX*oDirX+oDirY*oDirY)||1;
+    const oLpX=pO.x+(oDirX/oDirLen)*28;
+    const oLpY=pO.y+(oDirY/oDirLen)*28;
+
+    // O- lone pair dots fade out as arrow traces (electrons leaving O-)
+    ctx.globalAlpha=Math.max(0,1-arrow3Prog);
+    drawLonePair({x:oLpX,y:oLpY},0,0,'#f87171');
+    ctx.globalAlpha=1;
+
+    // === ARROW 1: O- lone pair → H ===
+    // Start lerps from lone pair → O as it straightens (arrow becomes O-H bond)
+    const arrowStartX=oLpX+(pO.x-oLpX)*straight3Prog;
+    const arrowStartY=oLpY+(pO.y-oLpY)*straight3Prog;
+    const oh_dx=pHCN_H_pos.x-arrowStartX, oh_dy=pHCN_H_pos.y-arrowStartY;
+    const oh_len=Math.sqrt(oh_dx*oh_dx+oh_dy*oh_dy)||1;
+    const oh_perpX=-oh_dy/oh_len*55, oh_perpY=oh_dx/oh_len*55;
+    const oh_midX=(arrowStartX+pHCN_H_pos.x)/2, oh_midY=(arrowStartY+pHCN_H_pos.y)/2;
+    // Control point: curved when straight3Prog=0, straight midpoint when straight3Prog=1
+    const oh_cpX=(oh_midX+oh_perpX)+(oh_midX-(oh_midX+oh_perpX))*straight3Prog;
+    const oh_cpY=(oh_midY+oh_perpY)+(oh_midY-(oh_midY+oh_perpY))*straight3Prog;
+    if(straight3Prog<1){
+      drawCurlyArrow(arrowStartX,arrowStartY,pHCN_H_pos.x,pHCN_H_pos.y,oh_cpX,oh_cpY,'#ffffff',arrow3Prog);
+    }
+    // O-H bond fades in smoothly with erase3Prog
+    if(erase3Prog>0){
+      drawBond(pO,pHCN_H_pos,false,'rgba(148,163,184,'+erase3Prog+')');
+    }
+
+    // === ARROW 2: H-C bond midpoint → C (simultaneous with arrow 1) ===
+    // Perpendicular to H->C direction, curves downward away from arrow 1
+    const hc_dx=pHCN_C_pos.x-pHCN_H_pos.x, hc_dy=pHCN_C_pos.y-pHCN_H_pos.y;
+    const hc_len=Math.sqrt(hc_dx*hc_dx+hc_dy*hc_dy)||1;
+    const hc_midX=(pHCN_H_pos.x+pHCN_C_pos.x)/2, hc_midY=(pHCN_H_pos.y+pHCN_C_pos.y)/2;
+    // Perp points downward (positive Y in screen = down)
+    const hc_cpX=hc_midX+hc_dy/hc_len*50, hc_cpY=hc_midY-hc_dx/hc_len*50;
+    // Arrow 2 traces with arrow3Prog, erases with erase3Prog
+    if(erase3Prog<1){
+      drawPartialCurveSegment(hc_midX,hc_midY,pHCN_C_pos.x,pHCN_C_pos.y,hc_cpX,hc_cpY,erase3Prog,arrow3Prog,'#ffffff');
+    }
+
+    // CN lone pair fades in on C atom of HCN once arrow 2 erases
+    if(cnLpProg>0){
+      // Lone pair aligned perpendicular to C-N bond (horizontal above C)
+      const cnDirX=pHCN_C_pos.x-pHCN_H_pos.x, cnDirY=pHCN_C_pos.y-pHCN_H_pos.y;
+      const cnDirLen=Math.sqrt(cnDirX*cnDirX+cnDirY*cnDirY)||1;
+      // Perpendicular to C-N = (-cnDirY, cnDirX), pointing upward
+      const cnPerpX=-cnDirY/cnDirLen, cnPerpY=cnDirX/cnDirLen;
+      const cnLpX=pHCN_C_pos.x+cnPerpX*24;
+      const cnLpY=pHCN_C_pos.y+cnPerpY*24;
+      ctx.globalAlpha=cnLpProg;
+      drawLonePair({x:cnLpX,y:cnLpY},0,0,'#ffffff');
+      ctx.globalAlpha=1;
+    }
+  }
+
+  // STATE 4: keep CN- lone pair visible on C atom permanently
+  if(state===4){
+    const pHCN_C_f=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_H_f=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
+    const cnDirX=pHCN_C_f.x-pHCN_H_f.x, cnDirY=pHCN_C_f.y-pHCN_H_f.y;
+    const cnDirLen=Math.sqrt(cnDirX*cnDirX+cnDirY*cnDirY)||1;
+    // Lone pair perpendicular to C-N bond, aligned above C
+    const cnPerpX=-cnDirY/cnDirLen, cnPerpY=cnDirX/cnDirLen;
+    const cnLpX=pHCN_C_f.x+cnPerpX*24;
+    const cnLpY=pHCN_C_f.y+cnPerpY*24;
+    drawLonePair({x:cnLpX,y:cnLpY},0,0,'#ffffff');
+    // Label CN- as nucleophile
+    ctx.font='10px Arial';ctx.textAlign='center';ctx.fillStyle='#c4b5fd';
+    ctx.fillText('CN⁻ (regenerated)',pHCN_C_f.x,pHCN_C_f.y-Math.round(34*pHCN_C_f.s));
+  }
+
+  // O- label during intermediate and early state 3
+  if((state===2&&paused)||(state===3&&hTransferT<1)){
+    drawIntermediateLabel(pO);
+  }
+
+  // bracket label at intermediate pause
+  if(state===2&&paused){
+    const pad=72*pC.s;
+    const bx=pC.x-pad,by=pC.y-pad*1.2,bw=pad*2,bh=pad*2.4,arm=10;
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(bx+arm,by);ctx.lineTo(bx,by);ctx.lineTo(bx,by+bh);ctx.lineTo(bx+arm,by+bh);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx+bw-arm,by);ctx.lineTo(bx+bw,by);ctx.lineTo(bx+bw,by+bh);ctx.lineTo(bx+bw-arm,by+bh);ctx.stroke();
+    ctx.fillStyle='#fbbf24';ctx.font='bold 11px Arial';ctx.textAlign='center';
+    ctx.fillText('[Anionic Intermediate]\u207B',pC.x,by-52);
+    ctx.font='10px Arial';ctx.fillStyle='#fde68a';
+    ctx.fillText('sp\u00B3 carbon \u2022 tetrahedral',pC.x,by-38);
+  }
+
+  // product label
+  if(state===4){
+    ctx.font='bold 11px Arial';ctx.textAlign='center';
+    ctx.fillStyle='#4ade80';
+    ctx.fillText('Cyanohydrin: CH\u2083CH(OH)CN',W/2,H-30);
+  }
+
+  requestAnimationFrame(drawLoop);
+}
+
+canvas.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;if(curView!==2)setView(2);});
+window.addEventListener('mousemove',e=>{if(!dragging)return;aY+=(e.clientX-lx)*0.01;aX+=(e.clientY-ly)*0.01;lx=e.clientX;ly=e.clientY;});
+window.addEventListener('mouseup',()=>dragging=false);
+canvas.addEventListener('touchstart',e=>{dragging=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;if(curView!==2)setView(2);},{passive:true});
+canvas.addEventListener('touchmove',e=>{if(!dragging)return;aY+=(e.touches[0].clientX-lx)*0.01;aX+=(e.touches[0].clientY-ly)*0.01;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+canvas.addEventListener('touchend',()=>dragging=false);
+
+document.getElementById('spd').addEventListener('input',e=>{
+  speed=parseFloat(e.target.value);
+  document.getElementById('spdOut').textContent=speed.toFixed(1)+'\u00d7';
+});
+document.getElementById('startBtn').addEventListener('click',()=>{
+  state=1;prog=0;arrowProg=0;straightProg=0;eraseProg=0;paused=false;
+  document.getElementById('resumeBtn').style.display='none';
+  setStep(1);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  state=0;prog=0;arrowProg=0;straightProg=0;eraseProg=0;arrow3Prog=0;straight3Prog=0;erase3Prog=0;cnLpProg=0;paused=false;
+  document.getElementById('resumeBtn').style.display='none';
+  setStep(0);
+});
+document.getElementById('resumeBtn').addEventListener('click',()=>{
+  paused=false;state=3;prog=0;arrow3Prog=0;straight3Prog=0;erase3Prog=0;cnLpProg=0;
+  document.getElementById('resumeBtn').style.display='none';
+  setStep(3);
+});
+document.getElementById('step2Btn').addEventListener('click',()=>{
+  // Jump directly to intermediate pause (state 2) then auto-resume into step 2
+  state=2;prog=0;paused=false;
+  arrowProg=1;straightProg=1;eraseProg=1;
+  arrow3Prog=0;straight3Prog=0;erase3Prog=0;cnLpProg=0;
+  document.getElementById('resumeBtn').style.display='none';
+  // Set all molecule geometry to intermediate state (sp3, CN bonded)
+  state=3;
+  setStep(3);
+});
+
+window.addEventListener('resize',resize);
+resize();
+drawLoop();
+})();
+</script>
+</body>
+</html>

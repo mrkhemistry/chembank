@@ -249,6 +249,7 @@ const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
 let W,H,state=0,prog=0,speed=1,paused=false;
+let arrowProg=0,straightProg=0,brFadeProg=0,ohSolidProg=0;
 let aX=0.28,aY=0.6,dragging=false,lx,ly;
 const BL=100;
 
@@ -314,31 +315,56 @@ function drawBond(p1,p2,dashed,col){
   ctx.stroke();ctx.setLineDash([]);
 }
 
-function drawArrow(p1,p2,col){
-  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
-  if(len<5)return;
-  const ux=dx/len,uy=dy/len;
-  const ex=p1.x+dx*0.4,ey=p1.y+dy*0.4;
-  ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(ex,ey);
-  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(ex,ey);
-  ctx.lineTo(ex-ux*9-uy*5,ey-uy*9+ux*5);
-  ctx.lineTo(ex-ux*9+uy*5,ey-uy*9-ux*5);
-  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+function drawLonePair(px,py,col){
+  ctx.fillStyle=col||'#fff';
+  ctx.beginPath();ctx.arc(px-5,py,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(px+5,py,4,0,Math.PI*2);ctx.fill();
 }
 
-function drawTSBracket(pC){
-  const pad=78*pC.s;
-  const x=pC.x-pad;
-  const bw=pad*2;
-  const bh=pad*2.2;
-  const y=pC.y-pad*1.1-40;
-  const arm=11;
+function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
+  col=col||'#fff';
+  t=t===undefined?1:Math.min(1,Math.max(0,t));
+  const steps=60;
+  const end=Math.floor(steps*t);
+  if(end<1)return;
+  ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([]);
+  for(let i=0;i<=end;i++){
+    const u=i/steps;
+    const bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2;
+    const by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;
+    if(i===0)ctx.moveTo(bx,by); else ctx.lineTo(bx,by);
+  }
+  ctx.stroke();
+  if(t>0.88){
+    const alpha=Math.min(1,(t-0.88)/0.12);
+    const u1=0.97;
+    const bx1=(1-u1)*(1-u1)*x1+2*(1-u1)*u1*cpx+u1*u1*x2;
+    const by1=(1-u1)*(1-u1)*y1+2*(1-u1)*u1*cpy+u1*u1*y2;
+    const dx=x2-bx1,dy=y2-by1,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len,uy=dy/len;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath();ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ux*12-uy*6,y2-uy*12+ux*6);
+    ctx.lineTo(x2-ux*12+uy*6,y2-uy*12-ux*6);
+    ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+function drawTSBracket(pC,pOH,pBr,subPs){
+  const pad=36;
+  const allX=[pOH.x,pC.x,pBr.x,...subPs.map(s=>s.p.x)];
+  const allY=[pOH.y,pC.y,pBr.y,...subPs.map(s=>s.p.y)];
+  const minX=Math.min(...allX)-pad;
+  const maxX=Math.max(...allX)+pad;
+  const minY=Math.min(...allY)-pad;
+  const maxY=Math.max(...allY)+pad;
+  const arm=14;
   ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(x+arm,y);ctx.lineTo(x,y);ctx.lineTo(x,y+bh);ctx.lineTo(x+arm,y+bh);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(x+bw-arm,y);ctx.lineTo(x+bw,y);ctx.lineTo(x+bw,y+bh);ctx.lineTo(x+bw-arm,y+bh);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(minX+arm,minY);ctx.lineTo(minX,minY);ctx.lineTo(minX,maxY);ctx.lineTo(minX+arm,maxY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(maxX-arm,minY);ctx.lineTo(maxX,minY);ctx.lineTo(maxX,maxY);ctx.lineTo(maxX-arm,maxY);ctx.stroke();
   ctx.fillStyle='#fbbf24';ctx.font='bold 11px Arial';ctx.textAlign='center';
-  ctx.fillText('[Transition State]\u2021',pC.x,y-14);
+  ctx.fillText('[Transition State]\u2021',(minX+maxX)/2,minY-14);
 }
 
 function setStep(n){
@@ -365,8 +391,18 @@ function getSubPos(t,idx){
 
 function drawLoop(){
   if(!paused){
-    if(state===1){prog+=0.008*speed;if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}}
-    else if(state===3){prog+=0.009*speed;if(prog>=1){state=4;prog=1;setStep(4);}}
+    if(state===1){
+      prog+=0.005*speed;
+      arrowProg=Math.min(1,arrowProg+0.009*speed);
+      if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.009*speed);
+      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
+    }
+    else if(state===3){
+      prog+=0.009*speed;
+      brFadeProg=Math.min(1,brFadeProg+0.009*speed);
+      ohSolidProg=Math.min(1,ohSolidProg+0.009*speed);
+      if(prog>=1){state=4;prog=1;setStep(4);}
+    }
   }
 
   ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
@@ -405,16 +441,20 @@ function drawLoop(){
     return{p:proj(pos.x,pos.y,pos.z),lbl:s.lbl,col:s.col};
   });
 
-  const bts=[
-    {p:pOH,dashed:ohDashed,col:'rgba(244,63,94,0.6)',show:true},
-    {p:pBr,dashed:brDashed,col:'rgba(168,85,247,0.6)',show:showBr},
-    ...subPs.map(s=>({p:s.p,dashed:false,col:'rgba(255,255,255,0.22)',show:true}))
-  ].filter(b=>b.show);
-  bts.sort((a,b)=>b.p.z-a.p.z);
-  bts.forEach(b=>drawBond(pC,b.p,b.dashed,b.col));
+  // C-OH bond: not shown in state 1 (curly arrow handles it), dashed at TS, solid after
+  const ohBondAlpha = state===2&&paused ? 0.6 : state===3||state===4 ? Math.min(1,ohSolidProg+0.3) : 0;
+  const ohDashedBond = state===2&&paused;
+  if(ohBondAlpha>0) drawBond(pC,pOH,ohDashedBond,'rgba(244,63,94,'+ohBondAlpha+')');
 
-  if(state===1&&prog<0.8) drawArrow(pOH,pC,'#f43f5e');
-  if(isTS) drawTSBracket(pC);
+  // C-Br bond: solid before TS, dashed at TS, fades as Br departs
+  const brBondAlpha = state<2 ? 0.6 : state===2&&paused ? 0.6 : state===3 ? Math.max(0,0.6*(1-brFadeProg)) : 0;
+  const brDashedBond = state===2&&paused;
+  if(brBondAlpha>0&&showBr) drawBond(pC,pBr,brDashedBond,'rgba(168,85,247,'+brBondAlpha+')');
+
+  // Substituent bonds always solid
+  subPs.forEach(s=>drawBond(pC,s.p,false,'rgba(255,255,255,0.22)'));
+
+  if(isTS) drawTSBracket(pC,pOH,pBr,subPs);
 
   const ats=[
     {p:pC, r:22,col:COLS.C, lbl:'C',   show:true},
@@ -424,6 +464,40 @@ function drawLoop(){
   ].filter(a=>a.show);
   ats.sort((a,b)=>b.p.z-a.p.z);
   ats.forEach(a=>drawAtom(a.p,a.r,a.col,a.lbl));
+
+  // === CURLY ARROW & LONE PAIR (drawn after atoms so visible on top) ===
+  if(state===0||state===1){
+    const dirX=pOH.x-pC.x, dirY=pOH.y-pC.y;
+    const dirLen=Math.sqrt(dirX*dirX+dirY*dirY)||1;
+    const normX=dirX/dirLen, normY=dirY/dirLen;
+    const lpX=pOH.x+normX*28, lpY=pOH.y+normY*28;
+    // Lone pair fades out as arrow traces (electrons leaving OH-)
+    ctx.globalAlpha=state===1?Math.max(0,1-arrowProg):1;
+    drawLonePair(lpX,lpY,'#f43f5e');
+    ctx.globalAlpha=1;
+    if(state===1){
+      // Arrow 1: OH lone pair → C (traces then straightens into partial C-OH bond)
+      const perpX=-normY*60, perpY=normX*60;
+      const midX=(lpX+pC.x)/2, midY=(lpY+pC.y)/2;
+      const curveCpX=midX+perpX, curveCpY=midY+perpY;
+      const cpX=curveCpX+(midX-curveCpX)*straightProg;
+      const cpY=curveCpY+(midY-curveCpY)*straightProg;
+      const startX=lpX+(pOH.x-lpX)*straightProg;
+      const startY=lpY+(pOH.y-lpY)*straightProg;
+      if(straightProg<1){
+        drawCurlyArrow(startX,startY,pC.x,pC.y,cpX,cpY,'#ffffff',arrowProg);
+      }
+      // Arrow 2: C-Br bond midpoint → Br (starts simultaneously, electrons pushed onto Br)
+      const brDirX=pBr.x-pC.x, brDirY=pBr.y-pC.y;
+      const brLen=Math.sqrt(brDirX*brDirX+brDirY*brDirY)||1;
+      const brMidX=(pC.x+pBr.x)/2, brMidY=(pC.y+pBr.y)/2;
+      // Perp to C-Br, curving below the bond
+      const brCpX=brMidX-brDirY/brLen*50, brCpY=brMidY+brDirX/brLen*50;
+      // End point: beyond Br in the C->Br direction (lone pair on Br)
+      const brLpX=pBr.x+brDirX/brLen*28, brLpY=pBr.y+brDirY/brLen*28;
+      drawCurlyArrow(brMidX,brMidY,brLpX,brLpY,brCpX,brCpY,'#ffffff',arrowProg);
+    }
+  }
 
   if(isTS){
     ctx.font='bold 13px Arial';ctx.textAlign='center';
@@ -435,6 +509,17 @@ function drawLoop(){
     ctx.fillStyle='#f43f5e';ctx.fillText('OH\u207B  nucleophile',pOH.x,pOH.y-Math.round(26*pOH.s));
     ctx.fillStyle='#a855f7';ctx.fillText('Br  leaving group',pBr.x,pBr.y-Math.round(32*pBr.s));
   }
+
+
+  // Watermark
+  ctx.save();
+  ctx.globalAlpha=0.25;
+  ctx.fillStyle='#ffffff';
+  ctx.font='11px Arial';
+  ctx.textAlign='right';
+  ctx.textBaseline='bottom';
+  ctx.fillText('© Mr Khemistry',W-12,H-10);
+  ctx.restore();
 
   requestAnimationFrame(drawLoop);
 }
@@ -452,16 +537,18 @@ document.getElementById('spd').addEventListener('input',e=>{
 });
 document.getElementById('startBtn').addEventListener('click',()=>{
   state=1;prog=0;paused=false;
+  arrowProg=0;straightProg=0;brFadeProg=0;ohSolidProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(1);
 });
 document.getElementById('resetBtn').addEventListener('click',()=>{
   state=0;prog=0;paused=false;
+  arrowProg=0;straightProg=0;brFadeProg=0;ohSolidProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(0);
 });
 document.getElementById('resumeBtn').addEventListener('click',()=>{
-  paused=false;state=3;prog=0;
+  paused=false;state=3;prog=0;brFadeProg=0;ohSolidProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(3);
 });

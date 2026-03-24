@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SN1 Mechanism — Mr Khemistry</title>
+<title>Sn1 Mechanism — Mr Khemistry</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,7 +72,7 @@
       Simulations
     </a>
     <div style="width:1px;height:20px;background:var(--border);"></div>
-    <span class="nav-title">S<sub>N</sub>1 Mechanism</span>
+    <span class="nav-title">Sn1 Mechanism</span>
   </div>
   <div class="nav-tags">
     <span class="ntag ntag-h2">H2</span>
@@ -105,6 +105,7 @@
       <button class="bp" id="startBtn">Start</button>
       <button class="bs" id="resetBtn">Reset</button>
       <button id="resumeBtn">Resume</button>
+      <button class="bs" id="step2Btn">Skip to Step 2</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">View:</span>
       <button class="bs av" id="v0" onclick="setView(0)">Side</button>
@@ -120,7 +121,7 @@
 
   <div class="notes-grid">
     <div class="note-card">
-      <h3>What is S<sub>N</sub>1?</h3>
+      <h3>What is Sn1?</h3>
       <p><strong>Unimolecular nucleophilic substitution.</strong> Rate depends only on the substrate — it is a <strong>two-step</strong> mechanism with a carbocation intermediate.</p>
     </div>
     <div class="note-card">
@@ -152,6 +153,7 @@ const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
 let W,H,state=0,prog=0,speed=1,paused=false;
+let brArrowProg=0,ohArrowProg=0,ohStraightProg=0;
 let aX=0.2,aY=0.5,dragging=false,lx,ly;
 const BL=92;
 
@@ -260,17 +262,40 @@ function drawBond(p1,p2,dashed,col){
   ctx.stroke();ctx.setLineDash([]);
 }
 
-function drawArrow(p1,p2,col){
-  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
-  if(len<5)return;
-  const ux=dx/len,uy=dy/len;
-  const ex=p1.x+dx*0.42,ey=p1.y+dy*0.42;
-  ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(ex,ey);
-  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-  ctx.beginPath();ctx.moveTo(ex,ey);
-  ctx.lineTo(ex-ux*9-uy*5,ey-uy*9+ux*5);
-  ctx.lineTo(ex-ux*9+uy*5,ey-uy*9-ux*5);
-  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+function drawLonePair(px,py,col){
+  ctx.fillStyle=col||'#fff';
+  ctx.beginPath();ctx.arc(px-5,py,4,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(px+5,py,4,0,Math.PI*2);ctx.fill();
+}
+
+function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
+  col=col||'#fff';
+  t=t===undefined?1:Math.min(1,Math.max(0,t));
+  const steps=60;
+  const end=Math.floor(steps*t);
+  if(end<1)return;
+  ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.setLineDash([]);
+  for(let i=0;i<=end;i++){
+    const u=i/steps;
+    const bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2;
+    const by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;
+    if(i===0)ctx.moveTo(bx,by); else ctx.lineTo(bx,by);
+  }
+  ctx.stroke();
+  if(t>0.88){
+    const alpha=Math.min(1,(t-0.88)/0.12);
+    const u1=0.97;
+    const bx1=(1-u1)*(1-u1)*x1+2*(1-u1)*u1*cpx+u1*u1*x2;
+    const by1=(1-u1)*(1-u1)*y1+2*(1-u1)*u1*cpy+u1*u1*y2;
+    const dx=x2-bx1,dy=y2-by1,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const ux=dx/len,uy=dy/len;
+    ctx.globalAlpha=alpha;
+    ctx.beginPath();ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ux*12-uy*6,y2-uy*12+ux*6);
+    ctx.lineTo(x2-ux*12+uy*6,y2-uy*12-ux*6);
+    ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    ctx.globalAlpha=1;
+  }
 }
 
 function setStep(n){
@@ -296,17 +321,19 @@ function drawCarbocationLabel(pC){
   ctx.moveTo(pC.x,pC.y+Math.round(28*pC.s));
   ctx.lineTo(pC.x,pC.y+Math.round(55*pC.s));
   ctx.stroke();ctx.setLineDash([]);
-  ctx.font='10px Arial';ctx.fillStyle='rgba(251,146,60,0.7)';
-  ctx.fillText('empty p orbital',pC.x,pC.y-Math.round(62*pC.s));
+
 }
 
 function drawLoop(){
   if(!paused){
     if(state===1){
-      prog+=0.007*speed;
+      prog+=0.005*speed;
+      brArrowProg=Math.min(1,brArrowProg+0.005*speed);
       if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
     } else if(state===3){
       prog+=0.008*speed;
+      ohArrowProg=Math.min(1,ohArrowProg+0.009*speed);
+      if(ohArrowProg>=1) ohStraightProg=Math.min(1,ohStraightProg+0.009*speed);
       if(prog>=1){state=4;prog=1;setStep(4);}
     }
   }
@@ -329,8 +356,8 @@ function drawLoop(){
 
   // Br departure
   let brX=BL;
-  if(state===1) brX=BL+220*prog;
-  else if(state>=2) brX=BL+220;
+  if(state===1) brX=BL+BL*0.8*prog;
+  else if(state>=2) brX=BL+BL*0.8;
   const showBr=state<2||(state===1);
 
   // centre of scene
@@ -349,13 +376,15 @@ function drawLoop(){
     ].map(s=>({p:proj(s.pos.x,s.pos.y,s.pos.z,cx,cy),lbl:s.lbl,col:s.col}));
 
     // bonds
+    // bonds — C-Br fades as brArrowProg increases
     subs.forEach(s=>drawBond(pC,s.p,false,'rgba(255,255,255,0.22)'));
-    if(state===0||state===1) drawBond(pC,pBr,state===1&&prog>0.5,'rgba(168,85,247,0.6)');
+    if(state===0) drawBond(pC,pBr,false,'rgba(168,85,247,0.6)');
+    if(state===1&&brArrowProg<1) drawBond(pC,pBr,false,'rgba(168,85,247,0.6)');
 
     // atoms depth sorted
     const ats=[
-      {p:pC,r:22,col:state>=2?COLS.Cplus:COLS.C,lbl:'C',show:true},
-      {p:pBr,r:24,col:COLS.Br,lbl:'Br',show:state<2},
+      {p:pC,r:22,col:COLS.C,lbl:'C',show:true},
+      {p:pBr,r:24,col:COLS.Br,lbl:'Br',show:state===0||(state===1&&brArrowProg<1)},
       ...subs.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true}))
     ].filter(a=>a.show);
     ats.sort((a,b)=>b.p.z-a.p.z);
@@ -373,11 +402,14 @@ function drawLoop(){
       ctx.fillText('\u03b4\u207B  leaving group',pBr.x,pBr.y-Math.round(32*pBr.s));
     }
 
-    // Br departure arrow label
-    if(state===1&&prog>0.3){
-      ctx.font='10px Arial';ctx.textAlign='center';
-      ctx.fillStyle='#a855f7';
-      ctx.fillText('Br\u207B departs',pBr.x,pBr.y-Math.round(30*pBr.s));
+    // Curly arrow: C-Br bond midpoint → Br (electrons pushed onto Br)
+    if(state===1){
+      const brDirX=pBr.x-pC.x, brDirY=pBr.y-pC.y;
+      const brLen=Math.sqrt(brDirX*brDirX+brDirY*brDirY)||1;
+      const brMidX=(pC.x+pBr.x)/2, brMidY=(pC.y+pBr.y)/2;
+      const brCpX=brMidX-brDirY/brLen*50, brCpY=brMidY+brDirX/brLen*50;
+      const brLpX=pBr.x+brDirX/brLen*28, brLpY=pBr.y+brDirY/brLen*28;
+      if(brArrowProg<1) drawCurlyArrow(brMidX,brMidY,brLpX,brLpY,brCpX,brCpY,'#ffffff',brArrowProg);
     }
 
   } else {
@@ -409,31 +441,53 @@ function drawLoop(){
     const pCL=proj(0,0,0,cxL,cy);
     const pCR=proj(0,0,0,cxR,cy);
 
-    const showOHbond=state===4;
-
-    // draw bonds
+    // C-OH bonds fade in as arrow straightens
     subsL.forEach(s=>drawBond(pCL,s.p,false,'rgba(255,255,255,0.22)'));
     subsR.forEach(s=>drawBond(pCR,s.p,false,'rgba(255,255,255,0.22)'));
-    drawBond(pCL,pOH_L,!showOHbond,'rgba(244,63,94,0.6)');
-    drawBond(pCR,pOH_R,!showOHbond,'rgba(244,63,94,0.6)');
-
-    // attack arrows during state 3
-    if(state===3&&prog<0.75){
-      drawArrow(pOH_L,pCL,'#f43f5e');
-      drawArrow(pOH_R,pCR,'#f43f5e');
+    if(state===3&&ohStraightProg>0){
+      drawBond(pCL,pOH_L,false,'rgba(244,63,94,'+ohStraightProg+')');
+      drawBond(pCR,pOH_R,false,'rgba(244,63,94,'+ohStraightProg+')');
+    }
+    if(state===4){
+      drawBond(pCL,pOH_L,false,'rgba(244,63,94,0.6)');
+      drawBond(pCR,pOH_R,false,'rgba(244,63,94,0.6)');
     }
 
     // atoms
     const allAts=[
       {p:pCL,r:22,col:COLS.C,lbl:'C',show:true},
       {p:pCR,r:22,col:COLS.C,lbl:'C',show:true},
-      {p:pOH_L,r:20,col:COLS.OH,lbl:'OH\u207B',show:true},
-      {p:pOH_R,r:20,col:COLS.OH,lbl:'OH\u207B',show:true},
+      {p:pOH_L,r:20,col:COLS.OH,lbl:'OH⁻',show:true},
+      {p:pOH_R,r:20,col:COLS.OH,lbl:'OH⁻',show:true},
       ...subsL.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true})),
       ...subsR.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true}))
     ];
     allAts.sort((a,b)=>b.p.z-a.p.z);
     allAts.forEach(a=>drawAtom(a.p,a.r,a.col,a.lbl));
+
+    // Curly arrows + lone pairs on both OH- (drawn after atoms)
+    if(state===3){
+      const drawOHAttack=(pOH,pC,side)=>{
+        const dirX=pOH.x-pC.x, dirY=pOH.y-pC.y;
+        const dirLen=Math.sqrt(dirX*dirX+dirY*dirY)||1;
+        const normX=dirX/dirLen, normY=dirY/dirLen;
+        const lpX=pOH.x+normX*28, lpY=pOH.y+normY*28;
+        ctx.globalAlpha=Math.max(0,1-ohArrowProg);
+        drawLonePair(lpX,lpY,'#f43f5e');
+        ctx.globalAlpha=1;
+        const perpX=-normY*55*side, perpY=normX*55*side;
+        const midX=(lpX+pC.x)/2, midY=(lpY+pC.y)/2;
+        const curveCpX=midX+perpX, curveCpY=midY+perpY;
+        const cpX=curveCpX+(midX-curveCpX)*ohStraightProg;
+        const cpY=curveCpY+(midY-curveCpY)*ohStraightProg;
+        const startX=lpX+(pOH.x-lpX)*ohStraightProg;
+        const startY=lpY+(pOH.y-lpY)*ohStraightProg;
+        if(ohStraightProg<1) drawCurlyArrow(startX,startY,pC.x,pC.y,cpX,cpY,'#ffffff',ohArrowProg);
+      }
+      drawOHAttack(pOH_L,pCL,1);
+      drawOHAttack(pOH_R,pCR,-1);
+    }
+
 
     // pathway labels
     ctx.font='bold 11px Arial';ctx.textAlign='center';
@@ -452,6 +506,17 @@ function drawLoop(){
     }
   }
 
+
+  // Watermark
+  ctx.save();
+  ctx.globalAlpha=0.25;
+  ctx.fillStyle='#ffffff';
+  ctx.font='11px Arial';
+  ctx.textAlign='right';
+  ctx.textBaseline='bottom';
+  ctx.fillText('© Mr Khemistry',W-12,H-10);
+  ctx.restore();
+
   requestAnimationFrame(drawLoop);
 }
 
@@ -468,16 +533,25 @@ document.getElementById('spd').addEventListener('input',e=>{
 });
 document.getElementById('startBtn').addEventListener('click',()=>{
   state=1;prog=0;paused=false;
+  brArrowProg=0;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(1);
 });
 document.getElementById('resetBtn').addEventListener('click',()=>{
   state=0;prog=0;paused=false;
+  brArrowProg=0;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(0);
 });
 document.getElementById('resumeBtn').addEventListener('click',()=>{
   paused=false;state=3;prog=0;
+  ohArrowProg=0;ohStraightProg=0;
+  document.getElementById('resumeBtn').style.display='none';
+  setStep(3);
+});
+document.getElementById('step2Btn').addEventListener('click',()=>{
+  state=3;prog=0;paused=false;
+  brArrowProg=1;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(3);
 });

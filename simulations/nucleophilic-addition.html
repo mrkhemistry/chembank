@@ -707,6 +707,17 @@ function drawLoop(){
     ctx.fillText('Cyanohydrin: CH\u2083CH(OH)CN',W/2,H-30);
   }
 
+
+  // Watermark
+  ctx.save();
+  ctx.globalAlpha=0.25;
+  ctx.fillStyle='#ffffff';
+  ctx.font='11px Arial';
+  ctx.textAlign='right';
+  ctx.textBaseline='bottom';
+  ctx.fillText('© Mr Khemistry',W-12,H-10);
+  ctx.restore();
+
   requestAnimationFrame(drawLoop);
 }
 

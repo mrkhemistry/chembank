@@ -165,7 +165,7 @@
       Simulations
     </a>
     <div style="width:1px;height:20px;background:var(--border);"></div>
-    <span class="nav-title">S<sub>N</sub>2 Mechanism</span>
+    <span class="nav-title">Sn2 Mechanism</span>
   </div>
   <div class="nav-tags">
     <span class="ntag ntag-h2">H2</span>
@@ -216,7 +216,7 @@
   <!-- Learning notes -->
   <div class="notes-grid">
     <div class="note-card">
-      <h3>What is S<sub>N</sub>2?</h3>
+      <h3>What is Sn2?</h3>
       <p><strong>Bimolecular nucleophilic substitution.</strong> The rate depends on both the nucleophile and the substrate — it is a <strong>one-step concerted</strong> mechanism with no intermediate.</p>
     </div>
     <div class="note-card">
@@ -261,7 +261,7 @@ const TET_BASE=[
 ];
 
 const OH_START_X=-BL*2.2;
-const COLS={OH:'#f43f5e',Br:'#a855f7',H:'#94a3b8',CH3:'#22d3ee',C2H5:'#4ade80',C:'#f97316'};
+const COLS={OH:'#f43f5e',Br:'#a855f7',H:'#e2e8f0',CH3:'#22d3ee',C2H5:'#4ade80',C:'#f97316'};
 
 const views=[{aX:0.28,aY:0.6},{aX:1.55,aY:0.0},{aX:0.0,aY:3.14},null];
 let curView=0;
@@ -296,15 +296,34 @@ function drawEnergy(t){
   eCtx.fillStyle='#fbbf24';eCtx.fill();
 }
 
+function lightenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;
+}
+function darkenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;
+}
 function drawAtom(p,r,col,lbl){
   const rad=Math.max(10,r*p.s);
-  ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);
-  ctx.fillStyle=col;ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle='#fff';
+  const x=p.x,y=p.y;
+  const g=ctx.createRadialGradient(x-rad*0.3,y-rad*0.32,rad*0.05,x,y,rad*1.05);
+  g.addColorStop(0,'#ffffff');
+  g.addColorStop(0.18,lightenCol(col,0.65));
+  g.addColorStop(0.5,col);
+  g.addColorStop(1,darkenCol(col,0.55));
+  ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);
+  ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=darkenCol(col,0.3);ctx.lineWidth=1;ctx.stroke();
+  const h=ctx.createRadialGradient(x-rad*0.32,y-rad*0.35,0,x-rad*0.32,y-rad*0.35,rad*0.42);
+  h.addColorStop(0,'rgba(255,255,255,0.52)');
+  h.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);
+  ctx.fillStyle=h;ctx.fill();
+  ctx.fillStyle='#0f172a';
   ctx.font='bold '+Math.max(8,Math.round(10*p.s))+'px Arial';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(lbl,p.x,p.y);
+  ctx.fillText(lbl,x,y+1);
 }
 
 function drawBond(p1,p2,dashed,col){

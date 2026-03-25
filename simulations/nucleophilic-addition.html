@@ -154,7 +154,7 @@ const wrap=document.getElementById('cWrap');
 
 let W,H,state=0,prog=0,arrowProg=0,straightProg=0,eraseProg=0,arrow3Prog=0,straight3Prog=0,erase3Prog=0,cnLpProg=0,speed=1,paused=false;
 let aX=0.25,aY=0.5,dragging=false,lx,ly;
-const BL=90;
+const BL=135;
 
 // Colours
 const COLS={
@@ -162,8 +162,8 @@ const COLS={
   O:'#ef4444',   // red — oxygen
   CN:'#22d3ee',  // cyan — CN group
   CH3:'#4ade80', // green — methyl
-  H:'#94a3b8',   // grey — hydrogen
-  HCN:'#a78bfa', // purple — HCN molecule
+  H:'#e2e8f0',   // off-white — hydrogen
+  HCN:'#a855f7', // purple — HCN molecule
   Oneg:'#f87171' // bright red — O- intermediate
 };
 
@@ -188,12 +188,13 @@ const SP3={
 };
 
 // CN nucleophile starting position — approaches from -Z axis
-const CN_START={x:0, y:0, z:-BL*2.8};
+const CN_START={x:0, y:0, z:-BL*1.6};
 const CN_END  ={x:0, y:0, z:-BL};
 
 // HCN molecule — approaches from the right after intermediate
-const HCN_START={x:BL*3.2, y:BL*0.9, z:0};
-const HCN_END  ={x:BL*1.5, y:BL*0.9, z:0};
+const HCN_START={x:BL*3.0, y:BL*0.9, z:0};
+const HCN_END  ={x:BL*1.8, y:BL*0.9, z:0};
+const SCENE_OFFSET_X=-60;
 
 function lerp(a,b,t){return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t};}
 function lerpV(a,b,t){return a+(b-a)*t;}
@@ -215,7 +216,7 @@ function proj(x,y,z){
   let y2=y*Math.cos(aX)-z1*Math.sin(aX);
   let z2=z1*Math.cos(aX)+y*Math.sin(aX);
   const s=700/(700+z2);
-  return{x:W/2+x1*s,y:H/2+y2*s,z:z2,s:s};
+  return{x:W/2+SCENE_OFFSET_X+x1*s,y:H/2+y2*s,z:z2,s:s};
 }
 
 // Two-hump energy: reactants->TS1->intermediate->TS2->product
@@ -237,15 +238,37 @@ function drawEnergy(t){
   eCtx.fillStyle='#fbbf24';eCtx.fill();
 }
 
+function lightenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;
+}
+function darkenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;
+}
 function drawAtom(p,r,col,lbl){
   const rad=Math.max(9,r*p.s);
-  ctx.beginPath();ctx.arc(p.x,p.y,rad,0,Math.PI*2);
-  ctx.fillStyle=col;ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=1;ctx.stroke();
-  ctx.fillStyle='#fff';
+  const x=p.x,y=p.y;
+  // Sphere gradient
+  const g=ctx.createRadialGradient(x-rad*0.3,y-rad*0.32,rad*0.05,x,y,rad*1.05);
+  g.addColorStop(0,'#ffffff');
+  g.addColorStop(0.18,lightenCol(col,0.65));
+  g.addColorStop(0.5,col);
+  g.addColorStop(1,darkenCol(col,0.55));
+  ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);
+  ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=darkenCol(col,0.3);ctx.lineWidth=1;ctx.stroke();
+  // Specular highlight
+  const h=ctx.createRadialGradient(x-rad*0.32,y-rad*0.35,0,x-rad*0.32,y-rad*0.35,rad*0.42);
+  h.addColorStop(0,'rgba(255,255,255,0.52)');
+  h.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);
+  ctx.fillStyle=h;ctx.fill();
+  // Dark label on all atoms for readability
+  ctx.fillStyle='#0f172a';
   ctx.font='bold '+Math.max(8,Math.round(10*p.s))+'px Arial';
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(lbl,p.x,p.y);
+  ctx.fillText(lbl,x,y+1);
 }
 
 function drawBond(p1,p2,dashed,col,double){
@@ -434,26 +457,27 @@ function drawLoop(){
 
   // H atom: starts attached to HCN, transfers to O during phase 0.33-0.66
   // H only moves after curly arrow has connected AND straightened into O-H bond
-  const hTransferT=state===3?Math.max(0,Math.min(1,(straight3Prog-0.8)/0.2)):
-                   state===4?1:0;
+  const hTransferT=0; // H stays on HCN — no transfer animation
   // H start = HCN_END + offset, H end = oPos
   const H_ON_HCN={x:hcnPos.x-30, y:hcnPos.y, z:hcnPos.z};
-  // H stays at its bonded position — no movement after arrow straightens
-  const H_ON_O  ={x:HCN_END.x-30, y:HCN_END.y, z:0};
-  const hTransPos=lerp(H_ON_HCN,H_ON_O,hTransferT);
+  // H_ON_O: bonded to O
+  const H_ON_O={x:SP3.O.x+BL*0.55, y:SP3.O.y+BL*0.4, z:SP3.O.z};
+  // H stays fixed at HCN position throughout step 2
+  const hMoveT=0;
+  const hTransPos=H_ON_HCN;
 
   // CN- departs gradually using cnLpProg — starts after erase3Prog completes
   const cnDepartT=state===3?Math.max(0,Math.min(1,cnLpProg)):
                   state===4?cnLpProg:0;
   // CN- ends up above and slightly right of the product molecule
-  const CN_DEPART={x:BL*2.0, y:BL*0.82, z:0};
+  const CN_DEPART={x:BL*1.4, y:BL*0.3, z:0};
   // HCN C and N depart together once H has left
   const hcnBodyPos=lerp(HCN_END,CN_DEPART,cnDepartT);
 
   const showHCNbody=state===3||state===4;
-  const showOH=state===4||(state===3&&hTransferT>=1);
-  const showTransferringH=(state===3&&hTransferT>0&&hTransferT<1);
-  const showHonHCN=(state===3&&hTransferT===0)||state<3;
+  const showOH=state===4;           // in product, H shown at O
+  const showTransferringH=false;    // no moving H
+  const showHonHCN=state<=3;        // H stays on HCN through step 2
 
   // Project all
   const pC  =proj(0,0,0);
@@ -475,20 +499,18 @@ function drawLoop(){
   }
   if(state>=2) drawBond(pC,pCN,false,'rgba(34,211,238,0.7)');
 
-  // HCN body (C and N atoms)
+  // HCN: two spheres — H (off-white) and CN (cyan), longer white bond between them
   if(showHCNbody){
     const pHCN_C=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
-    const pHCN_N=proj(hcnBodyPos.x+30,hcnBodyPos.y,hcnBodyPos.z);
-    drawBond(pHCN_C,pHCN_N,false,'rgba(167,139,250,0.5)',true);
-    // H still on HCN before transfer — H is now on the left (-30)
+    const pHCN_N=proj(hcnBodyPos.x+50,hcnBodyPos.y,hcnBodyPos.z);
+    // H still on HCN before transfer
     if(showHonHCN){
-      const pHCN_H=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
-      drawBond(pHCN_H,pHCN_C,false,'rgba(167,139,250,0.5)');
-      drawAtom(pHCN_H,10,COLS.HCN,'H');
+      const pHCN_H=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
+      // White bond H-CN
+      drawBond(pHCN_H,pHCN_N,false,'rgba(255,255,255,0.7)');
+      drawAtom(pHCN_H,13,COLS.H,'H');
     }
-    // curly arrow drawn separately in the curly arrows section below
-    drawAtom(pHCN_C,14,COLS.HCN,'C');
-    drawAtom(pHCN_N,12,COLS.HCN,'N');
+    drawAtom(pHCN_N,18,COLS.CN,'CN');
   }
 
   // Transferring H atom (moves from HCN to O)
@@ -525,7 +547,7 @@ function drawLoop(){
   // depth-sort and draw atoms
   const atoms=[
     {p:pC,  r:22,col:COLS.C,  lbl:'C',  show:true},
-    {p:pO,  r:20,col:(state===2&&paused)||state===3?COLS.Oneg:COLS.O, lbl:'O', show:true},
+    {p:pO,  r:20,col:COLS.O, lbl:'O', show:true},
     {p:pCH3,r:18,col:COLS.CH3,lbl:'CH\u2083',show:true},
     {p:pH,  r:14,col:COLS.H,  lbl:'H',  show:true},
     {p:pCN, r:20,col:COLS.CN, lbl:'CN\u207B',show:state===0||state===1}
@@ -604,82 +626,75 @@ function drawLoop(){
     drawLonePair({x:oLpX2,y:oLpY2},0,0,'#f87171');
   }
 
-  // STATE 3: curly arrows — same technique as step 1
+  // STATE 3: curly arrows
   if(state===3){
-    const pHCN_C_pos=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
-    const pHCN_H_pos=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_H_pos=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_N_pos=proj(hcnBodyPos.x+50,hcnBodyPos.y,hcnBodyPos.z);
 
-    // O- lone pair position — away from C
+    // Lone pair on O- — pointing away from C
     const oDirX=pO.x-pC.x, oDirY=pO.y-pC.y;
     const oDirLen=Math.sqrt(oDirX*oDirX+oDirY*oDirY)||1;
     const oLpX=pO.x+(oDirX/oDirLen)*28;
     const oLpY=pO.y+(oDirY/oDirLen)*28;
 
-    // O- lone pair dots fade out as arrow traces (electrons leaving O-)
+    // Lone pair fades as arrow traces
     ctx.globalAlpha=Math.max(0,1-arrow3Prog);
-    drawLonePair({x:oLpX,y:oLpY},0,0,'#f87171');
+    ctx.fillStyle='#f87171';
+    ctx.beginPath();ctx.arc(oLpX-5,oLpY,4,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(oLpX+5,oLpY,4,0,Math.PI*2);ctx.fill();
     ctx.globalAlpha=1;
 
-    // === ARROW 1: O- lone pair → H ===
-    // Start lerps from lone pair → O as it straightens (arrow becomes O-H bond)
-    const arrowStartX=oLpX+(pO.x-oLpX)*straight3Prog;
-    const arrowStartY=oLpY+(pO.y-oLpY)*straight3Prog;
-    const oh_dx=pHCN_H_pos.x-arrowStartX, oh_dy=pHCN_H_pos.y-arrowStartY;
-    const oh_len=Math.sqrt(oh_dx*oh_dx+oh_dy*oh_dy)||1;
-    const oh_perpX=-oh_dy/oh_len*55, oh_perpY=oh_dx/oh_len*55;
-    const oh_midX=(arrowStartX+pHCN_H_pos.x)/2, oh_midY=(arrowStartY+pHCN_H_pos.y)/2;
-    // Control point: curved when straight3Prog=0, straight midpoint when straight3Prog=1
-    const oh_cpX=(oh_midX+oh_perpX)+(oh_midX-(oh_midX+oh_perpX))*straight3Prog;
-    const oh_cpY=(oh_midY+oh_perpY)+(oh_midY-(oh_midY+oh_perpY))*straight3Prog;
+    // === ARROW 1: lone pair on O- → H sphere, curves down, straightens into bond ===
+    const midX=(oLpX+pHCN_H_pos.x)/2, midY=(oLpY+pHCN_H_pos.y)/2;
+    const cpCurveX=midX, cpCurveY=midY+70;
+    const straightMidX=(pO.x+pHCN_H_pos.x)/2, straightMidY=(pO.y+pHCN_H_pos.y)/2;
+    // Start lerps from lone pair toward O as it straightens
+    const a1StartX=oLpX+(pO.x-oLpX)*straight3Prog;
+    const a1StartY=oLpY+(pO.y-oLpY)*straight3Prog;
+    // Control point flattens toward straight midpoint
+    const a1CpX=cpCurveX+(straightMidX-cpCurveX)*straight3Prog;
+    const a1CpY=cpCurveY+(straightMidY-cpCurveY)*straight3Prog;
     if(straight3Prog<1){
-      drawCurlyArrow(arrowStartX,arrowStartY,pHCN_H_pos.x,pHCN_H_pos.y,oh_cpX,oh_cpY,'#ffffff',arrow3Prog);
+      drawCurlyArrow(a1StartX,a1StartY,pHCN_H_pos.x,pHCN_H_pos.y,a1CpX,a1CpY,'#ffffff',arrow3Prog);
     }
-    // O-H bond fades in smoothly with erase3Prog
+    // O-H bond fades in with erase3Prog
     if(erase3Prog>0){
       drawBond(pO,pHCN_H_pos,false,'rgba(148,163,184,'+erase3Prog+')');
     }
 
-    // === ARROW 2: H-C bond midpoint → C (simultaneous with arrow 1) ===
-    // Perpendicular to H->C direction, curves downward away from arrow 1
-    const hc_dx=pHCN_C_pos.x-pHCN_H_pos.x, hc_dy=pHCN_C_pos.y-pHCN_H_pos.y;
-    const hc_len=Math.sqrt(hc_dx*hc_dx+hc_dy*hc_dy)||1;
-    const hc_midX=(pHCN_H_pos.x+pHCN_C_pos.x)/2, hc_midY=(pHCN_H_pos.y+pHCN_C_pos.y)/2;
-    // Perp points downward (positive Y in screen = down)
-    const hc_cpX=hc_midX+hc_dy/hc_len*50, hc_cpY=hc_midY-hc_dx/hc_len*50;
-    // Arrow 2 traces with arrow3Prog, erases with erase3Prog
+    // === ARROW 2: H-CN midpoint → CN sphere, curves upward ===
+    const hc_midX=(pHCN_H_pos.x+pHCN_N_pos.x)/2;
+    const hc_midY=(pHCN_H_pos.y+pHCN_N_pos.y)/2;
+    const hc_cpX=hc_midX, hc_cpY=hc_midY-55;
     if(erase3Prog<1){
-      drawPartialCurveSegment(hc_midX,hc_midY,pHCN_C_pos.x,pHCN_C_pos.y,hc_cpX,hc_cpY,erase3Prog,arrow3Prog,'#ffffff');
+      drawPartialCurveSegment(hc_midX,hc_midY,pHCN_N_pos.x,pHCN_N_pos.y,hc_cpX,hc_cpY,erase3Prog,arrow3Prog,'#ffffff');
     }
 
-    // CN lone pair fades in on C atom of HCN once arrow 2 erases
+    // CN lone pair — vertically aligned on left side of CN sphere, moves with it
     if(cnLpProg>0){
-      // Lone pair aligned perpendicular to C-N bond (horizontal above C)
-      const cnDirX=pHCN_C_pos.x-pHCN_H_pos.x, cnDirY=pHCN_C_pos.y-pHCN_H_pos.y;
-      const cnDirLen=Math.sqrt(cnDirX*cnDirX+cnDirY*cnDirY)||1;
-      // Perpendicular to C-N = (-cnDirY, cnDirX), pointing upward
-      const cnPerpX=-cnDirY/cnDirLen, cnPerpY=cnDirX/cnDirLen;
-      const cnLpX=pHCN_C_pos.x+cnPerpX*24;
-      const cnLpY=pHCN_C_pos.y+cnPerpY*24;
+      // Left of CN sphere: offset in the -X screen direction from CN centre
+      const cnLpX=pHCN_N_pos.x-28;
+      const cnLpY=pHCN_N_pos.y;
       ctx.globalAlpha=cnLpProg;
-      drawLonePair({x:cnLpX,y:cnLpY},0,0,'#ffffff');
+      // Draw two dots stacked vertically
+      ctx.fillStyle='#ffffff';
+      ctx.beginPath();ctx.arc(cnLpX,cnLpY-6,3,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(cnLpX,cnLpY+6,3,0,Math.PI*2);ctx.fill();
       ctx.globalAlpha=1;
     }
   }
 
   // STATE 4: keep CN- lone pair visible on C atom permanently
   if(state===4){
-    const pHCN_C_f=proj(hcnBodyPos.x,hcnBodyPos.y,hcnBodyPos.z);
-    const pHCN_H_f=proj(hcnBodyPos.x-30,hcnBodyPos.y,hcnBodyPos.z);
-    const cnDirX=pHCN_C_f.x-pHCN_H_f.x, cnDirY=pHCN_C_f.y-pHCN_H_f.y;
-    const cnDirLen=Math.sqrt(cnDirX*cnDirX+cnDirY*cnDirY)||1;
-    // Lone pair perpendicular to C-N bond, aligned above C
-    const cnPerpX=-cnDirY/cnDirLen, cnPerpY=cnDirX/cnDirLen;
-    const cnLpX=pHCN_C_f.x+cnPerpX*24;
-    const cnLpY=pHCN_C_f.y+cnPerpY*24;
-    drawLonePair({x:cnLpX,y:cnLpY},0,0,'#ffffff');
+    const pHCN_N_f=proj(hcnBodyPos.x+50,hcnBodyPos.y,hcnBodyPos.z);
+    const pHCN_H_f=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
+    // CN lone pair — vertically aligned on left side of CN sphere
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();ctx.arc(pHCN_N_f.x-28,pHCN_N_f.y-6,3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(pHCN_N_f.x-28,pHCN_N_f.y+6,3,0,Math.PI*2);ctx.fill();
     // Label CN- as nucleophile
     ctx.font='10px Arial';ctx.textAlign='center';ctx.fillStyle='#c4b5fd';
-    ctx.fillText('CN⁻ (regenerated)',pHCN_C_f.x,pHCN_C_f.y-Math.round(34*pHCN_C_f.s));
+    ctx.fillText('CN⁻ (regenerated)',pHCN_N_f.x,pHCN_N_f.y-Math.round(34*pHCN_N_f.s));
   }
 
   // O- label during intermediate and early state 3
@@ -687,22 +702,27 @@ function drawLoop(){
     drawIntermediateLabel(pO);
   }
 
-  // bracket label at intermediate pause
+  // bracket — bounding box of all visible atoms
   if(state===2&&paused){
-    const pad=72*pC.s;
-    const bx=pC.x-pad,by=pC.y-pad*1.2,bw=pad*2,bh=pad*2.4,arm=10;
+    const pad=36;
+    const allPts=[pC,pO,pCH3,pH,pCN];
+    const minX=Math.min(...allPts.map(p=>p.x))-pad;
+    const maxX=Math.max(...allPts.map(p=>p.x))+pad;
+    const minY=Math.min(...allPts.map(p=>p.y))-pad;
+    const maxY=Math.max(...allPts.map(p=>p.y))+pad;
+    const arm=13;
     ctx.strokeStyle='#fbbf24';ctx.lineWidth=2;ctx.setLineDash([]);
-    ctx.beginPath();ctx.moveTo(bx+arm,by);ctx.lineTo(bx,by);ctx.lineTo(bx,by+bh);ctx.lineTo(bx+arm,by+bh);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(bx+bw-arm,by);ctx.lineTo(bx+bw,by);ctx.lineTo(bx+bw,by+bh);ctx.lineTo(bx+bw-arm,by+bh);ctx.stroke();
-    ctx.fillStyle='#fbbf24';ctx.font='bold 11px Arial';ctx.textAlign='center';
-    ctx.fillText('[Anionic Intermediate]\u207B',pC.x,by-52);
-    ctx.font='10px Arial';ctx.fillStyle='#fde68a';
-    ctx.fillText('sp\u00B3 carbon \u2022 tetrahedral',pC.x,by-38);
+    ctx.beginPath();ctx.moveTo(minX+arm,minY);ctx.lineTo(minX,minY);ctx.lineTo(minX,maxY);ctx.lineTo(minX+arm,maxY);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(maxX-arm,minY);ctx.lineTo(maxX,minY);ctx.lineTo(maxX,maxY);ctx.lineTo(maxX-arm,maxY);ctx.stroke();
+    ctx.fillStyle='#fbbf24';ctx.font='bold 13px Arial';ctx.textAlign='center';
+    ctx.fillText('[Anionic Intermediate]\u207B',(minX+maxX)/2,minY-16);
+    ctx.font='12px Arial';ctx.fillStyle='#fde68a';
+    ctx.fillText('sp\u00B3 carbon \u2022 tetrahedral',(minX+maxX)/2,minY-34);
   }
 
   // product label
   if(state===4){
-    ctx.font='bold 11px Arial';ctx.textAlign='center';
+    ctx.font='bold 13px Arial';ctx.textAlign='center';
     ctx.fillStyle='#4ade80';
     ctx.fillText('Cyanohydrin: CH\u2083CH(OH)CN',W/2,H-30);
   }

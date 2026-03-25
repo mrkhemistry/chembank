@@ -167,6 +167,35 @@ function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
   }
 }
 
+function lightenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;
+}
+function darkenCol(hex,t){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;
+}
+function drawAtomSphere(x,y,r,col,lbl){
+  const g=ctx.createRadialGradient(x-r*0.3,y-r*0.32,r*0.05,x,y,r*1.05);
+  g.addColorStop(0,'#ffffff');
+  g.addColorStop(0.18,lightenCol(col,0.65));
+  g.addColorStop(0.5,col);
+  g.addColorStop(1,darkenCol(col,0.55));
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=darkenCol(col,0.3);ctx.lineWidth=1;ctx.stroke();
+  const h=ctx.createRadialGradient(x-r*0.32,y-r*0.35,0,x-r*0.32,y-r*0.35,r*0.42);
+  h.addColorStop(0,'rgba(255,255,255,0.52)');
+  h.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=h;ctx.fill();
+  const isLight=col==='#e2e8f0'||col==='#22d3ee';
+  ctx.fillStyle=isLight?'#0f172a':'rgba(255,255,255,0.92)';
+  ctx.font='bold '+Math.max(8,Math.round(r*0.55))+'px Arial';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(lbl,x,y+1);
+}
+
 function setStep(n){
   for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('active',i===n);
   const lbs=['Ready','Cl\u207a attacks ring','Arenium ion','H\u207a abstraction','Chlorobenzene'];
@@ -264,8 +293,8 @@ function drawLoop(){
 
   // Ring vertices
   for(let i=0;i<6;i++){
-    ctx.beginPath();ctx.arc(pts[i].x,pts[i].y,5,0,Math.PI*2);
-    ctx.fillStyle='rgba(255,255,255,0.6)';ctx.fill();
+    ctx.beginPath();ctx.arc(pts[i].x,pts[i].y,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(148,163,184,0.9)';ctx.fill();
   }
 
   // Cl-C bond fades in as straightProg completes
@@ -291,17 +320,14 @@ function drawLoop(){
   }
 
   // Cl label
-  ctx.font='bold 15px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillStyle='#22d3ee';ctx.fillText('Cl',clX,clY-12);
+  drawAtomSphere(clX,clY-12,20,'#22d3ee','Cl');
   if(state===0||(state===1&&straightProg<1)){ctx.font='bold 18px Arial';ctx.fillStyle='#fbbf24';ctx.fillText('+',clX+18,clY-24);}
 
-  // H label — drifts right in state 3
+  // H atom sphere — drifts right in state 3
   if(showH){
-    ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle='#94a3b8';
     const hLblX=state===3?hDriftX:hX+8;
     const hLblY=state===3?hDriftY:hY-6;
-    ctx.fillText('H',hLblX,hLblY);
+    drawAtomSphere(hLblX,hLblY,14,'#e2e8f0','H');
   }
 
   // Arenium ion intermediate
@@ -312,36 +338,35 @@ function drawLoop(){
     // + in centre
     ctx.font='bold 24px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('+',cx,cy);
-    ctx.fillStyle='#fbbf24';ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('[Arenium Ion]⁺',cx,cy-ringR-30);
+    ctx.fillStyle='#fbbf24';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    // Place label above Cl and H atoms
+    const labelY=Math.min(clY-12,hY-6)-42;
+    ctx.fillText('[Arenium Ion]⁺',cx,labelY);
   }
 
   // Product labels
   if(state===4){
-    ctx.font='11px Arial';ctx.textAlign='center';
-    ctx.fillStyle='#4ade80';ctx.fillText('chlorobenzene',cx,cy+ringR+32);
-    ctx.fillStyle='#c4b5fd';ctx.fillText('HCl + FeCl₃ regenerated',cx+ringR*1.8,hY+10);
+    ctx.font='13px Arial';ctx.textAlign='center';
+    ctx.fillStyle='#4ade80';ctx.fillText('chlorobenzene',cx,cy+ringR+36);
+    ctx.fillStyle='#c4b5fd';ctx.fillText('HCl + FeCl₃ regenerated',cx+ringR*1.8,hY+14);
   }
 
   // === CURLY ARROWS ===
 
   // State 0: labels
   if(state===0){
-    ctx.font='10px Arial';ctx.textAlign='center';
-    ctx.fillStyle='#22d3ee';ctx.fillText('Cl\u207a  electrophile',clX,clY-36);
+    ctx.font='13px Arial';ctx.textAlign='center';
+    ctx.fillStyle='#22d3ee';ctx.fillText('Cl\u207a  electrophile',clX,clY-52);
     ctx.fillStyle='#94a3b8';ctx.fillText('benzene',cx,cy+ringR+32);
   }
 
-  // State 1: pi arc right-end → Cl+, arrow traces then straightens into C-Cl bond
+  // State 1: ring centre → Cl+, arrow traces then straightens into C-Cl bond
   if(state===1){
-    const arcR=ringR*0.55;
-    const arcEndX=cx+arcR*Math.cos(-Math.PI/6);
-    const arcEndY=cy+arcR*Math.sin(-Math.PI/6);
-    // End point: Cl label position
+    // Start from ring centre (middle of circle)
     const endX=clX, endY=clY-12;
-    // Start lerps from arc end → pts[0] as it straightens
-    const startX=arcEndX+(pts[0].x-arcEndX)*straightProg;
-    const startY=arcEndY+(pts[0].y-arcEndY)*straightProg;
+    // Start lerps from ring centre → pts[0] as it straightens
+    const startX=cx+(pts[0].x-cx)*straightProg;
+    const startY=cy+(pts[0].y-cy)*straightProg;
     // Control point lerps from curved offset → straight midpoint
     const curveCpX=(startX+endX)/2+55;
     const curveCpY=(startY+endY)/2-25;

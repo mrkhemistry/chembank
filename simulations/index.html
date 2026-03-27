@@ -291,7 +291,7 @@ function atom(ctx,x,y,r,col,lbl){
   const h=ctx.createRadialGradient(x-r*.32,y-r*.35,0,x-r*.32,y-r*.35,r*.42);
   h.addColorStop(0,'rgba(255,255,255,.52)');h.addColorStop(1,'rgba(255,255,255,0)');
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
-  if(lbl){ctx.fillStyle='#0f172a';ctx.font='bold '+Math.round(r*.62)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,x,y+1);}
+  // no label
 }
 function rod(ctx,x1,y1,x2,y2){
   const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/len*3,ny=dx/len*3;
@@ -322,9 +322,9 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const nuX=30,cX=105,brX=148,y=75,nuR=11,cR=17,brR=11;
   rod(ctx,cX,y,brX,y);
   arrow(ctx,nuX+11,y,cX-cR-3,y+3,(nuX+cX)/2,y+38);
-  atom(ctx,brX,y,brR,'#3b82f6','');
-  atom(ctx,cX,y,cR,'#fbbf24','');
-  atom(ctx,nuX,y,nuR,'#dc143c','Nu');
+  atom(ctx,brX,y,brR,'#3b82f6');
+  atom(ctx,cX,y,cR,'#fbbf24');
+  atom(ctx,nuX,y,nuR,'#dc143c');
 })();
 
 // ── SN1 ──────────────────────────────────────────────────────────
@@ -335,9 +335,9 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   rod(ctx,cX,y,xX,y);
   const mid=(cX+xX)/2;
   arrow(ctx,mid,y+4,xX,y+xR+2,mid,y+42);
-  atom(ctx,xX,y,xR,'#4ade80','');
-  atom(ctx,cX,y,cR,'#fbbf24','');
-  atom(ctx,nuX,y,nuR,'#dc143c','Nu');
+  atom(ctx,xX,y,xR,'#4ade80');
+  atom(ctx,cX,y,cR,'#fbbf24');
+  atom(ctx,nuX,y,nuR,'#dc143c');
 })();
 
 // ── NA ──────────────────────────────────────────────────────────
@@ -355,9 +355,9 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   // Arrow 2: pi bond midpoint → O, curves right
   const pmY=(cY-cR+oY+oR)/2;
   arrow(ctx,cX+6,pmY,oX+oR+4,oY+4,cX+44,pmY-8);
-  atom(ctx,oX,oY,oR,'#3b82f6','');
-  atom(ctx,cX,cY,cR,'#fbbf24','');
-  atom(ctx,nuX,cY,nuR,'#dc143c','Nu');
+  atom(ctx,oX,oY,oR,'#3b82f6');
+  atom(ctx,cX,cY,cR,'#fbbf24');
+  atom(ctx,nuX,cY,nuR,'#dc143c');
 })();
 
 // ── EA ──────────────────────────────────────────────────────────
@@ -369,7 +369,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   rod(ctx,brX+brR,y,br2X-brR,y);
   const pi=(c1X+c2X)/2;
   arrow(ctx,pi,y-5,brX-brR-3,y-5,((pi+brX)/2),y-42);
-  atom(ctx,br2X,y,brR,'#a855f7','');
+  atom(ctx,br2X,y,brR,'#a855f7');
   atom(ctx,brX,y,brR,'#a855f7','');
   atom(ctx,c2X,y,cR,'#4ade80','');
   atom(ctx,c1X,y,cR,'#ff6b00','');
@@ -415,7 +415,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     h.addColorStop(0,'rgba(255,255,255,0.52)');h.addColorStop(1,'rgba(255,255,255,0)');
     ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
     ctx.fillStyle='#0f172a';ctx.font='bold '+Math.round(r*0.6)+'px Arial';
-    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,p.x,p.y+1);
+    // no label
   }
   function drawRod(p1,p2){
     const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1;
@@ -428,8 +428,8 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const pts=bonds.map(b=>({p:proj(b[0]*BL,b[1]*BL,b[2]*BL),b}));
   pts.sort((a,b)=>b.p.y-a.p.y);
   bonds.forEach(b=>drawRod(pA,proj(b[0]*BL,b[1]*BL,b[2]*BL)));
-  pts.forEach(({p})=>drawAtom(p,10,'#22d3ee','X'));
-  drawAtom(pA,13,'#f97316','A');
+  pts.forEach(({p})=>drawAtom(p,10,'#22d3ee'));
+  drawAtom(pA,13,'#f97316');
 })();
 </script>
 </body>

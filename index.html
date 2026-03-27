@@ -11,6 +11,7 @@
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     
     <style>
         /* Import distinctive fonts */
@@ -2196,18 +2197,25 @@ Option D" required></textarea>
 
                     <!-- Enrolment chart -->
                     <div style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.3); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
                             <div>
                                 <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">📈 Student Enrolment</div>
                                 <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem;">New students registered per month</div>
                             </div>
-                            <select id="enrolmentYearFilter" onchange="renderEnrolmentChart()" style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.3); border-radius: 6px; color: var(--light); padding: 0.4rem 0.8rem; font-size: 0.85rem;">
-                            </select>
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; opacity: 0.85;">
+                                    <input type="checkbox" id="enrolmentBenchmarkToggle" onchange="renderEnrolmentChart()" style="width: auto; cursor: pointer; accent-color: var(--accent);">
+                                    Compare with:
+                                </label>
+                                <select id="enrolmentBenchmarkYear" onchange="renderEnrolmentChart()" style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; color: var(--light); padding: 0.3rem 0.6rem; font-size: 0.85rem;"></select>
+                                <select id="enrolmentYearFilter" onchange="renderEnrolmentChart()" style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.3); border-radius: 6px; color: var(--light); padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;"></select>
+                            </div>
                         </div>
-                        <div style="position: relative; height: 180px;" id="enrolmentChartWrap">
+                        <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap;" id="enrolmentLegend"></div>
+                        <div style="position: relative; height: 200px;">
                             <canvas id="enrolmentChart"></canvas>
                         </div>
-                        <div style="text-align: center; margin-top: 0.8rem; font-size: 0.8rem; opacity: 0.5;" id="enrolmentChartFooter"></div>
+                        <div style="text-align: center; margin-top: 0.6rem; font-size: 0.8rem; opacity: 0.5;" id="enrolmentChartFooter"></div>
                     </div>
 
                     <!-- Tabs -->
@@ -2828,7 +2836,13 @@ Option D" required></textarea>
         function redirectBasedOnRole() {
             document.getElementById('loadingOverlay').style.display = 'none';
             
-            if (userRole === 'admin') {
+            if (userRole === 'archived') {
+                // Archived students cannot access the app
+                alert('Your account has been archived and is no longer active.\n\nPlease contact Mr Khemistry if you believe this is an error.');
+                supabaseClient.auth.signOut();
+                showAuthView('login');
+                return;
+            } else if (userRole === 'admin') {
                 // Admin sees all 4 cards
                 const analyticsCard = document.getElementById('analyticsCard');
                 if (analyticsCard) analyticsCard.style.display = 'block';
@@ -5401,11 +5415,11 @@ Option D" required></textarea>
             });
 
             try {
-                // 1. Load all students
+                // 1. Load all students (active + archived)
                 const { data: students, error: sErr } = await supabaseClient
                     .from('user_profiles')
                     .select('id, full_name, email, created_at, role')
-                    .in('role', ['student', 'premium_student'])
+                    .in('role', ['student', 'premium_student', 'archived'])
                     .order('full_name');
                 if (sErr) throw sErr;
 
@@ -5447,14 +5461,17 @@ Option D" required></textarea>
 
         function renderAnalyticsSummary() {
             const { students, attempts } = analyticsData;
+            const activeStudents = students.filter(s => s.role !== 'archived');
 
-            document.getElementById('statTotalStudents').textContent = students.length;
-            document.getElementById('statTotalQuizzes').textContent = attempts.length;
+            document.getElementById('statTotalStudents').textContent = activeStudents.length;
 
-            const avgScore = attempts.length > 0
-                ? Math.round(attempts.reduce((sum, a) => sum + (a.score || 0), 0) / attempts.length)
+            const activeAttempts = attempts.filter(a => activeStudents.some(s => s.id === a.user_id));
+            document.getElementById('statTotalQuizzes').textContent = activeAttempts.length;
+
+            const avgScore = activeAttempts.length > 0
+                ? Math.round(activeAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / activeAttempts.length)
                 : 0;
-            document.getElementById('statAvgScore').textContent = attempts.length > 0 ? avgScore + '%' : 'N/A';
+            document.getElementById('statAvgScore').textContent = activeAttempts.length > 0 ? avgScore + '%' : 'N/A';
 
             // Find weakest topic from responses
             const topicStats = computeTopicStats();
@@ -5475,6 +5492,8 @@ Option D" required></textarea>
             renderEnrolmentChart();
         }
 
+        let enrolmentChartInstance = null;
+
         function populateEnrolmentYearFilter() {
             const { students } = analyticsData;
             const years = new Set();
@@ -5484,98 +5503,141 @@ Option D" required></textarea>
                 if (s.created_at) years.add(new Date(s.created_at).getFullYear());
             });
             const sorted = Array.from(years).sort((a, b) => b - a);
-            const sel = document.getElementById('enrolmentYearFilter');
-            sel.innerHTML = sorted.map(y =>
+
+            const mainSel = document.getElementById('enrolmentYearFilter');
+            mainSel.innerHTML = sorted.map(y =>
                 `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
             ).join('');
+
+            // Benchmark year — all years except currently selected main year
+            const benchSel = document.getElementById('enrolmentBenchmarkYear');
+            const prevYear = currentYear - 1;
+            benchSel.innerHTML = sorted
+                .filter(y => y !== currentYear)
+                .map(y => `<option value="${y}" ${y === prevYear ? 'selected' : ''}>${y}</option>`)
+                .join('');
         }
 
         function renderEnrolmentChart() {
             const { students } = analyticsData;
-            const selectedYear = parseInt(document.getElementById('enrolmentYearFilter').value);
             const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const selectedYear = parseInt(document.getElementById('enrolmentYearFilter').value);
+            const benchmarkToggle = document.getElementById('enrolmentBenchmarkToggle');
+            const showBenchmark = benchmarkToggle && benchmarkToggle.checked;
+            const benchmarkYear = showBenchmark
+                ? parseInt(document.getElementById('enrolmentBenchmarkYear').value)
+                : null;
 
-            // Count enrolments per month for selected year
-            const counts = new Array(12).fill(0);
-            students.forEach(s => {
-                if (!s.created_at) return;
-                const d = new Date(s.created_at);
-                if (d.getFullYear() === selectedYear) counts[d.getMonth()]++;
-            });
-
-            const total = counts.reduce((a, b) => a + b, 0);
-            const maxCount = Math.max(...counts, 1);
-            const canvas = document.getElementById('enrolmentChart');
-            const wrap = document.getElementById('enrolmentChartWrap');
-            canvas.width = wrap.offsetWidth || 700;
-            canvas.height = 180;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const padL = 36, padR = 16, padT = 16, padB = 40;
-            const chartW = canvas.width - padL - padR;
-            const chartH = canvas.height - padT - padB;
-            const barW = Math.floor(chartW / 12 * 0.6);
-            const gap = Math.floor(chartW / 12);
-
-            // Grid lines
-            ctx.strokeStyle = 'rgba(0,217,255,0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= 4; i++) {
-                const y = padT + chartH - (chartH / 4) * i;
-                ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + chartW, y); ctx.stroke();
-                const label = Math.round(maxCount / 4 * i);
-                ctx.fillStyle = 'rgba(240,244,248,0.4)';
-                ctx.font = '10px DM Sans, sans-serif';
-                ctx.textAlign = 'right';
-                ctx.fillText(label, padL - 4, y + 3);
+            // Count enrolments per month — include all students for enrolment chart
+            function countByMonth(year) {
+                const counts = new Array(12).fill(0);
+                students.forEach(s => {
+                    if (!s.created_at) return;
+                    const d = new Date(s.created_at);
+                    if (d.getFullYear() === year) counts[d.getMonth()]++;
+                });
+                return counts;
             }
 
-            // Bars
             const now = new Date();
-            counts.forEach((count, i) => {
-                const x = padL + gap * i + (gap - barW) / 2;
-                const barH = count === 0 ? 0 : Math.max(4, (count / maxCount) * chartH);
-                const y = padT + chartH - barH;
-                const isFuture = selectedYear === now.getFullYear() && i > now.getMonth();
+            const mainCounts = countByMonth(selectedYear);
+            // Null out future months for current year
+            const mainData = mainCounts.map((v, i) =>
+                selectedYear === now.getFullYear() && i > now.getMonth() ? null : v
+            );
+            const totalMain = mainCounts.slice(0, selectedYear === now.getFullYear() ? now.getMonth() + 1 : 12).reduce((a, b) => a + b, 0);
 
-                // Bar fill
-                const grad = ctx.createLinearGradient(0, y, 0, padT + chartH);
-                if (isFuture) {
-                    grad.addColorStop(0, 'rgba(0,217,255,0.1)');
-                    grad.addColorStop(1, 'rgba(0,217,255,0.05)');
-                } else if (count > 0) {
-                    grad.addColorStop(0, 'rgba(0,217,255,0.9)');
-                    grad.addColorStop(1, 'rgba(255,107,53,0.7)');
-                } else {
-                    grad.addColorStop(0, 'rgba(0,217,255,0.15)');
-                    grad.addColorStop(1, 'rgba(0,217,255,0.05)');
-                }
-                ctx.fillStyle = grad;
-                ctx.beginPath();
-                ctx.roundRect(x, y, barW, barH, [3, 3, 0, 0]);
-                ctx.fill();
+            const datasets = [{
+                label: String(selectedYear),
+                data: mainData,
+                borderColor: '#00D9FF',
+                backgroundColor: 'rgba(0,217,255,0.08)',
+                borderWidth: 2,
+                pointRadius: 4,
+                pointBackgroundColor: '#00D9FF',
+                pointBorderColor: 'rgba(10,14,39,1)',
+                pointBorderWidth: 1.5,
+                tension: 0.35,
+                fill: true,
+                spanGaps: false
+            }];
 
-                // Count label on bar
-                if (count > 0 && !isFuture) {
-                    ctx.fillStyle = 'rgba(240,244,248,0.9)';
-                    ctx.font = 'bold 11px DM Sans, sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(count, x + barW / 2, y - 4);
-                }
+            let benchmarkTotal = 0;
+            if (showBenchmark && benchmarkYear) {
+                const benchCounts = countByMonth(benchmarkYear);
+                benchmarkTotal = benchCounts.reduce((a, b) => a + b, 0);
+                datasets.push({
+                    label: String(benchmarkYear),
+                    data: benchCounts,
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255,107,53,0)',
+                    borderWidth: 1.5,
+                    borderDash: [5, 4],
+                    pointRadius: 3,
+                    pointBackgroundColor: '#FF6B35',
+                    pointBorderColor: 'rgba(10,14,39,1)',
+                    pointBorderWidth: 1,
+                    tension: 0.35,
+                    fill: false
+                });
+            }
 
-                // Month label
-                ctx.fillStyle = isFuture ? 'rgba(240,244,248,0.25)' : 'rgba(240,244,248,0.7)';
-                ctx.font = '11px DM Sans, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(months[i], x + barW / 2, padT + chartH + 16);
-            });
+            // Legend
+            const legendEl = document.getElementById('enrolmentLegend');
+            legendEl.innerHTML = `
+                <span style="display:flex; align-items:center; gap:6px; font-size:0.8rem; opacity:0.8;">
+                    <span style="width:20px; height:2px; background:#00D9FF; display:inline-block; border-radius:1px;"></span>
+                    ${selectedYear} (${totalMain} enrolled)
+                </span>
+                ${showBenchmark && benchmarkYear ? `
+                <span style="display:flex; align-items:center; gap:6px; font-size:0.8rem; opacity:0.7;">
+                    <span style="width:20px; height:2px; background:#FF6B35; display:inline-block; border-radius:1px; border-top: 2px dashed #FF6B35; height:0;"></span>
+                    ${benchmarkYear} (${benchmarkTotal} enrolled)
+                </span>` : ''}
+            `;
 
-            // Footer summary
+            // Footer
             document.getElementById('enrolmentChartFooter').textContent =
-                total === 0
+                totalMain === 0
                     ? `No enrolments recorded for ${selectedYear}`
-                    : `${total} student${total !== 1 ? 's' : ''} enrolled in ${selectedYear}`;
+                    : showBenchmark && benchmarkYear
+                        ? `${totalMain} enrolled in ${selectedYear}  ·  ${benchmarkTotal} enrolled in ${benchmarkYear}  ·  ${totalMain > benchmarkTotal ? '▲' : totalMain < benchmarkTotal ? '▼' : '='} ${Math.abs(totalMain - benchmarkTotal)} difference`
+                        : `${totalMain} student${totalMain !== 1 ? 's' : ''} enrolled in ${selectedYear}`;
+
+            // Destroy old chart if exists
+            if (enrolmentChartInstance) {
+                enrolmentChartInstance.destroy();
+                enrolmentChartInstance = null;
+            }
+
+            const canvas = document.getElementById('enrolmentChart');
+            enrolmentChartInstance = new Chart(canvas, {
+                type: 'line',
+                data: { labels: months, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y ?? 0} student${ctx.parsed.y !== 1 ? 's' : ''}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0,217,255,0.07)' },
+                            ticks: { color: 'rgba(240,244,248,0.5)', font: { size: 11 }, autoSkip: false, maxRotation: 0 }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,217,255,0.07)' },
+                            ticks: { color: 'rgba(240,244,248,0.5)', font: { size: 11 }, stepSize: 1, precision: 0 }
+                        }
+                    }
+                }
+            });
         }
 
         function computeTopicStats(userId = null) {
@@ -5594,69 +5656,105 @@ Option D" required></textarea>
 
         function renderStudentTable() {
             const { students, attempts } = analyticsData;
+            const activeStudents = students.filter(s => s.role !== 'archived');
+            const archivedStudents = students.filter(s => s.role === 'archived');
 
-            if (students.length === 0) {
+            if (activeStudents.length === 0 && archivedStudents.length === 0) {
                 document.getElementById('studentTableContainer').innerHTML =
                     '<div class="empty-state"><h3>No students registered yet</h3><p>Students will appear here once they sign up.</p></div>';
                 return;
             }
 
-            // Build per-student summary
-            const studentSummaries = students.map(s => {
-                const studentAttempts = attempts.filter(a => a.user_id === s.id);
-                const avgScore = studentAttempts.length > 0
-                    ? Math.round(studentAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / studentAttempts.length)
-                    : null;
-                const lastAttempt = studentAttempts.length > 0 ? studentAttempts[0].completed_at : null;
-                return { ...s, quizCount: studentAttempts.length, avgScore, lastAttempt };
-            });
+            function buildSummaries(list) {
+                return list.map(s => {
+                    const studentAttempts = attempts.filter(a => a.user_id === s.id);
+                    const avgScore = studentAttempts.length > 0
+                        ? Math.round(studentAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / studentAttempts.length)
+                        : null;
+                    const lastAttempt = studentAttempts.length > 0 ? studentAttempts[0].completed_at : null;
+                    return { ...s, quizCount: studentAttempts.length, avgScore, lastAttempt };
+                }).sort((a, b) => a.full_name.localeCompare(b.full_name));
+            }
 
-            // Sort by name
-            studentSummaries.sort((a, b) => a.full_name.localeCompare(b.full_name));
+            function buildRows(list, isArchived) {
+                return list.map(s => {
+                    const scoreBadgeClass = s.avgScore === null ? '' :
+                        s.avgScore >= 70 ? 'score-high' :
+                        s.avgScore >= 50 ? 'score-mid' : 'score-low';
+                    const scoreText = s.avgScore === null ? '<span style="opacity:0.5">No quizzes</span>'
+                        : `<span class="score-badge ${scoreBadgeClass}">${s.avgScore}%</span>`;
+                    const lastActive = s.lastAttempt
+                        ? new Date(s.lastAttempt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '<span style="opacity:0.5">—</span>';
 
-            let html = `
+                    const safeName = escapeHtml(s.full_name).replace(/'/g, "&#39;");
+
+                    if (isArchived) {
+                        return `
+                            <div class="student-row" style="opacity: 0.65;" data-uid="${s.id}">
+                                <div>
+                                    <div style="font-weight:600; display:flex; align-items:center; gap:0.5rem;">
+                                        ${escapeHtml(s.full_name)}
+                                        <span style="background:rgba(128,128,128,0.3); color:#aaa; font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:10px;">ARCHIVED</span>
+                                    </div>
+                                    <div style="font-size:0.8rem; opacity:0.6;">${escapeHtml(s.email)}</div>
+                                </div>
+                                <div>${s.quizCount}</div>
+                                <div>${scoreText}</div>
+                                <div style="font-size:0.9rem;">${lastActive}</div>
+                                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                    <span style="color:var(--primary); font-size:0.9rem; cursor:pointer;" onclick="openDrilldownById('${s.id}', '${safeName}')">View →</span>
+                                    <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="handleRestoreStudent(event, '${s.id}', '${safeName}')">Restore</button>
+                                    <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="handleDeleteStudent(event, '${s.id}', '${safeName}')">Delete</button>
+                                </div>
+                            </div>`;
+                    }
+
+                    const isPremium = s.role === 'premium_student';
+                    const roleBadge = isPremium
+                        ? `<span style="background:var(--accent); color:var(--dark); font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:10px;">PREMIUM</span>`
+                        : `<span style="background:rgba(0,217,255,0.15); color:var(--primary); font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:10px; border:1px solid var(--primary);">STUDENT</span>`;
+                    const upgradeBtn = isPremium
+                        ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="togglePremium(event, '${s.id}', '${safeName}', false)">Downgrade</button>`
+                        : `<button class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="togglePremium(event, '${s.id}', '${safeName}', true)">Upgrade</button>`;
+
+                    return `
+                        <div class="student-row" data-uid="${s.id}" data-name="${escapeHtml(s.full_name)}">
+                            <div style="cursor:pointer;" onclick="openDrilldownById('${s.id}', '${safeName}')">
+                                <div style="font-weight:600; display:flex; align-items:center; gap:0.5rem;">${escapeHtml(s.full_name)} ${roleBadge}</div>
+                                <div style="font-size:0.8rem; opacity:0.6;">${escapeHtml(s.email)}</div>
+                            </div>
+                            <div>${s.quizCount}</div>
+                            <div>${scoreText}</div>
+                            <div style="font-size:0.9rem;">${lastActive}</div>
+                            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                                <span style="color:var(--primary); font-size:0.9rem; cursor:pointer;" onclick="openDrilldownById('${s.id}', '${safeName}')">View →</span>
+                                ${upgradeBtn}
+                                <button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem; border-color:var(--accent); color:var(--accent);" onclick="handleArchiveStudent(event, '${s.id}', '${safeName}')">Archive</button>
+                                <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="handleDeleteStudent(event, '${s.id}', '${safeName}')">Delete</button>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+
+            const activeSummaries = buildSummaries(activeStudents);
+            const archivedSummaries = buildSummaries(archivedStudents);
+
+            const headerRow = `
                 <div class="student-row header-row">
-                    <div>Student</div>
-                    <div>Quizzes</div>
-                    <div>Avg Score</div>
-                    <div>Last Active</div>
-                    <div>Action</div>
-                </div>
-            `;
+                    <div>Student</div><div>Quizzes</div><div>Avg Score</div><div>Last Active</div><div>Action</div>
+                </div>`;
 
-            studentSummaries.forEach(s => {
-                const scoreBadgeClass = s.avgScore === null ? '' :
-                    s.avgScore >= 70 ? 'score-high' :
-                    s.avgScore >= 50 ? 'score-mid' : 'score-low';
-                const scoreText = s.avgScore === null ? '<span style="opacity:0.5">No quizzes</span>'
-                    : `<span class="score-badge ${scoreBadgeClass}">${s.avgScore}%</span>`;
-                const lastActive = s.lastAttempt
-                    ? new Date(s.lastAttempt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : '<span style="opacity:0.5">—</span>';
-                const isPremium = s.role === 'premium_student';
-                const roleBadge = isPremium
-                    ? `<span style="background:var(--accent); color:var(--dark); font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:10px;">PREMIUM</span>`
-                    : `<span style="background:rgba(0,217,255,0.15); color:var(--primary); font-size:0.7rem; font-weight:700; padding:0.15rem 0.5rem; border-radius:10px; border:1px solid var(--primary);">STUDENT</span>`;
-                const upgradeBtn = isPremium
-                    ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="togglePremium(event, '${s.id}', '${escapeHtml(s.full_name).replace(/'/g, "&#39;")}', false)">Downgrade</button>`
-                    : `<button class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="togglePremium(event, '${s.id}', '${escapeHtml(s.full_name).replace(/'/g, "&#39;")}', true)">Upgrade</button>`;
-                 html += `
-                     <div class="student-row" data-uid="${s.id}" data-name="${escapeHtml(s.full_name)}">
-                         <div style="cursor:pointer;" onclick="openDrilldownById('${s.id}', '${escapeHtml(s.full_name).replace(/'/g, "&#39;")}')">
-                             <div style="font-weight:600; display:flex; align-items:center; gap:0.5rem;">${escapeHtml(s.full_name)} ${roleBadge}</div>
-                             <div style="font-size:0.8rem; opacity:0.6;">${escapeHtml(s.email)}</div>
-                         </div>
-                         <div>${s.quizCount}</div>
-                         <div>${scoreText}</div>
-                         <div style="font-size:0.9rem;">${lastActive}</div>
-                         <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                             <span style="color:var(--primary); font-size:0.9rem; cursor:pointer;" onclick="openDrilldownById('${s.id}', '${escapeHtml(s.full_name).replace(/'/g, "&#39;")}')">View →</span>
-                             ${upgradeBtn}
-                             <button class="btn btn-danger" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="handleDeleteStudent(event, '${s.id}', '${escapeHtml(s.full_name).replace(/'/g, "&#39;")}')">Delete</button>
-                         </div>
-                     </div>
-                 `;
-            });
+            let html = headerRow + buildRows(activeSummaries, false);
+
+            if (archivedSummaries.length > 0) {
+                html += `
+                    <div style="margin: 1.5rem 0 0.75rem; padding-top: 1rem; border-top: 1px solid rgba(0,217,255,0.15); display:flex; align-items:center; gap:0.75rem;">
+                        <span style="font-size:0.85rem; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:0.5px;">Archived Students (${archivedSummaries.length})</span>
+                        <span style="font-size:0.8rem; opacity:0.5;">— excluded from stats and averages</span>
+                    </div>
+                    ${buildRows(archivedSummaries, true)}`;
+            }
 
             document.getElementById('studentTableContainer').innerHTML = html;
         }
@@ -5692,6 +5790,52 @@ Option D" required></textarea>
             const txt = document.createElement('textarea');
             txt.innerHTML = studentName;
             deleteStudent(userId, txt.value);
+        }
+
+        function handleArchiveStudent(event, userId, studentName) {
+            event.stopPropagation();
+            const txt = document.createElement('textarea');
+            txt.innerHTML = studentName;
+            archiveStudent(userId, txt.value);
+        }
+
+        function handleRestoreStudent(event, userId, studentName) {
+            event.stopPropagation();
+            const txt = document.createElement('textarea');
+            txt.innerHTML = studentName;
+            restoreStudent(userId, txt.value);
+        }
+
+        async function archiveStudent(userId, studentName) {
+            if (!confirm(`Archive "${studentName}"?\n\nThey will no longer be able to log in. Their quiz history is preserved and they will appear in the Archived section below. You can restore them at any time.`)) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('user_profiles')
+                    .update({ role: 'archived' })
+                    .eq('id', userId);
+                if (error) throw error;
+                alert(`"${studentName}" has been archived successfully.`);
+                loadAnalytics();
+            } catch (err) {
+                console.error('Archive error:', err);
+                alert('Error archiving student: ' + err.message);
+            }
+        }
+
+        async function restoreStudent(userId, studentName) {
+            if (!confirm(`Restore "${studentName}"?\n\nThey will be restored as a standard Student (TYS access only). You can upgrade them to Premium after restoring.`)) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('user_profiles')
+                    .update({ role: 'student' })
+                    .eq('id', userId);
+                if (error) throw error;
+                alert(`"${studentName}" has been restored as a Student.`);
+                loadAnalytics();
+            } catch (err) {
+                console.error('Restore error:', err);
+                alert('Error restoring student: ' + err.message);
+            }
         }
 
         async function deleteStudent(userId, studentName) {

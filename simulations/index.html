@@ -72,6 +72,7 @@
   .thumb-na  { background: linear-gradient(135deg, #0a1f0f, #0f2820); }
   .thumb-ea  { background: linear-gradient(135deg, #1f100a, #2a1a08); }
   .thumb-es  { background: linear-gradient(135deg, #100a1f, #1a0a2a); }
+  .thumb-vsepr { background: linear-gradient(135deg, #0a1628, #0d1f35); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -81,6 +82,7 @@
   .tag-org  { background: rgba(52,211,153,0.12);  color: #6ee7b7; border: 1px solid rgba(52,211,153,0.2); }
   .tag-mech { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
   .tag-new  { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
+  .tag-bond { background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.2); }
 
   .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.2; }
   .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
@@ -137,7 +139,7 @@
   <!-- SN2 — LIVE -->
   <a href="./sn2.html" class="sim-card" data-tags="substitution">
     <div class="card-thumb thumb-sn2">
-      <div class="card-thumb-icon">⚛️</div>
+      <canvas id="th-sn2" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
@@ -158,7 +160,7 @@
   <!-- SN1 — LIVE -->
   <a href="./sn1.html" class="sim-card" data-tags="substitution">
     <div class="card-thumb thumb-sn1">
-      <div class="card-thumb-icon">🔄</div>
+      <canvas id="th-sn1" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
@@ -179,7 +181,7 @@
   <!-- Nucleophilic Addition — LIVE -->
   <a href="./nucleophilic-addition.html" class="sim-card" data-tags="addition">
     <div class="card-thumb thumb-na">
-      <div class="card-thumb-icon">🧪</div>
+      <canvas id="th-na"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
@@ -200,7 +202,7 @@
   <!-- Electrophilic Addition — LIVE -->
   <a href="./electrophilic-addition.html" class="sim-card" data-tags="addition">
     <div class="card-thumb thumb-ea">
-      <div class="card-thumb-icon">⚡</div>
+      <canvas id="th-ea"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
@@ -221,7 +223,7 @@
   <!-- Electrophilic Substitution — LIVE -->
   <a href="./electrophilic-substitution.html" class="sim-card" data-tags="substitution aromatic">
     <div class="card-thumb thumb-es">
-      <div class="card-thumb-icon">💎</div>
+      <canvas id="th-es"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
@@ -241,29 +243,19 @@
 
   <!-- VSEPR Theory — LIVE -->
   <a href="./vsepr.html" class="sim-card" data-tags="bonding">
-    <div class="card-visual" style="background: linear-gradient(135deg, #0d2137 0%, #0a1628 100%); display:flex; align-items:center; justify-content:center; gap:10px;">
-      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-        <circle cx="40" cy="40" r="10" fill="#f97316" opacity="0.95"/>
-        <circle cx="40" cy="14" r="7" fill="#22d3ee" opacity="0.9"/>
-        <circle cx="64" cy="54" r="7" fill="#22d3ee" opacity="0.9"/>
-        <circle cx="16" cy="54" r="7" fill="#22d3ee" opacity="0.9"/>
-        <circle cx="27" cy="20" r="4" fill="#fbbf24" opacity="0.9"/>
-        <circle cx="53" cy="20" r="4" fill="#fbbf24" opacity="0.9"/>
-        <line x1="40" y1="40" x2="40" y2="21" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-        <line x1="40" y1="40" x2="58" y2="52" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-        <line x1="40" y1="40" x2="22" y2="52" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-      </svg>
+    <div class="card-thumb thumb-vsepr">
+      <canvas id="vseprThumb" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
     <div class="card-body">
       <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-bond">Bonding</span>
         <span class="tag tag-new">New</span>
-        <span class="tag">Bonding</span>
-        <span class="tag">3D</span>
       </div>
       <div class="card-title">VSEPR Theory</div>
       <div class="card-desc">Explore all 13 molecular shapes across 2–6 electron pairs. Interactive 3D rotation with lone pair visualisation.</div>
       <div class="card-footer">
-        <span>13 shapes · 2–6 electron pairs</span>
+        <span class="card-meta">Chemical Bonding · 3D</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -284,6 +276,161 @@ function filterCards(tag, btn) {
     card.style.display = (tag === 'all' || tags.includes(tag)) ? '' : 'none';
   });
 }
+</script>
+
+<script>
+(function(){
+// ── Shared helpers ──────────────────────────────────────────────
+function lighten(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;}
+function darken(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;}
+function atom(ctx,x,y,r,col,lbl){
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.32,r*.05,x,y,r*1.05);
+  g.addColorStop(0,'#fff');g.addColorStop(.18,lighten(col,.65));g.addColorStop(.5,col);g.addColorStop(1,darken(col,.55));
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=darken(col,.3);ctx.lineWidth=1;ctx.stroke();
+  const h=ctx.createRadialGradient(x-r*.32,y-r*.35,0,x-r*.32,y-r*.35,r*.42);
+  h.addColorStop(0,'rgba(255,255,255,.52)');h.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
+  if(lbl){ctx.fillStyle='#0f172a';ctx.font='bold '+Math.round(r*.62)+'px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,x,y+1);}
+}
+function rod(ctx,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/len*3,ny=dx/len*3;
+  const g=ctx.createLinearGradient(x1-nx,y1-ny,x1+nx,y1+ny);
+  g.addColorStop(0,'rgba(255,255,255,.1)');g.addColorStop(.4,'rgba(255,255,255,.6)');g.addColorStop(.6,'rgba(255,255,255,.6)');g.addColorStop(1,'rgba(255,255,255,.1)');
+  ctx.beginPath();ctx.moveTo(x1+nx,y1+ny);ctx.lineTo(x2+nx,y2+ny);ctx.lineTo(x2-nx,y2-ny);ctx.lineTo(x1-nx,y1-ny);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+}
+function dbl(ctx,x1,y1,x2,y2){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/len*4,ny=dx/len*4;
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x1+nx,y1+ny);ctx.lineTo(x2+nx,y2+ny);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x1-nx,y1-ny);ctx.lineTo(x2-nx,y2-ny);ctx.stroke();
+}
+function arrow(ctx,x1,y1,x2,y2,cpx,cpy,col){
+  ctx.beginPath();ctx.strokeStyle=col||'#fff';ctx.lineWidth=2;ctx.setLineDash([]);
+  for(let i=0;i<=40;i++){const u=i/40,bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2,by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;if(i===0)ctx.moveTo(bx,by);else ctx.lineTo(bx,by);}
+  ctx.stroke();
+  const u=.97,bx=(1-u)*(1-u)*x1+2*(1-u)*u*cpx+u*u*x2,by=(1-u)*(1-u)*y1+2*(1-u)*u*cpy+u*u*y2;
+  const dx=x2-bx,dy=y2-by,l=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/l,uy=dy/l;
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-ux*9-uy*4,y2-uy*9+ux*4);ctx.lineTo(x2-ux*9+uy*4,y2-uy*9-ux*4);ctx.closePath();ctx.fillStyle=col||'#fff';ctx.fill();
+}
+function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
+
+// ── SN2 ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-sn2');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  const nuX=30,cX=105,brX=148,y=75,nuR=11,cR=17,brR=11;
+  rod(ctx,cX,y,brX,y);
+  arrow(ctx,nuX+11,y,cX-cR-3,y+3,(nuX+cX)/2,y+38);
+  atom(ctx,brX,y,brR,'#3b82f6','');
+  atom(ctx,cX,y,cR,'#fbbf24','');
+  atom(ctx,nuX,y,nuR,'#dc143c','Nu');
+})();
+
+// ── SN1 ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-sn1');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  const nuX=28,cX=100,xX=148,y=75,nuR=11,cR=17,xR=11;
+  rod(ctx,cX,y,xX,y);
+  const mid=(cX+xX)/2;
+  arrow(ctx,mid,y+4,xX,y+xR+2,mid,y+42);
+  atom(ctx,xX,y,xR,'#4ade80','');
+  atom(ctx,cX,y,cR,'#fbbf24','');
+  atom(ctx,nuX,y,nuR,'#dc143c','Nu');
+})();
+
+// ── NA ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-na');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  // C=O vertical: C centre, O directly above
+  const nuX=28,cX=108,cY=95,oX=108,oY=48,nuR=11,cR=17,oR=14;
+  // Double bond — two vertical parallel lines
+  ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cX-4,cY-cR);ctx.lineTo(oX-4,oY+oR);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cX+4,cY-cR);ctx.lineTo(oX+4,oY+oR);ctx.stroke();
+  // Arrow 1: Nu → C, curves below
+  arrow(ctx,nuX+11,cY,cX-cR-3,cY+3,(nuX+cX)/2,cY+40);
+  // Arrow 2: pi bond midpoint → O, curves right
+  const pmY=(cY-cR+oY+oR)/2;
+  arrow(ctx,cX+6,pmY,oX+oR+4,oY+4,cX+44,pmY-8);
+  atom(ctx,oX,oY,oR,'#3b82f6','');
+  atom(ctx,cX,cY,cR,'#fbbf24','');
+  atom(ctx,nuX,cY,nuR,'#dc143c','Nu');
+})();
+
+// ── EA ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-ea');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  const c1X=50,c2X=95,brX=138,br2X=175,y=75,cR=14,brR=12;
+  dbl(ctx,c1X+cR,y,c2X-cR,y);
+  rod(ctx,brX+brR,y,br2X-brR,y);
+  const pi=(c1X+c2X)/2;
+  arrow(ctx,pi,y-5,brX-brR-3,y-5,((pi+brX)/2),y-42);
+  atom(ctx,br2X,y,brR,'#a855f7','');
+  atom(ctx,brX,y,brR,'#a855f7','');
+  atom(ctx,c2X,y,cR,'#4ade80','');
+  atom(ctx,c1X,y,cR,'#ff6b00','');
+})();
+
+// ── ES ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-es');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  const cx=80,cy=75,rr=32;
+  const hex=[];
+  for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;hex.push({x:cx+rr*Math.cos(a),y:cy+rr*Math.sin(a)});}
+  ctx.strokeStyle='#d4ef00';ctx.lineWidth=2.5;
+  ctx.beginPath();hex.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});
+  ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,rr*.55,0,Math.PI*2);ctx.strokeStyle='#d4ef00';ctx.lineWidth=2;ctx.stroke();
+  const clX=168,clY=75;
+  atom(ctx,clX,clY,14,'#22d3ee','Cl\u207a');
+  arrow(ctx,cx,cy-6,clX-14,clY-3,(cx+clX)/2,cy-42);
+})();
+
+})();
+
+(function(){
+  const c=document.getElementById('vseprThumb');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  const W=200,H=150,BL=48,aX=0.32,aY=0.52;
+  const bonds=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{const m=Math.sqrt(3);return[v[0]/m,v[1]/m,v[2]/m]});
+  function proj(x,y,z){
+    const x1=x*Math.cos(aY)+z*Math.sin(aY),z1=z*Math.cos(aY)-x*Math.sin(aY);
+    const y2=y*Math.cos(aX)-z1*Math.sin(aX);
+    return{x:W/2+x1,y:H/2+y2};
+  }
+  function lighten(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;}
+  function darken(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;}
+  function drawAtom(p,r,col,lbl){
+    const g=ctx.createRadialGradient(p.x-r*0.3,p.y-r*0.32,r*0.05,p.x,p.y,r*1.05);
+    g.addColorStop(0,'#fff');g.addColorStop(0.18,lighten(col,0.65));g.addColorStop(0.5,col);g.addColorStop(1,darken(col,0.55));
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle=darken(col,0.3);ctx.lineWidth=0.5;ctx.stroke();
+    const h=ctx.createRadialGradient(p.x-r*0.32,p.y-r*0.35,0,p.x-r*0.32,p.y-r*0.35,r*0.42);
+    h.addColorStop(0,'rgba(255,255,255,0.52)');h.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
+    ctx.fillStyle='#0f172a';ctx.font='bold '+Math.round(r*0.6)+'px Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,p.x,p.y+1);
+  }
+  function drawRod(p1,p2){
+    const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+    const nx=-dy/len*2.5,ny=dx/len*2.5;
+    const g=ctx.createLinearGradient(p1.x-nx,p1.y-ny,p1.x+nx,p1.y+ny);
+    g.addColorStop(0,'rgba(255,255,255,0.1)');g.addColorStop(0.4,'rgba(255,255,255,0.6)');g.addColorStop(0.6,'rgba(255,255,255,0.6)');g.addColorStop(1,'rgba(255,255,255,0.1)');
+    ctx.beginPath();ctx.moveTo(p1.x+nx,p1.y+ny);ctx.lineTo(p2.x+nx,p2.y+ny);ctx.lineTo(p2.x-nx,p2.y-ny);ctx.lineTo(p1.x-nx,p1.y-ny);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  }
+  const pA=proj(0,0,0);
+  const pts=bonds.map(b=>({p:proj(b[0]*BL,b[1]*BL,b[2]*BL),b}));
+  pts.sort((a,b)=>b.p.y-a.p.y);
+  bonds.forEach(b=>drawRod(pA,proj(b[0]*BL,b[1]*BL,b[2]*BL)));
+  pts.forEach(({p})=>drawAtom(p,10,'#22d3ee','X'));
+  drawAtom(pA,13,'#f97316','A');
+})();
 </script>
 </body>
 </html>

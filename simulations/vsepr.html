@@ -53,13 +53,13 @@
   #shapeTable::-webkit-scrollbar-track { background: transparent; }
   #shapeTable::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
   .ep-group { border-bottom: 1px solid #1e293b; }
-  .ep-header { padding: 6px 12px; font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; background: #060e1c; sticky: top 0; }
-  .shape-row { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; display: flex; align-items: center; justify-content: space-between; }
+  .ep-header { padding: 6px 12px; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; background: #060e1c; sticky: top 0; }
+  .shape-row { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; display: flex; align-items: center; justify-content: space-between; }
   .shape-row:hover { background: #0f1f3a; }
   .shape-row.active { background: #0c1f3a; border-left: 2px solid #4f9cf9; }
-  .shape-row.active .srow-name { color: #e2e8f0; }
-  .srow-name { font-size: 11px; font-weight: 600; color: #64748b; }
-  .srow-meta { font-size: 9px; color: #334155; }
+  .shape-row.active .srow-name { color: #f0f4ff; }
+  .srow-name { font-size: 13px; font-weight: 600; color: #94a3b8; }
+  .srow-meta { font-size: 11px; color: #64748b; }
   .shape-row.active .srow-meta { color: #7dd3fc; }
 
   /* CANVAS */
@@ -67,11 +67,11 @@
   #vseprCanvas { display: block; width: 100%; height: 100%; cursor: move; }
 
   /* INFO OVERLAY */
-  #infoOverlay { position: absolute; top: 14px; right: 14px; background: rgba(10,22,40,0.85); border: 1px solid #1e293b; border-radius: 10px; padding: 12px 16px; min-width: 180px; backdrop-filter: blur(8px); }
-  #infoName { font-size: 16px; font-weight: 600; color: #e2e8f0; margin-bottom: 6px; }
-  .info-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 4px; }
-  .info-label { font-size: 10px; color: #475569; }
-  .info-val { font-size: 10px; color: #7dd3fc; font-weight: 600; }
+  #infoOverlay { position: absolute; top: 14px; right: 14px; background: rgba(10,22,40,0.85); border: 1px solid #1e293b; border-radius: 10px; padding: 14px 18px; min-width: 200px; backdrop-filter: blur(8px); }
+  #infoName { font-size: 20px; font-weight: 600; color: #f0f4ff; margin-bottom: 10px; }
+  .info-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; }
+  .info-label { font-size: 13px; color: #94a3b8; }
+  .info-val { font-size: 13px; color: #7dd3fc; font-weight: 600; }
   #dragHint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #334155; pointer-events: none; }
 
   /* BOT BAR */
@@ -181,10 +181,13 @@
 const SHAPES=[
   {ep:2,bp:2,lp:0,name:'Linear',angle:'180°',bonds:[[0,0,1],[0,0,-1]],lones:[]},
   {ep:3,bp:3,lp:0,name:'Trigonal planar',angle:'120°',bonds:[[1,0,0],[-0.5,0,0.866],[-0.5,0,-0.866]],lones:[]},
-  {ep:3,bp:2,lp:1,name:'Bent',angle:'~119°',bonds:[[0.866,0,0.5],[-0.866,0,0.5]],lones:[[0,0,-1]]},
-  {ep:4,bp:4,lp:0,name:'Tetrahedral',angle:'109.5°',bonds:[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>{const m=Math.sqrt(3);return[v[0]/m,v[1]/m,v[2]/m]}),lones:[]},
-  {ep:4,bp:3,lp:1,name:'Trigonal pyramidal',angle:'107°',bonds:[[1,1,1],[1,-1,-1],[-1,1,-1]].map(v=>{const m=Math.sqrt(3);return[v[0]/m,v[1]/m,v[2]/m]}),lones:[[-1,-1,1].map(v=>v/Math.sqrt(3))]},
-  {ep:4,bp:2,lp:2,name:'Bent',angle:'104.5°',bonds:[[1,1,1],[1,-1,-1]].map(v=>{const m=Math.sqrt(3);return[v[0]/m,v[1]/m,v[2]/m]}),lones:[[-1,1,-1],[-1,-1,1]].map(v=>v.map(x=>x/Math.sqrt(3)))},
+  {ep:3,bp:2,lp:1,name:'Bent',angle:'~119°',bonds:[[0.9962,0,0.0871],[-0.4226,0,0.9063]],lones:[[-0.5,0,-0.866]]},
+  {ep:4,bp:4,lp:0,name:'Tetrahedral',angle:'109.5°',
+   bonds:[[0.9739,0.2271,0],[-0.4869,0.2271,0.8434],[-0.4869,0.2271,-0.8434],[0,-1,0]],lones:[]},
+  {ep:4,bp:3,lp:1,name:'Trigonal pyramidal',angle:'107°',
+   bonds:[[0.8846,0.4664,0],[-0.4423,0.4664,0.7660],[-0.4423,0.4664,-0.7660]],lones:[[0,-1,0]]},
+  {ep:4,bp:2,lp:2,name:'Bent',angle:'104.5°',
+   bonds:[[0.8002,0.5757,0.1684],[-0.2542,0.5757,0.7771]],lones:[[0,-1,0],[-0.4423,0.4664,-0.7660]]},
   {ep:5,bp:5,lp:0,name:'Trigonal bipyramidal',angle:'90°/120°',bonds:[[0,1,0],[0,-1,0],[1,0,0],[-0.5,0,0.866],[-0.5,0,-0.866]],lones:[]},
   {ep:5,bp:4,lp:1,name:'See-saw',angle:'<90°/<120°',bonds:[[0,1,0],[0,-1,0],[1,0,0],[-0.5,0,0.866]],lones:[[-0.5,0,-0.866]]},
   {ep:5,bp:3,lp:2,name:'T-shaped',angle:'<90°',bonds:[[0,1,0],[0,-1,0],[1,0,0]],lones:[[-0.5,0,0.866],[-0.5,0,-0.866]]},
@@ -214,13 +217,14 @@ function proj(x,y,z){
   const z1=z*Math.cos(aY)-x*Math.sin(aY);
   const y2=y*Math.cos(aX)-z1*Math.sin(aX);
   const z2=z1*Math.cos(aX)+y*Math.sin(aX);
-  return{x:W/2+x1,y:H/2+y2,z:z2,s:1};
+  const s=600/(600+z2);
+  return{x:W/2+x1*s,y:H/2+y2*s,z:z2,s:s};
 }
 
 function lightenCol(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;}
 function darkenCol(hex,t){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*(1-t))},${Math.round(g*(1-t))},${Math.round(b*(1-t))})`;}
 
-function drawAtom(p,r,col,lbl){
+function drawAtom(p,r,col){
   const x=p.x,y=p.y;
   const g=ctx.createRadialGradient(x-r*0.3,y-r*0.32,r*0.05,x,y,r*1.05);
   g.addColorStop(0,'#fff');g.addColorStop(0.18,lightenCol(col,0.65));g.addColorStop(0.5,col);g.addColorStop(1,darkenCol(col,0.55));
@@ -229,14 +233,11 @@ function drawAtom(p,r,col,lbl){
   const h=ctx.createRadialGradient(x-r*0.32,y-r*0.35,0,x-r*0.32,y-r*0.35,r*0.42);
   h.addColorStop(0,'rgba(255,255,255,0.52)');h.addColorStop(1,'rgba(255,255,255,0)');
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
-  ctx.fillStyle='#0f172a';
-  ctx.font='bold '+Math.round(r*0.6)+'px Arial';
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,x,y+1);
 }
 
 function drawRod(p1,p2){
   const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1;
-  const nx=-dy/len,ny=dx/len,w=4;
+  const nx=-dy/len,ny=dx/len,w=Math.max(2,4*Math.min(p1.s,p2.s));
   const grd=ctx.createLinearGradient(p1.x-nx*w,p1.y-ny*w,p1.x+nx*w,p1.y+ny*w);
   grd.addColorStop(0,'rgba(255,255,255,0.1)');
   grd.addColorStop(0.35,'rgba(255,255,255,0.65)');
@@ -261,57 +262,127 @@ function lonePairDots3D(lx,ly,lz){
   ];
 }
 
-function draw(){
+// Animation state
+let animRAF=null, animT=0;
+const ANIM_FRAMES=45;
+
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+// Normalise a 3D vector to unit length
+function norm(v){const m=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2])||1;return[v[0]/m,v[1]/m,v[2]/m];}
+
+// Spherical linear interpolation between two unit vectors (slerp)
+// Keeps bond length fixed at BL, only changes direction (= angle compression)
+function slerpBond(a,b,t){
+  const ua=norm(a), ub=norm(b);
+  let dot=ua[0]*ub[0]+ua[1]*ub[1]+ua[2]*ub[2];
+  dot=Math.max(-1,Math.min(1,dot));
+  if(dot>0.9999) return ua; // already same direction
+  const theta=Math.acos(dot)*t;
+  // Component of ub perpendicular to ua
+  const rel=[ub[0]-dot*ua[0], ub[1]-dot*ua[1], ub[2]-dot*ua[2]];
+  const rn=norm(rel);
+  return[
+    ua[0]*Math.cos(theta)+rn[0]*Math.sin(theta),
+    ua[1]*Math.cos(theta)+rn[1]*Math.sin(theta),
+    ua[2]*Math.cos(theta)+rn[2]*Math.sin(theta),
+  ];
+}
+
+function drawState(bonds, lones){
   if(!W||!H)return;
   ctx.fillStyle='#0f172a';ctx.fillRect(0,0,W,H);
-  const sh=SHAPES[current];
   const pA=proj(0,0,0);
+  const bondPts=bonds.map(b=>proj(b[0]*BL,b[1]*BL,b[2]*BL));
 
-  sh.bonds.forEach(b=>drawRod(pA,proj(b[0]*BL,b[1]*BL,b[2]*BL)));
+  // Draw all rods first (always behind atoms)
+  bondPts.forEach(pb=>drawRod(pA,pb));
 
+  // Depth-sort atoms and lone pairs only
   const items=[];
-  items.push({type:'atom',p:pA,r:22,col:'#f97316',lbl:'A'});
-  sh.bonds.forEach(b=>items.push({type:'atom',p:proj(b[0]*BL,b[1]*BL,b[2]*BL),r:16,col:'#22d3ee',lbl:'X'}));
-  sh.lones.forEach(l=>{
+  items.push({type:'atom',p:pA,r:22,col:'#f97316'});
+  bondPts.forEach(pb=>items.push({type:'atom',p:pb,r:16,col:'#22d3ee'}));
+  lones.forEach(l=>{
     const [d1,d2]=lonePairDots3D(l[0],l[1],l[2]);
     const pd1=proj(d1[0],d1[1],d1[2]);
     const pd2=proj(d2[0],d2[1],d2[2]);
-    items.push({type:'lone',p:{z:(pd1.z+pd2.z)/2},pd1,pd2});
+    items.push({type:'lone',p:{z:(pd1.z+pd2.z)/2},pd1,pd2,alpha:l[3]===undefined?1:l[3]});
   });
-
-  items.sort((a,b)=>a.p.z-b.p.z);
+  items.sort((a,b)=>b.p.z-a.p.z);
   items.forEach(item=>{
-    if(item.type==='atom') drawAtom(item.p,item.r,item.col,item.lbl);
+    if(item.type==='atom') drawAtom(item.p,Math.max(8,item.r*item.p.s),item.col);
     else{
+      ctx.globalAlpha=item.alpha;
       [item.pd1,item.pd2].forEach(p=>{
+        const lr=Math.max(3,5.5*p.s);
         ctx.fillStyle='#fbbf24';ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=0.5;
-        ctx.beginPath();ctx.arc(p.x,p.y,5.5,0,Math.PI*2);ctx.fill();ctx.stroke();
+        ctx.beginPath();ctx.arc(p.x,p.y,lr,0,Math.PI*2);ctx.fill();ctx.stroke();
       });
+      ctx.globalAlpha=1;
     }
   });
-
-  // Watermark
   ctx.save();ctx.globalAlpha=0.2;ctx.fillStyle='#fff';ctx.font='11px Arial';
   ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('© Mr Khemistry',W-12,H-10);ctx.restore();
 }
 
+function draw(){
+  if(!W||!H)return;
+  const sh=SHAPES[current];
+  drawState(sh.bonds.map(b=>norm(b)), sh.lones.map(l=>[l[0],l[1],l[2],1]));
+}
+
+function animateTo(fromIdx, toIdx){
+  if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}
+  const from=SHAPES[fromIdx], to=SHAPES[toIdx];
+  if(from.ep!==to.ep){draw();return;}
+
+  const sharedBonds=Math.min(from.bonds.length, to.bonds.length);
+  const fromBonds=from.bonds.map(b=>norm(b));
+  const toBonds=to.bonds.map(b=>norm(b));
+  const sharedLones=Math.min(from.lones.length, to.lones.length);
+  const addedLones=to.lones.slice(sharedLones);
+  const removedLones=from.lones.slice(sharedLones);
+
+  animT=0;
+
+  function step(){
+    animT+=1/ANIM_FRAMES;
+    if(animT>=1) animT=1;
+    const t=easeInOut(animT);
+
+    // Slerp shared bonds from FROM → TO directions (angle change, fixed length BL)
+    const bonds=[];
+    for(let i=0;i<sharedBonds;i++) bonds.push(slerpBond(fromBonds[i],toBonds[i],t));
+
+    // Lones
+    const lones=[];
+    to.lones.slice(0,sharedLones).forEach(l=>lones.push([l[0],l[1],l[2],1]));
+    addedLones.forEach(l=>lones.push([l[0],l[1],l[2],t]));
+    removedLones.forEach(l=>lones.push([l[0],l[1],l[2],1-t]));
+
+    drawState(bonds,lones);
+
+    if(animT<1) animRAF=requestAnimationFrame(step);
+    else{animRAF=null; draw();}
+  }
+  animRAF=requestAnimationFrame(step);
+}
+
 function selectShape(idx){
+  const prev=current;
   current=idx;
   const sh=SHAPES[idx];
-  // Update info panel
   document.getElementById('infoName').textContent=sh.name+(sh.ep===3&&sh.lp===1?' (3ep)':sh.ep===4&&sh.lp===2?' (4ep)':sh.ep===5&&sh.lp===3?' (5ep)':'');
   document.getElementById('iEP').textContent=sh.ep;
   document.getElementById('iBP').textContent=sh.bp;
   document.getElementById('iLP').textContent=sh.lp;
   document.getElementById('iAng').textContent=sh.angle;
-  // Update sliders
   document.getElementById('epSlider').value=sh.ep;
   document.getElementById('epVal').textContent=sh.ep;
   document.getElementById('lpSlider').value=sh.lp;
   document.getElementById('lpVal').textContent=sh.lp;
-  // Update table highlight
   document.querySelectorAll('.shape-row').forEach((r,i)=>r.classList.toggle('active',i===idx));
-  draw();
+  animateTo(prev,idx);
 }
 
 // Build table

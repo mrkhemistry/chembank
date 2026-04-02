@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Maxwell-Boltzmann Distribution — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#1e293b;border-bottom:1px solid #334155}
+nav a{color:#94a3b8;text-decoration:none;font-size:0.9rem;display:flex;align-items:center;gap:6px;transition:color 0.2s}
+nav a:hover{color:#7adce8}
+nav .title{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.15rem;color:#fff}
+nav .tags{display:flex;gap:8px}
+nav .tag{font-size:0.7rem;padding:3px 10px;border-radius:50px;background:#1b8c9c22;color:#7adce8;font-weight:600;letter-spacing:0.03em}
+
+/* MAIN LAYOUT */
+#simw{max-width:1100px;margin:24px auto;padding:0 20px}
+#topRow{display:flex;gap:18px;margin-bottom:18px}
+#chartWrap{flex:1;background:#1e293b;border-radius:12px;border:1px solid #334155;overflow:hidden;position:relative;min-height:440px}
+#chartCanvas{display:block;width:100%;height:100%}
+#sidePanel{width:260px;display:flex;flex-direction:column;gap:12px}
+
+/* SIDE PANELS */
+.side-box{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:16px}
+.side-box h3{font-family:'Poppins',sans-serif;font-size:0.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px}
+
+/* TEMPERATURE CONTROLS */
+.temp-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 12px;border-radius:8px;border:1px solid #334155;background:#0f172a}
+.temp-row .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.temp-row label{font-size:0.8rem;color:#94a3b8;min-width:22px}
+.temp-row input[type=range]{flex:1;accent-color:#1b8c9c;min-width:0}
+.temp-row .tval{color:#7adce8;font-weight:600;font-size:0.85rem;min-width:48px;text-align:right}
+.temp-row.disabled{opacity:0.35;pointer-events:none}
+
+/* TOGGLE */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:8px 0}
+.toggle-row span{font-size:0.85rem;color:#cbd5e1}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#334155;border-radius:24px;transition:0.3s}
+.toggle .slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#94a3b8;border-radius:50%;transition:0.3s}
+.toggle input:checked+.slider{background:#1b8c9c}
+.toggle input:checked+.slider:before{transform:translateX(18px);background:#fff}
+
+/* Ea DISPLAY */
+#eaInfo{font-size:0.85rem;line-height:1.6;color:#cbd5e1;margin-top:8px}
+#eaInfo .val{color:#fbbf24;font-weight:600;font-size:1.05rem}
+#eaInfo .highlight{color:#4ade80;font-weight:600}
+
+/* STATS BOX */
+.stat-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b}
+.stat-row:last-child{border-bottom:none}
+.stat-label{font-size:0.78rem;color:#94a3b8}
+.stat-val{font-size:0.85rem;font-weight:600;color:#7adce8}
+
+/* PARTICLE STRIP */
+#particleStrip{height:80px;background:#1e293b;border-radius:12px;border:1px solid #334155;overflow:hidden;position:relative;margin-bottom:18px}
+#particleCanvas{display:block;width:100%;height:100%}
+#particleLabel{position:absolute;top:6px;left:12px;font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.06em}
+
+/* LEGEND */
+#legend{position:absolute;top:12px;right:12px;background:rgba(15,23,42,0.88);padding:10px 14px;border-radius:10px;border:1px solid #334155;z-index:10;font-size:0.78rem}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.legend-item:last-child{margin-bottom:0}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.legend-line{width:16px;height:3px;border-radius:2px}
+.legend-swatch{width:14px;height:14px;border-radius:3px}
+
+/* CONTROLS BAR */
+#botBar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.bp{padding:8px 20px;background:#1b8c9c;color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
+.bp:hover{background:#136d7a;transform:translateY(-1px)}
+.bs{padding:8px 16px;background:#334155;color:#cbd5e1;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:500;font-size:0.82rem;cursor:pointer;transition:all 0.2s}
+.bs:hover{background:#475569}
+
+/* NOTES GRID */
+.notes-grid{max-width:1100px;margin:0 auto 40px;padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.note-card{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:20px;transition:all 0.3s}
+.note-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.note-card h4{font-family:'Poppins',sans-serif;font-size:0.95rem;color:#7adce8;margin-bottom:8px}
+.note-card p{font-size:0.85rem;line-height:1.6;color:#94a3b8}
+
+/* FOOTER */
+footer{text-align:center;padding:24px;color:#475569;font-size:0.8rem;border-top:1px solid #1e293b}
+footer a{color:#1b8c9c;text-decoration:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  #topRow{flex-direction:column}
+  #sidePanel{width:100%}
+  .notes-grid{grid-template-columns:1fr}
+  #chartWrap{min-height:320px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="./index.html">← Back to Simulations</a>
+  <span class="title">Maxwell-Boltzmann Distribution</span>
+  <div class="tags">
+    <span class="tag">Interactive</span>
+    <span class="tag">Kinetics</span>
+  </div>
+</nav>
+
+<div id="simw">
+  <div id="topRow">
+    <div id="chartWrap">
+      <canvas id="chartCanvas"></canvas>
+      <div id="legend"></div>
+    </div>
+    <div id="sidePanel">
+
+      <!-- Temperature Controls -->
+      <div class="side-box">
+        <h3>Temperature</h3>
+        <div class="temp-row" id="t1Row">
+          <span class="dot" style="background:#3b82f6"></span>
+          <label>T₁</label>
+          <input type="range" id="t1Slider" min="100" max="800" value="300" step="10">
+          <span class="tval" id="t1Val">300 K</span>
+        </div>
+        <div class="toggle-row">
+          <span>Compare 2nd temperature</span>
+          <label class="toggle"><input type="checkbox" id="t2Toggle"><span class="slider"></span></label>
+        </div>
+        <div class="temp-row disabled" id="t2Row">
+          <span class="dot" style="background:#ef4444"></span>
+          <label>T₂</label>
+          <input type="range" id="t2Slider" min="100" max="800" value="500" step="10">
+          <span class="tval" id="t2Val">500 K</span>
+        </div>
+      </div>
+
+      <!-- Ea & Catalyst -->
+      <div class="side-box">
+        <h3>Activation Energy</h3>
+        <div class="toggle-row">
+          <span>Show Ea line</span>
+          <label class="toggle"><input type="checkbox" id="eaToggle" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Show catalyst effect</span>
+          <label class="toggle"><input type="checkbox" id="catToggle"><span class="slider"></span></label>
+        </div>
+        <div id="eaInfo">
+          <div>Ea: <span class="val" id="eaDisplay">50 kJ</span></div>
+          <div style="font-size:0.75rem;color:#64748b;margin-top:4px">Drag the Ea line on the chart</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="side-box" id="statsBox">
+        <h3>Statistics</h3>
+        <div class="stat-row"><span class="stat-label">Above Ea (T₁)</span><span class="stat-val" id="statAbove1">—</span></div>
+        <div class="stat-row" id="statRow2" style="display:none"><span class="stat-label">Above Ea (T₂)</span><span class="stat-val" id="statAbove2">—</span></div>
+        <div class="stat-row" id="statRowCat1" style="display:none"><span class="stat-label">Above Ea' catalyst (T₁)</span><span class="stat-val" id="statAboveCat1">—</span></div>
+        <div class="stat-row" id="statRowCat2" style="display:none"><span class="stat-label">Above Ea' catalyst (T₂)</span><span class="stat-val" id="statAboveCat2">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Particle animation strip -->
+  <div id="particleStrip">
+    <canvas id="particleCanvas"></canvas>
+    <div id="particleLabel">Particle Speeds (colour = speed)</div>
+  </div>
+
+  <div id="botBar">
+    <button class="bp" onclick="resetAll()">Reset</button>
+    <button class="bs" onclick="presetLow()">Low Temp (200 K)</button>
+    <button class="bs" onclick="presetMed()">Medium (400 K)</button>
+    <button class="bs" onclick="presetHigh()">High Temp (700 K)</button>
+    <button class="bs" onclick="presetCompare()">Compare 300 K vs 600 K</button>
+  </div>
+</div>
+
+<div class="notes-grid">
+  <div class="note-card">
+    <h4>The Distribution</h4>
+    <p>The Maxwell-Boltzmann distribution shows the spread of molecular speeds (or kinetic energies) in a gas. Most molecules have speeds near the peak, but some are much faster or slower. The curve is <strong style="color:#fbbf24">not symmetrical</strong> — it has a longer tail to the right.</p>
+  </div>
+  <div class="note-card">
+    <h4>Effect of Temperature</h4>
+    <p>At higher temperatures, the peak shifts right and flattens out — more molecules have higher energies. The <strong style="color:#fbbf24">total area under the curve stays the same</strong> (same total number of molecules), but a greater fraction exceeds the activation energy Ea.</p>
+  </div>
+  <div class="note-card">
+    <h4>Effect of Catalyst</h4>
+    <p>A catalyst provides an <strong style="color:#fbbf24">alternative pathway with lower Ea</strong>. It does NOT change the distribution — the curve stays exactly the same. Instead, Ea' moves left, so more molecules now have enough energy to react, increasing the rate of reaction.</p>
+  </div>
+</div>
+
+<footer>
+  <a href="./index.html">← Back to Simulations</a> &nbsp;·&nbsp; © Mr Khemistry
+</footer>
+
+<script>
+/* ===== CHART CANVAS ===== */
+const cc = document.getElementById('chartCanvas');
+const cx = cc.getContext('2d');
+let CW, CH;
+
+/* ===== PARTICLE CANVAS ===== */
+const pc = document.getElementById('particleCanvas');
+const px = pc.getContext('2d');
+let PW, PH;
+
+/* ===== STATE ===== */
+let t1 = 300;
+let t2 = 500;
+let showT2 = false;
+let showEa = true;
+let showCatalyst = false;
+let eaFrac = 0.55;      // Ea position as fraction of x-axis (0–1)
+let catEaFrac = 0.35;   // Catalyst Ea' position
+let draggingEa = false;
+let draggingCatEa = false;
+
+/* Chart margins */
+const ML = 50, MR = 30, MT = 40, MB = 55;
+
+/* ===== RESIZE ===== */
+const resizeAll = () => {
+  const cw = document.getElementById('chartWrap');
+  CW = cc.width = cw.clientWidth;
+  CH = cc.height = cw.clientHeight;
+  const ps = document.getElementById('particleStrip');
+  PW = pc.width = ps.clientWidth;
+  PH = pc.height = ps.clientHeight;
+};
+window.addEventListener('resize', resizeAll);
+
+/* ===== MAXWELL-BOLTZMANN FUNCTION ===== */
+// f(v) ∝ (1/T)^(3/2) * v² * exp(-v²/(2kT/m))
+// Using dimensionless speed x with T-dependent normalisation
+// so that the AREA under the curve stays constant at all temperatures.
+// Higher T → flatter, broader curve shifted right. Lower T → taller, narrower peak.
+const mbDist = (x, T) => {
+  const a = 300 / T; // inverse temperature factor
+  // The (a^1.5) prefactor ensures equal area under all curves
+  return Math.pow(a, 1.5) * x * x * Math.exp(-x * x * a * 0.5);
+};
+
+// Get peak value for normalisation (used for display scaling)
+const getPeak = (T) => {
+  let max = 0;
+  for (let i = 0; i <= 300; i++) {
+    const x = i / 50;
+    const v = mbDist(x, T);
+    if (v > max) max = v;
+  }
+  return max;
+};
+
+// Fraction of particles above a given x threshold
+const fractionAbove = (T, xThresh) => {
+  let total = 0, above = 0;
+  const dx = 0.01;
+  for (let x = 0; x < 5; x += dx) {
+    const v = mbDist(x, T);
+    total += v * dx;
+    if (x >= xThresh) above += v * dx;
+  }
+  return total > 0 ? above / total : 0;
+};
+
+// Most probable speed (peak x)
+const peakSpeed = (T) => {
+  let max = 0, peakX = 0;
+  for (let i = 0; i <= 300; i++) {
+    const x = i / 60;
+    const v = mbDist(x, T);
+    if (v > max) { max = v; peakX = x; }
+  }
+  return peakX;
+};
+
+/* ===== DRAW CHART ===== */
+const drawChart = () => {
+  cx.clearRect(0, 0, CW, CH);
+
+  const gw = CW - ML - MR;
+  const gh = CH - MT - MB;
+
+  // FIXED y-axis scale based on a low reference temperature (100 K)
+  // This ensures that when T increases, the peak visibly drops
+  // (the curve flattens) while the area under the curve stays constant.
+  const maxY = getPeak(100) * 1.15;
+
+  // x maps to speed (0 to 5 in our units — wider range for high T)
+  const xMax = 5;
+  const xToCanvas = (x) => ML + (x / xMax) * gw;
+  const yToCanvas = (y) => MT + gh - (y / maxY) * gh;
+
+  // Grid lines
+  cx.strokeStyle = '#1e293b';
+  cx.lineWidth = 1;
+  for (let i = 1; i <= 5; i++) {
+    const lx = xToCanvas(i);
+    cx.beginPath(); cx.moveTo(lx, MT); cx.lineTo(lx, MT + gh); cx.stroke();
+  }
+
+  // Axes
+  cx.strokeStyle = '#475569';
+  cx.lineWidth = 2;
+  cx.beginPath();
+  cx.moveTo(ML, MT);
+  cx.lineTo(ML, MT + gh);
+  cx.lineTo(ML + gw, MT + gh);
+  cx.stroke();
+
+  // Axis labels
+  cx.fillStyle = '#94a3b8';
+  cx.font = '12px Inter, sans-serif';
+  cx.textAlign = 'center';
+  cx.fillText('Molecular Speed / Kinetic Energy →', ML + gw / 2, CH - 8);
+  cx.save();
+  cx.translate(14, MT + gh / 2);
+  cx.rotate(-Math.PI / 2);
+  cx.fillText('Number of Molecules →', 0, 0);
+  cx.restore();
+
+  // --- Ea shaded region (T1) ---
+  if (showEa) {
+    const eaX = xToCanvas(eaFrac * 5);
+
+    // Shaded areas only when catalyst is OFF (to keep it clean)
+    if (!showCatalyst) {
+      // Shaded area under T1 curve beyond Ea
+      cx.beginPath();
+      cx.moveTo(eaX, yToCanvas(0));
+      for (let i = Math.floor(eaFrac * 250); i <= 250; i++) {
+        const x = (i / 250) * xMax;
+        const y = mbDist(x, t1);
+        cx.lineTo(xToCanvas(x), yToCanvas(y));
+      }
+      cx.lineTo(xToCanvas(xMax), yToCanvas(0));
+      cx.closePath();
+      cx.fillStyle = 'rgba(59,130,246,0.15)';
+      cx.fill();
+
+      // If T2 shown, shade that too
+      if (showT2) {
+        cx.beginPath();
+        cx.moveTo(eaX, yToCanvas(0));
+        for (let i = Math.floor(eaFrac * 250); i <= 250; i++) {
+          const x = (i / 250) * xMax;
+          const y = mbDist(x, t2);
+          cx.lineTo(xToCanvas(x), yToCanvas(y));
+        }
+        cx.lineTo(xToCanvas(xMax), yToCanvas(0));
+        cx.closePath();
+        cx.fillStyle = 'rgba(239,68,68,0.12)';
+        cx.fill();
+      }
+    }
+
+    // Ea vertical line
+    cx.setLineDash([6, 4]);
+    cx.strokeStyle = '#fbbf24';
+    cx.lineWidth = 2.5;
+    cx.beginPath();
+    cx.moveTo(eaX, MT);
+    cx.lineTo(eaX, MT + gh);
+    cx.stroke();
+    cx.setLineDash([]);
+
+    // Ea label
+    cx.fillStyle = '#fbbf24';
+    cx.font = 'bold 13px Poppins, sans-serif';
+    cx.textAlign = 'center';
+    cx.fillText('Ea', eaX, MT - 8);
+
+    // Catalyst Ea' line
+    if (showCatalyst) {
+      const catX = xToCanvas(catEaFrac * 5);
+
+      cx.setLineDash([4, 3]);
+      cx.strokeStyle = '#4ade80';
+      cx.lineWidth = 2.5;
+      cx.beginPath();
+      cx.moveTo(catX, MT);
+      cx.lineTo(catX, MT + gh);
+      cx.stroke();
+      cx.setLineDash([]);
+
+      cx.fillStyle = '#4ade80';
+      cx.font = 'bold 13px Poppins, sans-serif';
+      cx.fillText("Ea'", catX, MT - 8);
+    }
+  }
+
+  // --- Draw T1 curve ---
+  cx.beginPath();
+  cx.strokeStyle = '#3b82f6';
+  cx.lineWidth = 3;
+  for (let i = 0; i <= 250; i++) {
+    const x = (i / 250) * xMax;
+    const y = mbDist(x, t1);
+    const canvasX = xToCanvas(x);
+    const canvasY = yToCanvas(y);
+    if (i === 0) cx.moveTo(canvasX, canvasY);
+    else cx.lineTo(canvasX, canvasY);
+  }
+  cx.stroke();
+
+  // T1 label on curve
+  const peak1X = peakSpeed(t1);
+  const peak1Y = mbDist(peak1X, t1);
+  cx.fillStyle = '#3b82f6';
+  cx.font = 'bold 12px Poppins, sans-serif';
+  cx.textAlign = 'left';
+  cx.fillText('T₁ = ' + t1 + ' K', xToCanvas(peak1X) + 8, yToCanvas(peak1Y) - 10);
+
+  // --- Draw T2 curve ---
+  if (showT2) {
+    cx.beginPath();
+    cx.strokeStyle = '#ef4444';
+    cx.lineWidth = 3;
+    for (let i = 0; i <= 250; i++) {
+      const x = (i / 250) * xMax;
+      const y = mbDist(x, t2);
+      const canvasX = xToCanvas(x);
+      const canvasY = yToCanvas(y);
+      if (i === 0) cx.moveTo(canvasX, canvasY);
+      else cx.lineTo(canvasX, canvasY);
+    }
+    cx.stroke();
+
+    const peak2X = peakSpeed(t2);
+    const peak2Y = mbDist(peak2X, t2);
+    cx.fillStyle = '#ef4444';
+    cx.font = 'bold 12px Poppins, sans-serif';
+    cx.textAlign = 'left';
+    cx.fillText('T₂ = ' + t2 + ' K', xToCanvas(peak2X) + 8, yToCanvas(peak2Y) - 10);
+  }
+
+  // Origin label
+  cx.fillStyle = '#64748b';
+  cx.font = '10px Inter, sans-serif';
+  cx.textAlign = 'center';
+  cx.fillText('0', ML - 8, MT + gh + 14);
+
+  // Watermark
+  cx.save();
+  cx.globalAlpha = 0.25;
+  cx.fillStyle = '#ffffff';
+  cx.font = '11px Arial';
+  cx.textAlign = 'right';
+  cx.textBaseline = 'bottom';
+  cx.fillText('© Mr Khemistry', CW - 12, CH - 10);
+  cx.restore();
+
+  // Update legend
+  updateLegend();
+  updateStats();
+};
+
+/* ===== LEGEND ===== */
+const updateLegend = () => {
+  let html = '';
+  html += '<div class="legend-item"><span class="legend-line" style="background:#3b82f6"></span> T₁ = ' + t1 + ' K</div>';
+  if (showT2) {
+    html += '<div class="legend-item"><span class="legend-line" style="background:#ef4444"></span> T₂ = ' + t2 + ' K</div>';
+  }
+  if (showEa) {
+    html += '<div class="legend-item"><span class="legend-line" style="background:#fbbf24"></span> Ea</div>';
+    if (!showCatalyst) {
+      html += '<div class="legend-item"><span class="legend-swatch" style="background:rgba(59,130,246,0.3);border:1px solid #3b82f6"></span> E ≥ Ea (T₁)</div>';
+      if (showT2) {
+        html += '<div class="legend-item"><span class="legend-swatch" style="background:rgba(239,68,68,0.25);border:1px solid #ef4444"></span> E ≥ Ea (T₂)</div>';
+      }
+    }
+  }
+  if (showCatalyst && showEa) {
+    html += '<div class="legend-item"><span class="legend-line" style="background:#4ade80"></span> Ea\' (catalyst)</div>';
+  }
+  document.getElementById('legend').innerHTML = html;
+};
+
+/* ===== STATS ===== */
+const updateStats = () => {
+  const eaXVal = eaFrac * 5;
+  const catXVal = catEaFrac * 5;
+
+  if (showEa) {
+    const frac1 = fractionAbove(t1, eaXVal);
+    document.getElementById('statAbove1').textContent = (frac1 * 100).toFixed(1) + '%';
+
+    if (showT2) {
+      const frac2 = fractionAbove(t2, eaXVal);
+      document.getElementById('statAbove2').textContent = (frac2 * 100).toFixed(1) + '%';
+    }
+
+    if (showCatalyst) {
+      const fracCat1 = fractionAbove(t1, catXVal);
+      document.getElementById('statAboveCat1').textContent = (fracCat1 * 100).toFixed(1) + '%';
+
+      if (showT2) {
+        const fracCat2 = fractionAbove(t2, catXVal);
+        document.getElementById('statAboveCat2').textContent = (fracCat2 * 100).toFixed(1) + '%';
+      }
+    }
+
+    // Ea display in kJ (scaled)
+    document.getElementById('eaDisplay').textContent = Math.round(eaFrac * 100) + ' kJ mol⁻¹';
+  } else {
+    document.getElementById('statAbove1').textContent = '—';
+    document.getElementById('statAbove2').textContent = '—';
+    document.getElementById('statAboveCat1').textContent = '—';
+    document.getElementById('statAboveCat2').textContent = '—';
+    document.getElementById('eaDisplay').textContent = '—';
+  }
+
+  // Show/hide stat rows
+  document.getElementById('statRow2').style.display = showT2 ? 'flex' : 'none';
+  document.getElementById('statRowCat1').style.display = (showCatalyst && showEa) ? 'flex' : 'none';
+  document.getElementById('statRowCat2').style.display = (showCatalyst && showEa && showT2) ? 'flex' : 'none';
+};
+
+/* ===== PARTICLE STRIP ===== */
+let dots = [];
+
+const initDots = () => {
+  dots = [];
+  for (let i = 0; i < 80; i++) {
+    dots.push({
+      x: Math.random() * PW,
+      y: 10 + Math.random() * (PH - 20),
+      speed: 0,
+      radius: 3 + Math.random() * 2
+    });
+  }
+  assignSpeeds();
+};
+
+const assignSpeeds = () => {
+  // Sample from MB distribution at T1
+  for (const d of dots) {
+    // Rejection sampling
+    let s = 0;
+    for (let tries = 0; tries < 50; tries++) {
+      const candidate = Math.random() * 4;
+      const prob = mbDist(candidate, t1) / getPeak(t1);
+      if (Math.random() < prob) { s = candidate; break; }
+    }
+    d.speed = s;
+    d.vx = (0.5 + s * 1.5) * (Math.random() > 0.5 ? 1 : -1);
+    d.vy = (Math.random() - 0.5) * 0.6;
+  }
+};
+
+const speedToColor = (s) => {
+  // Blue (slow) → Yellow (mid) → Red (fast)
+  const t = Math.min(1, s / 3.5);
+  if (t < 0.5) {
+    const u = t * 2;
+    const r = Math.round(59 + (250 - 59) * u);
+    const g = Math.round(130 + (190 - 130) * u);
+    const b = Math.round(246 + (36 - 246) * u);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  } else {
+    const u = (t - 0.5) * 2;
+    const r = Math.round(250 + (239 - 250) * u);
+    const g = Math.round(190 + (68 - 190) * u);
+    const b = Math.round(36 + (68 - 36) * u);
+    return 'rgb(' + r + ',' + g + ',' + b + ')';
+  }
+};
+
+const drawParticles = () => {
+  px.clearRect(0, 0, PW, PH);
+
+  // Speed color legend bar at bottom
+  const barH = 4;
+  const barY = PH - barH - 2;
+  const grad = px.createLinearGradient(20, 0, PW - 20, 0);
+  grad.addColorStop(0, '#3b82f6');
+  grad.addColorStop(0.5, '#fabe24');
+  grad.addColorStop(1, '#ef4444');
+  px.fillStyle = grad;
+  px.fillRect(20, barY, PW - 40, barH);
+  px.fillStyle = '#475569';
+  px.font = '8px Inter, sans-serif';
+  px.textAlign = 'left';
+  px.fillText('Slow', 20, barY - 2);
+  px.textAlign = 'right';
+  px.fillText('Fast', PW - 20, barY - 2);
+
+  // Update & draw dots
+  for (const d of dots) {
+    d.x += d.vx;
+    d.y += d.vy;
+    if (d.x < 0) d.x += PW;
+    if (d.x > PW) d.x -= PW;
+    if (d.y < 8) { d.y = 8; d.vy *= -1; }
+    if (d.y > PH - 16) { d.y = PH - 16; d.vy *= -1; }
+
+    const col = speedToColor(d.speed);
+    const r = d.radius;
+    const rg = px.createRadialGradient(d.x - r * 0.3, d.y - r * 0.3, r * 0.05, d.x, d.y, r);
+    rg.addColorStop(0, '#ffffff');
+    rg.addColorStop(0.3, col);
+    rg.addColorStop(1, col);
+    px.beginPath();
+    px.arc(d.x, d.y, r, 0, Math.PI * 2);
+    px.fillStyle = rg;
+    px.fill();
+  }
+};
+
+/* ===== Ea DRAGGING ===== */
+cc.addEventListener('mousedown', (e) => {
+  if (!showEa) return;
+  const rect = cc.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (CW / rect.width);
+  const gw = CW - ML - MR;
+  const eaCanvasX = ML + eaFrac * gw;
+  const catCanvasX = ML + catEaFrac * gw;
+
+  if (showCatalyst && Math.abs(mx - catCanvasX) < 15) {
+    draggingCatEa = true;
+  } else if (Math.abs(mx - eaCanvasX) < 15) {
+    draggingEa = true;
+  }
+});
+cc.addEventListener('mousemove', (e) => {
+  if (!draggingEa && !draggingCatEa) return;
+  const rect = cc.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (CW / rect.width);
+  const gw = CW - ML - MR;
+  const frac = Math.max(0.05, Math.min(0.95, (mx - ML) / gw));
+
+  if (draggingEa) {
+    eaFrac = frac;
+    // Keep catalyst Ea' to the left of Ea
+    if (catEaFrac >= eaFrac) catEaFrac = eaFrac - 0.05;
+  }
+  if (draggingCatEa) {
+    catEaFrac = Math.min(frac, eaFrac - 0.02);
+  }
+});
+cc.addEventListener('mouseup', () => { draggingEa = false; draggingCatEa = false; });
+cc.addEventListener('mouseleave', () => { draggingEa = false; draggingCatEa = false; });
+
+// Touch support
+cc.addEventListener('touchstart', (e) => {
+  if (!showEa) return;
+  const rect = cc.getBoundingClientRect();
+  const mx = (e.touches[0].clientX - rect.left) * (CW / rect.width);
+  const gw = CW - ML - MR;
+  const eaCanvasX = ML + eaFrac * gw;
+  const catCanvasX = ML + catEaFrac * gw;
+  if (showCatalyst && Math.abs(mx - catCanvasX) < 20) {
+    draggingCatEa = true; e.preventDefault();
+  } else if (Math.abs(mx - eaCanvasX) < 20) {
+    draggingEa = true; e.preventDefault();
+  }
+}, { passive: false });
+cc.addEventListener('touchmove', (e) => {
+  if (!draggingEa && !draggingCatEa) return;
+  const rect = cc.getBoundingClientRect();
+  const mx = (e.touches[0].clientX - rect.left) * (CW / rect.width);
+  const gw = CW - ML - MR;
+  const frac = Math.max(0.05, Math.min(0.95, (mx - ML) / gw));
+  if (draggingEa) { eaFrac = frac; if (catEaFrac >= eaFrac) catEaFrac = eaFrac - 0.05; }
+  if (draggingCatEa) { catEaFrac = Math.min(frac, eaFrac - 0.02); }
+  e.preventDefault();
+}, { passive: false });
+cc.addEventListener('touchend', () => { draggingEa = false; draggingCatEa = false; });
+
+/* ===== CURSOR HINT ===== */
+cc.addEventListener('mousemove', (e) => {
+  if (draggingEa || draggingCatEa) { cc.style.cursor = 'ew-resize'; return; }
+  if (!showEa) { cc.style.cursor = 'default'; return; }
+  const rect = cc.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (CW / rect.width);
+  const gw = CW - ML - MR;
+  const eaCanvasX = ML + eaFrac * gw;
+  const catCanvasX = ML + catEaFrac * gw;
+  if (Math.abs(mx - eaCanvasX) < 15 || (showCatalyst && Math.abs(mx - catCanvasX) < 15)) {
+    cc.style.cursor = 'ew-resize';
+  } else {
+    cc.style.cursor = 'default';
+  }
+});
+
+/* ===== CONTROLS ===== */
+document.getElementById('t1Slider').addEventListener('input', (e) => {
+  t1 = parseInt(e.target.value);
+  document.getElementById('t1Val').textContent = t1 + ' K';
+  assignSpeeds();
+});
+document.getElementById('t2Slider').addEventListener('input', (e) => {
+  t2 = parseInt(e.target.value);
+  document.getElementById('t2Val').textContent = t2 + ' K';
+});
+document.getElementById('t2Toggle').addEventListener('change', (e) => {
+  showT2 = e.target.checked;
+  document.getElementById('t2Row').classList.toggle('disabled', !showT2);
+});
+document.getElementById('eaToggle').addEventListener('change', (e) => {
+  showEa = e.target.checked;
+  if (!showEa) {
+    showCatalyst = false;
+    document.getElementById('catToggle').checked = false;
+  }
+});
+document.getElementById('catToggle').addEventListener('change', (e) => {
+  showCatalyst = e.target.checked;
+  if (showCatalyst && !showEa) {
+    showEa = true;
+    document.getElementById('eaToggle').checked = true;
+  }
+});
+
+/* ===== PRESETS ===== */
+const setT1 = (v) => {
+  t1 = v;
+  document.getElementById('t1Slider').value = v;
+  document.getElementById('t1Val').textContent = v + ' K';
+  assignSpeeds();
+};
+const setT2 = (v) => {
+  t2 = v;
+  document.getElementById('t2Slider').value = v;
+  document.getElementById('t2Val').textContent = v + ' K';
+};
+
+const resetAll = () => {
+  setT1(300); setT2(500);
+  showT2 = false;
+  showCatalyst = false;
+  showEa = true;
+  eaFrac = 0.55;
+  catEaFrac = 0.35;
+  document.getElementById('t2Toggle').checked = false;
+  document.getElementById('t2Row').classList.add('disabled');
+  document.getElementById('eaToggle').checked = true;
+  document.getElementById('catToggle').checked = false;
+};
+
+const presetLow = () => { setT1(200); };
+const presetMed = () => { setT1(400); };
+const presetHigh = () => { setT1(700); };
+const presetCompare = () => {
+  setT1(300); setT2(600);
+  showT2 = true;
+  document.getElementById('t2Toggle').checked = true;
+  document.getElementById('t2Row').classList.remove('disabled');
+};
+
+/* ===== MAIN LOOP ===== */
+const loop = () => {
+  drawChart();
+  drawParticles();
+  requestAnimationFrame(loop);
+};
+
+/* ===== INIT ===== */
+const init = () => {
+  resizeAll();
+  initDots();
+  loop();
+};
+
+init();
+</script>
+</body>
+</html>

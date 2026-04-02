@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Gas Laws Simulation — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Inter',sans-serif;min-height:100vh}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#1e293b;border-bottom:1px solid #334155}
+nav a{color:#94a3b8;text-decoration:none;font-size:0.9rem;display:flex;align-items:center;gap:6px;transition:color 0.2s}
+nav a:hover{color:#7adce8}
+nav .title{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.15rem;color:#fff}
+nav .tags{display:flex;gap:8px}
+nav .tag{font-size:0.7rem;padding:3px 10px;border-radius:50px;background:#1b8c9c22;color:#7adce8;font-weight:600;letter-spacing:0.03em}
+
+/* MAIN LAYOUT */
+#simw{max-width:1100px;margin:24px auto;padding:0 20px}
+#topRow{display:flex;gap:18px;margin-bottom:18px}
+#cWrap{flex:1;background:#1e293b;border-radius:12px;border:1px solid #334155;overflow:hidden;position:relative;min-height:420px}
+#chemCanvas{display:block;width:100%;height:100%}
+#sidePanel{width:240px;display:flex;flex-direction:column;gap:12px}
+
+/* MODE SELECTOR */
+#modePanel{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:14px}
+#modePanel h3{font-family:'Poppins',sans-serif;font-size:0.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+.mode-btn{display:block;width:100%;padding:10px 12px;margin-bottom:6px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#cbd5e1;font-size:0.85rem;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;text-align:left}
+.mode-btn:last-child{margin-bottom:0}
+.mode-btn:hover{border-color:#1b8c9c;color:#7adce8}
+.mode-btn.active{background:#1b8c9c22;border-color:#1b8c9c;color:#7adce8;font-weight:600}
+
+/* INFO PANEL */
+#infoPanel{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:14px;flex:1}
+#infoPanel h3{font-family:'Poppins',sans-serif;font-size:0.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+#infoContent{font-size:0.85rem;line-height:1.6;color:#cbd5e1}
+#infoContent .val{color:#7adce8;font-weight:600;font-size:1.05rem}
+#infoContent .label{color:#94a3b8;font-size:0.78rem}
+
+/* CONTROLS BAR */
+#botBar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.ctrl-group{display:flex;align-items:center;gap:8px;background:#1e293b;padding:8px 14px;border-radius:10px;border:1px solid #334155}
+.ctrl-group label{font-size:0.78rem;color:#94a3b8;white-space:nowrap}
+.ctrl-group input[type=range]{width:120px;accent-color:#1b8c9c}
+.ctrl-group .val-display{color:#7adce8;font-weight:600;font-size:0.85rem;min-width:50px;text-align:right}
+.bp{padding:8px 20px;background:#1b8c9c;color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
+.bp:hover{background:#136d7a;transform:translateY(-1px)}
+.bs{padding:8px 16px;background:#334155;color:#cbd5e1;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:500;font-size:0.82rem;cursor:pointer;transition:all 0.2s}
+.bs:hover{background:#475569}
+
+/* GAS LEGEND */
+#gasLegend{display:flex;gap:12px;flex-wrap:wrap}
+.gas-chip{display:flex;align-items:center;gap:5px;font-size:0.78rem;color:#94a3b8;padding:4px 10px;background:#0f172a;border-radius:50px;border:1px solid #334155}
+.gas-dot{width:10px;height:10px;border-radius:50%}
+
+/* PRESSURE DISPLAY */
+#pressureDisplay{position:absolute;top:12px;right:12px;background:rgba(15,23,42,0.85);padding:10px 16px;border-radius:10px;border:1px solid #334155;z-index:10}
+#pressureDisplay .label{font-size:0.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em}
+#pressureDisplay .val{font-family:'Poppins',sans-serif;font-size:1.3rem;color:#fbbf24;font-weight:700}
+#pressureDisplay .unit{font-size:0.75rem;color:#94a3b8}
+
+/* PARTIAL PRESSURES */
+#partialDisplay{position:absolute;top:12px;left:12px;background:rgba(15,23,42,0.85);padding:10px 14px;border-radius:10px;border:1px solid #334155;z-index:10;font-size:0.78rem}
+#partialDisplay .pp-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+#partialDisplay .pp-row:last-child{margin-bottom:0;padding-top:4px;border-top:1px solid #334155}
+#partialDisplay .pp-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+#partialDisplay .pp-name{color:#94a3b8;min-width:28px}
+#partialDisplay .pp-val{color:#7adce8;font-weight:600}
+
+/* PISTON */
+#pistonHandle{position:absolute;top:0;right:0;width:28px;height:100%;cursor:ew-resize;z-index:5}
+
+/* NOTES GRID */
+.notes-grid{max-width:1100px;margin:0 auto 40px;padding:0 20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.note-card{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:20px;transition:all 0.3s}
+.note-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.note-card h4{font-family:'Poppins',sans-serif;font-size:0.95rem;color:#7adce8;margin-bottom:8px}
+.note-card p{font-size:0.85rem;line-height:1.6;color:#94a3b8}
+
+/* FOOTER */
+footer{text-align:center;padding:24px;color:#475569;font-size:0.8rem;border-top:1px solid #1e293b}
+footer a{color:#1b8c9c;text-decoration:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  #topRow{flex-direction:column}
+  #sidePanel{width:100%;flex-direction:row;flex-wrap:wrap}
+  #modePanel,#infoPanel{flex:1;min-width:200px}
+  .notes-grid{grid-template-columns:1fr}
+  #cWrap{min-height:320px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="./index.html">← Back to Simulations</a>
+  <span class="title">Gas Laws Explorer</span>
+  <div class="tags">
+    <span class="tag">Interactive</span>
+    <span class="tag">Gases</span>
+  </div>
+</nav>
+
+<div id="simw">
+  <div id="topRow">
+    <div id="cWrap">
+      <canvas id="chemCanvas"></canvas>
+      <div id="pressureDisplay">
+        <div class="label">Total Pressure</div>
+        <div><span class="val" id="pVal">1.00</span> <span class="unit">atm</span></div>
+      </div>
+      <div id="partialDisplay"></div>
+    </div>
+    <div id="sidePanel">
+      <div id="modePanel">
+        <h3>Explore</h3>
+        <button class="mode-btn active" data-mode="boyle" onclick="setMode('boyle')">Boyle's Law</button>
+        <button class="mode-btn" data-mode="charles" onclick="setMode('charles')">Charles's Law</button>
+        <button class="mode-btn" data-mode="dalton" onclick="setMode('dalton')">Dalton's Law</button>
+        <button class="mode-btn" data-mode="free" onclick="setMode('free')">Free Explore</button>
+      </div>
+      <div id="infoPanel">
+        <h3>Current Law</h3>
+        <div id="infoContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="botBar">
+    <div class="ctrl-group" id="tempCtrl">
+      <label>Temperature</label>
+      <input type="range" id="tempSlider" min="100" max="600" value="300" step="10">
+      <span class="val-display" id="tempVal">300 K</span>
+    </div>
+    <div class="ctrl-group" id="addGasCtrl">
+      <label>Add Gas</label>
+      <button class="bs" onclick="addGasType('N₂','#3b82f6')">N₂</button>
+      <button class="bs" onclick="addGasType('O₂','#ef4444')">O₂</button>
+      <button class="bs" onclick="addGasType('He','#a855f7')">He</button>
+    </div>
+    <button class="bp" onclick="resetSim()">Reset</button>
+    <div id="gasLegend"></div>
+  </div>
+</div>
+
+<div class="notes-grid">
+  <div class="note-card">
+    <h4>Boyle's Law</h4>
+    <p>At constant temperature, pressure is inversely proportional to volume: <strong style="color:#fbbf24">P ∝ 1/V</strong>. Drag the piston left to decrease volume — watch particles collide with walls more frequently, increasing pressure.</p>
+  </div>
+  <div class="note-card">
+    <h4>Charles's Law</h4>
+    <p>At constant volume and amount of gas, pressure is directly proportional to absolute temperature: <strong style="color:#fbbf24">P ∝ T</strong>. Increase the temperature — particles speed up and collide with the walls more frequently, increasing pressure.</p>
+  </div>
+  <div class="note-card">
+    <h4>Dalton's Law</h4>
+    <p>The total pressure of a gas mixture equals the sum of the partial pressures: <strong style="color:#fbbf24">P_total = P₁ + P₂ + P₃ + ...</strong>. Add different gases and observe how each contributes to total pressure independently.</p>
+  </div>
+</div>
+
+<footer>
+  <a href="./index.html">← Back to Simulations</a> &nbsp;·&nbsp; © Mr Khemistry
+</footer>
+
+<script>
+/* ===== SIMULATION ENGINE ===== */
+const canvas = document.getElementById('chemCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+/* --- Resize --- */
+function resize() {
+  const wrap = document.getElementById('cWrap');
+  W = canvas.width = wrap.clientWidth;
+  H = canvas.height = wrap.clientHeight;
+}
+window.addEventListener('resize', resize);
+
+/* --- State --- */
+let mode = 'boyle'; // boyle, charles, dalton, free
+let temperature = 300;     // K
+let pistonX;               // right boundary of gas container (relative to canvas)
+let pistonMinX, pistonMaxX;
+let draggingPiston = false;
+let charlesAutoAdjust = false;
+
+/* --- Gas types & particles --- */
+const gasTypes = {
+  'N₂': { color: '#3b82f6', mass: 28, radius: 7 },
+  'O₂': { color: '#ef4444', mass: 32, radius: 7 },
+  'He': { color: '#a855f7', mass: 4, radius: 5 }
+};
+
+let particles = [];
+let activeGases = {}; // { 'N₂': count, ... }
+
+const WALL_LEFT = 40;
+const WALL_TOP = 40;
+const WALL_BOTTOM_OFFSET = 40;
+let wallBottom;
+const PISTON_WIDTH = 18;
+
+/* Base values for ideal gas calculations */
+const BASE_TEMP = 300;
+const BASE_PARTICLES = 20;
+const BASE_VOLUME_FRAC = 0.7; // fraction of available width
+
+/* --- Particle class --- */
+class Particle {
+  constructor(name, x, y) {
+    const gt = gasTypes[name];
+    this.name = name;
+    this.color = gt.color;
+    this.mass = gt.mass;
+    this.radius = gt.radius;
+    this.x = x;
+    this.y = y;
+    const speed = this.getSpeed();
+    const angle = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+    this.trail = [];
+  }
+  getSpeed() {
+    // Maxwell-Boltzmann: v ∝ sqrt(T/m)
+    return Math.sqrt(temperature / this.mass) * 2.2;
+  }
+  update() {
+    // Adjust speed based on temperature (gradual)
+    const targetSpeed = this.getSpeed();
+    const currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy) || 0.01;
+    const ratio = targetSpeed / currentSpeed;
+    // Smoothly adjust
+    const blend = 0.03;
+    this.vx *= (1 - blend) + blend * ratio;
+    this.vy *= (1 - blend) + blend * ratio;
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Wall collisions
+    const r = this.radius;
+    if (this.x - r < WALL_LEFT) { this.x = WALL_LEFT + r; this.vx = Math.abs(this.vx); }
+    if (this.x + r > pistonX - PISTON_WIDTH) { this.x = pistonX - PISTON_WIDTH - r; this.vx = -Math.abs(this.vx); }
+    if (this.y - r < WALL_TOP) { this.y = WALL_TOP + r; this.vy = Math.abs(this.vy); }
+    if (this.y + r > wallBottom) { this.y = wallBottom - r; this.vy = -Math.abs(this.vy); }
+
+    // Trail
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > 6) this.trail.shift();
+  }
+  draw() {
+    // Faint trail
+    if (this.trail.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(this.trail[0].x, this.trail[0].y);
+      for (let i = 1; i < this.trail.length; i++) {
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+      }
+      ctx.strokeStyle = this.color + '30';
+      ctx.lineWidth = this.radius * 0.8;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+    // Particle sphere
+    const r = this.radius;
+    const g = ctx.createRadialGradient(this.x - r * 0.3, this.y - r * 0.3, r * 0.05, this.x, this.y, r * 1.05);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.25, this.color + 'cc');
+    g.addColorStop(0.7, this.color);
+    g.addColorStop(1, this.color + '88');
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+    // Small highlight
+    const h = ctx.createRadialGradient(this.x - r * 0.3, this.y - r * 0.35, 0, this.x - r * 0.3, this.y - r * 0.35, r * 0.5);
+    h.addColorStop(0, 'rgba(255,255,255,0.5)');
+    h.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = h;
+    ctx.fill();
+  }
+}
+
+/* --- Initialize particles --- */
+function spawnParticles(name, count) {
+  for (let i = 0; i < count; i++) {
+    const x = WALL_LEFT + 20 + Math.random() * (pistonX - PISTON_WIDTH - WALL_LEFT - 40);
+    const y = WALL_TOP + 20 + Math.random() * (wallBottom - WALL_TOP - 40);
+    particles.push(new Particle(name, x, y));
+  }
+  activeGases[name] = (activeGases[name] || 0) + count;
+  updateLegend();
+  updatePartialPressures();
+}
+
+function addGasType(name, color) {
+  spawnParticles(name, 10);
+}
+
+/* --- Reset --- */
+function resetSim() {
+  particles = [];
+  activeGases = {};
+  temperature = 300;
+  document.getElementById('tempSlider').value = 300;
+  document.getElementById('tempVal').textContent = '300 K';
+  pistonX = WALL_LEFT + (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC;
+  updateLegend();
+  updatePartialPressures();
+  // Add default gas
+  if (mode === 'dalton') {
+    spawnParticles('N₂', 10);
+  } else {
+    spawnParticles('N₂', 20);
+  }
+}
+
+/* --- Mode switching --- */
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === m);
+  });
+  updateInfo();
+  updateControlVisibility();
+  // Reset when switching modes
+  resetSim();
+}
+
+function updateControlVisibility() {
+  const tempCtrl = document.getElementById('tempCtrl');
+  const addGasCtrl = document.getElementById('addGasCtrl');
+
+  // Show/hide controls based on mode
+  if (mode === 'boyle') {
+    tempCtrl.style.display = 'none';
+    addGasCtrl.style.display = 'none';
+  } else if (mode === 'charles') {
+    tempCtrl.style.display = 'flex';
+    addGasCtrl.style.display = 'none';
+  } else if (mode === 'dalton') {
+    tempCtrl.style.display = 'none';
+    addGasCtrl.style.display = 'flex';
+  } else {
+    tempCtrl.style.display = 'flex';
+    addGasCtrl.style.display = 'flex';
+  }
+}
+
+const infoTexts = {
+  boyle: '<div class="val">P ∝ 1/V</div><br><span class="label">At constant T and n</span><br><br>Drag the <strong style="color:#fbbf24">piston</strong> left or right to change volume. Temperature and amount of gas stay fixed. Watch how pressure changes inversely with volume.',
+  charles: '<div class="val">P ∝ T</div><br><span class="label">At constant V and n</span><br><br>Adjust the <strong style="color:#fbbf24">temperature</strong> slider. Volume and amount of gas stay fixed. Watch how pressure increases with temperature as particles move faster.',
+  dalton: '<div class="val">P = P₁ + P₂ + ...</div><br><span class="label">At constant T and V</span><br><br>Add different gases. Temperature and volume stay fixed. Each gas contributes its own <strong style="color:#fbbf24">partial pressure</strong> to the total.',
+  free: '<div class="val">PV = nRT</div><br><span class="label">Ideal Gas Law</span><br><br>All controls unlocked. Change temperature, volume, and add gases freely to explore gas behaviour.'
+};
+
+function updateInfo() {
+  document.getElementById('infoContent').innerHTML = infoTexts[mode] || '';
+}
+
+/* --- Legend --- */
+function updateLegend() {
+  const el = document.getElementById('gasLegend');
+  let html = '';
+  for (const name in activeGases) {
+    if (activeGases[name] > 0) {
+      html += '<div class="gas-chip"><span class="gas-dot" style="background:' + gasTypes[name].color + '"></span>' + name + ' ×' + activeGases[name] + '</div>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+/* --- Pressure calculation --- */
+function calcPressure() {
+  // P ∝ nT/V
+  const n = particles.length || 1;
+  const vol = Math.max(50, pistonX - PISTON_WIDTH - WALL_LEFT);
+  const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
+  const p = (n / BASE_PARTICLES) * (temperature / BASE_TEMP) * (baseVol / vol);
+  return p;
+}
+
+function updatePressureDisplay() {
+  const p = calcPressure();
+  document.getElementById('pVal').textContent = p.toFixed(2);
+}
+
+function updatePartialPressures() {
+  const el = document.getElementById('partialDisplay');
+  const vol = Math.max(50, pistonX - PISTON_WIDTH - WALL_LEFT);
+  const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
+  let html = '';
+  let total = 0;
+  for (const name in activeGases) {
+    const n = activeGases[name];
+    if (n > 0) {
+      const pp = (n / BASE_PARTICLES) * (temperature / BASE_TEMP) * (baseVol / vol);
+      total += pp;
+      html += '<div class="pp-row"><span class="pp-dot" style="background:' + gasTypes[name].color + '"></span><span class="pp-name">' + name + '</span><span class="pp-val">' + pp.toFixed(2) + ' atm</span></div>';
+    }
+  }
+  if (Object.keys(activeGases).length > 1) {
+    html += '<div class="pp-row"><span class="pp-dot" style="background:#fbbf24"></span><span class="pp-name">Total</span><span class="pp-val">' + total.toFixed(2) + ' atm</span></div>';
+  }
+  el.innerHTML = html;
+
+  // Show partial display only in dalton or free mode, or when multiple gases
+  el.style.display = (Object.keys(activeGases).length > 0) ? 'block' : 'none';
+}
+
+/* --- Charles's Law: volume stays constant, pressure changes with T --- */
+/* No auto-adjust needed — piston is locked in charles mode */
+
+/* --- Piston dragging --- */
+canvas.addEventListener('mousedown', (e) => {
+  if (mode === 'charles' || mode === 'dalton') return; // piston locked
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  if (Math.abs(mx - pistonX) < 25) {
+    draggingPiston = true;
+  }
+});
+canvas.addEventListener('mousemove', (e) => {
+  if (!draggingPiston) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  pistonX = Math.min(pistonMaxX, Math.max(pistonMinX, mx));
+});
+canvas.addEventListener('mouseup', () => { draggingPiston = false; });
+canvas.addEventListener('mouseleave', () => { draggingPiston = false; });
+
+// Touch support
+canvas.addEventListener('touchstart', (e) => {
+  if (mode === 'charles' || mode === 'dalton') return; // piston locked
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.touches[0].clientX - rect.left) * (W / rect.width);
+  if (Math.abs(mx - pistonX) < 35) {
+    draggingPiston = true;
+    e.preventDefault();
+  }
+}, { passive: false });
+canvas.addEventListener('touchmove', (e) => {
+  if (!draggingPiston) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.touches[0].clientX - rect.left) * (W / rect.width);
+  pistonX = Math.min(pistonMaxX, Math.max(pistonMinX, mx));
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener('touchend', () => { draggingPiston = false; });
+
+/* --- Temperature slider --- */
+document.getElementById('tempSlider').addEventListener('input', (e) => {
+  temperature = parseInt(e.target.value);
+  document.getElementById('tempVal').textContent = temperature + ' K';
+});
+
+/* --- Drawing --- */
+function drawWalls() {
+  const r = 8;
+  // Container bg
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.moveTo(WALL_LEFT + r, WALL_TOP);
+  ctx.lineTo(pistonX - PISTON_WIDTH, WALL_TOP);
+  ctx.lineTo(pistonX - PISTON_WIDTH, wallBottom);
+  ctx.lineTo(WALL_LEFT + r, wallBottom);
+  ctx.arcTo(WALL_LEFT, wallBottom, WALL_LEFT, wallBottom - r, r);
+  ctx.lineTo(WALL_LEFT, WALL_TOP + r);
+  ctx.arcTo(WALL_LEFT, WALL_TOP, WALL_LEFT + r, WALL_TOP, r);
+  ctx.closePath();
+  ctx.fill();
+
+  // Container border (3 sides — left, top, bottom)
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(pistonX - PISTON_WIDTH, WALL_TOP);
+  ctx.lineTo(WALL_LEFT + r, WALL_TOP);
+  ctx.arcTo(WALL_LEFT, WALL_TOP, WALL_LEFT, WALL_TOP + r, r);
+  ctx.lineTo(WALL_LEFT, wallBottom - r);
+  ctx.arcTo(WALL_LEFT, wallBottom, WALL_LEFT + r, wallBottom, r);
+  ctx.lineTo(pistonX - PISTON_WIDTH, wallBottom);
+  ctx.stroke();
+}
+
+function drawPiston() {
+  const x = pistonX - PISTON_WIDTH;
+  const canDrag = mode === 'boyle' || mode === 'free';
+
+  // Piston body
+  const grad = ctx.createLinearGradient(x, 0, x + PISTON_WIDTH, 0);
+  grad.addColorStop(0, '#475569');
+  grad.addColorStop(0.5, '#64748b');
+  grad.addColorStop(1, '#475569');
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, WALL_TOP, PISTON_WIDTH, wallBottom - WALL_TOP);
+
+  // Grip lines
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const lx = x + 5 + i * 5;
+    ctx.beginPath();
+    ctx.moveTo(lx, (WALL_TOP + wallBottom) / 2 - 15);
+    ctx.lineTo(lx, (WALL_TOP + wallBottom) / 2 + 15);
+    ctx.stroke();
+  }
+
+  // Drag hint
+  if (canDrag) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '10px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('◄ ►', x + PISTON_WIDTH / 2, wallBottom + 16);
+  }
+
+  // Handle area extends beyond piston for easier grabbing
+  // (handled via mouse events checking distance to pistonX)
+}
+
+function drawGraph() {
+  // Mini P-V or P-T graph in bottom-left of canvas
+  const gx = WALL_LEFT + 8;
+  const gy = wallBottom - 90;
+  const gw = 100;
+  const gh = 70;
+
+  ctx.fillStyle = 'rgba(15,23,42,0.8)';
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(gx - 6, gy - 6, gw + 12, gh + 22, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  // Axes
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(gx, gy);
+  ctx.lineTo(gx, gy + gh);
+  ctx.lineTo(gx + gw, gy + gh);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px Inter, sans-serif';
+  ctx.textAlign = 'center';
+
+  if (mode === 'boyle') {
+    ctx.fillText('Volume →', gx + gw / 2, gy + gh + 14);
+    ctx.save();
+    ctx.translate(gx - 2, gy + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('P →', 0, 0);
+    ctx.restore();
+
+    // Draw 1/V curve
+    ctx.beginPath();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= gw; i++) {
+      const vFrac = 0.15 + (i / gw) * 0.85;
+      const pFrac = 0.15 / vFrac;
+      const py = gy + gh - pFrac * gh;
+      if (i === 0) ctx.moveTo(gx + i, Math.max(gy, py));
+      else ctx.lineTo(gx + i, Math.max(gy, py));
+    }
+    ctx.stroke();
+
+    // Current position dot
+    const curVol = (pistonX - PISTON_WIDTH - WALL_LEFT) / (pistonMaxX - WALL_LEFT);
+    const curP = calcPressure();
+    const dotX = gx + curVol * gw;
+    const dotY = gy + gh - Math.min(1, curP / 3) * gh;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fill();
+  } else if (mode === 'charles') {
+    ctx.fillText('Temp →', gx + gw / 2, gy + gh + 14);
+    ctx.save();
+    ctx.translate(gx - 2, gy + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('P →', 0, 0);
+    ctx.restore();
+
+    // Linear P ∝ T (at constant V and n)
+    ctx.beginPath();
+    ctx.strokeStyle = '#22d3ee';
+    ctx.lineWidth = 2;
+    ctx.moveTo(gx, gy + gh);
+    ctx.lineTo(gx + gw, gy);
+    ctx.stroke();
+
+    // Current position
+    const tFrac = (temperature - 100) / 500;
+    const curP = calcPressure();
+    const pFrac = Math.min(1, curP / 2);
+    const dotX = gx + tFrac * gw;
+    const dotY = gy + gh - pFrac * gh;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#22d3ee';
+    ctx.fill();
+  } else if (mode === 'dalton') {
+    ctx.fillText('Gases added →', gx + gw / 2, gy + gh + 14);
+    ctx.save();
+    ctx.translate(gx - 2, gy + gh / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('P →', 0, 0);
+    ctx.restore();
+
+    // Bar chart for partial pressures
+    const names = Object.keys(activeGases);
+    if (names.length > 0) {
+      const barW = Math.min(20, (gw - 10) / (names.length + 1));
+      const maxP = calcPressure() * 1.2 || 1;
+      let bx = gx + 10;
+      for (const name of names) {
+        const n = activeGases[name];
+        const vol = Math.max(50, pistonX - PISTON_WIDTH - WALL_LEFT);
+        const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
+        const pp = (n / BASE_PARTICLES) * (temperature / BASE_TEMP) * (baseVol / vol);
+        const barH = (pp / maxP) * (gh - 5);
+        ctx.fillStyle = gasTypes[name].color + 'cc';
+        ctx.fillRect(bx, gy + gh - barH, barW, barH);
+        bx += barW + 6;
+      }
+      // Total bar
+      const totalP = calcPressure();
+      const totalH = (totalP / maxP) * (gh - 5);
+      ctx.fillStyle = '#fbbf24cc';
+      ctx.fillRect(bx, gy + gh - totalH, barW, totalH);
+    }
+  } else {
+    // Free mode — show PV = nRT
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 11px Poppins, sans-serif';
+    ctx.fillText('PV = nRT', gx + gw / 2, gy + gh / 2);
+  }
+}
+
+function drawWatermark() {
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '11px Arial';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('© Mr Khemistry', W - 12, H - 10);
+  ctx.restore();
+}
+
+/* --- Collision glow on walls --- */
+let wallHits = { left: 0, top: 0, bottom: 0, piston: 0 };
+function decayHits() {
+  wallHits.left *= 0.92;
+  wallHits.top *= 0.92;
+  wallHits.bottom *= 0.92;
+  wallHits.piston *= 0.92;
+}
+function countCollisions() {
+  for (const p of particles) {
+    const r = p.radius;
+    if (p.x - r <= WALL_LEFT + 2 && p.vx < 0) wallHits.left += 0.3;
+    if (p.y - r <= WALL_TOP + 2 && p.vy < 0) wallHits.top += 0.3;
+    if (p.y + r >= wallBottom - 2 && p.vy > 0) wallHits.bottom += 0.3;
+    if (p.x + r >= pistonX - PISTON_WIDTH - 2 && p.vx > 0) wallHits.piston += 0.3;
+  }
+}
+function drawWallGlow() {
+  // Glow on walls proportional to hits (shows pressure visually)
+  const maxAlpha = 0.35;
+  // Left wall
+  if (wallHits.left > 0.1) {
+    const g = ctx.createLinearGradient(WALL_LEFT, 0, WALL_LEFT + 20, 0);
+    g.addColorStop(0, 'rgba(251,191,36,' + Math.min(maxAlpha, wallHits.left * 0.05) + ')');
+    g.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(WALL_LEFT, WALL_TOP, 20, wallBottom - WALL_TOP);
+  }
+  // Top wall
+  if (wallHits.top > 0.1) {
+    const g = ctx.createLinearGradient(0, WALL_TOP, 0, WALL_TOP + 20);
+    g.addColorStop(0, 'rgba(251,191,36,' + Math.min(maxAlpha, wallHits.top * 0.05) + ')');
+    g.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(WALL_LEFT, WALL_TOP, pistonX - PISTON_WIDTH - WALL_LEFT, 20);
+  }
+  // Bottom wall
+  if (wallHits.bottom > 0.1) {
+    const g = ctx.createLinearGradient(0, wallBottom, 0, wallBottom - 20);
+    g.addColorStop(0, 'rgba(251,191,36,' + Math.min(maxAlpha, wallHits.bottom * 0.05) + ')');
+    g.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(WALL_LEFT, wallBottom - 20, pistonX - PISTON_WIDTH - WALL_LEFT, 20);
+  }
+  // Piston
+  if (wallHits.piston > 0.1) {
+    const px = pistonX - PISTON_WIDTH;
+    const g = ctx.createLinearGradient(px, 0, px - 20, 0);
+    g.addColorStop(0, 'rgba(251,191,36,' + Math.min(maxAlpha, wallHits.piston * 0.05) + ')');
+    g.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(px - 20, WALL_TOP, 20, wallBottom - WALL_TOP);
+  }
+}
+
+/* --- Volume label --- */
+function drawVolumeLabel() {
+  const vol = pistonX - PISTON_WIDTH - WALL_LEFT;
+  const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
+  const vRatio = vol / baseVol;
+  ctx.fillStyle = '#64748b';
+  ctx.font = '11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('V = ' + vRatio.toFixed(2) + 'V₀', (WALL_LEFT + pistonX - PISTON_WIDTH) / 2, WALL_TOP - 12);
+}
+
+/* --- Main draw loop --- */
+function drawLoop() {
+  ctx.clearRect(0, 0, W, H);
+
+  wallBottom = H - WALL_BOTTOM_OFFSET;
+  pistonMinX = WALL_LEFT + 100;
+  pistonMaxX = W - 40;
+
+  // Lock piston in charles and dalton modes (volume stays constant)
+  if (mode === 'charles' || mode === 'dalton') {
+    pistonX = WALL_LEFT + (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC;
+  }
+
+  // Draw container
+  drawWalls();
+  drawWallGlow();
+  drawPiston();
+  drawVolumeLabel();
+
+  // Update & draw particles
+  countCollisions();
+  decayHits();
+  for (const p of particles) {
+    p.update();
+  }
+  for (const p of particles) {
+    p.draw();
+  }
+
+  // Pressure + graph
+  updatePressureDisplay();
+  updatePartialPressures();
+  drawGraph();
+  drawWatermark();
+
+  requestAnimationFrame(drawLoop);
+}
+
+/* --- Init --- */
+function init() {
+  resize();
+  pistonX = WALL_LEFT + (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC;
+  wallBottom = H - WALL_BOTTOM_OFFSET;
+  pistonMinX = WALL_LEFT + 100;
+  pistonMaxX = W - 40;
+  updateInfo();
+  updateControlVisibility();
+  spawnParticles('N₂', 20);
+  drawLoop();
+}
+
+init();
+</script>
+</body>
+</html>

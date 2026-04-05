@@ -5910,7 +5910,7 @@ Option D" required></textarea>
                     <div class="topic-bar-container">
                         <div class="topic-bar-label">
                             <span>${escapeHtml(topic)}</span>
-                            <span style="font-weight:700; color:${barColor}">${pct}% <span style="opacity:0.6; font-weight:400;">(${correct}/${total})</span></span>
+                            <span style="font-weight:700; color:${barColor}">${pct}% <span style="opacity:1; font-weight:600; color:rgba(255,255,255,0.9);">(${correct}/${total})</span></span>
                         </div>
                         <div class="topic-bar-track">
                             <div class="topic-bar-fill" style="width:${pct}%; background:${barColor};"></div>
@@ -5930,22 +5930,24 @@ Option D" required></textarea>
                     .select('topic, source');
                 if (error) throw error;
 
-                // Tally TYS and Prelim per topic
+                // Tally TYS, Prelim and Promos per topic
                 const tally = {};
                 (data || []).forEach(q => {
                     const t = q.topic || 'Unknown';
-                    if (!tally[t]) tally[t] = { tys: 0, prelim: 0 };
+                    if (!tally[t]) tally[t] = { tys: 0, prelim: 0, promos: 0 };
                     if (q.source === 'TYS') tally[t].tys++;
                     else if (q.source === 'Prelim') tally[t].prelim++;
+                    else if (q.source === 'Promos') tally[t].promos++;
                 });
 
                 const sorted = Object.entries(tally)
-                    .map(([topic, counts]) => ({ topic, tys: counts.tys, prelim: counts.prelim, total: counts.tys + counts.prelim }))
+                    .map(([topic, counts]) => ({ topic, tys: counts.tys, prelim: counts.prelim, promos: counts.promos, total: counts.tys + counts.prelim + counts.promos }))
                     .sort((a, b) => b.total - a.total);
 
                 const totalAll = sorted.reduce((s, r) => s + r.total, 0);
                 const totalTYS = sorted.reduce((s, r) => s + r.tys, 0);
                 const totalPrelim = sorted.reduce((s, r) => s + r.prelim, 0);
+                const totalPromos = sorted.reduce((s, r) => s + r.promos, 0);
 
                 // Build chart canvas + table
                 let html = `
@@ -5961,6 +5963,9 @@ Option D" required></textarea>
                             <span style="font-size:0.85rem; background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
                                 Prelim: <strong>${totalPrelim}</strong>
                             </span>
+                            <span style="font-size:0.85rem; background:rgba(74,222,128,0.15); border:1px solid rgba(74,222,128,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
+                                Promos: <strong>${totalPromos}</strong>
+                            </span>
                         </div>
                     </div>
                     <div style="position:relative; height:520px; margin-bottom:2rem;">
@@ -5972,6 +5977,7 @@ Option D" required></textarea>
                                 <th style="padding:0.5rem 0.75rem;">Topic</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">TYS</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Prelim</th>
+                                <th style="padding:0.5rem 0.75rem; text-align:right;">Promos</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Total</th>
                             </tr>
                         </thead>
@@ -5981,6 +5987,7 @@ Option D" required></textarea>
                                     <td style="padding:0.45rem 0.75rem;">${escapeHtml(r.topic)}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(168,85,247,0.9);">${r.tys}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(251,191,36,0.9);">${r.prelim}</td>
+                                    <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(74,222,128,0.9);">${r.promos}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; font-weight:700;">${r.total}</td>
                                 </tr>
                             `).join('')}
@@ -6010,6 +6017,14 @@ Option D" required></textarea>
                                 data: sorted.map(r => r.prelim),
                                 backgroundColor: 'rgba(251,191,36,0.75)',
                                 borderColor: 'rgba(251,191,36,1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Promos',
+                                data: sorted.map(r => r.promos),
+                                backgroundColor: 'rgba(74,222,128,0.75)',
+                                borderColor: 'rgba(74,222,128,1)',
                                 borderWidth: 1,
                                 borderRadius: 4
                             }
@@ -6128,7 +6143,7 @@ Option D" required></textarea>
                         <div class="topic-bar-container">
                             <div class="topic-bar-label">
                                 <span>${escapeHtml(topic)}</span>
-                                <span style="font-weight:700; color:${barColor}">${pct}% <span style="opacity:0.6; font-weight:400;">(${correct}/${total})</span></span>
+                                <span style="font-weight:700; color:${barColor}">${pct}% <span style="opacity:1; font-weight:600; color:rgba(255,255,255,0.9);">(${correct}/${total})</span></span>
                             </div>
                             <div class="topic-bar-track">
                                 <div class="topic-bar-fill" style="width:${pct}%; background:${barColor};"></div>

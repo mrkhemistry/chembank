@@ -153,7 +153,7 @@ footer a{color:#1b8c9c;text-decoration:none}
   </div>
   <div class="note-card">
     <h4>Charles's Law</h4>
-    <p>At constant volume and amount of gas, pressure is directly proportional to absolute temperature: <strong style="color:#fbbf24">P ∝ T</strong>. Increase the temperature — particles speed up and collide with the walls more frequently, increasing pressure.</p>
+    <p>At constant pressure and amount of gas, volume is directly proportional to absolute temperature: <strong style="color:#fbbf24">V ∝ T</strong>. Increase the temperature — particles speed up, pushing the piston outward to maintain constant pressure.</p>
   </div>
   <div class="note-card">
     <h4>Dalton's Law</h4>
@@ -355,7 +355,7 @@ function updateControlVisibility() {
 
 const infoTexts = {
   boyle: '<div class="val">P ∝ 1/V</div><br><span class="label">At constant T and n</span><br><br>Drag the <strong style="color:#fbbf24">piston</strong> left or right to change volume. Temperature and amount of gas stay fixed. Watch how pressure changes inversely with volume.',
-  charles: '<div class="val">P ∝ T</div><br><span class="label">At constant V and n</span><br><br>Adjust the <strong style="color:#fbbf24">temperature</strong> slider. Volume and amount of gas stay fixed. Watch how pressure increases with temperature as particles move faster.',
+  charles: '<div class="val">V ∝ T</div><br><span class="label">At constant P and n</span><br><br>Adjust the <strong style="color:#fbbf24">temperature</strong> slider. Pressure and amount of gas stay fixed. The piston moves automatically — volume increases with temperature.',
   dalton: '<div class="val">P = P₁ + P₂ + ...</div><br><span class="label">At constant T and V</span><br><br>Add different gases. Temperature and volume stay fixed. Each gas contributes its own <strong style="color:#fbbf24">partial pressure</strong> to the total.',
   free: '<div class="val">PV = nRT</div><br><span class="label">Ideal Gas Law</span><br><br>All controls unlocked. Change temperature, volume, and add gases freely to explore gas behaviour.'
 };
@@ -387,12 +387,31 @@ function calcPressure() {
 }
 
 function updatePressureDisplay() {
+  // Charles's Law: pressure is constant by definition (V adjusts to maintain it)
+  if (mode === 'charles') {
+    document.getElementById('pVal').textContent = '1.00';
+    return;
+  }
   const p = calcPressure();
   document.getElementById('pVal').textContent = p.toFixed(2);
 }
 
 function updatePartialPressures() {
   const el = document.getElementById('partialDisplay');
+
+  // Charles's Law: show constant 1.00 atm
+  if (mode === 'charles') {
+    let html = '';
+    for (const name in activeGases) {
+      if (activeGases[name] > 0) {
+        html += '<div class="pp-row"><span class="pp-dot" style="background:' + gasTypes[name].color + '"></span><span class="pp-name">' + name + '</span><span class="pp-val">1.00 atm</span></div>';
+      }
+    }
+    el.innerHTML = html;
+    el.style.display = (Object.keys(activeGases).length > 0) ? 'block' : 'none';
+    return;
+  }
+
   const vol = Math.max(50, pistonX - PISTON_WIDTH - WALL_LEFT);
   const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
   let html = '';
@@ -414,8 +433,14 @@ function updatePartialPressures() {
   el.style.display = (Object.keys(activeGases).length > 0) ? 'block' : 'none';
 }
 
-/* --- Charles's Law: volume stays constant, pressure changes with T --- */
-/* No auto-adjust needed — piston is locked in charles mode */
+/* --- Charles's Law: V ∝ T at constant P — piston auto-adjusts --- */
+function charlesAdjust() {
+  if (mode !== 'charles') return;
+  const baseWidth = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC;
+  const newWidth = baseWidth * (temperature / BASE_TEMP);
+  const target = WALL_LEFT + Math.min(Math.max(newWidth, 80), W - 60);
+  pistonX += (target - pistonX) * 0.05; // smooth animation toward equilibrium
+}
 
 /* --- Piston dragging --- */
 canvas.addEventListener('mousedown', (e) => {
@@ -525,7 +550,10 @@ function drawPiston() {
 }
 
 function drawGraph() {
-  // Mini P-V or P-T graph in bottom-left of canvas
+  // No mini graph for Dalton's mode — top-left legend is enough
+  if (mode === 'dalton') return;
+
+  // Mini P-V or V-T graph in bottom-left of canvas
   const gx = WALL_LEFT + 8;
   const gy = wallBottom - 90;
   const gw = 100;
@@ -588,10 +616,10 @@ function drawGraph() {
     ctx.save();
     ctx.translate(gx - 2, gy + gh / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('P →', 0, 0);
+    ctx.fillText('V →', 0, 0);
     ctx.restore();
 
-    // Linear P ∝ T (at constant V and n)
+    // Linear V ∝ T (at constant P and n)
     ctx.beginPath();
     ctx.strokeStyle = '#22d3ee';
     ctx.lineWidth = 2;
@@ -599,12 +627,13 @@ function drawGraph() {
     ctx.lineTo(gx + gw, gy);
     ctx.stroke();
 
-    // Current position
+    // Current position — volume tracks temperature
     const tFrac = (temperature - 100) / 500;
-    const curP = calcPressure();
-    const pFrac = Math.min(1, curP / 2);
+    const vol = pistonX - PISTON_WIDTH - WALL_LEFT;
+    const baseVol = (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC - PISTON_WIDTH;
+    const vFrac = Math.min(1, vol / (baseVol * 2));
     const dotX = gx + tFrac * gw;
-    const dotY = gy + gh - pFrac * gh;
+    const dotY = gy + gh - vFrac * gh;
     ctx.beginPath();
     ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
     ctx.fillStyle = '#22d3ee';
@@ -732,8 +761,13 @@ function drawLoop() {
   pistonMinX = WALL_LEFT + 100;
   pistonMaxX = W - 40;
 
-  // Lock piston in charles and dalton modes (volume stays constant)
-  if (mode === 'charles' || mode === 'dalton') {
+  // Charles's Law: piston auto-adjusts to maintain constant pressure
+  if (mode === 'charles') {
+    charlesAdjust();
+  }
+
+  // Dalton mode: lock piston (volume stays constant)
+  if (mode === 'dalton') {
     pistonX = WALL_LEFT + (W - WALL_LEFT - 40) * BASE_VOLUME_FRAC;
   }
 

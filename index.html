@@ -2222,6 +2222,7 @@ Option D" required></textarea>
                     <div class="analytics-tabs">
                         <button class="analytics-tab active" onclick="switchAnalyticsTab('students', this)">👥 Students</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('topics', this)">📚 Topics</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">🗃️ Question Bank</button>
                     </div>
 
                     <!-- Students tab -->
@@ -2235,6 +2236,13 @@ Option D" required></textarea>
                     <div id="analyticsTopics" class="analytics-section">
                         <div id="topicChartContainer">
                             <div class="empty-state"><h3>Loading topic data...</h3></div>
+                        </div>
+                    </div>
+
+                    <!-- Question Bank tab -->
+                    <div id="analyticsQuestionbank" class="analytics-section">
+                        <div id="questionBankContainer">
+                            <div class="empty-state"><h3>Loading question bank data...</h3></div>
                         </div>
                     </div>
                 </div>
@@ -5410,6 +5418,7 @@ Option D" required></textarea>
             // Reset containers
             document.getElementById('studentTableContainer').innerHTML = '<div class="empty-state"><h3>Loading...</h3></div>';
             document.getElementById('topicChartContainer').innerHTML = '<div class="empty-state"><h3>Loading...</h3></div>';
+            document.getElementById('questionBankContainer').innerHTML = '<div class="empty-state"><h3>Loading...</h3></div>';
             ['statTotalStudents','statTotalQuizzes','statAvgScore','statWeakestTopic'].forEach(id => {
                 document.getElementById(id).textContent = '—';
             });
@@ -5452,6 +5461,7 @@ Option D" required></textarea>
                 renderAnalyticsSummary();
                 renderStudentTable();
                 renderTopicChart();
+                renderQuestionBankChart();
 
             } catch (err) {
                 console.error('Analytics load error:', err);
@@ -5910,6 +5920,137 @@ Option D" required></textarea>
             });
 
             document.getElementById('topicChartContainer').innerHTML = html;
+        }
+
+        async function renderQuestionBankChart() {
+            const container = document.getElementById('questionBankContainer');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .select('topic, source');
+                if (error) throw error;
+
+                // Tally TYS and Prelim per topic
+                const tally = {};
+                (data || []).forEach(q => {
+                    const t = q.topic || 'Unknown';
+                    if (!tally[t]) tally[t] = { tys: 0, prelim: 0 };
+                    if (q.source === 'TYS') tally[t].tys++;
+                    else if (q.source === 'Prelim') tally[t].prelim++;
+                });
+
+                const sorted = Object.entries(tally)
+                    .map(([topic, counts]) => ({ topic, tys: counts.tys, prelim: counts.prelim, total: counts.tys + counts.prelim }))
+                    .sort((a, b) => b.total - a.total);
+
+                const totalAll = sorted.reduce((s, r) => s + r.total, 0);
+                const totalTYS = sorted.reduce((s, r) => s + r.tys, 0);
+                const totalPrelim = sorted.reduce((s, r) => s + r.prelim, 0);
+
+                // Build chart canvas + table
+                let html = `
+                    <div style="margin-bottom:1.2rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+                        <div style="opacity:0.7; font-size:0.9rem; flex:1;">Question bank coverage by topic. Updates live as you upload questions.</div>
+                        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                            <span style="font-size:0.85rem; background:rgba(0,217,255,0.15); border:1px solid rgba(0,217,255,0.3); border-radius:8px; padding:0.3rem 0.75rem;">
+                                Total: <strong>${totalAll}</strong>
+                            </span>
+                            <span style="font-size:0.85rem; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
+                                TYS: <strong>${totalTYS}</strong>
+                            </span>
+                            <span style="font-size:0.85rem; background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
+                                Prelim: <strong>${totalPrelim}</strong>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="position:relative; height:520px; margin-bottom:2rem;">
+                        <canvas id="questionBankCanvas"></canvas>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+                        <thead>
+                            <tr style="border-bottom:1px solid rgba(0,217,255,0.3); color:var(--primary); text-align:left;">
+                                <th style="padding:0.5rem 0.75rem;">Topic</th>
+                                <th style="padding:0.5rem 0.75rem; text-align:right;">TYS</th>
+                                <th style="padding:0.5rem 0.75rem; text-align:right;">Prelim</th>
+                                <th style="padding:0.5rem 0.75rem; text-align:right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sorted.map((r, i) => `
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); background:${i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'};">
+                                    <td style="padding:0.45rem 0.75rem;">${escapeHtml(r.topic)}</td>
+                                    <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(168,85,247,0.9);">${r.tys}</td>
+                                    <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(251,191,36,0.9);">${r.prelim}</td>
+                                    <td style="padding:0.45rem 0.75rem; text-align:right; font-weight:700;">${r.total}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                container.innerHTML = html;
+
+                // Render Chart.js horizontal bar chart
+                const ctx = document.getElementById('questionBankCanvas').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(r => r.topic),
+                        datasets: [
+                            {
+                                label: 'TYS',
+                                data: sorted.map(r => r.tys),
+                                backgroundColor: 'rgba(168,85,247,0.75)',
+                                borderColor: 'rgba(168,85,247,1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Prelim',
+                                data: sorted.map(r => r.prelim),
+                                backgroundColor: 'rgba(251,191,36,0.75)',
+                                borderColor: 'rgba(251,191,36,1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: 'rgba(255,255,255,0.8)', font: { size: 12 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(ctx) {
+                                        const idx = ctx.dataIndex;
+                                        return 'Total: ' + sorted[idx].total;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                ticks: { color: 'rgba(255,255,255,0.6)', font: { size: 11 } },
+                                grid: { color: 'rgba(255,255,255,0.07)' },
+                                title: { display: true, text: 'Number of Questions', color: 'rgba(255,255,255,0.5)', font: { size: 11 } }
+                            },
+                            y: {
+                                stacked: true,
+                                ticks: { color: 'rgba(255,255,255,0.8)', font: { size: 11 } },
+                                grid: { color: 'rgba(255,255,255,0.04)' }
+                            }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                container.innerHTML = `<div class="empty-state"><h3>Error loading question bank</h3><p>${err.message}</p></div>`;
+            }
         }
 
         function switchAnalyticsTab(tab, btn) {

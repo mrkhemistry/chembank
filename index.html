@@ -3228,11 +3228,81 @@ Option D" required></textarea>
             const hasFilters = filterTopic || filterDifficulty || filterSource || filterIdFrom || filterIdTo;
 
             try {
+                const PAGE_SIZE = 200;
+
+                // Build a base filter-applier so both queries use identical filters
+                function applyFilters(q) {
+                    if (filterTopic) q = q.contains('topics', [filterTopic]);
+                    if (filterDifficulty) q = q.eq('difficulty', filterDifficulty);
+                    if (filterSource) q = q.eq('source', filterSource);
+                    if (filterIdFrom) q = q.gte('id', parseInt(filterIdFrom));
+                    if (filterIdTo) q = q.lte('id', parseInt(filterIdTo));
+                    return q;
+                }
+
+                if (!hasFilters) {
+                    // No filters: just show 10 most recent
+                    const { data, error } = await supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .order('id', { ascending: false })
+                        .limit(10);
+                    if (error) throw error;
+                    document.getElementById('filterResultInfo').textContent = `Showing 10 most recent — use filters + Search to find more`;
+                    displayQuestionsFromData(data || []);
+                } else {
+                    // Step 1: fast count query (no data transferred)
+                    let countQuery = applyFilters(supabaseClient.from('questions').select('id', { count: 'exact', head: true }));
+                    const { count, error: countError } = await countQuery;
+                    if (countError) throw countError;
+                    const totalCount = count || 0;
+
+                    // Step 2: fetch first PAGE_SIZE rows
+                    let dataQuery = applyFilters(supabaseClient.from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .order('id', { ascending: false })
+                        .limit(PAGE_SIZE));
+                    const { data, error } = await dataQuery;
+                    if (error) throw error;
+                    const results = data || [];
+
+                    const infoEl = document.getElementById('filterResultInfo');
+                    if (totalCount <= PAGE_SIZE) {
+                        infoEl.textContent = `${totalCount} question${totalCount !== 1 ? 's' : ''} found`;
+                    } else {
+                        infoEl.textContent = `Showing first ${results.length} of ${totalCount} questions (sorted by newest)`;
+                    }
+
+                    displayQuestionsFromData(results);
+
+                    // Show "Load All" button if there are more
+                    if (totalCount > PAGE_SIZE) {
+                        const questionList = document.getElementById('questionList');
+                        const loadAllBtn = document.createElement('div');
+                        loadAllBtn.style.cssText = 'text-align:center; margin: 1.5rem 0;';
+                        loadAllBtn.innerHTML = `<button class="btn btn-primary" onclick="loadAllFilteredQuestions()" style="padding: 0.75rem 2rem;">Load All ${totalCount} Questions</button>`;
+                        questionList.appendChild(loadAllBtn);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching questions:', error);
+                alert('Error fetching questions: ' + error.message);
+            }
+        }
+
+        async function loadAllFilteredQuestions() {
+            const filterTopic = document.getElementById('filterTopic').value;
+            const filterDifficulty = document.getElementById('filterDifficulty').value;
+            const filterSource = document.getElementById('filterSource').value;
+            const filterIdFrom = document.getElementById('filterIdFrom').value;
+            const filterIdTo = document.getElementById('filterIdTo').value;
+
+            try {
                 let query = supabaseClient
                     .from('questions')
                     .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
                     .order('id', { ascending: false })
-                    .limit(hasFilters ? 200 : 10);
+                    .limit(1000);
 
                 if (filterTopic) query = query.contains('topics', [filterTopic]);
                 if (filterDifficulty) query = query.eq('difficulty', filterDifficulty);
@@ -3242,20 +3312,13 @@ Option D" required></textarea>
 
                 const { data, error } = await query;
                 if (error) throw error;
-
                 const results = data || [];
-                const infoEl = document.getElementById('filterResultInfo');
 
-                if (!hasFilters) {
-                    infoEl.textContent = `Showing 10 most recent — use filters + Search to find more`;
-                } else {
-                    infoEl.textContent = `${results.length} question${results.length !== 1 ? 's' : ''} found`;
-                }
-
+                document.getElementById('filterResultInfo').textContent = `${results.length} question${results.length !== 1 ? 's' : ''} found`;
                 displayQuestionsFromData(results);
             } catch (error) {
-                console.error('Error fetching questions:', error);
-                alert('Error fetching questions: ' + error.message);
+                console.error('Error loading all questions:', error);
+                alert('Error loading questions: ' + error.message);
             }
         }
 

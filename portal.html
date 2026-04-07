@@ -291,7 +291,7 @@
   <div class="portal-footer">Mr Khemistry Tuition Centre &nbsp;&middot;&nbsp; Student Portal</div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
@@ -315,6 +315,16 @@
       document.getElementById('userEmail').textContent = user.email;
       showView('dashboardView');
       sb.from('user_profiles').select('role').eq('id', user.id).single().then(function(res) {
+        console.log('role check:', res);
+        if (res.error) {
+          var errEl = document.getElementById('loginError');
+          errEl.textContent = 'Profile load failed: ' + res.error.message;
+          errEl.classList.add('visible');
+          var btn = document.getElementById('loginBtn');
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+          return;
+        }
         if (res.data && res.data.role === 'sec_student') {
           window.location.href = 'courses.html';
           return;
@@ -322,7 +332,7 @@
         if (res.data && res.data.role === 'admin') {
           document.getElementById('adminCard').style.display = 'block';
         }
-      });
+      }).catch(function(e) { console.error('role check failed:', e); });
     }
 
     sb.auth.getSession().then(function(result) {

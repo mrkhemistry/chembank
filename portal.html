@@ -262,6 +262,18 @@
         </div>
       </a>
 
+      <a class="tool-card" id="adminCard" href="admin-courses.html" style="display:none;">
+        <div class="card-header">
+          <div class="card-icon">&#128272;</div>
+          <div class="card-name">Admin</div>
+          <div class="card-tag">Enrollments</div>
+        </div>
+        <div class="card-body">
+          <div class="card-desc">Manage student access to course video libraries. Toggle enrollments per student per course.</div>
+          <div class="card-cta">Open Admin &rarr;</div>
+        </div>
+      </a>
+
       <a class="tool-card" href="https://mrkhemistry.github.io/chembank/simulations/" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#9883;</div>
@@ -302,6 +314,11 @@
     function showDashboard(user) {
       document.getElementById('userEmail').textContent = user.email;
       showView('dashboardView');
+      sb.from('user_profiles').select('role').eq('id', user.id).single().then(function(res) {
+        if (res.data && res.data.role === 'admin') {
+          document.getElementById('adminCard').style.display = 'block';
+        }
+      });
     }
 
     sb.auth.getSession().then(function(result) {

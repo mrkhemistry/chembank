@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mr Khemistry — Courses</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #2a2a2a;
+    --border2: #3a3a3a;
+    --text: #ffffff;
+    --text2: #cccccc;
+    --text3: #777777;
+    --cyan: #00e5ff;
+    --cyan-dim: rgba(0,229,255,0.08);
+    --cyan-border: rgba(0,229,255,0.2);
+    --red: #ff5555;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; font-size: 16px; background: var(--bg); color: var(--text); min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  a { color: inherit; text-decoration: none; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+  .dash-header { background: #000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .back-link { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  .back-link:hover { color: var(--cyan); }
+  .dash-right { display: flex; align-items: center; gap: 1rem; }
+  .dash-user { font-size: 0.8rem; color: var(--text3); text-align: right; }
+  .dash-user strong { display: block; color: var(--text2); font-size: 0.875rem; font-weight: 500; }
+  .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  .main { padding: 3rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .eyebrow { font-size: 0.75rem; font-weight: 600; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.6rem; }
+  h2.title { font-family: 'DM Serif Display', serif; font-size: 2.4rem; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--text3); font-size: 1rem; margin-bottom: 2.2rem; }
+
+  .state { padding: 3rem 1rem; text-align: center; color: var(--text3); }
+  .state .spinner { margin-bottom: 1rem; }
+
+  /* Course cards */
+  .course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+  .course-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; cursor: pointer; transition: border-color 0.15s, transform 0.15s; animation: fadeUp 0.4s ease forwards; }
+  .course-card:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  .course-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.35rem; margin-bottom: 0.5rem; }
+  .course-card .meta { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .course-card .cta { font-size: 0.8rem; color: var(--cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 1rem; }
+
+  /* Topic/video list */
+  .topic { margin-bottom: 2rem; animation: fadeUp 0.3s ease forwards; }
+  .topic h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; margin-bottom: 0.9rem; color: var(--cyan); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  .video-list { display: flex; flex-direction: column; gap: 0.4rem; }
+  .video-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: border-color 0.1s, background 0.1s; }
+  .video-item:hover { border-color: var(--cyan); background: var(--surface2); }
+  .video-item .title { font-size: 0.95rem; color: var(--text2); }
+  .video-item .duration { font-size: 0.8rem; color: var(--text3); font-variant-numeric: tabular-nums; }
+
+  /* Player modal */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 2rem; }
+  .modal.active { display: flex; }
+  .modal-inner { width: 100%; max-width: 1100px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--text); }
+  .modal-close { background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: 4px; padding: 0.4rem 0.9rem; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; }
+  .modal-close:hover { border-color: var(--red); color: var(--red); }
+  .player-wrap { position: relative; padding-top: 56.25%; background: #000; border-radius: 6px; overflow: hidden; }
+  .player-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  @media (max-width: 600px) {
+    .main { padding: 2rem 1rem; }
+    h2.title { font-size: 1.8rem; }
+    .dash-header { padding: 0 1rem; }
+    .dash-user { display: none; }
+    .modal { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="dash-header">
+  <div style="display:flex;align-items:center;gap:1.25rem;">
+    <div class="dash-logo">Mr Khemistry</div>
+    <a href="portal.html" class="back-link">&larr; Portal</a>
+  </div>
+  <div class="dash-right">
+    <div class="dash-user">
+      <strong id="userEmail"></strong>
+      Courses
+    </div>
+    <button class="btn-signout" id="signOutBtn">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="courseListView">
+    <div class="eyebrow">Your Library</div>
+    <h2 class="title">Lesson Recordings</h2>
+    <p class="subtitle">Select a course to view its video lessons.</p>
+    <div id="courseList"></div>
+  </div>
+
+  <div id="courseDetailView" style="display:none;">
+    <a href="#" id="backToCourses" class="back-link" style="display:inline-block;margin-bottom:1rem;">&larr; All Courses</a>
+    <div class="eyebrow" id="detailEyebrow">Course</div>
+    <h2 class="title" id="detailTitle"></h2>
+    <p class="subtitle" id="detailSubtitle"></p>
+    <div id="topicList"></div>
+  </div>
+</div>
+
+<!-- Player modal -->
+<div class="modal" id="playerModal">
+  <div class="modal-inner">
+    <div class="modal-header">
+      <div class="modal-title" id="playerTitle"></div>
+      <button class="modal-close" id="playerClose">Close</button>
+    </div>
+    <div class="player-wrap">
+      <iframe id="playerFrame" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  var courseListEl = document.getElementById('courseList');
+  var courseListView = document.getElementById('courseListView');
+  var courseDetailView = document.getElementById('courseDetailView');
+  var topicListEl = document.getElementById('topicList');
+
+  function showState(container, msg, withSpinner) {
+    container.innerHTML = '<div class="state">' + (withSpinner ? '<div class="spinner"></div><br>' : '') + msg + '</div>';
+  }
+
+  async function init() {
+    var { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.href = 'portal.html';
+      return;
+    }
+    document.getElementById('userEmail').textContent = session.user.email;
+    loadCourses();
+  }
+
+  async function loadCourses() {
+    showState(courseListEl, 'Loading courses...', true);
+    var { data, error } = await sb
+      .from('courses')
+      .select('id, name, bunny_library_id, display_order')
+      .order('display_order');
+    if (error) {
+      showState(courseListEl, 'Error loading courses: ' + error.message);
+      return;
+    }
+    if (!data || data.length === 0) {
+      showState(courseListEl, 'You are not enrolled in any courses yet. Contact Mr Khemistry to get access.');
+      return;
+    }
+    courseListEl.innerHTML = '<div class="course-grid">' +
+      data.map(function(c) {
+        return '<div class="course-card" data-id="' + c.id + '" data-name="' + escapeAttr(c.name) + '">' +
+          '<div class="meta">Course</div>' +
+          '<h3>' + escapeHtml(c.name) + '</h3>' +
+          '<div class="cta">View Lessons &rarr;</div>' +
+        '</div>';
+      }).join('') +
+      '</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('.course-card'), function(el) {
+      el.addEventListener('click', function() {
+        openCourse(el.getAttribute('data-id'), el.getAttribute('data-name'));
+      });
+    });
+  }
+
+  async function openCourse(courseId, courseName) {
+    courseListView.style.display = 'none';
+    courseDetailView.style.display = 'block';
+    document.getElementById('detailTitle').textContent = courseName;
+    document.getElementById('detailSubtitle').textContent = 'Loading lessons...';
+    showState(topicListEl, 'Loading videos...', true);
+
+    var { data: { session } } = await sb.auth.getSession();
+    try {
+      var res = await fetch(SUPABASE_URL + '/functions/v1/list-videos', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ course_id: courseId })
+      });
+      var body = await res.json();
+      if (!res.ok) {
+        showState(topicListEl, 'Error: ' + (body.error || res.status));
+        return;
+      }
+      renderVideos(body);
+    } catch (e) {
+      showState(topicListEl, 'Network error: ' + e.message);
+    }
+  }
+
+  function renderVideos(body) {
+    var collections = body.collections || [];
+    var videos = body.videos || [];
+    var libraryId = body.course.library_id;
+    document.getElementById('detailSubtitle').textContent = videos.length + ' lesson' + (videos.length === 1 ? '' : 's');
+
+    // Group videos by collection
+    var collMap = {};
+    collections.forEach(function(c) { collMap[c.guid] = { name: c.name, videos: [] }; });
+    collMap['_none'] = { name: 'Uncategorised', videos: [] };
+    videos.forEach(function(v) {
+      var cid = v.collectionId && collMap[v.collectionId] ? v.collectionId : '_none';
+      collMap[cid].videos.push(v);
+    });
+    // Sort videos within each collection by title
+    Object.keys(collMap).forEach(function(k) {
+      collMap[k].videos.sort(function(a, b) { return a.title.localeCompare(b.title); });
+    });
+
+    // Render in collection order (Bunny returned them ordered by name)
+    var html = '';
+    var order = collections.map(function(c) { return c.guid; });
+    if (collMap['_none'].videos.length) order.push('_none');
+
+    order.forEach(function(cid) {
+      var c = collMap[cid];
+      if (!c || !c.videos.length) return;
+      html += '<div class="topic"><h3>' + escapeHtml(c.name) + '</h3><div class="video-list">';
+      c.videos.forEach(function(v) {
+        html += '<div class="video-item" data-guid="' + v.guid + '" data-lib="' + libraryId + '" data-title="' + escapeAttr(v.title) + '">' +
+          '<div class="title">' + escapeHtml(v.title) + '</div>' +
+          '<div class="duration">' + fmtDuration(v.length) + '</div>' +
+        '</div>';
+      });
+      html += '</div></div>';
+    });
+
+    topicListEl.innerHTML = html || '<div class="state">No videos found in this course.</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('.video-item'), function(el) {
+      el.addEventListener('click', function() {
+        openPlayer(el.getAttribute('data-lib'), el.getAttribute('data-guid'), el.getAttribute('data-title'));
+      });
+    });
+  }
+
+  function openPlayer(libraryId, guid, title) {
+    document.getElementById('playerTitle').textContent = title;
+    document.getElementById('playerFrame').src = 'https://iframe.mediadelivery.net/embed/' + libraryId + '/' + guid + '?autoplay=true';
+    document.getElementById('playerModal').classList.add('active');
+  }
+
+  document.getElementById('playerClose').addEventListener('click', function() {
+    document.getElementById('playerFrame').src = '';
+    document.getElementById('playerModal').classList.remove('active');
+  });
+  document.getElementById('playerModal').addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('playerClose').click();
+  });
+
+  document.getElementById('backToCourses').addEventListener('click', function(e) {
+    e.preventDefault();
+    courseDetailView.style.display = 'none';
+    courseListView.style.display = 'block';
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', function() {
+    sb.auth.signOut().then(function() { window.location.href = 'portal.html'; });
+  });
+
+  function fmtDuration(secs) {
+    if (!secs) return '';
+    var m = Math.floor(secs / 60);
+    var s = Math.floor(secs % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function escapeAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/[&<>]/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+  if (typeof supabase !== 'undefined') init();
+  else window.addEventListener('load', init);
+})();
+</script>
+</body>
+</html>

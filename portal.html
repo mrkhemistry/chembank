@@ -315,6 +315,10 @@
       document.getElementById('userEmail').textContent = user.email;
       showView('dashboardView');
       sb.from('user_profiles').select('role').eq('id', user.id).single().then(function(res) {
+        if (res.data && res.data.role === 'sec_student') {
+          window.location.href = 'courses.html';
+          return;
+        }
         if (res.data && res.data.role === 'admin') {
           document.getElementById('adminCard').style.display = 'block';
         }

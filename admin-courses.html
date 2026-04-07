@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mr Khemistry — Admin: Course Enrollments</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c;
+    --border: #2a2a2a; --border2: #3a3a3a;
+    --text: #fff; --text2: #ccc; --text3: #777;
+    --cyan: #00e5ff; --cyan-dim: rgba(0,229,255,0.08); --cyan-border: rgba(0,229,255,0.2);
+    --red: #ff5555; --green: #4ade80;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; font-size: 15px; background: var(--bg); color: var(--text); min-height: 100vh; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  a { color: inherit; text-decoration: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.7s linear infinite; }
+
+  .header { background: #000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; background: linear-gradient(90deg, #fff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .header-left { display: flex; align-items: center; gap: 1.25rem; }
+  .back-link { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  .back-link:hover { color: var(--cyan); }
+  .badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 2px; background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+
+  .main { padding: 2.5rem 2rem; max-width: 1400px; margin: 0 auto; }
+  h2.title { font-family: 'DM Serif Display', serif; font-size: 2rem; margin-bottom: 0.4rem; }
+  .subtitle { color: var(--text3); margin-bottom: 1.5rem; }
+
+  .toolbar { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .search { background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 0.55rem 0.85rem; color: var(--text); font-family: inherit; font-size: 0.9rem; min-width: 260px; outline: none; }
+  .search:focus { border-color: var(--cyan); }
+  .filter-tabs { display: flex; gap: 0.4rem; }
+  .tab { background: var(--surface); border: 1px solid var(--border2); color: var(--text2); padding: 0.5rem 0.9rem; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; border-radius: 4px; cursor: pointer; font-family: inherit; }
+  .tab.active { background: var(--cyan-dim); border-color: var(--cyan); color: var(--cyan); }
+
+  .status { font-size: 0.8rem; color: var(--text3); margin-left: auto; }
+  .status.saving { color: var(--cyan); }
+  .status.saved { color: var(--green); }
+  .status.error { color: var(--red); }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: auto; max-height: calc(100vh - 280px); }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 900px; }
+  th, td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  thead th { background: #000; position: sticky; top: 0; z-index: 5; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 600; border-bottom: 1px solid var(--border2); }
+  thead th.course-col { text-align: center; min-width: 100px; max-width: 110px; writing-mode: horizontal-tb; }
+  thead th.course-col span { display: inline-block; transform: rotate(-15deg); transform-origin: center; }
+  tbody tr:hover { background: var(--surface2); }
+  td.center { text-align: center; }
+  td.name { font-weight: 500; color: var(--text); white-space: nowrap; }
+  td.email { color: var(--text3); font-size: 0.8rem; white-space: nowrap; }
+  td.role { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); }
+
+  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--cyan); }
+
+  .state { padding: 4rem 1rem; text-align: center; color: var(--text3); }
+
+  @media (max-width: 700px) {
+    .main { padding: 1.5rem 1rem; }
+    .header { padding: 0 1rem; }
+    .search { min-width: 0; flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">Mr Khemistry</div>
+    <span class="badge">Admin</span>
+    <a href="portal.html" class="back-link">&larr; Portal</a>
+  </div>
+  <button id="signOutBtn" class="back-link" style="background:transparent;border:1px solid var(--border2);padding:0.4rem 0.85rem;border-radius:4px;cursor:pointer;font-family:inherit;">Sign Out</button>
+</div>
+
+<div class="main">
+  <h2 class="title">Course Enrollments</h2>
+  <p class="subtitle">Toggle checkboxes to grant or revoke access to each course library. Changes save automatically.</p>
+
+  <div class="toolbar">
+    <input type="text" class="search" id="search" placeholder="Search by name or email...">
+    <div class="filter-tabs" id="roleTabs">
+      <button class="tab active" data-role="all">All</button>
+      <button class="tab" data-role="student">Student</button>
+      <button class="tab" data-role="premium_student">Premium</button>
+      <button class="tab" data-role="teacher">Teacher</button>
+      <button class="tab" data-role="admin">Admin</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="content" class="table-wrap">
+    <div class="state"><div class="spinner"></div><br>Loading...</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  var users = [];
+  var courses = [];
+  var enrollSet = new Set(); // "userid|courseid"
+  var filter = { search: '', role: 'all' };
+  var statusEl = document.getElementById('status');
+  var statusTimer;
+
+  function setStatus(msg, cls) {
+    statusEl.className = 'status ' + (cls || '');
+    statusEl.textContent = msg;
+    if (statusTimer) clearTimeout(statusTimer);
+    if (cls === 'saved') statusTimer = setTimeout(function() { statusEl.textContent = ''; }, 1500);
+  }
+
+  async function init() {
+    var { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; return; }
+
+    // Verify admin
+    var { data: profile } = await sb.from('user_profiles').select('role').eq('id', session.user.id).single();
+    if (!profile || profile.role !== 'admin') {
+      document.getElementById('content').innerHTML = '<div class="state">Access denied. Admin only.</div>';
+      return;
+    }
+
+    var [coursesRes, usersRes, enrolRes] = await Promise.all([
+      sb.from('courses').select('id, name, display_order').order('display_order'),
+      sb.from('user_profiles').select('id, email, full_name, role').order('full_name'),
+      sb.from('enrollments').select('user_id, course_id')
+    ]);
+
+    if (coursesRes.error || usersRes.error || enrolRes.error) {
+      document.getElementById('content').innerHTML = '<div class="state">Error: ' + (coursesRes.error || usersRes.error || enrolRes.error).message + '</div>';
+      return;
+    }
+
+    courses = coursesRes.data || [];
+    users = usersRes.data || [];
+    (enrolRes.data || []).forEach(function(e) { enrollSet.add(e.user_id + '|' + e.course_id); });
+    render();
+  }
+
+  function render() {
+    var filtered = users.filter(function(u) {
+      if (filter.role !== 'all' && u.role !== filter.role) return false;
+      if (filter.search) {
+        var s = filter.search.toLowerCase();
+        var name = (u.full_name || '').toLowerCase();
+        var email = (u.email || '').toLowerCase();
+        if (name.indexOf(s) === -1 && email.indexOf(s) === -1) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      document.getElementById('content').innerHTML = '<div class="state">No users match.</div>';
+      return;
+    }
+
+    var html = '<table><thead><tr>';
+    html += '<th>Name</th><th>Email</th><th>Role</th>';
+    courses.forEach(function(c) {
+      html += '<th class="course-col"><span>' + escapeHtml(c.name) + '</span></th>';
+    });
+    html += '</tr></thead><tbody>';
+    filtered.forEach(function(u) {
+      html += '<tr>';
+      html += '<td class="name">' + escapeHtml(u.full_name || '—') + '</td>';
+      html += '<td class="email">' + escapeHtml(u.email || '') + '</td>';
+      html += '<td class="role">' + escapeHtml(u.role || '') + '</td>';
+      courses.forEach(function(c) {
+        var checked = enrollSet.has(u.id + '|' + c.id) ? 'checked' : '';
+        html += '<td class="center"><input type="checkbox" data-uid="' + u.id + '" data-cid="' + c.id + '" ' + checked + '></td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('content').innerHTML = html;
+
+    Array.prototype.forEach.call(document.querySelectorAll('input[type="checkbox"]'), function(cb) {
+      cb.addEventListener('change', onToggle);
+    });
+  }
+
+  async function onToggle(e) {
+    var cb = e.target;
+    var uid = cb.getAttribute('data-uid');
+    var cid = cb.getAttribute('data-cid');
+    var key = uid + '|' + cid;
+    cb.disabled = true;
+    setStatus('Saving...', 'saving');
+    try {
+      if (cb.checked) {
+        var { error } = await sb.from('enrollments').insert({ user_id: uid, course_id: cid });
+        if (error) throw error;
+        enrollSet.add(key);
+      } else {
+        var { error: err2 } = await sb.from('enrollments').delete().eq('user_id', uid).eq('course_id', cid);
+        if (err2) throw err2;
+        enrollSet.delete(key);
+      }
+      setStatus('Saved', 'saved');
+    } catch (err) {
+      setStatus('Error: ' + err.message, 'error');
+      cb.checked = !cb.checked;
+    } finally {
+      cb.disabled = false;
+    }
+  }
+
+  document.getElementById('search').addEventListener('input', function(e) {
+    filter.search = e.target.value;
+    render();
+  });
+  document.querySelectorAll('#roleTabs .tab').forEach(function(t) {
+    t.addEventListener('click', function() {
+      document.querySelectorAll('#roleTabs .tab').forEach(function(x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      filter.role = t.getAttribute('data-role');
+      render();
+    });
+  });
+  document.getElementById('signOutBtn').addEventListener('click', function() {
+    sb.auth.signOut().then(function() { window.location.href = 'portal.html'; });
+  });
+
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  if (typeof supabase !== 'undefined') init();
+  else window.addEventListener('load', init);
+})();
+</script>
+</body>
+</html>

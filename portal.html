@@ -434,18 +434,9 @@
         if (codeResult.error || !codeResult.data) throw new Error('Invalid or expired join code.');
         var codeData = codeResult.data;
         if (codeData.max_uses && codeData.times_used >= codeData.max_uses) throw new Error('This join code has reached its maximum uses.');
-        // Create auth account
-        var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
+        // Create auth account — DB trigger reads join_code from metadata to set role/enrollment
+        var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode } } });
         if (signupResult.error) throw signupResult.error;
-        // Create user profile
-        var assignedRole = codeData.assigned_role || 'student';
-        await sb.from('user_profiles').insert([{ id: signupResult.data.user.id, email: email, full_name: name, role: assignedRole }]);
-        // Auto-enroll in course if join code has one
-        if (codeData.course_id) {
-          await sb.from('enrollments').insert([{ user_id: signupResult.data.user.id, course_id: codeData.course_id }]);
-        }
-        // Increment join code usage
-        await sb.from('join_codes').update({ times_used: (codeData.times_used || 0) + 1 }).eq('id', codeData.id);
         successEl.textContent = 'Account created! You can now sign in.';
         successEl.classList.add('visible');
         btn.disabled = false;

@@ -440,6 +440,10 @@
         // Create user profile
         var assignedRole = codeData.assigned_role || 'student';
         await sb.from('user_profiles').insert([{ id: signupResult.data.user.id, email: email, full_name: name, role: assignedRole }]);
+        // Auto-enroll in course if join code has one
+        if (codeData.course_id) {
+          await sb.from('enrollments').insert([{ user_id: signupResult.data.user.id, course_id: codeData.course_id }]);
+        }
         // Increment join code usage
         await sb.from('join_codes').update({ times_used: (codeData.times_used || 0) + 1 }).eq('id', codeData.id);
         successEl.textContent = 'Account created! You can now sign in.';

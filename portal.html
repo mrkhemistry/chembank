@@ -313,9 +313,13 @@
 
     function showDashboard(user) {
       document.getElementById('userEmail').textContent = user.email;
-      showView('dashboardView');
       sb.from('user_profiles').select('role').eq('id', user.id).single().then(function(res) {
         console.log('role check:', res);
+        if (res.data && res.data.role === 'sec_student') {
+          window.location.href = 'courses.html';
+          return;
+        }
+        showView('dashboardView');
         if (res.error) {
           var errEl = document.getElementById('loginError');
           errEl.textContent = 'Profile load failed: ' + res.error.message;
@@ -323,10 +327,6 @@
           var btn = document.getElementById('loginBtn');
           btn.disabled = false;
           btn.textContent = 'Sign In';
-          return;
-        }
-        if (res.data && res.data.role === 'sec_student') {
-          window.location.href = 'courses.html';
           return;
         }
         if (res.data && res.data.role === 'admin') {

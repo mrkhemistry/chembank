@@ -6891,12 +6891,17 @@ function cc_openQuestion(id) {
   document.getElementById('cc_extractedAnswer').value = '';
   cc_switchMode('type');
 
-  // MathJax render — clear any stale typeset output then re-typeset on next frame
+  // MathJax render — wait for startup, clear, then typeset the inner text element
   if (window.MathJax) {
-    const detailEl = document.getElementById('cc_sQuestionDetail');
-    try { MathJax.typesetClear([detailEl]); } catch (e) {}
-    requestAnimationFrame(() => {
-      MathJax.typesetPromise([detailEl]).catch(err => console.warn('MathJax typeset error:', err));
+    const textEl = document.getElementById('cc_detailQuestion');
+    const metaEl = document.getElementById('cc_detailMeta');
+    const ready = (MathJax.startup && MathJax.startup.promise) || Promise.resolve();
+    ready.then(() => {
+      try { MathJax.typesetClear([textEl, metaEl]); } catch (e) {}
+      setTimeout(() => {
+        MathJax.typesetPromise([textEl, metaEl])
+          .catch(err => console.warn('MathJax typeset error:', err));
+      }, 50);
     });
   }
 }

@@ -6891,8 +6891,14 @@ function cc_openQuestion(id) {
   document.getElementById('cc_extractedAnswer').value = '';
   cc_switchMode('type');
 
-  // MathJax render — cover full detail panel
-  if (window.MathJax) MathJax.typesetPromise([document.getElementById('cc_sQuestionDetail')]);
+  // MathJax render — clear any stale typeset output then re-typeset on next frame
+  if (window.MathJax) {
+    const detailEl = document.getElementById('cc_sQuestionDetail');
+    try { MathJax.typesetClear([detailEl]); } catch (e) {}
+    requestAnimationFrame(() => {
+      MathJax.typesetPromise([detailEl]).catch(err => console.warn('MathJax typeset error:', err));
+    });
+  }
 }
 
 function cc_backToList() {

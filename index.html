@@ -6877,19 +6877,23 @@ function cc_openQuestion(id) {
     <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
   `;
 
-  // Reset
-  document.getElementById('cc_studentAnswer').value = '';
-  document.getElementById('cc_feedbackContainer').classList.remove('visible');
-  document.getElementById('cc_loadingSpinner').classList.remove('visible');
+  // Reset — guarded against missing image-mode elements
+  const _setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  const _setHTML = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
+  const _setDisp = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v; };
+  const _rmCls = (id, c) => { const el = document.getElementById(id); if (el) el.classList.remove(c); };
+  _setVal('cc_studentAnswer', '');
+  _rmCls('cc_feedbackContainer', 'visible');
+  _rmCls('cc_loadingSpinner', 'visible');
   cc_clearFile();
   cc_uploadedImages = [];
-  document.getElementById('cc_studentImgPreviews').innerHTML = '';
-  document.getElementById('cc_studentImgZone').style.display = 'block';
-  document.getElementById('cc_extractBtnWrap').style.display = 'none';
-  document.getElementById('cc_imgStep1').style.display = 'block';
-  document.getElementById('cc_imgStep2').style.display = 'none';
-  document.getElementById('cc_extractedAnswer').value = '';
-  cc_switchMode('type');
+  _setHTML('cc_studentImgPreviews', '');
+  _setDisp('cc_studentImgZone', 'block');
+  _setDisp('cc_extractBtnWrap', 'none');
+  _setDisp('cc_imgStep1', 'block');
+  _setDisp('cc_imgStep2', 'none');
+  _setVal('cc_extractedAnswer', '');
+  try { cc_switchMode('type'); } catch (e) {}
 
   // MathJax render — wait for startup, clear, then typeset the inner text element
   if (window.MathJax) {

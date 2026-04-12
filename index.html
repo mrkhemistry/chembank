@@ -1655,6 +1655,7 @@ Option D" required></textarea>
                 <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">🧪 Practice Quiz</button>
                 <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">📄 Worksheets</button>
                 <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">🔍 Check My Answer</button>
+                <button class="student-tab" id="tabHistory" onclick="switchStudentTab('history')">📊 My History</button>
             </div>
 
             <!-- Quiz Panel -->
@@ -2169,6 +2170,21 @@ Option D" required></textarea>
   </div>
               </div>
             </div><!-- end studentCheckPanel -->
+
+            <!-- History Panel -->
+            <div id="studentHistoryPanel" style="display:none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>📊 My Quiz History</span>
+                        <button class="btn btn-secondary" onclick="loadQuizHistory()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">↻ Refresh</button>
+                    </div>
+                    <div id="historyLoading" style="display:none; text-align:center; padding:2rem;">
+                        <div class="loading-spinner"></div>
+                        <p style="margin-top:1rem; color:var(--text-secondary);">Loading your quiz history...</p>
+                    </div>
+                    <div id="historyList"></div>
+                </div>
+            </div><!-- end studentHistoryPanel -->
 
         </div><!-- end studentView outer -->
 
@@ -4649,6 +4665,121 @@ Option D" required></textarea>
             }
         }
 
+        // ── Quiz History ──────────────────────────────────────────
+        async function loadQuizHistory() {
+            const listEl = document.getElementById('historyList');
+            const loadingEl = document.getElementById('historyLoading');
+            loadingEl.style.display = 'block';
+            listEl.innerHTML = '';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('quiz_attempts')
+                    .select('id, completed_at, score, total_questions, correct_answers, topics, difficulties, source')
+                    .eq('user_id', currentUser.id)
+                    .order('completed_at', { ascending: false });
+
+                if (error) throw error;
+
+                loadingEl.style.display = 'none';
+
+                if (!data || data.length === 0) {
+                    listEl.innerHTML = '<div class="empty-state"><h3>No quizzes yet</h3><p>Complete a practice quiz and it will appear here.</p></div>';
+                    return;
+                }
+
+                listEl.innerHTML = data.map(a => {
+                    const date = new Date(a.completed_at);
+                    const dateStr = date.toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const timeStr = date.toLocaleTimeString('en-SG', { hour: '2-digit', minute: '2-digit' });
+                    const scoreColor = a.score >= 80 ? 'var(--success)' : a.score >= 50 ? 'var(--warning, orange)' : 'var(--danger)';
+                    const topicsStr = (a.topics || []).map(t => `<span class="tag tag-topic" style="font-size:0.7rem;">${escapeHtml(t)}</span>`).join(' ');
+                    return `
+                    <div style="background:rgba(10,14,39,0.6); border:1px solid rgba(0,217,255,0.15); border-radius:12px; padding:1.25rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
+                        <div style="min-width:60px; text-align:center;">
+                            <div style="font-size:1.6rem; font-weight:800; color:${scoreColor};">${a.score}%</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary);">${a.correct_answers}/${a.total_questions}</div>
+                        </div>
+                        <div style="flex:1; min-width:180px;">
+                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">${dateStr} &middot; ${timeStr}</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">${topicsStr}</div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <button class="btn btn-secondary" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="reviewPastQuiz('${a.id}')">Review</button>
+                            <button class="btn btn-primary" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="retakePastQuiz('${a.id}')">Re-take</button>
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (err) {
+                loadingEl.style.display = 'none';
+                listEl.innerHTML = '<div class="empty-state"><h3>Error loading history</h3><p>' + escapeHtml(err.message) + '</p></div>';
+                console.error('loadQuizHistory error:', err);
+            }
+        }
+
+        async function fetchPastQuizQuestions(attemptId) {
+            const { data: responses, error: rErr } = await supabaseClient
+                .from('question_responses')
+                .select('question_id, user_answer')
+                .eq('quiz_attempt_id', attemptId);
+            if (rErr) throw rErr;
+            if (!responses || responses.length === 0) throw new Error('No responses found for this quiz attempt.');
+
+            const qIds = responses.map(r => r.question_id);
+            const { data: questions, error: qErr } = await supabaseClient
+                .from('questions')
+                .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                .in('id', qIds);
+            if (qErr) throw qErr;
+
+            const qMap = {};
+            questions.forEach(q => { qMap[q.id] = q; });
+
+            const orderedQuestions = [];
+            const orderedAnswers = [];
+            responses.forEach(r => {
+                if (qMap[r.question_id]) {
+                    orderedQuestions.push(qMap[r.question_id]);
+                    orderedAnswers.push(r.user_answer);
+                }
+            });
+            return { orderedQuestions, orderedAnswers };
+        }
+
+        async function reviewPastQuiz(attemptId) {
+            try {
+                const { orderedQuestions, orderedAnswers } = await fetchPastQuizQuestions(attemptId);
+                currentQuiz = orderedQuestions;
+                userAnswers = orderedAnswers;
+                isWeakQuizMode = false;
+                shuffleMap = [];
+                currentQuestionIndex = 0;
+                showView('quiz');
+                displayReviewQuestion();
+            } catch (err) {
+                alert('Could not load quiz: ' + err.message);
+                console.error('reviewPastQuiz error:', err);
+            }
+        }
+
+        async function retakePastQuiz(attemptId) {
+            try {
+                const { orderedQuestions } = await fetchPastQuizQuestions(attemptId);
+                currentQuiz = orderedQuestions;
+                userAnswers = new Array(orderedQuestions.length).fill(null);
+                isWeakQuizMode = false;
+                shuffleMap = [];
+                currentQuestionIndex = 0;
+                clearInterval(quizTimerInterval);
+                document.getElementById('quizTimerBar').style.display = 'none';
+                showView('quiz');
+                displayQuizQuestion();
+            } catch (err) {
+                alert('Could not load quiz: ' + err.message);
+                console.error('retakePastQuiz error:', err);
+            }
+        }
+
         function reviewQuiz() {
             currentQuestionIndex = 0;
             showView('quiz');
@@ -4873,13 +5004,16 @@ Option D" required></textarea>
             const quizPanel = document.getElementById('studentQuizPanel');
             const wsPanel = document.getElementById('studentWorksheetsPanel');
             const checkPanel = document.getElementById('studentCheckPanel');
+            const historyPanel = document.getElementById('studentHistoryPanel');
             const tabQuiz = document.getElementById('tabQuiz');
             const tabWs = document.getElementById('tabWorksheets');
             const tabCheck = document.getElementById('tabCheckAnswer');
+            const tabHist = document.getElementById('tabHistory');
             quizPanel.style.display = 'none';
             wsPanel.style.display = 'none';
             checkPanel.style.display = 'none';
-            [tabQuiz, tabWs, tabCheck].forEach(t => t && t.classList.remove('active'));
+            historyPanel.style.display = 'none';
+            [tabQuiz, tabWs, tabCheck, tabHist].forEach(t => t && t.classList.remove('active'));
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
@@ -4899,6 +5033,10 @@ Option D" required></textarea>
                 } else {
                     cc_renderStudentQuestions();
                 }
+            } else if (tab === 'history') {
+                historyPanel.style.display = 'block';
+                tabHist.classList.add('active');
+                loadQuizHistory();
             }
         }
 

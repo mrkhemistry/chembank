@@ -1902,6 +1902,7 @@ Option D" required></textarea>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                     <button class="btn btn-primary" onclick="startQuiz()">Start Quiz</button>
                     <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()" style="display:none;">⚠️ Practice Weak Questions</button>
+                    <button class="btn btn-secondary" id="resumeQuizBtn" onclick="resumeQuizProgress()" style="display:none;">▶️ Resume Quiz</button>
                 </div>
             </div>
             </div><!-- end studentQuizPanel -->
@@ -2243,7 +2244,7 @@ Option D" required></textarea>
                 <div style="text-align: left; margin-top: 2rem;" id="resultsBreakdown"></div>
                 
                 <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-                    <button class="btn btn-primary" onclick="showView('student')">Take Another Quiz</button>
+                    <button class="btn btn-primary" onclick="clearQuizProgress(); showView('student')">Take Another Quiz</button>
                     <button class="btn btn-secondary" onclick="reviewQuiz()">Review Answers</button>
                 </div>
             </div>
@@ -2961,6 +2962,8 @@ Option D" required></textarea>
                     setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
                 } else {
                     showView('student');
+                    // Show resume button if there's cached quiz progress
+                    setTimeout(() => updateResumeButton(), 500);
                 }
             }
         }
@@ -3243,6 +3246,89 @@ Option D" required></textarea>
         let userAnswers = [];
         let shuffleMap = []; // stores shuffled option order per question for weak quiz mode
         let isWeakQuizMode = false;
+        let quizInProgress = false;
+
+        // ── Quiz progress protection ─────────────────────────────
+        window.addEventListener('beforeunload', function(e) {
+            if (quizInProgress) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        function saveQuizProgress() {
+            if (!currentUser || !quizInProgress) return;
+            try {
+                localStorage.setItem('chembank_quiz_progress', JSON.stringify({
+                    userId: currentUser.id,
+                    savedAt: Date.now(),
+                    currentQuiz: currentQuiz,
+                    userAnswers: userAnswers,
+                    currentQuestionIndex: currentQuestionIndex,
+                    isWeakQuizMode: isWeakQuizMode,
+                    shuffleMap: shuffleMap,
+                    timerModeEnabled: timerModeEnabled,
+                    quizTimeRemaining: quizTimeRemaining
+                }));
+            } catch (e) { console.warn('Could not save quiz progress:', e); }
+        }
+
+        function clearQuizProgress() {
+            quizInProgress = false;
+            localStorage.removeItem('chembank_quiz_progress');
+            updateResumeButton();
+        }
+
+        function updateResumeButton() {
+            const btn = document.getElementById('resumeQuizBtn');
+            if (!btn) return;
+            try {
+                const raw = localStorage.getItem('chembank_quiz_progress');
+                if (!raw || !currentUser) { btn.style.display = 'none'; return; }
+                const saved = JSON.parse(raw);
+                if (saved.userId !== currentUser.id || Date.now() - saved.savedAt > 24 * 60 * 60 * 1000) {
+                    btn.style.display = 'none';
+                    return;
+                }
+                const answered = saved.userAnswers.filter(a => a !== null).length;
+                btn.textContent = '▶️ Resume Quiz (' + answered + '/' + saved.userAnswers.length + ')';
+                btn.style.display = 'inline-block';
+            } catch (e) { btn.style.display = 'none'; }
+        }
+
+        function resumeQuizProgress() {
+            try {
+                const raw = localStorage.getItem('chembank_quiz_progress');
+                if (!raw || !currentUser) return false;
+                const saved = JSON.parse(raw);
+                // Must belong to same user and be less than 24h old
+                if (saved.userId !== currentUser.id) { clearQuizProgress(); return false; }
+                if (Date.now() - saved.savedAt > 24 * 60 * 60 * 1000) { clearQuizProgress(); return false; }
+                currentQuiz = saved.currentQuiz;
+                userAnswers = saved.userAnswers;
+                currentQuestionIndex = saved.currentQuestionIndex;
+                isWeakQuizMode = saved.isWeakQuizMode;
+                shuffleMap = saved.shuffleMap || [];
+                timerModeEnabled = saved.timerModeEnabled || false;
+                quizTimeRemaining = saved.quizTimeRemaining || 0;
+                quizInProgress = true;
+                // Reset button handlers
+                document.getElementById('prevBtn').onclick = previousQuestion;
+                document.getElementById('nextBtn').onclick = nextQuestion;
+                document.getElementById('quizSubmitBtn').onclick = submitQuiz;
+                document.getElementById('nextBtn').textContent = 'Next Question';
+                document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
+                showView('quiz');
+                displayQuizQuestion();
+                if (timerModeEnabled && quizTimeRemaining > 0) startQuizTimer(null);
+                saveQuizProgress(); // Re-cache immediately so another refresh is safe
+                return true;
+            } catch (e) {
+                console.warn('Could not resume quiz progress:', e);
+                clearQuizProgress();
+                return false;
+            }
+        }
 
         async function loadQuestionsFromSupabase() {
             try {
@@ -4310,8 +4396,10 @@ Option D" required></textarea>
                 document.getElementById('quizSubmitBtn').onclick = submitQuiz;
                 document.getElementById('nextBtn').textContent = 'Next Question';
                 document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
+                quizInProgress = true;
                 showView('quiz');
                 displayQuizQuestion();
+                saveQuizProgress();
                 alert(`Loaded ${currentQuiz.length} weak question${currentQuiz.length > 1 ? 's' : ''} with shuffled options. Good luck!`);
             } catch (e) {
                 alert('Error loading weak questions: ' + e.message);
@@ -4408,8 +4496,10 @@ Option D" required></textarea>
             document.getElementById('nextBtn').textContent = 'Next Question';
             document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
             
+                quizInProgress = true;
                 showView('quiz');
                 displayQuizQuestion();
+                saveQuizProgress();
                 if (timerModeEnabled) startQuizTimer(currentQuiz.length);
             } catch (err) {
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -4532,12 +4622,14 @@ Option D" required></textarea>
         function selectOption(letter) {
             userAnswers[currentQuestionIndex] = letter;
             displayQuizQuestion();
+            saveQuizProgress();
         }
 
         function nextQuestion() {
             if (currentQuestionIndex < currentQuiz.length - 1) {
                 currentQuestionIndex++;
                 displayQuizQuestion();
+                saveQuizProgress();
             }
         }
 
@@ -4545,11 +4637,13 @@ Option D" required></textarea>
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
                 displayQuizQuestion();
+                saveQuizProgress();
             }
         }
 
         function submitQuiz() {
             clearQuizTimer();
+            clearQuizProgress();
             const unanswered = userAnswers.filter(a => a === null).length;
             if (unanswered > 0) {
                 if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
@@ -6517,7 +6611,8 @@ Option D" required></textarea>
 
         function startQuizTimer(totalQuestions) {
             clearQuizTimer();
-            quizTimeRemaining = totalQuestions * 120; // 2 mins per question
+            if (totalQuestions !== null) quizTimeRemaining = totalQuestions * 120; // 2 mins per question
+            // When totalQuestions is null, use existing quizTimeRemaining (resume mode)
             const display = document.getElementById('quizTimerDisplay');
             const bar = document.getElementById('quizTimerBar');
             bar.style.display = 'block';

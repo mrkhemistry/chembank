@@ -335,20 +335,30 @@
       }).catch(function(e) { console.error('role check failed:', e); });
     }
 
+    var isRecoveryHash = false;
+
+    // Listen for auth state changes — this is how Supabase v2 signals PASSWORD_RECOVERY
+    sb.auth.onAuthStateChange(function(event, session) {
+      console.log('Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        isRecoveryHash = true;
+        showView('resetView');
+        document.querySelector('.reset-card h2').textContent = 'Set New Password';
+        document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
+        document.getElementById('resetEmail').type = 'password';
+        document.getElementById('resetEmail').placeholder = 'New password';
+        document.getElementById('resetBtn').textContent = 'Update Password';
+      } else if (event === 'SIGNED_IN' && !isRecoveryHash) {
+        showDashboard(session.user);
+      }
+    });
+
+    // Also check existing session for normal page loads (no hash)
     sb.auth.getSession().then(function(result) {
-      if (result.data && result.data.session) {
+      if (result.data && result.data.session && !isRecoveryHash) {
         showDashboard(result.data.session.user);
       }
     }).catch(function(e) { console.error('Session check failed:', e); });
-
-    if (window.location.hash && window.location.hash.includes('type=recovery')) {
-      showView('resetView');
-      document.querySelector('.reset-card h2').textContent = 'Set New Password';
-      document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-      document.getElementById('resetEmail').type = 'password';
-      document.getElementById('resetEmail').placeholder = 'New password';
-      document.getElementById('resetBtn').textContent = 'Update Password';
-    }
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
@@ -461,7 +471,7 @@
     });
 
     document.getElementById('resetBtn').addEventListener('click', function() {
-      var isRecovery = window.location.hash && window.location.hash.includes('type=recovery');
+      var isRecovery = isRecoveryHash;
       var btn = document.getElementById('resetBtn');
       if (isRecovery) {
         var newPass = document.getElementById('resetEmail').value.trim();

@@ -335,21 +335,20 @@
       }).catch(function(e) { console.error('role check failed:', e); });
     }
 
-    var isRecoveryHash = window.location.hash && window.location.hash.includes('type=recovery');
-
     sb.auth.getSession().then(function(result) {
-      if (isRecoveryHash) {
-        // Recovery link detected — show reset form (session is now established)
-        showView('resetView');
-        document.querySelector('.reset-card h2').textContent = 'Set New Password';
-        document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-        document.getElementById('resetEmail').type = 'password';
-        document.getElementById('resetEmail').placeholder = 'New password';
-        document.getElementById('resetBtn').textContent = 'Update Password';
-      } else if (result.data && result.data.session) {
+      if (result.data && result.data.session) {
         showDashboard(result.data.session.user);
       }
     }).catch(function(e) { console.error('Session check failed:', e); });
+
+    if (window.location.hash && window.location.hash.includes('type=recovery')) {
+      showView('resetView');
+      document.querySelector('.reset-card h2').textContent = 'Set New Password';
+      document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
+      document.getElementById('resetEmail').type = 'password';
+      document.getElementById('resetEmail').placeholder = 'New password';
+      document.getElementById('resetBtn').textContent = 'Update Password';
+    }
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();

@@ -166,6 +166,17 @@
             border-color: var(--primary);
         }
 
+        .btn-outline-red {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .btn-outline-red:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
         .btn-danger {
             background: var(--danger);
             color: var(--white);
@@ -424,7 +435,7 @@
         }
 
         .tag-difficulty.easy {
-            border-color: #4a9eff;
+            border-color: var(--success);
         }
 
         .tag-difficulty.medium {
@@ -5274,7 +5285,7 @@ Option D" required></textarea>
                         <div class="worksheet-card-actions">
                             <button class="btn btn-outline-cyan btn-sm" onclick="previewWorksheet(${ws.id}, 'student')">View</button>
                             <button class="btn btn-outline-cyan btn-sm" onclick="previewWorksheet(${ws.id}, 'tutor')">Answer Key</button>
-                            ${isAdminOrTeacher ? '<button class="btn btn-danger btn-sm" onclick="deleteWorksheet(' + ws.id + ')">Delete</button>' : ''}
+                            ${isAdminOrTeacher ? '<button class="btn btn-outline-red btn-sm" onclick="deleteWorksheet(' + ws.id + ')">Delete</button>' : ''}
                         </div>
                     </div>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">

@@ -1024,7 +1024,72 @@
                 grid-template-columns: 1fr;
             }
         }
-        
+
+        /* ── Mobile (phones ≤ 480px) ──────────────── */
+        @media (max-width: 480px) {
+            /* Header */
+            header { padding: 0.75rem 1rem; }
+            .logo { font-size: 1.4rem; }
+            .nav-buttons { gap: 0.5rem; }
+            .nav-buttons .btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+            .nav-buttons span { font-size: 0.75rem; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+            /* Welcome */
+            .welcome-title { font-size: 1.8rem; }
+            .welcome-subtitle { font-size: 1rem; }
+            .portal-cards { grid-template-columns: 1fr; gap: 1rem; margin-top: 1.5rem; }
+            .portal-card { padding: 1.5rem; }
+            .portal-card h2 { font-size: 1.3rem; }
+            .portal-card p { font-size: 0.9rem; }
+
+            /* Student tabs — horizontally scrollable */
+            #studentView > div:first-child {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                scrollbar-width: none;
+            }
+            #studentView > div:first-child::-webkit-scrollbar { display: none; }
+            .student-tab { font-size: 0.8rem; padding: 0.5rem 0.75rem; white-space: nowrap; flex-shrink: 0; }
+
+            /* Panels */
+            .panel { padding: 1rem; }
+            .panel-header { flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+            .panel-header span { font-size: 1.1rem; }
+
+            /* Quiz view */
+            .quiz-question { padding: 1rem; border-radius: 12px; }
+            .quiz-question-text { font-size: 1rem; line-height: 1.6; margin-bottom: 1.25rem; }
+            .option { padding: 0.75rem 1rem; gap: 0.75rem; }
+            .option-letter { width: 32px; height: 32px; font-size: 0.9rem; }
+            .option-text { font-size: 0.95rem; }
+            .quiz-progress { gap: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem; }
+
+            /* Quiz nav buttons */
+            #quizView .quiz-container > div:last-child { flex-wrap: wrap; }
+            #quizView .quiz-container > div:last-child .btn { flex: 1 1 auto; min-width: 0; font-size: 0.85rem; padding: 0.6rem 1rem; }
+
+            /* Results */
+            .results-score { font-size: 3rem; }
+            .results-message { font-size: 1rem; }
+            .results-panel .panel-header span { font-size: 1.2rem; }
+
+            /* Tags */
+            .tag { font-size: 0.7rem; padding: 0.2rem 0.5rem; }
+
+            /* Question images */
+            .question-image-container img,
+            .option-image-container img { max-width: 100% !important; max-height: 250px !important; }
+
+            /* History panel cards */
+            #historyList > div { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 1rem; }
+
+            /* Auth views */
+            .auth-container { padding: 0 0.5rem; }
+            .auth-header .logo { font-size: 2rem; }
+            .auth-panel { padding: 1.5rem; }
+        }
+
         /* ============================================ */
         /* AUTHENTICATION STYLES */
         /* ============================================ */

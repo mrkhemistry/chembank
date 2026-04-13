@@ -14,27 +14,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
     
     <style>
-        /* Import distinctive fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
-        
+        /* Import fonts — matching portal */
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;600&display=swap');
+
         :root {
-            /* Chemistry-inspired color palette */
-            --primary: #00D9FF;
-            --primary-dark: #0099CC;
-            --secondary: #FF6B35;
-            --accent: #FFE66D;
+            /* Portal-aligned color palette */
+            --primary: #00e5ff;
+            --primary-dark: #00b8d4;
+            --secondary: #00e5ff;
+            --accent: #ffffff;
             --success: #06FFA5;
-            --danger: #FF006E;
-            --dark: #0A0E27;
-            --mid-dark: #1A1F3A;
-            --light: #F0F4F8;
+            --danger: #ff5555;
+            --dark: #0a0a0a;
+            --mid-dark: #141414;
+            --light: #ffffff;
             --white: #FFFFFF;
-            
+            --text-secondary: #777777;
+            --border: #2a2a2a;
+            --border2: #3a3a3a;
+            --surface: #141414;
+            --surface2: #1c1c1c;
+            --cyan-dim: rgba(0,229,255,0.08);
+            --cyan-border: rgba(0,229,255,0.2);
+
             /* Shadows and effects */
-            --shadow-sm: 0 2px 8px rgba(0, 217, 255, 0.15);
-            --shadow-md: 0 4px 16px rgba(0, 217, 255, 0.2);
-            --shadow-lg: 0 8px 32px rgba(0, 217, 255, 0.25);
-            --glow: 0 0 20px rgba(0, 217, 255, 0.5);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --glow: 0 4px 24px rgba(0, 229, 255, 0.1);
         }
         
         * {
@@ -51,37 +58,14 @@
             position: relative;
         }
         
-        /* Animated background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(0, 217, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 107, 53, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(255, 230, 109, 0.05) 0%, transparent 70%);
-            z-index: -1;
-            animation: float 20s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.1) rotate(5deg); }
-        }
-        
         /* Header */
         header {
-            background: rgba(26, 31, 58, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid var(--primary);
-            padding: 1.5rem 2rem;
+            background: #000;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: var(--shadow-lg);
         }
         
         .header-content {
@@ -93,14 +77,14 @@
         }
         
         .logo {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #ffffff, var(--primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -1px;
-            text-transform: uppercase;
+            letter-spacing: 0;
+            text-transform: none;
         }
         
         .connection-status {
@@ -141,50 +125,59 @@
         .btn {
             padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 20px;
             font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            font-size: 0.95rem;
+            font-weight: 700;
+            font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.04em;
         }
-        
+
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: var(--dark);
-            box-shadow: var(--shadow-md);
+            background: var(--primary);
+            color: #000;
         }
-        
+
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--glow);
+            opacity: 0.88;
+            transform: translateY(-1px);
         }
-        
+
         .btn-secondary {
             background: transparent;
             color: var(--light);
-            border: 2px solid var(--primary);
+            border: 1px solid rgba(255,255,255,0.4);
         }
-        
+
         .btn-secondary:hover {
-            background: var(--primary);
-            color: var(--dark);
+            border-color: var(--primary);
+            color: var(--primary);
         }
-        
+
+        .btn-outline-cyan {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid #ffffff;
+        }
+
+        .btn-outline-cyan:hover {
+            border-color: var(--primary);
+        }
+
         .btn-danger {
             background: var(--danger);
             color: var(--white);
         }
-        
+
         .btn-success {
             background: var(--success);
-            color: var(--dark);
+            color: #000;
         }
-        
+
         .btn:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
         }
         
@@ -217,28 +210,23 @@
         }
         
         .welcome-title {
-            font-family: 'Archivo Black', sans-serif;
-            font-size: 4rem;
+            font-family: 'DM Serif Display', serif;
+            font-size: 3rem;
             margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--light);
             line-height: 1.2;
         }
-        
+
         .welcome-subtitle {
-            font-size: 1.5rem;
-            color: var(--light);
+            font-size: 1.2rem;
+            color: #ffffff;
             margin-bottom: 1rem;
-            opacity: 0.9;
         }
-        
+
         .welcome-info {
-            font-size: 1rem;
-            color: var(--accent);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
             margin-bottom: 3rem;
-            opacity: 0.8;
         }
         
         .portal-cards {
@@ -249,74 +237,60 @@
         }
         
         .portal-card {
-            background: rgba(26, 31, 58, 0.6);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--primary);
-            border-radius: 16px;
-            padding: 3rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 2.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
             position: relative;
             overflow: hidden;
         }
-        
-        .portal-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
+
         .portal-card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-3px);
+            border-color: var(--primary);
             box-shadow: var(--glow);
         }
-        
-        .portal-card:hover::before {
-            opacity: 0.1;
-        }
-        
+
         .portal-card h2 {
             position: relative;
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 0.75rem;
             color: var(--primary);
         }
-        
+
         .portal-card p {
             position: relative;
-            font-size: 1.1rem;
-            opacity: 0.9;
+            font-size: 0.95rem;
+            color: #ffffff;
             line-height: 1.6;
         }
         
         /* Panels */
         .panel {
-            background: rgba(26, 31, 58, 0.6);
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--primary);
-            border-radius: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 2rem;
             margin-bottom: 2rem;
         }
-        
+
         .panel-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+            border-bottom: 1px solid var(--cyan-border);
         }
-        
+
         .panel-header span {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.4rem;
+            font-weight: 400;
             color: var(--primary);
         }
         
@@ -328,7 +302,7 @@
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--accent);
+            color: var(--primary);
             font-weight: 500;
         }
         
@@ -337,13 +311,13 @@
         .form-group textarea {
             width: 100%;
             padding: 0.75rem;
-            background: rgba(10, 14, 39, 0.8);
-            border: 2px solid rgba(0, 217, 255, 0.3);
-            border-radius: 8px;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 4px;
             color: var(--light);
             font-family: 'DM Sans', sans-serif;
             font-size: 1rem;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.15s ease;
         }
         
         .form-group input:focus,
@@ -374,10 +348,11 @@
             border-radius: 6px;
             transition: background 0.2s ease;
             line-height: 1;
+            color: #ffffff;
         }
         
         .checkbox-label:hover {
-            background: rgba(0, 217, 255, 0.1);
+            background: var(--cyan-dim);
         }
         
         .checkbox-label input[type="checkbox"] {
@@ -387,17 +362,17 @@
         
         /* Question list */
         .question-item {
-            background: rgba(10, 14, 39, 0.8);
-            border: 1px solid rgba(0, 217, 255, 0.2);
-            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
         }
-        
+
         .question-item:hover {
             border-color: var(--primary);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--glow);
         }
         
         .question-header {
@@ -433,29 +408,27 @@
         }
         
         .tag-topic {
-            background: var(--primary);
-            color: var(--dark);
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
         }
         
         .tag-difficulty {
-            background: var(--mid-dark);
-            color: var(--light);
-            border: 1px solid var(--accent);
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid var(--border2);
         }
-        
+
         .tag-difficulty.easy {
-            border-color: var(--success);
-            color: var(--success);
+            border-color: #4a9eff;
         }
-        
+
         .tag-difficulty.medium {
-            border-color: var(--accent);
-            color: var(--accent);
+            border-color: #ffffff;
         }
-        
+
         .tag-difficulty.hard {
             border-color: var(--danger);
-            color: var(--danger);
         }
         
         /* Options display */
@@ -972,9 +945,9 @@
 
         /* Worksheet cards */
         .worksheet-card {
-            background: rgba(10, 14, 39, 0.8);
-            border: 1px solid rgba(0, 217, 255, 0.2);
-            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
             padding: 1.5rem;
             margin-bottom: 1rem;
             transition: all 0.3s ease;
@@ -1002,12 +975,12 @@
         .ws-preview-content .option-row { color: var(--light); }
         .ws-preview-content .option-row.correct-ans .option-letter { color: var(--success); }
         .ws-preview-content .option-row.correct-ans .option-text { color: var(--success); }
-        .ws-preview-content .answer-box { background: rgba(0,0,0,0.3) !important; border-color: rgba(0,217,255,0.3); color: var(--light); }
+        .ws-preview-content .answer-box { background: rgba(0,0,0,0.3) !important; border-color: var(--cyan-border); color: var(--light); }
         .ws-preview-content .ans-label { color: var(--accent); }
         .ws-preview-content .correct-letter { color: var(--success); }
         .ws-preview-content .explanation-text { color: rgba(240,244,248,0.85); }
-        .ws-preview-content .answer-summary { border-top-color: rgba(0,217,255,0.3); }
-        .ws-preview-content .ans-cell { border-color: rgba(0,217,255,0.3); color: var(--light); background: rgba(0,0,0,0.2); }
+        .ws-preview-content .answer-summary { border-top-color: var(--cyan-border); }
+        .ws-preview-content .ans-cell { border-color: var(--cyan-border); color: var(--light); background: rgba(0,0,0,0.2); }
         .ws-preview-content .ans-cell .q-num { border-bottom-color: rgba(0,217,255,0.2); color: var(--accent); }
         .ws-preview-content .ws-footer { border-top-color: rgba(0,217,255,0.2); color: rgba(240,244,248,0.5); }
         .ws-preview-content .name-line { color: var(--light); }
@@ -1066,7 +1039,7 @@
                 width: 18px; height: 18px; min-width: 18px; min-height: 18px;
                 margin: 0; flex-shrink: 0;
                 border: 2px solid rgba(0,217,255,0.4); border-radius: 4px;
-                background: rgba(10,14,39,0.8); cursor: pointer;
+                background: var(--surface); cursor: pointer;
             }
             .checkbox-label input[type="checkbox"]:checked {
                 background: var(--primary); border-color: var(--primary);
@@ -1278,7 +1251,7 @@
         #studentCheckPanel .answer-mode     { display: flex; gap: 2px; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 4px; width: fit-content; margin-bottom: 16px; }
         #studentCheckPanel .mode-btn        { padding: 7px 16px; border-radius: 6px; border: none; background: transparent; color: rgba(240,244,248,0.5); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
         #studentCheckPanel .mode-btn.active { background: var(--mid-dark); color: var(--light); }
-        #studentCheckPanel .upload-zone     { border: 2px dashed rgba(0,217,255,0.3); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
+        #studentCheckPanel .upload-zone     { border: 2px dashed var(--cyan-border); border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2); }
         #studentCheckPanel .upload-zone:hover, #studentCheckPanel .upload-zone.dragover { border-color: var(--primary); background: rgba(0,217,255,0.05); }
         #studentCheckPanel .upload-zone input { display: none; }
         #studentCheckPanel .upload-icon    { font-size: 2rem; margin-bottom: 8px; }
@@ -1299,8 +1272,8 @@
         #studentCheckPanel .q-card-text    { font-size: 0.9rem; line-height: 1.5; flex: 1; }
         #studentCheckPanel .q-meta         { display: flex; gap: 8px; flex-wrap: wrap; }
         #studentCheckPanel .tag            { font-size: 0.65rem; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; }
-        #studentCheckPanel .tag-topic      { background: rgba(6,255,165,0.1); color: var(--success); border: 1px solid rgba(6,255,165,0.2); }
-        #studentCheckPanel .tag-marks      { background: rgba(124,111,247,0.1); color: #7c6ff7; border: 1px solid rgba(124,111,247,0.2); }
+        #studentCheckPanel .tag-topic      { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        #studentCheckPanel .tag-marks      { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
         #studentCheckPanel .filter-bar     { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         #studentCheckPanel .filter-bar select { background: var(--mid-dark); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; padding: 8px 14px; color: var(--light); font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; }
         #studentCheckPanel .filter-bar select:focus { border-color: var(--primary); }
@@ -1460,26 +1433,26 @@
             <div class="welcome-screen">
                 <h1 class="welcome-title">KhemBank</h1>
                 <p class="welcome-subtitle">Advanced Chemistry Question Bank System</p>
-                <p class="welcome-info">🌐 Cloud-powered with Supabase • Real-time synchronization • Built to scale</p>
+                <p class="welcome-info">Cloud-powered with Supabase • Real-time synchronization • Built to scale</p>
                 
                 <div class="portal-cards">
                     <div class="portal-card" id="teacherCard" style="display:none;" onclick="accessTeacherPortal()">
-                        <h2>🎓 Teacher Workspace</h2>
+                        <h2>Teacher Workspace</h2>
                         <p>Upload questions, create quizzes, tag content by topic and difficulty, add video explanations, and manage your question bank.</p>
                     </div>
                     
                     <div class="portal-card" onclick="accessStudentPortal()">
-                        <h2>📚 MCQ Repository</h2>
+                        <h2>MCQ Repository</h2>
                         <p>Access quizzes, practice questions by topic and difficulty, view video explanations, and track your progress.</p>
                     </div>
 
                     <div class="portal-card" id="analyticsCard" style="display:none;" onclick="showView('analytics')">
-                        <h2>📊 Analytics</h2>
+                        <h2>Analytics</h2>
                         <p>View student performance, track scores over time, identify weak topics, and drill down into individual student progress.</p>
                     </div>
 
                     <div class="portal-card" id="pdfCard" style="display:none;" onclick="openPdfModal()">
-                        <h2>🖨️ Print Worksheets</h2>
+                        <h2>Print Worksheets</h2>
                         <p>Generate printable student worksheets or tutor answer keys. Filter by topic, difficulty, and number of questions.</p>
                     </div>
                 </div>
@@ -1503,7 +1476,7 @@
                     
                     <div class="form-group">
                         <label>Topic <span style="color: var(--danger);">*</span> <span style="font-weight:400; font-size:0.85rem; opacity:0.7;">(Select one or more)</span></label>
-                        <div class="checkbox-group" id="uploadTopicCheckboxes" style="background: rgba(10,14,39,0.8); border: 2px solid rgba(0,217,255,0.3); border-radius: 8px; padding: 1rem;">
+                        <div class="checkbox-group" id="uploadTopicCheckboxes" style="background: var(--surface); border: 2px solid var(--cyan-border); border-radius: 8px; padding: 1rem;">
                             <label class="checkbox-label"><input type="checkbox" class="upload-topic-checkbox" value="Acid base equilibrium"><span>Acid base equilibrium</span></label>
                             <label class="checkbox-label"><input type="checkbox" class="upload-topic-checkbox" value="Atomic structure"><span>Atomic structure</span></label>
                             <label class="checkbox-label"><input type="checkbox" class="upload-topic-checkbox" value="Chemical bonding"><span>Chemical bonding</span></label>
@@ -1673,7 +1646,7 @@ Option D" required></textarea>
             <div class="panel">
                 <div class="panel-header">
                     <span>Question Bank (<span id="questionCount">0</span> questions)</span>
-                    <button class="btn btn-primary" onclick="exportBackup()" style="padding: 0.5rem 1rem;">📥 Export Backup</button>
+                    <button class="btn btn-primary" onclick="exportBackup()" style="padding: 0.5rem 1rem;">Export Backup</button>
                 </div>
                 
                 <div class="filters">
@@ -1743,7 +1716,7 @@ Option D" required></textarea>
                 </div>
 
                 <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; align-items:center; flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="applyAdminFilters()" style="padding:0.6rem 1.4rem;">🔍 Search</button>
+                    <button class="btn btn-primary" onclick="applyAdminFilters()" style="padding:0.6rem 1.4rem;">Search</button>
                     <button class="btn btn-secondary" onclick="clearAdminFilters()" style="padding:0.6rem 1.2rem;">Clear</button>
                     <span id="filterResultInfo" style="font-size:0.85rem; opacity:0.7; margin-left:0.5rem;"></span>
                 </div>
@@ -1756,10 +1729,10 @@ Option D" required></textarea>
         <div id="studentView" class="view">
             <!-- Student Tab Navigation -->
             <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; border-bottom: 2px solid rgba(0,217,255,0.2); padding-bottom:0;">
-                <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">🧪 Practice Quiz</button>
-                <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">📄 Worksheets</button>
-                <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">🔍 Check My Answer</button>
-                <button class="student-tab" id="tabHistory" onclick="switchStudentTab('history')">📊 My History</button>
+                <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">Practice Quiz</button>
+                <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">Worksheets</button>
+                <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">Check My Answer</button>
+                <button class="student-tab" id="tabHistory" onclick="switchStudentTab('history')">My History</button>
             </div>
 
             <!-- Quiz Panel -->
@@ -2005,8 +1978,8 @@ Option D" required></textarea>
                 
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                     <button class="btn btn-primary" onclick="startQuiz()">Start Quiz</button>
-                    <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()" style="display:none;">⚠️ Practice Weak Questions</button>
-                    <button class="btn btn-secondary" id="resumeQuizBtn" onclick="resumeQuizProgress()" style="display:none;">▶️ Resume Quiz</button>
+                    <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()" style="display:none;">Practice Weak Questions</button>
+                    <button class="btn btn-secondary" id="resumeQuizBtn" onclick="resumeQuizProgress()" style="display:none;">Resume Quiz</button>
                 </div>
             </div>
             </div><!-- end studentQuizPanel -->
@@ -2015,7 +1988,7 @@ Option D" required></textarea>
             <div id="studentWorksheetsPanel" style="display:none;">
                 <div class="panel">
                     <div class="panel-header">
-                        <span>📄 Worksheets</span>
+                        <span>Worksheets</span>
                         <span id="worksheetCount" style="font-size:0.9rem; opacity:0.7;"></span>
                     </div>
                     <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
@@ -2084,38 +2057,38 @@ Option D" required></textarea>
     </div>
     <div class="form-group">
       <label>Topic</label>
-      <input type="text" id="ccAdmin_topic" placeholder="e.g. Acid base equilibrium" style="width:100%; padding:10px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light); font-family:inherit;">
+      <input type="text" id="ccAdmin_topic" placeholder="e.g. Acid base equilibrium" style="width:100%; padding:10px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light); font-family:inherit;">
     </div>
     <div class="form-group">
       <label>Marks</label>
-      <input type="number" id="ccAdmin_marks" min="1" max="20" value="2" style="width:100px; padding:10px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light); font-family:inherit;">
+      <input type="number" id="ccAdmin_marks" min="1" max="20" value="2" style="width:100px; padding:10px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light); font-family:inherit;">
     </div>
     <div class="form-group">
       <label>Question Text (LaTeX supported: \(...\) inline, \[...\] display)</label>
-      <textarea id="ccAdmin_text" rows="5" placeholder="Enter the question..." style="width:100%; padding:10px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
+      <textarea id="ccAdmin_text" rows="5" placeholder="Enter the question..." style="width:100%; padding:10px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
     </div>
     <div class="form-group">
       <label>Question Images (optional, up to 5)</label>
-      <div id="ccAdmin_imgUploadZone" onclick="document.getElementById('ccAdmin_imgInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='rgba(0,217,255,0.3)'" ondrop="ccAdmin_handleImgDrop(event)" style="border:2px dashed rgba(0,217,255,0.3); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:rgba(0,0,0,0.2);">
+      <div id="ccAdmin_imgUploadZone" onclick="document.getElementById('ccAdmin_imgInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--cyan-border)'" ondrop="ccAdmin_handleImgDrop(event)" style="border:2px dashed var(--cyan-border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:rgba(0,0,0,0.2);">
         <input type="file" id="ccAdmin_imgInput" accept="image/*" multiple style="display:none;" onchange="ccAdmin_handleImgSelect(this.files)">
-        <div style="font-size:1.5rem;">🖼️</div>
+        <div style="font-size:1.5rem;"></div>
         <div style="font-size:0.85rem; color:rgba(240,244,248,0.5);"><strong style="color:var(--primary);">Click to upload</strong> or drag & drop</div>
       </div>
       <div id="ccAdmin_imgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;"></div>
     </div>
     <div class="form-group">
       <label>Model Answer</label>
-      <textarea id="ccAdmin_model" rows="6" placeholder="Full model answer..." style="width:100%; padding:10px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
+      <textarea id="ccAdmin_model" rows="6" placeholder="Full model answer..." style="width:100%; padding:10px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
     </div>
     <div class="form-group">
       <label>Answer Tip (optional)</label>
-      <textarea id="ccAdmin_tip" rows="2" placeholder="Hint shown to students after answering..." style="width:100%; padding:10px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
+      <textarea id="ccAdmin_tip" rows="2" placeholder="Hint shown to students after answering..." style="width:100%; padding:10px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light); font-family:inherit;"></textarea>
     </div>
     <div class="form-group">
       <label>Answer Images (optional, up to 5)</label>
-      <div id="ccAdmin_ansImgUploadZone" onclick="document.getElementById('ccAdmin_ansImgInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='rgba(0,217,255,0.3)'" ondrop="ccAdmin_handleAnsImgDrop(event)" style="border:2px dashed rgba(0,217,255,0.3); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:rgba(0,0,0,0.2);">
+      <div id="ccAdmin_ansImgUploadZone" onclick="document.getElementById('ccAdmin_ansImgInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'" ondragleave="this.style.borderColor='var(--cyan-border)'" ondrop="ccAdmin_handleAnsImgDrop(event)" style="border:2px dashed var(--cyan-border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; background:rgba(0,0,0,0.2);">
         <input type="file" id="ccAdmin_ansImgInput" accept="image/*" multiple style="display:none;" onchange="ccAdmin_handleAnsImgSelect(this.files)">
-        <div style="font-size:1.5rem;">🖼️</div>
+        <div style="font-size:1.5rem;"></div>
         <div style="font-size:0.85rem; color:rgba(240,244,248,0.5);"><strong style="color:var(--primary);">Click to upload</strong> or drag & drop</div>
       </div>
       <div id="ccAdmin_ansImgPreviews" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;"></div>
@@ -2129,7 +2102,7 @@ Option D" required></textarea>
   <div class="panel">
     <div class="panel-header">Existing Questions (<span id="ccAdmin_count">0</span>)</div>
     <div class="filter-bar" style="margin-bottom:12px;">
-      <select id="ccAdmin_filterTopic" onchange="ccAdmin_renderList()" style="padding:8px; background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; color:var(--light);">
+      <select id="ccAdmin_filterTopic" onchange="ccAdmin_renderList()" style="padding:8px; background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; color:var(--light);">
         <option value="">All Topics</option>
       </select>
     </div>
@@ -2170,8 +2143,8 @@ Option D" required></textarea>
             <div class="panel-title"><span class="dot"></span> Your Answer</div>
 
             <div class="answer-mode">
-              <button class="mode-btn active" id="cc_modeType" onclick="cc_switchMode('type')">✏️ Type answer</button>
-              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">📄 Word doc</button>
+              <button class="mode-btn active" id="cc_modeType" onclick="cc_switchMode('type')">Type answer</button>
+              <button class="mode-btn" id="cc_modeUpload" onclick="cc_switchMode('upload')">Word doc</button>
               </div>
 
             <!-- TYPE MODE -->
@@ -2188,11 +2161,11 @@ Option D" required></textarea>
                    ondragleave="this.classList.remove('dragover')"
                    ondrop="cc_handleDrop(event)">
                 <input type="file" id="cc_docUpload" accept=".docx" onchange="cc_handleFileUpload(this.files[0])">
-                <div class="upload-icon">📄</div>
+                <div class="upload-icon"></div>
                 <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br><span style="font-size:0.8rem;color:var(--text-dim)">Word documents (.docx) only</span></div>
               </div>
               <div class="file-attached" id="cc_fileAttached">
-                <span>📎</span>
+                <span></span>
                 <span id="cc_attachedFileName">document.docx</span>
                 <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_clearFile()">✕</span>
               </div>
@@ -2213,7 +2186,7 @@ Option D" required></textarea>
             </div>
 
             <div class="form-actions">
-              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">🔍 Check My Answer</button>
+              <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">Check My Answer</button>
             </div>
           </div>
 
@@ -2231,7 +2204,7 @@ Option D" required></textarea>
               <div id="cc_scoreBadge" class="score-badge pulse">⏳ Checking...</div>
 
               <div id="cc_fbMissing" class="feedback-section feedback-missing" style="display:none">
-                <div class="feedback-label missing-label">⚠️ Missing Key Points</div>
+                <div class="feedback-label missing-label">Missing Key Points</div>
                 <div class="feedback-body" id="cc_fbMissingText"></div>
               </div>
 
@@ -2241,19 +2214,19 @@ Option D" required></textarea>
               </div>
 
               <div id="cc_fbLength" class="feedback-section feedback-length" style="display:none">
-                <div class="feedback-label length-label">📏 Answer Length</div>
+                <div class="feedback-label length-label">Answer Length</div>
                 <div class="feedback-body" id="cc_fbLengthText"></div>
               </div>
 
               <div id="cc_fbTips" class="feedback-section feedback-tips" style="display:none">
-                <div class="feedback-label tips-label">💡 Tips & Answer Template</div>
+                <div class="feedback-label tips-label">Tips & Answer Template</div>
                 <div class="feedback-body" id="cc_fbTipsText"></div>
               </div>
 
               <div class="divider"></div>
 
               <div class="feedback-section feedback-model">
-                <div class="feedback-label model-label">📋 Model Answer</div>
+                <div class="feedback-label model-label">Model Answer</div>
                 <div class="feedback-body" id="cc_fbModelText"></div>
               </div>
 
@@ -2261,7 +2234,7 @@ Option D" required></textarea>
 
               <div style="text-align:center; padding-top:4px;">
                 <button class="btn btn-secondary" onclick="cc_downloadAnalysis()" style="gap:8px;">
-                  ⬇️ Download Analysis
+                  Download Analysis
                 </button>
               </div>
             </div>
@@ -2280,7 +2253,7 @@ Option D" required></textarea>
             <div id="studentHistoryPanel" style="display:none;">
                 <div class="panel" style="max-width:900px; margin:0 auto;">
                     <div class="panel-header">
-                        <span>📊 My Quiz History</span>
+                        <span>My Quiz History</span>
                         <button class="btn btn-secondary" onclick="loadQuizHistory()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">↻ Refresh</button>
                     </div>
                     <div id="historyLoading" style="display:none; text-align:center; padding:2rem;">
@@ -2361,7 +2334,7 @@ Option D" required></textarea>
             <div id="analyticsOverview">
                 <div class="panel">
                     <div class="panel-header">
-                        <span>📊 Analytics Dashboard</span>
+                        <span>Analytics Dashboard</span>
                         <button class="btn btn-secondary" onclick="loadAnalytics()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">↻ Refresh</button>
                     </div>
 
@@ -2386,10 +2359,10 @@ Option D" required></textarea>
                     </div>
 
                     <!-- Enrolment chart -->
-                    <div style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.3); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
                             <div>
-                                <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">📈 Student Enrolment</div>
+                                <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">Student Enrolment</div>
                                 <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem;">New students registered per month</div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
@@ -2397,8 +2370,8 @@ Option D" required></textarea>
                                     <input type="checkbox" id="enrolmentBenchmarkToggle" onchange="renderEnrolmentChart()" style="width: auto; cursor: pointer; accent-color: var(--accent);">
                                     Compare with:
                                 </label>
-                                <select id="enrolmentBenchmarkYear" onchange="renderEnrolmentChart()" style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; color: var(--light); padding: 0.3rem 0.6rem; font-size: 0.85rem;"></select>
-                                <select id="enrolmentYearFilter" onchange="renderEnrolmentChart()" style="background: rgba(10,14,39,0.8); border: 1px solid rgba(0,217,255,0.3); border-radius: 6px; color: var(--light); padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;"></select>
+                                <select id="enrolmentBenchmarkYear" onchange="renderEnrolmentChart()" style="background: var(--surface); border: 1px solid rgba(0,217,255,0.2); border-radius: 6px; color: var(--light); padding: 0.3rem 0.6rem; font-size: 0.85rem;"></select>
+                                <select id="enrolmentYearFilter" onchange="renderEnrolmentChart()" style="background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 6px; color: var(--light); padding: 0.4rem 0.8rem; font-size: 0.85rem; font-weight: 600;"></select>
                             </div>
                         </div>
                         <div style="display: flex; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap;" id="enrolmentLegend"></div>
@@ -2410,9 +2383,9 @@ Option D" required></textarea>
 
                     <!-- Tabs -->
                     <div class="analytics-tabs">
-                        <button class="analytics-tab active" onclick="switchAnalyticsTab('students', this)">👥 Students</button>
-                        <button class="analytics-tab" onclick="switchAnalyticsTab('topics', this)">📚 Topics</button>
-                        <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">🗃️ Question Bank</button>
+                        <button class="analytics-tab active" onclick="switchAnalyticsTab('students', this)">Students</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('topics', this)">Topics</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">Question Bank</button>
                     </div>
 
                     <!-- Students tab -->
@@ -2451,7 +2424,7 @@ Option D" required></textarea>
     <div id="pdfModal" class="pdf-modal">
         <div class="pdf-modal-inner">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
-                <h2>🖨️ Print Worksheet</h2>
+                <h2>Print Worksheet</h2>
                 <button class="btn btn-danger" onclick="closePdfModal()">✕ Close</button>
             </div>
             <p class="subtitle">Generate a printable PDF for students or a tutor answer key.</p>
@@ -2460,11 +2433,11 @@ Option D" required></textarea>
             <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
                 <label class="pdf-type-btn active" id="pdfTypeStudentLabel" style="cursor:pointer; display:flex; align-items:center; gap:0.75rem;">
                     <input type="checkbox" id="pdfTypeStudent" checked style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
-                    <span>📄 <strong>Student Version</strong><small style="display:block;">Questions only — no answers</small></span>
+                    <span><strong>Student Version</strong><small style="display:block;">Questions only — no answers</small></span>
                 </label>
                 <label class="pdf-type-btn" id="pdfTypeTutorLabel" style="cursor:pointer; display:flex; align-items:center; gap:0.75rem;">
                     <input type="checkbox" id="pdfTypeTutor" style="width:18px; height:18px; cursor:pointer; accent-color: var(--accent);">
-                    <span>🔑 <strong>Tutor Version</strong><small style="display:block;">Includes answers &amp; explanations</small></span>
+                    <span><strong>Tutor Version</strong><small style="display:block;">Includes answers &amp; explanations</small></span>
                 </label>
             </div>
 
@@ -2478,7 +2451,7 @@ Option D" required></textarea>
                             <span style="font-weight:700; color:var(--accent);">✓ All Topics</span>
                         </label>
                     </div>
-                    <div class="checkbox-group" id="pdfTopicCheckboxes" style="background:rgba(10,14,39,0.8); border:2px solid rgba(0,217,255,0.3); border-radius:8px; padding:1rem;">
+                    <div class="checkbox-group" id="pdfTopicCheckboxes" style="background:var(--surface); border:2px solid var(--cyan-border); border-radius:8px; padding:1rem;">
                         <label class="checkbox-label"><input type="checkbox" class="pdf-topic-cb" value="Acid base equilibrium"><span>Acid base equilibrium</span></label>
                         <label class="checkbox-label"><input type="checkbox" class="pdf-topic-cb" value="Atomic structure"><span>Atomic structure</span></label>
                         <label class="checkbox-label"><input type="checkbox" class="pdf-topic-cb" value="Chemical bonding"><span>Chemical bonding</span></label>
@@ -2542,12 +2515,12 @@ Option D" required></textarea>
                     Check Availability
                 </button>
                 <button class="btn btn-primary" onclick="generateAndPrintPdf()" style="flex:2; min-width:180px;">
-                    🖨️ Generate & Print PDF
+                    Generate & Print PDF
                 </button>
             </div>
             <div style="display:flex; gap:1rem; margin-top:0.75rem;">
                 <button class="btn btn-success" onclick="saveWorksheetToPortal()" style="flex:1; background: linear-gradient(135deg, var(--success), #04cc84); color: var(--dark);">
-                    💾 Save to Student Portal
+                    Save to Student Portal
                 </button>
             </div>
         </div>
@@ -2562,7 +2535,7 @@ Option D" required></textarea>
             <div class="ws-preview-toolbar">
                 <h2 style="color: var(--primary); font-size: 1.5rem;" id="wsPreviewTitle">Worksheet</h2>
                 <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-                    <button class="btn btn-primary btn-sm" onclick="printWorksheetPreview()">🖨️ Print / Download PDF</button>
+                    <button class="btn btn-primary btn-sm" onclick="printWorksheetPreview()">Print / Download PDF</button>
                     <button class="btn btn-danger btn-sm" onclick="closeWsPreview()">✕ Close</button>
                 </div>
             </div>
@@ -2585,9 +2558,9 @@ Option D" required></textarea>
     </div>
 
     <!-- Name prompt modal for first-time invited students -->
-    <div id="namePromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,14,39,0.95); z-index:10000; align-items:center; justify-content:center;">
-        <div style="background:var(--dark); border:1px solid rgba(0,217,255,0.3); border-radius:12px; padding:2.5rem; max-width:420px; width:90%; text-align:center;">
-            <div style="font-size:2rem; margin-bottom:1rem;">👋</div>
+    <div id="namePromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:var(--dark); border:1px solid var(--cyan-border); border-radius:12px; padding:2.5rem; max-width:420px; width:90%; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:1rem;"></div>
             <h2 style="color:var(--primary); font-size:1.5rem; margin-bottom:0.5rem;">Welcome to ChemBank!</h2>
             <p style="color:rgba(240,244,248,0.6); font-size:0.95rem; margin-bottom:1.5rem;">Please enter your full name to get started.</p>
             <input type="text" id="namePromptInput" placeholder="e.g. John Tan" style="width:100%; background:var(--mid-dark); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:12px 16px; color:var(--light); font-family:'DM Sans',sans-serif; font-size:1rem; outline:none; margin-bottom:1rem;">
@@ -3395,7 +3368,7 @@ Option D" required></textarea>
                     return;
                 }
                 const answered = saved.userAnswers.filter(a => a !== null).length;
-                btn.textContent = '▶️ Resume Quiz (' + answered + '/' + saved.userAnswers.length + ')';
+                btn.textContent = 'Resume Quiz (' + answered + '/' + saved.userAnswers.length + ')';
                 btn.style.display = 'inline-block';
             } catch (e) { btn.style.display = 'none'; }
         }
@@ -4236,8 +4209,8 @@ Option D" required></textarea>
                             </li>
                         `).join('')}
                     </ul>
-                    ${question.explanation ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong> ${escapeHtml(question.explanation)}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid rgba(0,217,255,0.3);"></div>` : ''}</div>` : ''}
-                    ${question.video_url ? `<div style="margin-top: 1rem;"><a href="${escapeHtml(question.video_url)}" target="_blank" style="color: var(--primary);">📹 Video Explanation</a></div>` : ''}
+                    ${question.explanation ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong> ${escapeHtml(question.explanation)}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
+                    ${question.video_url ? `<div style="margin-top: 1rem;"><a href="${escapeHtml(question.video_url)}" target="_blank" style="color: var(--primary);">Video Explanation</a></div>` : ''}
                 </div>
             `}).join('');
             
@@ -4351,32 +4324,32 @@ Option D" required></textarea>
 
             if (viewId === 'welcomeView') {
                 buttons = `
-                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'analyticsView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'adminView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'studentView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'quizView') {
                 headerUsername.textContent = '';
                 buttons = `
-                    <button class="btn btn-danger" onclick="confirmExitQuiz()">Exit Quiz</button>
+                    <button class="btn btn-secondary" onclick="confirmExitQuiz()">Exit Quiz</button>
                 `;
             } else if (viewId === 'resultsView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <button class="btn btn-danger" onclick="logout()">Logout</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             }
 
@@ -4785,8 +4758,8 @@ Option D" required></textarea>
                 percentage >= 50 ? "Bruh. This ain't it. The rizz was there but the chemistry knowledge was not." :
                 percentage >= 40 ? "You're so cooked rn. Grab your notes, it's a vibe check fail." :
                 percentage >= 30 ? "Oof, this slay was not slay. Major L. Time to grind fr." :
-                percentage >= 20 ? "No shot you studied for this. Bestie, open the textbook pls 💀" :
-                percentage >= 1 ? "This is giving 'I thought chemistry was about Breaking Bad.' Touch grass, then touch your notes. 💀💀" :
+                percentage >= 20 ? "No shot you studied for this. Bestie, open the textbook pls" :
+                percentage >= 1 ? "This is giving 'I thought chemistry was about Breaking Bad.' Touch grass, then touch your notes." :
                 "BRUH. OMG. This is an EMERGENCY! Call the ambulance!~~~";
             
             // Breakdown by topic and difficulty
@@ -4897,10 +4870,10 @@ Option D" required></textarea>
                     const scoreColor = a.score >= 80 ? 'var(--success)' : a.score >= 50 ? 'var(--warning, orange)' : 'var(--danger)';
                     const topicsStr = (a.topics || []).map(t => escapeHtml(t)).join(', ');
                     return `
-                    <div style="background:rgba(10,14,39,0.6); border:1px solid rgba(0,217,255,0.15); border-radius:10px; padding:0.5rem 0.8rem; margin-bottom:0.3rem;">
+                    <div style="background:var(--surface); border:1px solid rgba(0,217,255,0.15); border-radius:10px; padding:0.5rem 0.8rem; margin-bottom:0.3rem;">
                         <div style="display:flex; align-items:center; gap:0.5rem;">
                             <span style="font-weight:800; color:${scoreColor}; font-size:0.9rem;">${a.score}%</span>
-                            <span style="font-size:0.75rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${topicsStr}</span>
+                            <span style="font-size:0.75rem; color:#ffffff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${topicsStr}</span>
                         </div>
                         <div style="text-align:right; margin-top:0.25rem;">
                             <button class="btn btn-secondary" style="padding:0.2rem 0.6rem; font-size:0.7rem;" onclick="reviewPastQuiz('${a.id}')">Review</button>
@@ -5287,17 +5260,17 @@ Option D" required></textarea>
                         <div>
                             <div class="worksheet-card-title">${escapeHtml(ws.title)}</div>
                             <div class="worksheet-card-meta">
-                                📚 ${escapeHtml(topicsLabel)} &nbsp;|&nbsp;
-                                ⭐ ${escapeHtml(diffsLabel)} &nbsp;|&nbsp;
-                                ❓ ${ws.question_count} questions &nbsp;|&nbsp;
-                                📅 ${date}
+                                ${escapeHtml(topicsLabel)} &nbsp;|&nbsp;
+                                ${escapeHtml(diffsLabel)} &nbsp;|&nbsp;
+                                ${ws.question_count} questions &nbsp;|&nbsp;
+                                ${date}
                             </div>
                             ${ws.description ? '<div class="worksheet-card-meta" style="margin-top:0.3rem;">' + escapeHtml(ws.description) + '</div>' : ''}
                         </div>
                         <div class="worksheet-card-actions">
-                            <button class="btn btn-primary btn-sm" onclick="previewWorksheet(${ws.id}, 'student')">👁️ View</button>
-                            <button class="btn btn-secondary btn-sm" onclick="previewWorksheet(${ws.id}, 'tutor')">🔑 Answer Key</button>
-                            ${isAdminOrTeacher ? '<button class="btn btn-danger btn-sm" onclick="deleteWorksheet(' + ws.id + ')">🗑️</button>' : ''}
+                            <button class="btn btn-outline-cyan btn-sm" onclick="previewWorksheet(${ws.id}, 'student')">View</button>
+                            <button class="btn btn-outline-cyan btn-sm" onclick="previewWorksheet(${ws.id}, 'tutor')">Answer Key</button>
+                            ${isAdminOrTeacher ? '<button class="btn btn-danger btn-sm" onclick="deleteWorksheet(' + ws.id + ')">Delete</button>' : ''}
                         </div>
                     </div>
                     <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
@@ -5385,13 +5358,13 @@ Option D" required></textarea>
                 }]);
 
                 if (error) throw error;
-                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save to Student Portal'; }
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Student Portal'; }
                 closePdfModal();
                 alert('Worksheet "' + customTitle + '" saved to Student Portal!');
             } catch (err) {
                 console.error('Error saving worksheet:', err);
                 const saveBtn = document.querySelector('[onclick="saveWorksheetToPortal()"]');
-                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save to Student Portal'; }
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save to Student Portal'; }
                 alert('Error saving worksheet: ' + err.message);
             }
         }
@@ -6422,7 +6395,7 @@ Option D" required></textarea>
                     <div style="margin-bottom:1.2rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
                         <div style="opacity:0.7; font-size:0.9rem; flex:1;">Question bank coverage by topic. Updates live as you upload questions.</div>
                         <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-                            <span style="font-size:0.85rem; background:rgba(0,217,255,0.15); border:1px solid rgba(0,217,255,0.3); border-radius:8px; padding:0.3rem 0.75rem;">
+                            <span style="font-size:0.85rem; background:rgba(0,217,255,0.15); border:1px solid var(--cyan-border); border-radius:8px; padding:0.3rem 0.75rem;">
                                 Total: <strong>${totalAll}</strong>
                             </span>
                             <span style="font-size:0.85rem; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
@@ -6441,7 +6414,7 @@ Option D" required></textarea>
                     </div>
                     <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
                         <thead>
-                            <tr style="border-bottom:1px solid rgba(0,217,255,0.3); color:var(--primary); text-align:left;">
+                            <tr style="border-bottom:1px solid var(--cyan-border); color:var(--primary); text-align:left;">
                                 <th style="padding:0.5rem 0.75rem;">Topic</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">TYS</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Prelim</th>
@@ -6594,8 +6567,8 @@ Option D" required></textarea>
             if (scores.length > 1) {
                 html += `
                     <div style="margin-bottom:2rem;">
-                        <h3 style="color:var(--accent); margin-bottom:1rem;">📈 Score Over Time</h3>
-                        <div style="background:rgba(10,14,39,0.8); border-radius:12px; padding:1.5rem;">
+                        <h3 style="color:var(--accent); margin-bottom:1rem;">Score Over Time</h3>
+                        <div style="background:var(--surface); border-radius:12px; padding:1.5rem;">
                             ${renderScoreTimeline(studentAttempts)}
                         </div>
                     </div>
@@ -6604,7 +6577,7 @@ Option D" required></textarea>
 
             // Topic performance
             if (sortedTopics.length > 0) {
-                html += `<div style="margin-bottom:2rem;"><h3 style="color:var(--accent); margin-bottom:1rem;">📚 Topic Performance (Weakest First)</h3>`;
+                html += `<div style="margin-bottom:2rem;"><h3 style="color:var(--accent); margin-bottom:1rem;">Topic Performance (Weakest First)</h3>`;
                 sortedTopics.forEach(({ topic, pct, correct, total }) => {
                     const barColor = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--danger)';
                     html += `
@@ -6625,7 +6598,7 @@ Option D" required></textarea>
             // Quiz history
             if (studentAttempts.length > 0) {
                 html += `
-                    <h3 style="color:var(--accent); margin-bottom:1rem;">📋 Quiz History</h3>
+                    <h3 style="color:var(--accent); margin-bottom:1rem;">Quiz History</h3>
                     <div class="history-item" style="background:rgba(0,217,255,0.1); font-size:0.85rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">
                         <div>Date</div><div>Score</div><div>Questions</div><div>Topics</div>
                     </div>
@@ -7036,7 +7009,7 @@ function renderTeacherQuestions() {
   const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
 
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions yet. Add one to get started!'}</div></div>`;
     return;
   }
 
@@ -7169,7 +7142,7 @@ function cc_renderStudentQuestions() {
   const filtered = filter ? cc_questions.filter(q => q.topic === filter) : cc_questions;
 
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-text">${cc_questions.length ? 'No questions match this filter.' : 'No questions available yet. Check back soon!'}</div></div>`;
     return;
   }
 
@@ -7347,7 +7320,7 @@ async function extractText() {
   }
 
   btn.disabled = false;
-  btn.textContent = '📝 Read my answer';
+  btn.textContent = 'Read my answer';
 }
 
 function resetImageMode() {
@@ -7521,7 +7494,7 @@ Return ONLY a valid JSON object (no markdown, no backticks) with these exact key
 
 function cc_renderFeedback(fb, q) {
   if (fb.error) {
-    document.getElementById('cc_scoreBadge').innerHTML = '⚠️ Error getting feedback';
+    document.getElementById('cc_scoreBadge').innerHTML = 'Error getting feedback';
     document.getElementById('cc_scoreBadge').className = 'score-badge';
     document.getElementById('cc_feedbackContainer').classList.add('visible');
     return;
@@ -7666,14 +7639,14 @@ function cc_downloadAnalysis() {
 <div class="section-title">Feedback</div>
 <div class="score">✅ ${score}</div>
 
-${section('#e8a020', '⚠️', 'Missing Key Points', missing)}
+${section('#e8a020', '', 'Missing Key Points', missing)}
 ${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}
-${section('#6c5fe6', '📏', 'Answer Length', length)}
-${section('#0ea572', '💡', 'Tips & Answer Template', tips)}
-${section('#7a82a0', '📋', 'Model Answer', model)}
+${section('#6c5fe6', '', 'Answer Length', length)}
+${section('#0ea572', '', 'Tips & Answer Template', tips)}
+${section('#7a82a0', '', 'Model Answer', model)}
 
 <div class="no-print" style="text-align:center;">
-  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
 </div>
 
 <div class="footer">Generated by ChemCheck — Mr Khemistry Tuition Centre</div>
@@ -7762,7 +7735,7 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
                 // Reset button on error
                 const btn = event.target;
                 btn.disabled = false;
-                btn.innerHTML = '📥 Export Backup';
+                btn.innerHTML = 'Export Backup';
             }
         }
 
@@ -7847,7 +7820,7 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
             countEl.textContent = cc_questions.length;
 
             if (!filtered.length) {
-                listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No questions yet. Add one above.</div></div>';
+                listEl.innerHTML = '<div class="empty-state"><div class="empty-icon"></div><div class="empty-text">No questions yet. Add one above.</div></div>';
                 return;
             }
 
@@ -7881,14 +7854,14 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
         }
         function ccAdmin_handleImgDrop(e) {
             e.preventDefault();
-            e.currentTarget.style.borderColor = 'rgba(0,217,255,0.3)';
+            e.currentTarget.style.borderColor = 'var(--cyan-border)';
             ccAdmin_handleImgSelect(e.dataTransfer.files);
         }
         function ccAdmin_renderImgPreviews() {
             const c = document.getElementById('ccAdmin_imgPreviews');
             if (!c) return;
             c.innerHTML = ccAdmin_pendingImgs.map((img, i) => `
-                <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid rgba(0,217,255,0.3);">
+                <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid var(--cyan-border);">
                     <img src="${img.publicUrl || img.previewUrl}" style="width:100%; height:100%; object-fit:cover;">
                     <button onclick="ccAdmin_removeImg(${i})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:0.7rem;">✕</button>
                 </div>`).join('');
@@ -7909,14 +7882,14 @@ ${section('#7a82a0', '📋', 'Model Answer', model)}
         }
         function ccAdmin_handleAnsImgDrop(e) {
             e.preventDefault();
-            e.currentTarget.style.borderColor = 'rgba(0,217,255,0.3)';
+            e.currentTarget.style.borderColor = 'var(--cyan-border)';
             ccAdmin_handleAnsImgSelect(e.dataTransfer.files);
         }
         function ccAdmin_renderAnsImgPreviews() {
             const c = document.getElementById('ccAdmin_ansImgPreviews');
             if (!c) return;
             c.innerHTML = ccAdmin_pendingAnsImgs.map((img, i) => `
-                <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid rgba(0,217,255,0.3);">
+                <div style="position:relative; width:80px; height:80px; border-radius:6px; overflow:hidden; border:1px solid var(--cyan-border);">
                     <img src="${img.publicUrl || img.previewUrl}" style="width:100%; height:100%; object-fit:cover;">
                     <button onclick="ccAdmin_removeAnsImg(${i})" style="position:absolute; top:2px; right:2px; background:rgba(0,0,0,0.7); color:white; border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; font-size:0.7rem;">✕</button>
                 </div>`).join('');

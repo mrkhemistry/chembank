@@ -1109,13 +1109,10 @@
             .question-image-container img,
             .option-image-container img { max-width: 100% !important; max-height: 250px !important; }
 
-            /* History panel cards */
-            /* History cards — compact centred */
-            #historyList > div {
-                flex-direction: column; align-items: center; gap: 0.5rem;
-                padding: 0.75rem; text-align: center;
-            }
-            #historyList > div > div { min-width: 0 !important; text-align: center; }
+            /* History cards — compact on mobile */
+            #historyList > div { padding: 0.5rem 0.6rem; margin-bottom: 0.3rem; }
+            #historyList > div > div { flex-wrap: wrap; gap: 0.4rem; }
+            #historyList > div > div > div:last-child { margin-left: 0; width: 100%; justify-content: flex-end; }
 
             /* Worksheet cards — compact left-aligned */
             .worksheet-card { padding: 1rem; }
@@ -4900,18 +4897,16 @@ Option D" required></textarea>
                     const scoreColor = a.score >= 80 ? 'var(--success)' : a.score >= 50 ? 'var(--warning, orange)' : 'var(--danger)';
                     const topicsStr = (a.topics || []).map(t => `<span class="tag tag-topic" style="font-size:0.7rem;">${escapeHtml(t)}</span>`).join(' ');
                     return `
-                    <div style="background:rgba(10,14,39,0.6); border:1px solid rgba(0,217,255,0.15); border-radius:12px; padding:1.25rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
-                        <div style="min-width:60px; text-align:center;">
-                            <div style="font-size:1.6rem; font-weight:800; color:${scoreColor};">${a.score}%</div>
-                            <div style="font-size:0.75rem; color:var(--text-secondary);">${a.correct_answers}/${a.total_questions}</div>
-                        </div>
-                        <div style="flex:1; min-width:180px;">
-                            <div style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.4rem;">${dateStr} &middot; ${timeStr}</div>
-                            <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">${topicsStr}</div>
-                        </div>
-                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                            <button class="btn btn-secondary" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="reviewPastQuiz('${a.id}')">Review</button>
-                            <button class="btn btn-primary" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="retakePastQuiz('${a.id}')">Re-take</button>
+                    <div style="background:rgba(10,14,39,0.6); border:1px solid rgba(0,217,255,0.15); border-radius:10px; padding:0.6rem 0.8rem; margin-bottom:0.4rem;">
+                        <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                            <span style="font-weight:800; color:${scoreColor}; font-size:0.95rem; min-width:42px;">${a.score}%</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary);">${a.correct_answers}/${a.total_questions}</span>
+                            <span style="font-size:0.75rem; color:var(--text-secondary);">${dateStr}</span>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.25rem; flex:1;">${topicsStr}</div>
+                            <div style="display:flex; gap:0.35rem; margin-left:auto;">
+                                <button class="btn btn-secondary" style="padding:0.25rem 0.6rem; font-size:0.7rem;" onclick="reviewPastQuiz('${a.id}')">Review</button>
+                                <button class="btn btn-primary" style="padding:0.25rem 0.6rem; font-size:0.7rem;" onclick="retakePastQuiz('${a.id}')">Re-take</button>
+                            </div>
                         </div>
                     </div>`;
                 }).join('');

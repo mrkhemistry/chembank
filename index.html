@@ -128,6 +128,11 @@
             50% { opacity: 0.5; }
         }
         
+        .header-username {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
         .nav-buttons {
             display: flex;
             gap: 1rem;
@@ -1032,9 +1037,9 @@
             .logo { font-size: 1.4rem; }
             .header-content { flex-wrap: wrap; gap: 0.3rem 0.5rem; }
             .connection-status { font-size: 0.75rem; }
-            .nav-buttons { gap: 0.5rem; flex-wrap: wrap; }
+            .header-username { font-size: 0.75rem; margin-left: auto; }
+            .nav-buttons { width: 100%; display: flex; justify-content: space-between; gap: 0.5rem; }
             .nav-buttons .btn { padding: 0.35rem 0.6rem; font-size: 0.75rem; }
-            .nav-buttons span { font-size: 0.75rem; margin: 0; width: 100%; text-align: right; order: -1; }
 
             /* Welcome */
             .welcome-title { font-size: 1.8rem; }
@@ -1414,6 +1419,7 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">Connecting...</span>
             </div>
+            <span class="header-username" id="headerUsername"></span>
             <div class="nav-buttons" id="navButtons"></div>
         </div>
     </header>
@@ -4305,30 +4311,35 @@ Option D" required></textarea>
                 return;
             }
             
+            // Set username in header
+            const headerUsername = document.getElementById('headerUsername');
+            if (viewId === 'welcomeView') {
+                headerUsername.textContent = userProfile ? `${userProfile.full_name} (${userRole === 'premium_student' ? 'Premium Student' : userRole})` : '';
+            } else {
+                headerUsername.textContent = userProfile ? userProfile.full_name : '';
+            }
+
             if (viewId === 'welcomeView') {
                 buttons = `
-                    <span style="margin-right: 1rem; opacity: 0.8;">${userProfile ? userProfile.full_name : ''} (${userRole === 'premium_student' ? 'Premium Student' : userRole})</span>
                     <button class="btn btn-danger" onclick="logout()">Logout</button>
                 `;
             } else if (viewId === 'analyticsView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <span style="margin-right: 1rem; opacity: 0.8;">${userProfile ? userProfile.full_name : ''}</span>
                     <button class="btn btn-danger" onclick="logout()">Logout</button>
                 `;
             } else if (viewId === 'adminView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <span style="margin-right: 1rem; opacity: 0.8;">${userProfile ? userProfile.full_name : ''}</span>
                     <button class="btn btn-danger" onclick="logout()">Logout</button>
                 `;
             } else if (viewId === 'studentView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
-                    <span style="margin-right: 1rem; opacity: 0.8;">${userProfile ? userProfile.full_name : ''}</span>
                     <button class="btn btn-danger" onclick="logout()">Logout</button>
                 `;
             } else if (viewId === 'quizView') {
+                headerUsername.textContent = '';
                 buttons = `
                     <button class="btn btn-danger" onclick="confirmExitQuiz()">Exit Quiz</button>
                 `;
@@ -4338,7 +4349,7 @@ Option D" required></textarea>
                     <button class="btn btn-danger" onclick="logout()">Logout</button>
                 `;
             }
-            
+
             navButtons.innerHTML = buttons;
         }
 

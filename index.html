@@ -2618,6 +2618,10 @@ Option D" required></textarea>
         let userProfile = null;
         let isCheckingAuth = false; // Prevent re-entry
 
+        // Promise that resolves when onAuthStateChange fires (used to wait for PKCE code exchange)
+        let resolveAuthEvent = null;
+        const authEventPromise = new Promise(resolve => { resolveAuthEvent = resolve; });
+
         try {
             supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -2630,6 +2634,8 @@ Option D" required></textarea>
                     sessionStorage.setItem('passwordResetHandled', 'true');
                     showPasswordResetForm();
                 }
+                // Resolve the promise so checkAuthState can proceed
+                if (resolveAuthEvent) resolveAuthEvent(event);
             });
 
             testConnection();
@@ -2787,8 +2793,13 @@ Option D" required></textarea>
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.has('code')) {
                     console.log('PKCE code detected in URL - waiting for auth state change...');
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    // Re-check if PASSWORD_RECOVERY event fired during the wait
+                    // Wait for the actual auth event (no fixed timeout — waits until Supabase responds)
+                    const event = await Promise.race([
+                        authEventPromise,
+                        new Promise(resolve => setTimeout(() => resolve('timeout'), 10000))
+                    ]);
+                    console.log('Auth event resolved:', event);
+                    // Re-check if PASSWORD_RECOVERY event fired
                     if (isPasswordRecovery) {
                         console.log('Password recovery confirmed after PKCE exchange');
                         return; // showPasswordResetForm already called by onAuthStateChange

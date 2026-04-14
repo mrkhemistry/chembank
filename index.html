@@ -3055,7 +3055,9 @@ Option D" required></textarea>
         
         function redirectBasedOnRole() {
             document.getElementById('loadingOverlay').style.display = 'none';
-            
+
+            const savedView = sessionStorage.getItem('chembank_lastView');
+
             if (userRole === 'archived') {
                 // Archived students cannot access the app
                 alert('Your account has been archived and is no longer active.\n\nPlease contact Mr Khemistry if you believe this is an error.');
@@ -3070,14 +3072,22 @@ Option D" required></textarea>
                 if (pdfCard) pdfCard.style.display = 'block';
                 const teacherCard = document.getElementById('teacherCard');
                 if (teacherCard) teacherCard.style.display = 'block';
-                showView('welcome');
+                const restoreView = savedView || 'welcome';
+                const savedTab = (restoreView === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
+                showView(restoreView);
+                if (savedTab) switchStudentTab(savedTab);
             } else if (userRole === 'teacher') {
                 // Teachers see Teacher Portal + Print Worksheets
                 const teacherCard = document.getElementById('teacherCard');
                 if (teacherCard) teacherCard.style.display = 'block';
                 const pdfCard = document.getElementById('pdfCard');
                 if (pdfCard) pdfCard.style.display = 'block';
-                showView('welcome');
+                // Teachers can access welcome, admin, student — validate before restoring
+                const allowedViews = ['welcome', 'admin', 'student'];
+                const restoreView2 = savedView && allowedViews.includes(savedView) ? savedView : 'welcome';
+                const savedTab2 = (restoreView2 === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
+                showView(restoreView2);
+                if (savedTab2) switchStudentTab(savedTab2);
             } else if (userRole === 'student' || userRole === 'premium_student') {
                 // Check if student needs to set their name first
                 const name = userProfile && userProfile.full_name ? userProfile.full_name.trim() : '';
@@ -3087,7 +3097,11 @@ Option D" required></textarea>
                     modal.style.display = 'flex';
                     setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
                 } else {
+                    // Read saved tab before showView resets it
+                    const savedTab = sessionStorage.getItem('chembank_lastStudentTab');
                     showView('student');
+                    // Restore student tab if saved
+                    if (savedTab) switchStudentTab(savedTab);
                     // Show resume button if there's cached quiz progress
                     setTimeout(() => updateResumeButton(), 500);
                 }
@@ -3312,6 +3326,8 @@ Option D" required></textarea>
                 userRole = null;
                 userProfile = null;
                 questionBank = [];
+                sessionStorage.removeItem('chembank_lastView');
+                sessionStorage.removeItem('chembank_lastStudentTab');
                 
                 // Show login view first
                 showAuthView('login');
@@ -4328,20 +4344,19 @@ Option D" required></textarea>
             const wsModal = document.getElementById('wsPreviewModal');
             if (wsModal) wsModal.classList.remove('show');
 
-            // Reset student tabs when navigating to student view
+            // Default to quiz tab when navigating to student view via menu
+            // (on refresh, redirectBasedOnRole restores the saved tab instead)
             if (viewName === 'student') {
-                const quizPanel = document.getElementById('studentQuizPanel');
-                const wsPanel = document.getElementById('studentWorksheetsPanel');
-                const tabQuiz = document.getElementById('tabQuiz');
-                const tabWs = document.getElementById('tabWorksheets');
-                if (quizPanel) quizPanel.style.display = 'block';
-                if (wsPanel) wsPanel.style.display = 'none';
-                if (tabQuiz) tabQuiz.classList.add('active');
-                if (tabWs) tabWs.classList.remove('active');
+                switchStudentTab('quiz');
             }
             
             updateNavigation();
-            
+
+            // Persist current view so refresh restores it
+            if (!['login', 'signup', 'forgotPassword'].includes(viewName)) {
+                sessionStorage.setItem('chembank_lastView', viewName);
+            }
+
             setTimeout(() => {
                 if (window.MathJax) {
                     const activeView = document.querySelector('.view.active');
@@ -5221,6 +5236,7 @@ Option D" required></textarea>
         let allWorksheets = [];
 
         function switchStudentTab(tab) {
+            sessionStorage.setItem('chembank_lastStudentTab', tab);
             const quizPanel = document.getElementById('studentQuizPanel');
             const wsPanel = document.getElementById('studentWorksheetsPanel');
             const checkPanel = document.getElementById('studentCheckPanel');

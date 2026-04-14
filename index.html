@@ -2620,6 +2620,18 @@ Option D" required></textarea>
 
         try {
             supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Listen for PASSWORD_RECOVERY event (PKCE flow sends ?code= not #type=recovery)
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state change:', event);
+                if (event === 'PASSWORD_RECOVERY') {
+                    console.log('PASSWORD_RECOVERY event detected - showing reset form');
+                    isPasswordRecovery = true;
+                    sessionStorage.setItem('passwordResetHandled', 'true');
+                    showPasswordResetForm();
+                }
+            });
+
             testConnection();
         } catch (error) {
             console.error('Supabase initialization error:', error);
@@ -2769,7 +2781,20 @@ Option D" required></textarea>
                     showPasswordResetForm();
                     return; // Stop here, don't proceed with normal login
                 }
-                
+
+                // PKCE flow: if ?code= is in the URL, wait for onAuthStateChange to fire
+                // so PASSWORD_RECOVERY event can be detected before we proceed
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('code')) {
+                    console.log('PKCE code detected in URL - waiting for auth state change...');
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    // Re-check if PASSWORD_RECOVERY event fired during the wait
+                    if (isPasswordRecovery) {
+                        console.log('Password recovery confirmed after PKCE exchange');
+                        return; // showPasswordResetForm already called by onAuthStateChange
+                    }
+                }
+
                 // Check for password reset or errors in URL hash
                 const hashParams = new URLSearchParams(window.location.hash.substring(1));
                 const type = hashParams.get('type');

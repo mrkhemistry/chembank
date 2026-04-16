@@ -1750,6 +1750,17 @@ Option D" required></textarea>
 
             <!-- Quiz Panel -->
             <div id="studentQuizPanel">
+            <!-- Personal Bests Card -->
+            <div class="panel" id="personalBestsCard" style="display:none; margin-bottom:1.5rem;">
+                <div class="panel-header" style="cursor:pointer;" onclick="togglePersonalBests()">
+                    <span>Your Personal Bests</span>
+                    <span id="personalBestsToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Hide</span>
+                </div>
+                <div id="personalBestsContent">
+                    <div style="padding:1rem; color:#777;">Loading your personal bests...</div>
+                </div>
+            </div>
+
             <div class="panel">
                 <div class="panel-header">
                     <span>Select Quiz Parameters</span>
@@ -2327,7 +2338,9 @@ Option D" required></textarea>
                 <div class="panel-header" style="justify-content: center;">
                     <span>Quiz Results</span>
                 </div>
-                
+
+                <div id="newPersonalBestBanner" style="display:none; background:linear-gradient(90deg, rgba(6,255,165,0.15), rgba(0,229,255,0.15)); border:1px solid var(--success); border-radius:10px; padding:0.8rem 1.2rem; margin:0 0 1rem 0; text-align:center; font-weight:700; color:var(--success); text-transform:uppercase; letter-spacing:1px; font-size:0.95rem;"></div>
+
                 <div class="results-score" id="finalScore">0%</div>
                 <div class="results-message" id="resultsMessage">Great job!</div>
                 
@@ -4787,7 +4800,7 @@ Option D" required></textarea>
             }
         }
 
-        function submitQuiz() {
+        async function submitQuiz() {
             clearQuizTimer();
             clearQuizProgress();
             const unanswered = userAnswers.filter(a => a === null).length;
@@ -4796,19 +4809,54 @@ Option D" required></textarea>
                     return;
                 }
             }
-            
+
             // Calculate score — account for shuffled options in weak quiz mode
             let correct = 0;
             currentQuiz.forEach((question, index) => {
                 if (isAnswerCorrect(index, userAnswers[index])) correct++;
             });
-            
+
             const percentage = Math.round((correct / currentQuiz.length) * 100);
-            
-            // Save quiz attempt to database for students
+
+            // Detect new personal bests (compare vs prior saved bests before inserting this attempt)
+            let newBestTopics = [];
             if ((userRole === 'student' || userRole === 'premium_student') && currentUser) {
+                try {
+                    const priorBests = await computePersonalBests(currentUser.id);
+                    const curByTopic = {};
+                    currentQuiz.forEach((q, i) => {
+                        if (!q.topic) return;
+                        if (!curByTopic[q.topic]) curByTopic[q.topic] = { correct: 0, total: 0 };
+                        curByTopic[q.topic].total++;
+                        if (isAnswerCorrect(i, userAnswers[i])) curByTopic[q.topic].correct++;
+                    });
+                    for (const [topic, stats] of Object.entries(curByTopic)) {
+                        if (stats.total < MIN_QUESTIONS_PER_TOPIC) continue;
+                        const acc = Math.round((stats.correct / stats.total) * 100);
+                        const prior = priorBests[topic]?.score ?? -1;
+                        if (acc > prior) newBestTopics.push({ topic, score: acc });
+                    }
+                } catch (e) {
+                    console.warn('Could not compute personal best comparison:', e);
+                }
+
+                // Save quiz attempt to database
                 saveQuizAttempt(correct, currentQuiz.length, percentage)
                     .catch(err => console.error('Failed to save quiz attempt (non-critical):', err));
+            }
+
+            // Show new personal best banner if any
+            const banner = document.getElementById('newPersonalBestBanner');
+            if (banner) {
+                if (newBestTopics.length > 0) {
+                    const topicList = newBestTopics
+                        .map(t => escapeHtml(t.topic) + ' (' + t.score + '%)')
+                        .join(', ');
+                    banner.innerHTML = '&#9733; New personal best: ' + topicList;
+                    banner.style.display = 'block';
+                } else {
+                    banner.style.display = 'none';
+                }
             }
             
             // Display results
@@ -4902,6 +4950,117 @@ Option D" required></textarea>
 
             } catch (error) {
                 console.error('Error saving quiz attempt:', error);
+            }
+        }
+
+        // ── Personal Bests ───────────────────────────────────────
+        // Computes per-topic personal best: for each quiz attempt, calculates
+        // that attempt's accuracy on questions of a given topic. Only counts
+        // attempts that had >= MIN_QUESTIONS_PER_TOPIC questions on that topic.
+        // Returns { topic: { score, correct, total, date, attemptId } }
+        const MIN_QUESTIONS_PER_TOPIC = 5;
+
+        async function computePersonalBests(userId) {
+            if (!userId) return {};
+            // Fetch all question_responses for this user
+            const { data: responses, error: rErr } = await supabaseClient
+                .from('question_responses')
+                .select('quiz_attempt_id, question_id, is_correct')
+                .eq('user_id', userId);
+            if (rErr) throw rErr;
+            if (!responses || responses.length === 0) return {};
+
+            // Fetch topics for all answered questions
+            const qIds = [...new Set(responses.map(r => r.question_id))];
+            const { data: questions, error: qErr } = await supabaseClient
+                .from('questions')
+                .select('id, topic')
+                .in('id', qIds);
+            if (qErr) throw qErr;
+            const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, q.topic]));
+
+            // Fetch attempt completion dates
+            const attemptIds = [...new Set(responses.map(r => r.quiz_attempt_id))];
+            const { data: attempts, error: aErr } = await supabaseClient
+                .from('quiz_attempts')
+                .select('id, completed_at')
+                .in('id', attemptIds);
+            if (aErr) throw aErr;
+            const dateByAttempt = Object.fromEntries((attempts || []).map(a => [a.id, a.completed_at]));
+
+            // Group by (attemptId, topic)
+            const groups = {};
+            for (const r of responses) {
+                const topic = topicByQid[r.question_id];
+                if (!topic) continue;
+                const key = r.quiz_attempt_id + '|' + topic;
+                if (!groups[key]) groups[key] = { correct: 0, total: 0, attemptId: r.quiz_attempt_id, topic };
+                groups[key].total++;
+                if (r.is_correct) groups[key].correct++;
+            }
+
+            // Find best per topic
+            const best = {};
+            for (const g of Object.values(groups)) {
+                if (g.total < MIN_QUESTIONS_PER_TOPIC) continue;
+                const score = Math.round((g.correct / g.total) * 100);
+                const existing = best[g.topic];
+                if (!existing || score > existing.score) {
+                    best[g.topic] = {
+                        score, correct: g.correct, total: g.total,
+                        date: dateByAttempt[g.attemptId],
+                        attemptId: g.attemptId
+                    };
+                }
+            }
+            return best;
+        }
+
+        async function loadPersonalBests() {
+            if (!currentUser) return;
+            if (userRole !== 'student' && userRole !== 'premium_student') return;
+            const card = document.getElementById('personalBestsCard');
+            const content = document.getElementById('personalBestsContent');
+            if (!card || !content) return;
+
+            card.style.display = 'block';
+            try {
+                const best = await computePersonalBests(currentUser.id);
+                const bests = Object.entries(best)
+                    .map(([topic, d]) => ({ topic, ...d }))
+                    .sort((a, b) => b.score - a.score);
+
+                if (bests.length === 0) {
+                    content.innerHTML = '<div style="padding:1rem; color:#777; text-align:center;">Complete a quiz with at least ' + MIN_QUESTIONS_PER_TOPIC + ' questions on one topic to unlock your first personal best.</div>';
+                    return;
+                }
+
+                const html = bests.map(b => {
+                    const dateStr = new Date(b.date).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const scoreColor = b.score >= 80 ? 'var(--success)' : b.score >= 50 ? 'var(--warning, orange)' : 'var(--danger)';
+                    return '<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 1rem; border-bottom:1px solid var(--border); gap:1rem;">'
+                        + '<span style="color:#fff; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(b.topic) + '</span>'
+                        + '<span style="color:' + scoreColor + '; font-weight:700; font-size:1.05rem; white-space:nowrap;">' + b.score + '%</span>'
+                        + '<span style="color:#777; font-size:0.75rem; min-width:110px; text-align:right; white-space:nowrap;">' + b.correct + '/' + b.total + ' &middot; ' + dateStr + '</span>'
+                        + '</div>';
+                }).join('');
+                content.innerHTML = html;
+            } catch (err) {
+                console.error('loadPersonalBests error:', err);
+                content.innerHTML = '<div style="padding:1rem; color:var(--danger);">Could not load personal bests: ' + escapeHtml(err.message) + '</div>';
+            }
+        }
+
+        function togglePersonalBests() {
+            const content = document.getElementById('personalBestsContent');
+            const toggle = document.getElementById('personalBestsToggle');
+            if (!content || !toggle) return;
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = 'Hide';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = 'Show';
             }
         }
 
@@ -5253,6 +5412,7 @@ Option D" required></textarea>
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
+                loadPersonalBests();
             } else if (tab === 'worksheets') {
                 wsPanel.style.display = 'block';
                 tabWs.classList.add('active');

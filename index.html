@@ -2675,12 +2675,19 @@ Option D" required></textarea>
         // This must run before createClient()
         let isPasswordRecovery = false;
         const initialHash = window.location.hash;
-        
+        const initialSearch = window.location.search;
+
         // Check if we've already handled password reset in this session
         const passwordResetHandled = sessionStorage.getItem('passwordResetHandled');
-        
-        if (initialHash.includes('type=recovery') && !passwordResetHandled) {
-            console.log('Password recovery detected in initial hash:', initialHash);
+
+        // Detect recovery via legacy hash flow (#type=recovery) OR PKCE flow (?code=)
+        // ChemBank only uses PKCE for password recovery (no OAuth/magic links/PKCE signup),
+        // so any ?code= parameter is guaranteed to be from a password reset link.
+        const hasRecoveryHash = initialHash.includes('type=recovery');
+        const hasPkceCode = new URLSearchParams(initialSearch).has('code');
+
+        if ((hasRecoveryHash || hasPkceCode) && !passwordResetHandled) {
+            console.log('Password recovery detected. Hash:', initialHash, 'Search:', initialSearch);
             isPasswordRecovery = true;
             // Mark that we're handling it now
             sessionStorage.setItem('passwordResetHandled', 'true');

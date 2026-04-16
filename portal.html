@@ -297,6 +297,21 @@
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
 
   function init() {
+    // Detect PKCE recovery code BEFORE Supabase processes the URL.
+    // Portal only uses PKCE for password recovery (no OAuth/magic links/PKCE signup),
+    // so any ?code= parameter is guaranteed to be from a password reset link.
+    // Supabase v2 PKCE often fires SIGNED_IN before PASSWORD_RECOVERY, so we must
+    // detect this synchronously to avoid a race condition.
+    var isRecoveryHash = false;
+    try {
+      var _initSearch = window.location.search;
+      var _initHash = window.location.hash;
+      if (new URLSearchParams(_initSearch).has('code') || _initHash.indexOf('type=recovery') !== -1) {
+        console.log('Password recovery detected synchronously at page load');
+        isRecoveryHash = true;
+      }
+    } catch (e) { console.error('Recovery URL check failed:', e); }
+
     var sb;
     try {
       sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -335,19 +350,26 @@
       }).catch(function(e) { console.error('role check failed:', e); });
     }
 
-    var isRecoveryHash = false;
+    function showRecoveryView() {
+      showView('resetView');
+      document.querySelector('.reset-card h2').textContent = 'Set New Password';
+      document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
+      document.getElementById('resetEmail').type = 'password';
+      document.getElementById('resetEmail').placeholder = 'New password';
+      document.getElementById('resetBtn').textContent = 'Update Password';
+    }
 
-    // Listen for auth state changes — this is how Supabase v2 signals PASSWORD_RECOVERY
+    // If we already detected a recovery URL synchronously, show the reset view immediately
+    if (isRecoveryHash) {
+      showRecoveryView();
+    }
+
+    // Listen for auth state changes — fallback for legacy hash flow
     sb.auth.onAuthStateChange(function(event, session) {
       console.log('Auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
         isRecoveryHash = true;
-        showView('resetView');
-        document.querySelector('.reset-card h2').textContent = 'Set New Password';
-        document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-        document.getElementById('resetEmail').type = 'password';
-        document.getElementById('resetEmail').placeholder = 'New password';
-        document.getElementById('resetBtn').textContent = 'Update Password';
+        showRecoveryView();
       } else if (event === 'SIGNED_IN' && !isRecoveryHash) {
         showDashboard(session.user);
       }

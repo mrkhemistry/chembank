@@ -2439,6 +2439,19 @@ Option D" required></textarea>
                         </div>
                     </div>
 
+                    <!-- Most Improved (Last 7 Days) -->
+                    <div style="background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 1rem; color: var(--primary);">Most Improved (Last 7 Days)</div>
+                                <div style="font-size: 0.8rem; opacity: 0.6; margin-top: 0.2rem;">Students whose average score improved most vs the previous 7 days (min 2 attempts in each window)</div>
+                            </div>
+                        </div>
+                        <div id="mostImprovedContainer">
+                            <div class="empty-state" style="padding:1rem;"><p style="color:#777;">Loading...</p></div>
+                        </div>
+                    </div>
+
                     <!-- Enrolment chart -->
                     <div style="background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 14px; padding: 1.5rem; margin-bottom: 2rem;">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
@@ -6391,6 +6404,7 @@ Option D" required></textarea>
 
                 renderAnalyticsSummary();
                 renderStudentTable();
+                renderMostImproved();
                 renderTopicChart();
                 renderQuestionBankChart();
 
@@ -6812,6 +6826,88 @@ Option D" required></textarea>
                 console.error('Error deleting student:', error);
                 alert('Error deleting student: ' + error.message + '\n\nNote: Their KhemBank data has been removed. To remove their login, go to:\nSupabase → Authentication → Users → find the email → Delete');
             }
+        }
+
+        function renderMostImproved() {
+            const container = document.getElementById('mostImprovedContainer');
+            if (!container) return;
+
+            const { students, attempts } = analyticsData;
+            const activeStudents = (students || []).filter(s => s.role !== 'archived');
+            const studentById = {};
+            activeStudents.forEach(s => { studentById[s.id] = s; });
+
+            const now = Date.now();
+            const DAY = 24 * 60 * 60 * 1000;
+            const recentStart = now - 7 * DAY;
+            const priorStart  = now - 14 * DAY;
+
+            // Bucket attempts into recent (last 7d) and prior (7-14d ago)
+            const recentByUser = {};
+            const priorByUser  = {};
+            (attempts || []).forEach(a => {
+                if (!a.completed_at || !studentById[a.user_id]) return;
+                const t = new Date(a.completed_at).getTime();
+                const score = (typeof a.score === 'number') ? a.score : null;
+                if (score === null) return;
+                if (t >= recentStart && t <= now) {
+                    (recentByUser[a.user_id] = recentByUser[a.user_id] || []).push(score);
+                } else if (t >= priorStart && t < recentStart) {
+                    (priorByUser[a.user_id] = priorByUser[a.user_id] || []).push(score);
+                }
+            });
+
+            const avg = arr => arr.reduce((s, x) => s + x, 0) / arr.length;
+
+            const rows = [];
+            Object.keys(recentByUser).forEach(uid => {
+                const recent = recentByUser[uid] || [];
+                const prior  = priorByUser[uid]  || [];
+                if (recent.length < 2 || prior.length < 2) return;
+                const r = avg(recent);
+                const p = avg(prior);
+                rows.push({
+                    student: studentById[uid],
+                    priorAvg: Math.round(p),
+                    recentAvg: Math.round(r),
+                    delta: Math.round(r - p),
+                    recentCount: recent.length,
+                    priorCount: prior.length
+                });
+            });
+
+            // Only show positive improvements, sorted desc by delta
+            const improved = rows.filter(r => r.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 10);
+
+            if (improved.length === 0) {
+                container.innerHTML = `<div style="padding:0.75rem; opacity:0.7; font-size:0.9rem;">No students have enough attempts in both windows yet (need at least 2 quizzes in the last 7 days and 2 in the previous 7 days).</div>`;
+                return;
+            }
+
+            const headerRow = `
+                <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:0.5rem; padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); font-size:0.75rem; font-weight:700; color:#aaa; text-transform:uppercase; letter-spacing:0.5px;">
+                    <div>Student</div>
+                    <div style="text-align:center;">Prior 7d</div>
+                    <div style="text-align:center;">Last 7d</div>
+                    <div style="text-align:center;">Change</div>
+                </div>`;
+
+            const bodyRows = improved.map(r => {
+                const safeName = escapeHtml(r.student.full_name).replace(/'/g, "&#39;");
+                const deltaColor = r.delta >= 10 ? 'var(--success)' : 'var(--primary)';
+                return `
+                    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:0.5rem; padding:0.6rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); align-items:center; font-size:0.9rem;">
+                        <div style="cursor:pointer;" onclick="openDrilldownById('${r.student.id}', '${safeName}')">
+                            <div style="font-weight:600;">${escapeHtml(r.student.full_name)}</div>
+                            <div style="font-size:0.75rem; opacity:0.55;">${r.priorCount} → ${r.recentCount} quizzes</div>
+                        </div>
+                        <div style="text-align:center; opacity:0.75;">${r.priorAvg}%</div>
+                        <div style="text-align:center; font-weight:700;">${r.recentAvg}%</div>
+                        <div style="text-align:center; font-weight:700; color:${deltaColor};">+${r.delta}%</div>
+                    </div>`;
+            }).join('');
+
+            container.innerHTML = headerRow + bodyRows;
         }
 
         function renderTopicChart() {

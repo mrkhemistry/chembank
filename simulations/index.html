@@ -75,6 +75,7 @@
   .thumb-vsepr { background: linear-gradient(135deg, #0a1628, #0d1f35); }
   .thumb-gas   { background: linear-gradient(135deg, #0a1f1a, #0f2820); }
   .thumb-mb    { background: linear-gradient(135deg, #1a0a10, #2a0f18); }
+  .thumb-pt    { background: linear-gradient(135deg, #0a1528, #0d2030); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -278,6 +279,26 @@
       <div class="card-desc">Explore Boyle's and Gay-Lussac's Laws interactively. Watch particles collide as you adjust pressure, volume and temperature.</div>
       <div class="card-footer">
         <span class="card-meta">Gases · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Interactive Periodic Table — LIVE -->
+  <a href="./periodic-table/" class="sim-card" data-tags="inorganic">
+    <div class="card-thumb thumb-pt">
+      <canvas id="th-pt" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-bond">Inorganic</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Interactive Periodic Table</div>
+      <div class="card-desc">Explore all 118 elements with click-for-details. Toggle heatmaps for electronegativity, atomic radius, 1st ionisation energy and melting point — or filter to just the H2 syllabus elements.</div>
+      <div class="card-footer">
+        <span class="card-meta">Periodicity · Interactive</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -554,6 +575,54 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   bonds.forEach(b=>drawRod(pA,proj(b[0]*BL,b[1]*BL,b[2]*BL)));
   pts.forEach(({p})=>drawAtom(p,10,'#22d3ee'));
   drawAtom(pA,13,'#f97316');
+})();
+
+// ── Periodic Table thumbnail ────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-pt');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;
+  ctx.fillStyle='#0a1528';ctx.fillRect(0,0,W,H);
+  const tw=9, tg=1;
+  const rowW = 18*tw + 17*tg;
+  const x0 = (W - rowW) / 2;
+  const y0 = 14;
+  // Grid: columns active per row (1-indexed). Null rows are gaps.
+  const grid = [
+    null,
+    [1,18],                                            // period 1
+    [1,2,13,14,15,16,17,18],                           // period 2
+    [1,2,13,14,15,16,17,18],                           // period 3
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 4
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 5
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 6
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 7
+    null,
+    [3,4,5,6,7,8,9,10,11,12,13,14,15,16],              // lanthanides
+    [3,4,5,6,7,8,9,10,11,12,13,14,15,16]               // actinides
+  ];
+  const stops=[[0,[48,18,59]],[.15,[66,70,187]],[.3,[26,227,255]],[.5,[78,252,55]],[.7,[249,186,41]],[.85,[224,75,21]],[1,[180,20,5]]];
+  function heat(t){
+    t=Math.min(1,Math.max(0,t));
+    for(let i=1;i<stops.length;i++){
+      if(t<=stops[i][0]){
+        const [t0,c0]=stops[i-1],[t1,c1]=stops[i];
+        const f=(t-t0)/(t1-t0||1);
+        return 'rgb('+Math.round(c0[0]+(c1[0]-c0[0])*f)+','+Math.round(c0[1]+(c1[1]-c0[1])*f)+','+Math.round(c0[2]+(c1[2]-c0[2])*f)+')';
+      }
+    }
+    return 'rgb(180,20,5)';
+  }
+  grid.forEach((cols,row)=>{
+    if(!cols)return;
+    cols.forEach(col=>{
+      const x=x0+(col-1)*(tw+tg), y=y0+(row-1)*(tw+tg);
+      const t=((col-1)/17)*0.65 + ((row-1)/10)*0.35;
+      ctx.fillStyle=heat(t);
+      ctx.fillRect(x,y,tw,tw);
+      ctx.fillStyle='rgba(255,255,255,0.14)';
+      ctx.fillRect(x,y,tw,1);
+    });
+  });
 })();
 </script>
 </body>

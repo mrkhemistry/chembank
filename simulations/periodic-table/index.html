@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Periodic Table — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0f1a; --surface: #111827; --surface2: #1a2236;
+    --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.15);
+    --text: #f0f4ff; --muted: #7a8aaa; --accent: #4f9cf9;
+    /* Legend swatch colours (midpoint of each tile's gradient) */
+    --c-alkali:      #f87171;
+    --c-alkaline:    #fb923c;
+    --c-transition:  #fbbf24;
+    --c-posttrans:   #60a5fa;
+    --c-metalloid:   #34d399;
+    --c-nonmetal:    #22d3ee;
+    --c-halogen:     #a3e635;
+    --c-noble:       #a78bfa;
+    --c-lanth:       #f472b6;
+    --c-actin:       #fb7185;
+    --c-unknown:     #94a3b8;
+    --c-hydrogen:    #818cf8;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(79,156,249,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(79,156,249,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .orb { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.12; pointer-events: none; z-index: 0; }
+  .orb1 { width: 500px; height: 500px; background: #4f9cf9; top: -150px; left: -100px; }
+  .orb2 { width: 400px; height: 400px; background: #a78bfa; bottom: 100px; right: -100px; }
+
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; border-bottom: 1px solid var(--border);
+    background: rgba(11,15,26,0.8); backdrop-filter: blur(12px);
+  }
+  .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .nav-logo {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: linear-gradient(135deg, #4f9cf9, #a78bfa);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif; font-size: 18px; color: white;
+  }
+  .nav-name { font-size: 15px; font-weight: 600; color: var(--text); }
+  .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-back:hover { color: var(--accent); }
+
+  .hero { position: relative; z-index: 1; text-align: center; padding: 60px 40px 30px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(79,156,249,0.1); border: 1px solid rgba(79,156,249,0.25);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 12px; font-weight: 500; color: var(--accent);
+    margin-bottom: 20px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(32px, 4.6vw, 54px); font-weight: 400; line-height: 1.1; color: var(--text); margin-bottom: 14px; }
+  h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub { font-size: 16px; color: var(--muted); max-width: 560px; margin: 0 auto; line-height: 1.6; }
+
+  .view-bar {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 8px;
+    padding: 8px 24px 28px; flex-wrap: wrap;
+  }
+  .view-btn {
+    padding: 7px 16px; border-radius: 100px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.01em;
+  }
+  .view-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .view-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+  .table-wrap {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 0 24px 24px;
+    overflow-x: auto;
+  }
+  .ptable {
+    display: grid;
+    grid-template-columns: repeat(18, minmax(54px, 1fr));
+    gap: 4px;
+    min-width: 1040px;
+  }
+  .cell {
+    aspect-ratio: 1/1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 4px 4px;
+    display: flex; flex-direction: column;
+    cursor: pointer; user-select: none;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s, opacity 0.2s;
+    position: relative; overflow: hidden;
+    color: var(--text);
+  }
+  .cell:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.28); box-shadow: 0 6px 18px rgba(0,0,0,0.4); z-index: 2; }
+  .cell .z { font-size: 9px; color: rgba(255,255,255,0.65); line-height: 1; }
+  .cell .sym { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; text-align: center; margin-top: 2px; line-height: 1; }
+  .cell .nm { font-size: 8px; color: rgba(255,255,255,0.7); text-align: center; margin-top: 2px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .val { font-size: 8.5px; color: rgba(255,255,255,0.85); text-align: center; margin-top: auto; font-weight: 600; line-height: 1; }
+  .cell.selected { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+  .cell.dim { opacity: 0.18; }
+
+  /* Per-tile gradient is computed in JS and injected via --tile-bg.
+     Each element gets a slightly different hue so neighbours don't read as identical. */
+  .cell[data-cat]               { background: var(--tile-bg, var(--surface)); }
+  .cell[data-cat="alkali"]      { border-color: rgba(251,113,133,0.8); }
+  .cell[data-cat="alkaline"]    { border-color: rgba(251,146,60,0.8); }
+  .cell[data-cat="transition"]  { border-color: rgba(251,191,36,0.8); }
+  .cell[data-cat="halogen"]     { border-color: rgba(190,242,100,0.8); }
+  .cell[data-cat="metalloid"]   { border-color: rgba(52,211,153,0.8); }
+  .cell[data-cat="nonmetal"]    { border-color: rgba(34,211,238,0.8); }
+  .cell[data-cat="posttrans"]   { border-color: rgba(96,165,250,0.8); }
+  .cell[data-cat="hydrogen"]    { border-color: rgba(129,140,248,0.8); }
+  .cell[data-cat="noble"]       { border-color: rgba(167,139,250,0.8); }
+  .cell[data-cat="lanthanide"]  { border-color: rgba(232,121,249,0.8); }
+  .cell[data-cat="actinide"]    { border-color: rgba(244,114,182,0.8); }
+  .cell[data-cat="unknown"]     { border-color: rgba(148,163,184,0.7); }
+
+  /* Soft inner highlight for dimensional feel on every tile */
+  .cell[data-cat]:not([data-cat="unknown"])::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 45%);
+    pointer-events: none;
+  }
+
+  /* Text colour is computed per tile in JS via --tile-text (or --hm-text in heatmap mode).
+     No text-shadow: luminance-based colour picking gives enough contrast already, and
+     shadow bloom at small tile sizes makes letters look hazy. */
+  .cell { color: var(--tile-text, #fff); }
+  .cell .z, .cell .sym, .cell .nm, .cell .val { color: inherit; position: relative; z-index: 1; }
+  .ptable.heatmap .cell { color: var(--hm-text, #fff); }
+
+  /* Heatmap mode override — JS sets inline background */
+  .ptable.heatmap .cell { background: var(--hm, var(--surface)); border-color: rgba(255,255,255,0.10); }
+  .ptable.heatmap .cell[data-val="na"] { background: var(--surface); opacity: 0.35; }
+
+  .placeholder {
+    aspect-ratio: 1/1;
+    background: transparent; border: 1px dashed rgba(255,255,255,0.12);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: var(--muted); text-align: center; line-height: 1.1;
+    padding: 4px;
+  }
+  .spacer { aspect-ratio: 1/1; }
+
+  /* Legend */
+  .legend {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 18px 24px 12px;
+    display: flex; flex-wrap: wrap; gap: 10px 18px;
+    font-size: 12px; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.15); }
+
+  /* Heat scale */
+  .scale {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; color: var(--muted);
+    padding: 8px 24px 0;
+    max-width: 1280px; margin: 0 auto;
+  }
+  .scale .bar {
+    flex: 1; height: 8px; border-radius: 4px;
+    background: linear-gradient(to right,
+      #30123b 0%, #4146bb 15%, #1ae3ff 30%, #4efc37 50%,
+      #f9ba29 70%, #e04b15 85%, #7a0403 100%);
+  }
+
+  /* Detail panel */
+  .detail-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    z-index: 40;
+  }
+  .detail-overlay.open { opacity: 1; pointer-events: auto; }
+  .detail-panel {
+    position: fixed; top: 0; right: 0; height: 100vh;
+    width: min(420px, 92vw);
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    transform: translateX(105%); transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    z-index: 50; display: flex; flex-direction: column;
+    box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+  }
+  .detail-panel.open { transform: translateX(0); }
+  .dp-head {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  }
+  .dp-sym {
+    font-family: 'DM Serif Display', serif;
+    font-size: 56px; line-height: 1; color: var(--text);
+  }
+  .dp-z { font-size: 12px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .dp-name { font-family: 'DM Serif Display', serif; font-size: 22px; margin-top: 6px; }
+  .dp-cat { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 4px; }
+  .dp-close {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; transition: all 0.15s;
+  }
+  .dp-close:hover { color: var(--text); border-color: var(--border-hover); }
+  .dp-body { padding: 20px 24px 32px; overflow-y: auto; flex: 1; }
+  .dp-row {
+    display: grid; grid-template-columns: 130px 1fr;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+  .dp-row .lbl { color: var(--muted); }
+  .dp-row .v { color: var(--text); font-weight: 500; }
+  .dp-syl {
+    margin-top: 20px; padding: 14px 16px;
+    border-radius: 10px; background: rgba(79,156,249,0.08);
+    border: 1px solid rgba(79,156,249,0.25);
+    font-size: 13px; color: var(--text); line-height: 1.55;
+  }
+  .dp-syl .t { font-family: 'DM Serif Display', serif; font-size: 14px; color: var(--accent); margin-bottom: 6px; }
+
+  footer { position: relative; z-index: 1; text-align: center; padding: 28px 40px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 900px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 40px 20px 20px; }
+    .view-bar { padding: 0 16px 20px; }
+    .table-wrap { padding: 0 12px 18px; }
+    .legend { padding: 14px 16px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<nav>
+  <a href="../" class="nav-brand">
+    <div class="nav-logo">K</div>
+    <span class="nav-name">Mr Khemistry</span>
+  </a>
+  <a href="../" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+    Back to Simulations
+  </a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge"><span></span>Interactive Periodic Table · H2 Chemistry</div>
+  <h1>The periodic table, <em>in motion</em></h1>
+  <p class="hero-sub">Tap any element for full details. Toggle heatmaps to see how electronegativity, atomic radius and ionisation energy change across the table — or focus on just the elements the H2 syllabus covers.</p>
+</section>
+
+<div class="view-bar" id="viewBar">
+  <button class="view-btn active" data-view="category">Category</button>
+  <button class="view-btn" data-view="syllabus">H2 Highlight</button>
+  <button class="view-btn" data-view="en">Electronegativity</button>
+  <button class="view-btn" data-view="radius">Atomic radius</button>
+  <button class="view-btn" data-view="ie">1st ionisation energy</button>
+  <button class="view-btn" data-view="mp">Melting point</button>
+</div>
+
+<div class="scale" id="scaleBar" style="display:none;">
+  <span id="scaleLow">low</span>
+  <div class="bar"></div>
+  <span id="scaleHigh">high</span>
+</div>
+
+<div class="table-wrap">
+  <div class="ptable" id="ptable"></div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="detail-overlay" id="dpOverlay"></div>
+<aside class="detail-panel" id="dpPanel" aria-hidden="true">
+  <div class="dp-head">
+    <div>
+      <div class="dp-z" id="dpZ">Z = —</div>
+      <div class="dp-sym" id="dpSym">—</div>
+      <div class="dp-name" id="dpName">—</div>
+      <div class="dp-cat" id="dpCat">—</div>
+    </div>
+    <button class="dp-close" id="dpClose" aria-label="Close">×</button>
+  </div>
+  <div class="dp-body" id="dpBody"></div>
+</aside>
+
+<footer>
+  © Mr Khemistry · Interactive Periodic Table · <a href="../">More simulations</a>
+</footer>
+
+<script>
+/* =========================================================================
+   ELEMENT DATA
+   [z, sym, name, mass, period, group, block, category, EN(Pauling),
+    radius_pm, IE1_kJ, MP_C, BP_C, econfig, oxStates]
+   Group 0 for f-block rows (lanthanides/actinides).
+   Values: standard textbook references; "null" where not applicable/undefined.
+   ========================================================================= */
+const E = [
+  [1,'H','Hydrogen',1.008,1,1,'s','hydrogen',2.20,53,1312,-259,-253,'1s¹','+1, -1'],
+  [2,'He','Helium',4.003,1,18,'s','noble',null,31,2372,-272,-269,'1s²','0'],
+  [3,'Li','Lithium',6.94,2,1,'s','alkali',0.98,167,520,181,1342,'[He] 2s¹','+1'],
+  [4,'Be','Beryllium',9.012,2,2,'s','alkaline',1.57,112,900,1287,2470,'[He] 2s²','+2'],
+  [5,'B','Boron',10.81,2,13,'p','metalloid',2.04,87,801,2076,3927,'[He] 2s² 2p¹','+3'],
+  [6,'C','Carbon',12.01,2,14,'p','nonmetal',2.55,67,1086,3550,4027,'[He] 2s² 2p²','+4, +2, -4'],
+  [7,'N','Nitrogen',14.01,2,15,'p','nonmetal',3.04,56,1402,-210,-196,'[He] 2s² 2p³','+5, +3, -3'],
+  [8,'O','Oxygen',16.00,2,16,'p','nonmetal',3.44,48,1314,-218,-183,'[He] 2s² 2p⁴','-2'],
+  [9,'F','Fluorine',19.00,2,17,'p','halogen',3.98,42,1681,-220,-188,'[He] 2s² 2p⁵','-1'],
+  [10,'Ne','Neon',20.18,2,18,'p','noble',null,38,2081,-249,-246,'[He] 2s² 2p⁶','0'],
+  [11,'Na','Sodium',22.99,3,1,'s','alkali',0.93,190,496,98,883,'[Ne] 3s¹','+1'],
+  [12,'Mg','Magnesium',24.31,3,2,'s','alkaline',1.31,145,738,650,1090,'[Ne] 3s²','+2'],
+  [13,'Al','Aluminium',26.98,3,13,'p','posttrans',1.61,118,578,660,2519,'[Ne] 3s² 3p¹','+3'],
+  [14,'Si','Silicon',28.09,3,14,'p','metalloid',1.90,111,786,1414,3265,'[Ne] 3s² 3p²','+4, -4'],
+  [15,'P','Phosphorus',30.97,3,15,'p','nonmetal',2.19,98,1012,44,281,'[Ne] 3s² 3p³','+5, +3, -3'],
+  [16,'S','Sulfur',32.07,3,16,'p','nonmetal',2.58,88,1000,115,445,'[Ne] 3s² 3p⁴','+6, +4, -2'],
+  [17,'Cl','Chlorine',35.45,3,17,'p','halogen',3.16,79,1251,-102,-34,'[Ne] 3s² 3p⁵','+7, +5, +1, -1'],
+  [18,'Ar','Argon',39.95,3,18,'p','noble',null,71,1521,-189,-186,'[Ne] 3s² 3p⁶','0'],
+  [19,'K','Potassium',39.10,4,1,'s','alkali',0.82,243,419,63,759,'[Ar] 4s¹','+1'],
+  [20,'Ca','Calcium',40.08,4,2,'s','alkaline',1.00,194,590,842,1484,'[Ar] 4s²','+2'],
+  [21,'Sc','Scandium',44.96,4,3,'d','transition',1.36,184,633,1541,2836,'[Ar] 3d¹ 4s²','+3'],
+  [22,'Ti','Titanium',47.87,4,4,'d','transition',1.54,176,659,1668,3287,'[Ar] 3d² 4s²','+4, +3'],
+  [23,'V','Vanadium',50.94,4,5,'d','transition',1.63,171,651,1910,3407,'[Ar] 3d³ 4s²','+5, +4, +3, +2'],
+  [24,'Cr','Chromium',52.00,4,6,'d','transition',1.66,166,653,1907,2671,'[Ar] 3d⁵ 4s¹','+6, +3, +2'],
+  [25,'Mn','Manganese',54.94,4,7,'d','transition',1.55,161,717,1246,2061,'[Ar] 3d⁵ 4s²','+7, +4, +2'],
+  [26,'Fe','Iron',55.85,4,8,'d','transition',1.83,156,762,1538,2861,'[Ar] 3d⁶ 4s²','+3, +2'],
+  [27,'Co','Cobalt',58.93,4,9,'d','transition',1.88,152,760,1495,2927,'[Ar] 3d⁷ 4s²','+3, +2'],
+  [28,'Ni','Nickel',58.69,4,10,'d','transition',1.91,149,737,1455,2913,'[Ar] 3d⁸ 4s²','+2'],
+  [29,'Cu','Copper',63.55,4,11,'d','transition',1.90,145,745,1085,2562,'[Ar] 3d¹⁰ 4s¹','+2, +1'],
+  [30,'Zn','Zinc',65.38,4,12,'d','transition',1.65,142,906,420,907,'[Ar] 3d¹⁰ 4s²','+2'],
+  [31,'Ga','Gallium',69.72,4,13,'p','posttrans',1.81,136,579,30,2204,'[Ar] 3d¹⁰ 4s² 4p¹','+3'],
+  [32,'Ge','Germanium',72.63,4,14,'p','metalloid',2.01,125,762,938,2833,'[Ar] 3d¹⁰ 4s² 4p²','+4, +2'],
+  [33,'As','Arsenic',74.92,4,15,'p','metalloid',2.18,114,947,817,614,'[Ar] 3d¹⁰ 4s² 4p³','+5, +3, -3'],
+  [34,'Se','Selenium',78.97,4,16,'p','nonmetal',2.55,103,941,221,685,'[Ar] 3d¹⁰ 4s² 4p⁴','+6, +4, -2'],
+  [35,'Br','Bromine',79.90,4,17,'p','halogen',2.96,94,1140,-7,59,'[Ar] 3d¹⁰ 4s² 4p⁵','+5, +1, -1'],
+  [36,'Kr','Krypton',83.80,4,18,'p','noble',3.00,88,1351,-157,-153,'[Ar] 3d¹⁰ 4s² 4p⁶','0, +2'],
+  [37,'Rb','Rubidium',85.47,5,1,'s','alkali',0.82,265,403,39,688,'[Kr] 5s¹','+1'],
+  [38,'Sr','Strontium',87.62,5,2,'s','alkaline',0.95,219,549,777,1382,'[Kr] 5s²','+2'],
+  [39,'Y','Yttrium',88.91,5,3,'d','transition',1.22,212,600,1526,3338,'[Kr] 4d¹ 5s²','+3'],
+  [40,'Zr','Zirconium',91.22,5,4,'d','transition',1.33,206,640,1855,4409,'[Kr] 4d² 5s²','+4'],
+  [41,'Nb','Niobium',92.91,5,5,'d','transition',1.6,198,652,2477,4744,'[Kr] 4d⁴ 5s¹','+5, +3'],
+  [42,'Mo','Molybdenum',95.95,5,6,'d','transition',2.16,190,684,2623,4639,'[Kr] 4d⁵ 5s¹','+6, +4'],
+  [43,'Tc','Technetium',98,5,7,'d','transition',1.9,183,702,2157,4265,'[Kr] 4d⁵ 5s²','+7'],
+  [44,'Ru','Ruthenium',101.1,5,8,'d','transition',2.2,178,710,2334,4150,'[Kr] 4d⁷ 5s¹','+4, +3'],
+  [45,'Rh','Rhodium',102.9,5,9,'d','transition',2.28,173,720,1964,3695,'[Kr] 4d⁸ 5s¹','+3'],
+  [46,'Pd','Palladium',106.4,5,10,'d','transition',2.20,169,804,1555,2963,'[Kr] 4d¹⁰','+2, +4'],
+  [47,'Ag','Silver',107.9,5,11,'d','transition',1.93,165,731,962,2162,'[Kr] 4d¹⁰ 5s¹','+1'],
+  [48,'Cd','Cadmium',112.4,5,12,'d','transition',1.69,161,868,321,767,'[Kr] 4d¹⁰ 5s²','+2'],
+  [49,'In','Indium',114.8,5,13,'p','posttrans',1.78,156,558,157,2072,'[Kr] 4d¹⁰ 5s² 5p¹','+3'],
+  [50,'Sn','Tin',118.7,5,14,'p','posttrans',1.96,145,709,232,2602,'[Kr] 4d¹⁰ 5s² 5p²','+4, +2'],
+  [51,'Sb','Antimony',121.8,5,15,'p','metalloid',2.05,133,834,631,1587,'[Kr] 4d¹⁰ 5s² 5p³','+5, +3, -3'],
+  [52,'Te','Tellurium',127.6,5,16,'p','metalloid',2.10,123,869,450,988,'[Kr] 4d¹⁰ 5s² 5p⁴','+6, +4, -2'],
+  [53,'I','Iodine',126.9,5,17,'p','halogen',2.66,115,1008,114,184,'[Kr] 4d¹⁰ 5s² 5p⁵','+7, +5, +1, -1'],
+  [54,'Xe','Xenon',131.3,5,18,'p','noble',2.60,108,1170,-112,-108,'[Kr] 4d¹⁰ 5s² 5p⁶','+6, +4, +2, 0'],
+  [55,'Cs','Caesium',132.9,6,1,'s','alkali',0.79,298,376,28,671,'[Xe] 6s¹','+1'],
+  [56,'Ba','Barium',137.3,6,2,'s','alkaline',0.89,253,503,727,1897,'[Xe] 6s²','+2'],
+  [57,'La','Lanthanum',138.9,6,3,'d','lanthanide',1.10,195,538,920,3464,'[Xe] 5d¹ 6s²','+3'],
+  [58,'Ce','Cerium',140.1,6,0,'f','lanthanide',1.12,185,534,799,3443,'[Xe] 4f¹ 5d¹ 6s²','+3, +4'],
+  [59,'Pr','Praseodymium',140.9,6,0,'f','lanthanide',1.13,247,527,931,3520,'[Xe] 4f³ 6s²','+3'],
+  [60,'Nd','Neodymium',144.2,6,0,'f','lanthanide',1.14,206,533,1021,3074,'[Xe] 4f⁴ 6s²','+3'],
+  [61,'Pm','Promethium',145,6,0,'f','lanthanide',1.13,205,540,1100,3000,'[Xe] 4f⁵ 6s²','+3'],
+  [62,'Sm','Samarium',150.4,6,0,'f','lanthanide',1.17,238,545,1072,1794,'[Xe] 4f⁶ 6s²','+3, +2'],
+  [63,'Eu','Europium',152.0,6,0,'f','lanthanide',1.2,231,547,822,1529,'[Xe] 4f⁷ 6s²','+3, +2'],
+  [64,'Gd','Gadolinium',157.3,6,0,'f','lanthanide',1.20,233,593,1313,3273,'[Xe] 4f⁷ 5d¹ 6s²','+3'],
+  [65,'Tb','Terbium',158.9,6,0,'f','lanthanide',1.2,225,565,1359,3230,'[Xe] 4f⁹ 6s²','+3, +4'],
+  [66,'Dy','Dysprosium',162.5,6,0,'f','lanthanide',1.22,228,573,1412,2567,'[Xe] 4f¹⁰ 6s²','+3'],
+  [67,'Ho','Holmium',164.9,6,0,'f','lanthanide',1.23,226,581,1472,2700,'[Xe] 4f¹¹ 6s²','+3'],
+  [68,'Er','Erbium',167.3,6,0,'f','lanthanide',1.24,226,589,1529,2868,'[Xe] 4f¹² 6s²','+3'],
+  [69,'Tm','Thulium',168.9,6,0,'f','lanthanide',1.25,222,597,1545,1950,'[Xe] 4f¹³ 6s²','+3'],
+  [70,'Yb','Ytterbium',173.0,6,0,'f','lanthanide',1.1,222,603,819,1196,'[Xe] 4f¹⁴ 6s²','+3, +2'],
+  [71,'Lu','Lutetium',175.0,6,0,'f','lanthanide',1.27,217,524,1663,3402,'[Xe] 4f¹⁴ 5d¹ 6s²','+3'],
+  [72,'Hf','Hafnium',178.5,6,4,'d','transition',1.3,208,659,2233,4603,'[Xe] 4f¹⁴ 5d² 6s²','+4'],
+  [73,'Ta','Tantalum',180.9,6,5,'d','transition',1.5,200,728,3017,5458,'[Xe] 4f¹⁴ 5d³ 6s²','+5'],
+  [74,'W','Tungsten',183.8,6,6,'d','transition',2.36,193,759,3422,5555,'[Xe] 4f¹⁴ 5d⁴ 6s²','+6, +4'],
+  [75,'Re','Rhenium',186.2,6,7,'d','transition',1.9,188,756,3186,5596,'[Xe] 4f¹⁴ 5d⁵ 6s²','+7, +4'],
+  [76,'Os','Osmium',190.2,6,8,'d','transition',2.2,185,814,3033,5012,'[Xe] 4f¹⁴ 5d⁶ 6s²','+4, +3'],
+  [77,'Ir','Iridium',192.2,6,9,'d','transition',2.20,180,865,2466,4428,'[Xe] 4f¹⁴ 5d⁷ 6s²','+3, +4'],
+  [78,'Pt','Platinum',195.1,6,10,'d','transition',2.28,177,864,1768,3825,'[Xe] 4f¹⁴ 5d⁹ 6s¹','+2, +4'],
+  [79,'Au','Gold',197.0,6,11,'d','transition',2.54,174,890,1064,2856,'[Xe] 4f¹⁴ 5d¹⁰ 6s¹','+3, +1'],
+  [80,'Hg','Mercury',200.6,6,12,'d','transition',2.00,171,1007,-39,357,'[Xe] 4f¹⁴ 5d¹⁰ 6s²','+2, +1'],
+  [81,'Tl','Thallium',204.4,6,13,'p','posttrans',1.62,156,589,304,1473,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹','+1, +3'],
+  [82,'Pb','Lead',207.2,6,14,'p','posttrans',2.33,154,716,327,1749,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²','+2, +4'],
+  [83,'Bi','Bismuth',209.0,6,15,'p','posttrans',2.02,143,703,271,1564,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³','+3, +5'],
+  [84,'Po','Polonium',209,6,16,'p','posttrans',2.0,135,812,254,962,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴','+4, +2'],
+  [85,'At','Astatine',210,6,17,'p','halogen',2.2,127,920,302,337,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵','±1'],
+  [86,'Rn','Radon',222,6,18,'p','noble',2.2,120,1037,-71,-62,'[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶','0'],
+  [87,'Fr','Francium',223,7,1,'s','alkali',0.7,260,380,27,677,'[Rn] 7s¹','+1'],
+  [88,'Ra','Radium',226,7,2,'s','alkaline',0.9,215,509,700,1737,'[Rn] 7s²','+2'],
+  [89,'Ac','Actinium',227,7,3,'d','actinide',1.1,195,499,1050,3200,'[Rn] 6d¹ 7s²','+3'],
+  [90,'Th','Thorium',232.0,7,0,'f','actinide',1.3,180,587,1750,4788,'[Rn] 6d² 7s²','+4'],
+  [91,'Pa','Protactinium',231.0,7,0,'f','actinide',1.5,180,568,1572,4027,'[Rn] 5f² 6d¹ 7s²','+5, +4'],
+  [92,'U','Uranium',238.0,7,0,'f','actinide',1.38,175,597,1135,4131,'[Rn] 5f³ 6d¹ 7s²','+6, +4, +3'],
+  [93,'Np','Neptunium',237,7,0,'f','actinide',1.36,175,604,644,3902,'[Rn] 5f⁴ 6d¹ 7s²','+5, +4, +3'],
+  [94,'Pu','Plutonium',244,7,0,'f','actinide',1.28,175,585,640,3228,'[Rn] 5f⁶ 7s²','+4, +3'],
+  [95,'Am','Americium',243,7,0,'f','actinide',1.13,175,578,1176,2011,'[Rn] 5f⁷ 7s²','+3, +4'],
+  [96,'Cm','Curium',247,7,0,'f','actinide',1.28,176,581,1345,3100,'[Rn] 5f⁷ 6d¹ 7s²','+3'],
+  [97,'Bk','Berkelium',247,7,0,'f','actinide',1.3,175,601,986,2627,'[Rn] 5f⁹ 7s²','+3, +4'],
+  [98,'Cf','Californium',251,7,0,'f','actinide',1.3,175,608,900,1472,'[Rn] 5f¹⁰ 7s²','+3'],
+  [99,'Es','Einsteinium',252,7,0,'f','actinide',1.3,null,619,860,996,'[Rn] 5f¹¹ 7s²','+3'],
+  [100,'Fm','Fermium',257,7,0,'f','actinide',1.3,null,627,1527,null,'[Rn] 5f¹² 7s²','+3'],
+  [101,'Md','Mendelevium',258,7,0,'f','actinide',1.3,null,635,827,null,'[Rn] 5f¹³ 7s²','+3'],
+  [102,'No','Nobelium',259,7,0,'f','actinide',1.3,null,642,827,null,'[Rn] 5f¹⁴ 7s²','+2, +3'],
+  [103,'Lr','Lawrencium',266,7,0,'f','actinide',1.3,null,470,1627,null,'[Rn] 5f¹⁴ 7s² 7p¹','+3'],
+  [104,'Rf','Rutherfordium',267,7,4,'d','transition',null,null,580,null,null,'[Rn] 5f¹⁴ 6d² 7s²','+4'],
+  [105,'Db','Dubnium',268,7,5,'d','transition',null,null,665,null,null,'[Rn] 5f¹⁴ 6d³ 7s²','+5'],
+  [106,'Sg','Seaborgium',269,7,6,'d','transition',null,null,757,null,null,'[Rn] 5f¹⁴ 6d⁴ 7s²','+6'],
+  [107,'Bh','Bohrium',270,7,7,'d','transition',null,null,740,null,null,'[Rn] 5f¹⁴ 6d⁵ 7s²','+7'],
+  [108,'Hs','Hassium',269,7,8,'d','transition',null,null,730,null,null,'[Rn] 5f¹⁴ 6d⁶ 7s²','+8'],
+  [109,'Mt','Meitnerium',278,7,9,'d','unknown',null,null,800,null,null,'[Rn] 5f¹⁴ 6d⁷ 7s²','—'],
+  [110,'Ds','Darmstadtium',281,7,10,'d','unknown',null,null,960,null,null,'[Rn] 5f¹⁴ 6d⁸ 7s²','—'],
+  [111,'Rg','Roentgenium',282,7,11,'d','unknown',null,null,1020,null,null,'[Rn] 5f¹⁴ 6d⁹ 7s²','—'],
+  [112,'Cn','Copernicium',285,7,12,'d','unknown',null,null,1155,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s²','+2'],
+  [113,'Nh','Nihonium',286,7,13,'p','unknown',null,null,704,430,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹','—'],
+  [114,'Fl','Flerovium',289,7,14,'p','unknown',null,null,832,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²','—'],
+  [115,'Mc','Moscovium',290,7,15,'p','unknown',null,null,538,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³','—'],
+  [116,'Lv','Livermorium',293,7,16,'p','unknown',null,null,723,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴','—'],
+  [117,'Ts','Tennessine',294,7,17,'p','unknown',null,null,743,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵','—'],
+  [118,'Og','Oganesson',294,7,18,'p','unknown',null,null,839,null,null,'[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶','—']
+];
+
+/* H2 syllabus: explicitly covered elements for Periodicity (Na-Cl),
+   Group 2 (Mg-Ba), Group 17 (Cl-I), Transition metals Sc-Cu,
+   plus Period 1-2 (atomic structure/bonding), Zn (context), Ag (electrochem), Ca/K. */
+const H2_SET = new Set([
+  1,2,3,4,5,6,7,8,9,10,                // Period 1-2
+  11,12,13,14,15,16,17,18,              // Period 3
+  19,20,                                // K, Ca
+  21,22,23,24,25,26,27,28,29,30,        // Sc-Zn
+  35,                                   // Br
+  38,47,53,                             // Sr, Ag, I
+  56                                    // Ba
+]);
+
+/* H2 syllabus notes for selected elements (shown in detail panel when relevant) */
+const H2_NOTES = {
+  1:  "Simplest element. Appears in acid-base theory, bonding (covalent, hydrogen bonding), and energetics (bond energies).",
+  3:  "Period 2 s-block. Example for electronic configuration and atomic structure.",
+  6:  "Central to organic chemistry. Tetrahedral in sp³ (alkanes), trigonal planar in sp² (alkenes, carbonyls), linear in sp (alkynes).",
+  7:  "Key in amines, amides, nitriles, amino acids. Lone pair governs basicity and nucleophilicity.",
+  8:  "Central to alcohols, carbonyls, acids. Lone pairs and high electronegativity drive H-bonding and polar bonds.",
+  9:  "Most electronegative element. Appears in bond energy and electronegativity trends.",
+  11: "Period 3 start. Strong reducing agent. Na₂O is basic. Ionic chloride NaCl dissolves giving neutral solution.",
+  12: "Group 2 reducing agent. MgO basic. MgCl₂ ionic; hydrolyses slightly in water. Reference point for Group 2 trends.",
+  13: "Amphoteric: Al₂O₃ and Al(OH)₃ react with both acids and bases. AlCl₃ covalent (exception), hydrolyses extensively.",
+  14: "Giant covalent (diamond-like). SiO₂ acidic (reacts with NaOH). SiCl₄ covalent, hydrolyses violently.",
+  15: "P₄O₁₀ acidic. PCl₅ and PCl₃ both hydrolyse to give acidic solutions.",
+  16: "SO₂ and SO₃ acidic oxides. Key element in acid-base equilibria and energetics (e.g. contact process).",
+  17: "Cl₂O₇ strongly acidic. Cl₂ powerful oxidising agent. Reference point for Group 17 trends.",
+  18: "Period 3 noble gas. Full octet — illustrates why noble gases are unreactive.",
+  19: "Group 1 alkali metal. Reference for reactivity trend down the group.",
+  20: "Group 2. Ca(OH)₂ 'limewater'. CaCO₃ more thermally stable than MgCO₃.",
+  21: "First-row transition element. Sc³⁺ has empty d-subshell — so compounds are white (not a typical transition metal colour).",
+  22: "Transition metal. Ti⁴⁺/Ti³⁺ shows variable oxidation state. TiO₂ widely used.",
+  23: "Variable oxidation states: +2 (violet), +3 (green), +4 (blue), +5 (yellow). Classic redox series.",
+  24: "Variable oxidation states. Cr₂O₇²⁻ (orange) and CrO₄²⁻ (yellow) — equilibrium shifts with pH.",
+  25: "Very variable ox states (+2 to +7). MnO₄⁻ (purple) is a classic oxidising agent in acidic medium.",
+  26: "Fe²⁺ (pale green) / Fe³⁺ (yellow-brown). Redox couple and complex formation central to transition metal chemistry.",
+  27: "Co²⁺ pink (octahedral aqua) ↔ blue (tetrahedral [CoCl₄]²⁻). Ligand substitution example.",
+  28: "Ni²⁺ green in aqueous solution. Catalyst in hydrogenation (e.g. margarine manufacture).",
+  29: "Cu²⁺ blue (hydrated). Classic redox and complex chemistry: [Cu(NH₃)₄]²⁺ deep blue.",
+  30: "Full 3d¹⁰ — often excluded from 'transition metal' definition (no partially filled d-subshell in ions). Only +2 oxidation state.",
+  35: "Br₂ red-brown liquid. Group 17 oxidising agent, less reactive than Cl₂.",
+  38: "Group 2. Sr(OH)₂ more soluble than Mg(OH)₂. SrCO₃ more thermally stable than MgCO₃.",
+  47: "Electrochemistry: Ag⁺/Ag half-cell. Ag⁺ forms [Ag(NH₃)₂]⁺ (Tollens'), AgCl/AgBr/AgI colours used in halide tests.",
+  53: "I₂ grey-black solid; purple in non-polar solvents. Weakest oxidising agent in Group 17 (of Cl, Br, I).",
+  56: "Most reactive Group 2 metal studied. Ba(OH)₂ very soluble. BaSO₄ white precipitate (test for sulfate)."
+};
+
+const CAT_LABEL = {
+  hydrogen:'Hydrogen',
+  alkali:'Alkali metal',
+  alkaline:'Alkaline earth metal',
+  transition:'Transition metal',
+  posttrans:'Post-transition metal',
+  metalloid:'Metalloid',
+  nonmetal:'Reactive non-metal',
+  halogen:'Halogen',
+  noble:'Noble gas',
+  lanthanide:'Lanthanide',
+  actinide:'Actinide',
+  unknown:'Unknown properties'
+};
+
+/* ================= Render table ================= */
+const table = document.getElementById('ptable');
+
+function gridPos(e){
+  const [z,,,,period,group,,cat] = e;
+  if (cat === 'lanthanide' && z !== 57) return { row: 9, col: z - 57 + 3 };
+  if (cat === 'actinide'  && z !== 89) return { row: 10, col: z - 89 + 3 };
+  return { row: period, col: group };
+}
+
+function makeCell(e){
+  const [z,sym,name,mass,period,group,block,cat] = e;
+  const d = document.createElement('button');
+  d.className = 'cell';
+  d.dataset.z = z;
+  d.dataset.cat = cat;
+  d.innerHTML = `
+    <span class="z">${z}</span>
+    <span class="sym">${sym}</span>
+    <span class="nm">${name}</span>
+    <span class="val"></span>`;
+  const pos = gridPos(e);
+  d.style.gridRow = pos.row;
+  d.style.gridColumn = pos.col;
+  d.addEventListener('click', () => openDetail(z));
+  return d;
+}
+
+/* Per-element colour: base hue per category, small hue shift per element
+   so no two neighbours are identical while category remains recognisable. */
+const CAT_HSL = {
+  hydrogen:   { h: 228, s: 85, l: 62, dh: -18, dl: -16 },
+  alkali:     { h: 352, s: 85, l: 62, dh: -22, dl: -16 },
+  alkaline:   { h:  22, s: 90, l: 58, dh: -18, dl: -14 },
+  transition: { h:  40, s: 88, l: 56, dh: -20, dl: -14 },
+  posttrans:  { h: 210, s: 88, l: 60, dh: -26, dl: -16 },
+  metalloid:  { h: 158, s: 65, l: 50, dh: -16, dl: -14 },
+  nonmetal:   { h: 188, s: 78, l: 54, dh: -24, dl: -16 },
+  halogen:    { h:  82, s: 72, l: 52, dh: -20, dl: -18 },
+  noble:      { h: 262, s: 78, l: 66, dh: -22, dl: -18 },
+  lanthanide: { h: 300, s: 78, l: 66, dh: -20, dl: -18 },
+  actinide:   { h: 336, s: 80, l: 64, dh: -18, dl: -16 },
+  unknown:    { h: 215, s: 14, l: 52, dh:   0, dl: -10 }
+};
+function hslToRgb(h, s, l){
+  h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
+  const c = (1 - Math.abs(2*l - 1)) * s;
+  const hp = h / 60;
+  const x = c * (1 - Math.abs(hp % 2 - 1));
+  let r=0,g=0,b=0;
+  if      (hp < 1) { r=c; g=x; }
+  else if (hp < 2) { r=x; g=c; }
+  else if (hp < 3) {      g=c; b=x; }
+  else if (hp < 4) {      g=x; b=c; }
+  else if (hp < 5) { r=x;      b=c; }
+  else             { r=c;      b=x; }
+  const m = l - c/2;
+  return [Math.round((r+m)*255), Math.round((g+m)*255), Math.round((b+m)*255)];
+}
+/* Perceived-luminance text picker. Threshold tuned so yellows/limes/oranges get dark text. */
+function textOnRgb(r, g, b){
+  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return lum > 0.60
+    ? { color: '#0b0f1a', shadow: 'rgba(255,255,255,0.35)' }
+    : { color: '#ffffff', shadow: 'rgba(0,0,0,0.45)' };
+}
+function tileStyle(z, cat){
+  const b = CAT_HSL[cat] || CAT_HSL.unknown;
+  const shift = (((z * 47) % 29) - 14);
+  const h1 = b.h + shift * 0.55;
+  const h2 = h1 + b.dh;
+  const l1 = b.l;
+  const l2 = b.l + b.dl;
+  const bg = `linear-gradient(135deg, hsl(${h1} ${b.s}% ${l1}%) 0%, hsl(${h2} ${b.s}% ${l2}%) 100%)`;
+  const [r1,g1,bl1] = hslToRgb(h1, b.s, l1);
+  const [r2,g2,bl2] = hslToRgb(h2, b.s, l2);
+  const text = textOnRgb((r1+r2)/2, (g1+g2)/2, (bl1+bl2)/2);
+  return { bg, text };
+}
+
+E.forEach(e => {
+  const cell = makeCell(e);
+  const { bg, text } = tileStyle(e[0], e[7]);
+  cell.style.setProperty('--tile-bg', bg);
+  cell.style.setProperty('--tile-text', text.color);
+  cell.style.setProperty('--tile-shadow', text.shadow);
+  table.appendChild(cell);
+});
+
+// Lanthanide/actinide placeholders in main grid (row 6 col 3, row 7 col 3)
+function placeholder(txt,row,col){
+  const p = document.createElement('div');
+  p.className = 'placeholder';
+  p.textContent = txt;
+  p.style.gridRow = row;
+  p.style.gridColumn = col;
+  table.appendChild(p);
+}
+placeholder('57–71',6,3);
+placeholder('89–103',7,3);
+
+// Gap row between main table and f-block
+const gap = document.createElement('div');
+gap.className = 'spacer';
+gap.style.gridRow = 8;
+gap.style.gridColumn = '1 / span 18';
+gap.style.aspectRatio = 'unset';
+gap.style.height = '12px';
+table.appendChild(gap);
+
+/* ================= Legend ================= */
+const legendEl = document.getElementById('legend');
+const catsForLegend = ['hydrogen','alkali','alkaline','transition','posttrans','metalloid','nonmetal','halogen','noble','lanthanide','actinide','unknown'];
+catsForLegend.forEach(c => {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  const sw = document.createElement('span');
+  sw.className = 'swatch';
+  const colVar = c==='posttrans' ? '--c-posttrans' : '--c-'+c.slice(0,8);
+  // manual map to var name
+  const varMap = {hydrogen:'--c-hydrogen',alkali:'--c-alkali',alkaline:'--c-alkaline',transition:'--c-transition',
+    posttrans:'--c-posttrans',metalloid:'--c-metalloid',nonmetal:'--c-nonmetal',halogen:'--c-halogen',
+    noble:'--c-noble',lanthanide:'--c-lanth',actinide:'--c-actin',unknown:'--c-unknown'};
+  sw.style.background = `var(${varMap[c]})`;
+  item.appendChild(sw);
+  const label = document.createElement('span');
+  label.textContent = CAT_LABEL[c];
+  item.appendChild(label);
+  legendEl.appendChild(item);
+});
+
+/* ================= View toggles & heatmaps ================= */
+const viewBar = document.getElementById('viewBar');
+const scaleBar = document.getElementById('scaleBar');
+const scaleLow = document.getElementById('scaleLow');
+const scaleHigh = document.getElementById('scaleHigh');
+let currentView = 'category';
+
+viewBar.addEventListener('click', (ev) => {
+  const b = ev.target.closest('.view-btn'); if(!b) return;
+  viewBar.querySelectorAll('.view-btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  setView(b.dataset.view);
+});
+
+function valForView(e, view){
+  // data indices: 8=EN, 9=radius, 10=IE, 11=MP
+  if (view==='en')     return e[8];
+  if (view==='radius') return e[9];
+  if (view==='ie')     return e[10];
+  if (view==='mp')     return e[11];
+  return null;
+}
+
+/* Turbo-inspired multi-hue colormap: dark purple → blue → cyan → green → gold → red */
+const HEAT_STOPS = [
+  [0.00, [ 48, 18, 59]],  // deep purple
+  [0.15, [ 66, 70,187]],  // indigo
+  [0.30, [ 26,227,255]],  // cyan
+  [0.50, [ 78,252, 55]],  // green
+  [0.70, [249,186, 41]],  // gold
+  [0.85, [224, 75, 21]],  // orange-red
+  [1.00, [180, 20,  5]]   // deep red
+];
+function heatStyle(t){ // t in 0..1 → { bg, text }
+  t = Math.max(0, Math.min(1, t));
+  let r=0, g=0, b=0;
+  for (let i = 1; i < HEAT_STOPS.length; i++) {
+    if (t <= HEAT_STOPS[i][0]) {
+      const [t0, c0] = HEAT_STOPS[i-1];
+      const [t1, c1] = HEAT_STOPS[i];
+      const f = (t - t0) / (t1 - t0 || 1);
+      r = Math.round(c0[0] + (c1[0]-c0[0])*f);
+      g = Math.round(c0[1] + (c1[1]-c0[1])*f);
+      b = Math.round(c0[2] + (c1[2]-c0[2])*f);
+      break;
+    }
+  }
+  if (r===0 && g===0 && b===0 && t >= HEAT_STOPS[HEAT_STOPS.length-1][0]) {
+    [r,g,b] = HEAT_STOPS[HEAT_STOPS.length-1][1];
+  }
+  const dr = Math.max(0, r-30), dg = Math.max(0, g-30), db = Math.max(0, b-30);
+  const bg = `linear-gradient(160deg, rgb(${r},${g},${b}) 0%, rgb(${dr},${dg},${db}) 100%)`;
+  const text = textOnRgb(r, g, b);
+  return { bg, text };
+}
+
+function setView(view){
+  currentView = view;
+  const isHeat = ['en','radius','ie','mp'].includes(view);
+  const cells = table.querySelectorAll('.cell');
+  table.classList.toggle('heatmap', isHeat);
+  scaleBar.style.display = isHeat ? 'flex' : 'none';
+  legendEl.style.display = isHeat ? 'none' : 'flex';
+
+  if (view === 'category') {
+    cells.forEach(c => {
+      c.classList.remove('dim');
+      c.style.removeProperty('--hm');
+      c.style.removeProperty('--hm-text');
+      c.style.removeProperty('--hm-shadow');
+      c.querySelector('.val').textContent = '';
+      c.dataset.val = '';
+    });
+    return;
+  }
+
+  if (view === 'syllabus') {
+    cells.forEach(c => {
+      const z = +c.dataset.z;
+      c.classList.toggle('dim', !H2_SET.has(z));
+      c.style.removeProperty('--hm');
+      c.style.removeProperty('--hm-text');
+      c.style.removeProperty('--hm-shadow');
+      c.querySelector('.val').textContent = '';
+    });
+    return;
+  }
+
+  // heatmap mode
+  const vals = E.map(e => valForView(e, view)).filter(v => v != null);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  scaleLow.textContent  = formatScale(view, min);
+  scaleHigh.textContent = formatScale(view, max);
+
+  cells.forEach(c => {
+    c.classList.remove('dim');
+    const z = +c.dataset.z;
+    const e = E[z-1];
+    const v = valForView(e, view);
+    if (v == null) {
+      c.dataset.val = 'na';
+      c.style.setProperty('--hm', 'var(--surface)');
+      c.style.setProperty('--hm-text', '#ffffff');
+      c.style.setProperty('--hm-shadow', 'rgba(0,0,0,0.45)');
+      c.querySelector('.val').textContent = '—';
+    } else {
+      const t = (v - min) / (max - min || 1);
+      const { bg, text } = heatStyle(t);
+      c.dataset.val = '';
+      c.style.setProperty('--hm', bg);
+      c.style.setProperty('--hm-text', text.color);
+      c.style.setProperty('--hm-shadow', text.shadow);
+      c.querySelector('.val').textContent = formatVal(view, v);
+    }
+  });
+}
+
+function formatVal(view, v){
+  if (view==='en') return v.toFixed(2);
+  if (view==='radius') return v + ' pm';
+  if (view==='ie') return v;
+  if (view==='mp') return v + '°';
+  return '';
+}
+function formatScale(view, v){
+  if (view==='en') return v.toFixed(2);
+  if (view==='radius') return v + ' pm';
+  if (view==='ie') return v + ' kJ/mol';
+  if (view==='mp') return v + ' °C';
+  return v;
+}
+
+/* ================= Detail panel ================= */
+const dpPanel   = document.getElementById('dpPanel');
+const dpOverlay = document.getElementById('dpOverlay');
+const dpZ       = document.getElementById('dpZ');
+const dpSym     = document.getElementById('dpSym');
+const dpName    = document.getElementById('dpName');
+const dpCat     = document.getElementById('dpCat');
+const dpBody    = document.getElementById('dpBody');
+
+document.getElementById('dpClose').onclick = closeDetail;
+dpOverlay.onclick = closeDetail;
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeDetail(); });
+
+function row(label, val){
+  if (val == null || val === '') return '';
+  return `<div class="dp-row"><span class="lbl">${label}</span><span class="v">${val}</span></div>`;
+}
+
+function openDetail(z){
+  const e = E[z-1];
+  const [, sym, name, mass,,, block, cat, en, r, ie, mp, bp, econfig, ox] = e;
+  dpZ.textContent = `Z = ${z}`;
+  dpSym.textContent = sym;
+  dpSym.style.color = `var(--c-${cat==='posttrans'?'posttrans':cat==='lanthanide'?'lanth':cat==='actinide'?'actin':cat})`;
+  dpName.textContent = name;
+  dpCat.textContent = `${CAT_LABEL[cat]} · ${block}-block`;
+
+  let html = '';
+  html += row('Atomic mass', `${mass} u`);
+  html += row('Electron config.', econfig);
+  html += row('Oxidation states', ox);
+  html += row('Electronegativity', en!=null ? `${en} (Pauling)` : '—');
+  html += row('Atomic radius', r!=null ? `${r} pm` : '—');
+  html += row('1st ionisation E', ie!=null ? `${ie} kJ/mol` : '—');
+  html += row('Melting point', mp!=null ? `${mp} °C` : '—');
+  html += row('Boiling point', bp!=null ? `${bp} °C` : '—');
+
+  if (H2_NOTES[z]) {
+    html += `<div class="dp-syl"><div class="t">H2 syllabus note</div>${H2_NOTES[z]}</div>`;
+  } else if (H2_SET.has(z)) {
+    html += `<div class="dp-syl"><div class="t">H2 syllabus</div>Included in the H2 Chemistry syllabus.</div>`;
+  }
+
+  dpBody.innerHTML = html;
+
+  // highlight cell
+  table.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+  const cell = table.querySelector(`.cell[data-z="${z}"]`);
+  if (cell) cell.classList.add('selected');
+
+  dpPanel.classList.add('open');
+  dpOverlay.classList.add('open');
+  dpPanel.setAttribute('aria-hidden','false');
+}
+
+function closeDetail(){
+  dpPanel.classList.remove('open');
+  dpOverlay.classList.remove('open');
+  dpPanel.setAttribute('aria-hidden','true');
+  table.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+}
+
+// initial view
+setView('category');
+</script>
+
+</body>
+</html>

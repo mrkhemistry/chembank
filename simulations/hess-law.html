@@ -526,11 +526,11 @@ const PROBLEMS = {
           "Na(g) + Cl₂(g)"
         ],
         steps: [
-          { id: "st01", from: "s0", to: "s1", correctChipId: "bh_at", description: "atomisation of Na (Na(s) → Na(g))" },
-          { id: "st12", from: "s1", to: "s2", correctChipId: "bh_be", description: "breaking ½ Cl–Cl bond (½Cl₂(g) → Cl(g))" },
-          { id: "st23", from: "s2", to: "s3", correctChipId: "bh_ie", description: "1st ionisation of Na (Na(g) → Na⁺(g) + e⁻)" },
-          { id: "st34", from: "s3", to: "s4", correctChipId: "bh_ea", description: "1st electron affinity of Cl (Cl(g) + e⁻ → Cl⁻(g))" },
-          { id: "st45", from: "s4", to: "s5", correctChipId: "bh_le", description: "lattice energy (Na⁺(g) + Cl⁻(g) → NaCl(s))" }
+          { id: "st01", from: "s0", to: "s1", correctApps: [{ chipId: "bh_at", mult: 1 }], description: "atomisation of Na (Na(s) → Na(g))" },
+          { id: "st12", from: "s1", to: "s2", correctApps: [{ chipId: "bh_be", mult: 1 }], description: "breaking ½ Cl–Cl bond (½Cl₂(g) → Cl(g))" },
+          { id: "st23", from: "s2", to: "s3", correctApps: [{ chipId: "bh_ie", mult: 1 }], description: "1st ionisation of Na (Na(g) → Na⁺(g) + e⁻)" },
+          { id: "st34", from: "s3", to: "s4", correctApps: [{ chipId: "bh_ea", mult: 1 }], description: "1st electron affinity of Cl (Cl(g) + e⁻ → Cl⁻(g))" },
+          { id: "st45", from: "s4", to: "s5", correctApps: [{ chipId: "bh_le", mult: 1 }], description: "lattice energy (Na⁺(g) + Cl⁻(g) → NaCl(s))" }
         ]
       },
       chips: [
@@ -541,6 +541,51 @@ const PROBLEMS = {
         { id: "bh_le", label: "LE[NaCl(s)]",   value: -780 }
       ],
       hint: "Build from elements down to ionic solid. The anticlockwise (direct) path is the single ΔHf arrow; the clockwise (indirect, via the steps) path is the sum of all 5 step ΔH values. Both must be equal."
+    },
+    {
+      name: "ΔHf[MgCl₂(s)] from a Born-Haber cycle",
+      target: { lhs: "Mg(s) + Cl₂(g)", rhs: "MgCl₂(s)", dhLabel: "ΔHf[MgCl₂(s)]" },
+      answer: -641,
+      ladder: {
+        slots: [
+          { id: "s0", correctLabel: "Mg(s) + Cl₂(g)", locked: true },
+          { id: "s1", correctLabel: "Mg(g) + Cl₂(g)" },
+          { id: "s2", correctLabel: "Mg(g) + 2Cl(g)" },
+          { id: "s3", correctLabel: "Mg⁺(g) + e⁻ + 2Cl(g)" },
+          { id: "s4", correctLabel: "Mg²⁺(g) + 2e⁻ + 2Cl(g)" },
+          { id: "s5", correctLabel: "Mg²⁺(g) + 2Cl⁻(g)" },
+          { id: "s6", correctLabel: "MgCl₂(s)", locked: true }
+        ],
+        speciesOptions: [
+          "Mg(s) + Cl₂(g)",
+          "Mg(g) + Cl₂(g)",
+          "Mg(g) + 2Cl(g)",
+          "Mg⁺(g) + e⁻ + 2Cl(g)",
+          "Mg²⁺(g) + 2e⁻ + 2Cl(g)",
+          "Mg²⁺(g) + 2Cl⁻(g)",
+          "MgCl₂(s)",
+          "Mg²⁻(g) + 2Cl⁺(g)",
+          "Mg(g) + Cl(g)",
+          "Mg⁺(g) + Cl⁻(g) + Cl(g)"
+        ],
+        steps: [
+          { id: "st01", from: "s0", to: "s1", correctApps: [{ chipId: "ch_at",  mult: 1 }], description: "atomisation of Mg (Mg(s) → Mg(g))" },
+          { id: "st12", from: "s1", to: "s2", correctApps: [{ chipId: "ch_be",  mult: 1 }], description: "breaking Cl–Cl bond (Cl₂(g) → 2Cl(g))" },
+          { id: "st23", from: "s2", to: "s3", correctApps: [{ chipId: "ch_ie1", mult: 1 }], description: "1st ionisation of Mg (Mg(g) → Mg⁺(g) + e⁻)" },
+          { id: "st34", from: "s3", to: "s4", correctApps: [{ chipId: "ch_ie2", mult: 1 }], description: "2nd ionisation of Mg (Mg⁺(g) → Mg²⁺(g) + e⁻)" },
+          { id: "st45", from: "s4", to: "s5", correctApps: [{ chipId: "ch_ea",  mult: 2 }], description: "2 × electron affinity of Cl (each Cl(g) + e⁻ → Cl⁻(g))" },
+          { id: "st56", from: "s5", to: "s6", correctApps: [{ chipId: "ch_le",  mult: 1 }], description: "lattice energy (Mg²⁺(g) + 2Cl⁻(g) → MgCl₂(s))" }
+        ]
+      },
+      chips: [
+        { id: "ch_at",  label: "ΔHat[Mg(s)]",   value: 150  },
+        { id: "ch_be",  label: "BE[Cl–Cl]",     value: 244  },
+        { id: "ch_ie1", label: "IE₁[Mg]",       value: 738  },
+        { id: "ch_ie2", label: "IE₂[Mg]",       value: 1451 },
+        { id: "ch_ea",  label: "EA₁[Cl]",       value: -349 },
+        { id: "ch_le",  label: "LE[MgCl₂(s)]",  value: -2526 }
+      ],
+      hint: "Mg ionises TWICE (Mg → Mg⁺ → Mg²⁺) so two IE chips needed. Cl gets ONE EA each, but there are 2 Cl atoms — set the EA chip's multiplier × 2. Sum of all 6 step ΔH = ΔHf."
     }
   ]
 };
@@ -1056,23 +1101,38 @@ function renderLadder() {
   const p = currProb();
   const d = document.getElementById('diagram');
   d.innerHTML = '';
-  d.style.width = LAD.W + 'px';
-  d.style.height = LAD.H + 'px';
 
   const N = p.ladder.slots.length;
+  // Compute layout dynamically so larger cycles (e.g. MgCl₂ N=7, Fe₂O₃ N≥10)
+  // still fit. Step is held at LAD.STEP unless that would push the diagram
+  // too tall, in which case it shrinks.
+  const yTopSlot = 95;          // first (top) slot's centre y
+  const yBottomMargin = 50;     // gap below the ionic-compound slot
+  const slotHalfH = 35;
+  const idealStep = LAD.STEP;
+  const minStep = 80;
+  let step = idealStep;
+  if (N <= 1) step = idealStep;
+  // Compute total height that would result, scale step down only if it explodes
+  const ladderH = yTopSlot + (N - 1) * step + slotHalfH + yBottomMargin;
+  const yBottomSlot = yTopSlot + (N - 1) * step;
+
+  d.style.width = LAD.W + 'px';
+  d.style.height = ladderH + 'px';
+
   // Slot positions:
   //   • slots[N-1] (ionic compound) at the very BOTTOM
   //   • slots[0]   (elements)        just above it
   //   • slots[1..N-2] go UP in a vertical column above the elements
   const slotPos = {};
-  slotPos[p.ladder.slots[N - 1].id] = { x: LAD.X_COL, y: LAD.Y_BOTTOM };
+  slotPos[p.ladder.slots[N - 1].id] = { x: LAD.X_COL, y: yBottomSlot };
   for (let i = 0; i < N - 1; i++) {
-    slotPos[p.ladder.slots[i].id] = { x: LAD.X_COL, y: LAD.Y_BOTTOM - (i + 1) * LAD.STEP };
+    slotPos[p.ladder.slots[i].id] = { x: LAD.X_COL, y: yBottomSlot - (i + 1) * step };
   }
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'arrows');
-  svg.setAttribute('viewBox', `0 0 ${LAD.W} ${LAD.H}`);
+  svg.setAttribute('viewBox', `0 0 ${LAD.W} ${ladderH}`);
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   svg.innerHTML = `
     <defs>
@@ -1174,11 +1234,11 @@ function isSetupFullyCorrect() {
       if (s.locked) continue;
       if (state.slotFills[s.id] !== s.correctLabel) return false;
     }
+    const norm = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
     for (const st of p.ladder.steps) {
       const apps = ((state.steps[st.id] || {}).apps) || [];
-      if (apps.length !== 1) return false;
-      if (apps[0].chipId !== st.correctChipId) return false;
-      if (apps[0].mult !== 1) return false;
+      const expected = st.correctApps || (st.correctChipId ? [{ chipId: st.correctChipId, mult: 1 }] : []);
+      if (norm(apps) !== norm(expected)) return false;
     }
     return true;
   }
@@ -1556,18 +1616,23 @@ function showMistakes() {
     // Step mistakes — describe the chemistry of the step
     p.ladder.steps.forEach(st => {
       const apps = ((state.steps[st.id] || {}).apps) || [];
-      const correctChip = p.chips.find(c => c.id === st.correctChipId);
+      const expected = st.correctApps || (st.correctChipId ? [{ chipId: st.correctChipId, mult: 1 }] : []);
+      const expectedFmt = expected.map(a => {
+        const c = p.chips.find(x => x.id === a.chipId);
+        return (c ? c.label : '?') + (a.mult !== 1 ? ' × ' + a.mult : '');
+      }).join(' + ') || '?';
       const fromLabel = (p.ladder.slots.find(s => s.id === st.from) || {}).correctLabel || st.from;
       const toLabel   = (p.ladder.slots.find(s => s.id === st.to)   || {}).correctLabel || st.to;
       const desc = st.description ? ` — ${st.description}` : '';
+      const norm = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
       if (apps.length === 0) {
-        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: no ΔH assigned. Should be ${correctChip.label}.`);
-      } else if (apps.length > 1 || apps[0].chipId !== st.correctChipId || apps[0].mult !== 1) {
+        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: no ΔH assigned. Should be ${expectedFmt}.`);
+      } else if (norm(apps) !== norm(expected)) {
         const got = apps.map(a => {
           const c = p.chips.find(x => x.id === a.chipId);
           return (c ? c.label : '?') + (a.mult !== 1 ? ' × ' + a.mult : '');
         }).join(' + ');
-        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: should use ${correctChip.label} — you assigned ${got}.`);
+        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: should use ${expectedFmt} — you assigned ${got}.`);
       }
       if ((state.steps[st.id] || {}).flipped) {
         issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: arrow is flipped — should point top → bottom.`);
@@ -1643,7 +1708,9 @@ function isArrowWrong(id) {
     const apps = data.apps || [];
     const step = p.ladder.steps.find(s => s.id === id);
     if (!step) return false;
-    const chipsOk = (apps.length === 1 && apps[0].chipId === step.correctChipId && apps[0].mult === 1);
+    const expected = step.correctApps || (step.correctChipId ? [{ chipId: step.correctChipId, mult: 1 }] : []);
+    const norm2 = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
+    const chipsOk = norm2(apps) === norm2(expected);
     return !chipsOk || data.flipped;
   }
   // id is now 'L0', 'L1', 'R0', etc.

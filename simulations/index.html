@@ -78,6 +78,7 @@
   .thumb-pt    { background: linear-gradient(135deg, #0a1528, #0d2030); }
   .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
   .thumb-electro { background: linear-gradient(135deg, #0a1628, #0f2030); }
+  .thumb-rs    { background: linear-gradient(135deg, #08222a, #062430); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -139,6 +140,7 @@
   <button class="filter-btn" onclick="filterCards('substitution', this)">Substitution</button>
   <button class="filter-btn" onclick="filterCards('addition', this)">Addition</button>
   <button class="filter-btn" onclick="filterCards('aromatic', this)">Aromatic</button>
+  <button class="filter-btn" onclick="filterCards('synthesis', this)">Synthesis</button>
 </div>
 
 <div class="grid-wrap" id="cardGrid">
@@ -243,6 +245,27 @@
       <div class="card-desc">Chlorination of benzene — how Cl&#8314; attacks the aromatic ring and aromaticity is restored.</div>
       <div class="card-footer">
         <span class="card-meta">Arene · 2D</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Reaction Scheme Practice — LIVE -->
+  <a href="./reaction-scheme.html" class="sim-card" data-tags="synthesis">
+    <div class="card-thumb thumb-rs">
+      <canvas id="th-rs" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Synthesis</span>
+        <span class="tag tag-bond">Multi-step</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Reaction Scheme Practice</div>
+      <div class="card-desc">Plan 3-step organic syntheses. Drag reagents and conditions onto each arrow, watch intermediates appear, and reach the target product. 17 questions covering aliphatic and aromatic routes.</div>
+      <div class="card-footer">
+        <span class="card-meta">Organic Synthesis · Interactive</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -496,6 +519,72 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const clX=168,clY=75;
   atom(ctx,clX,clY,14,'#22d3ee','Cl\u207a');
   arrow(ctx,cx,cy-6,clX-14,clY-3,(cx+clX)/2,cy-42);
+})();
+
+// \u2500\u2500 Reaction Scheme Practice \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+(function(){
+  const c=document.getElementById('th-rs');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;
+  ctx.fillStyle='#082530';ctx.fillRect(0,0,W,H);
+  const bw=44, bh=44, by=53, x0=10, gap=14;
+  for(let i=0;i<3;i++){
+    const bx=x0+i*(bw+gap);
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();const r=4;
+    ctx.moveTo(bx+r,by);
+    ctx.arcTo(bx+bw,by,bx+bw,by+bh,r);
+    ctx.arcTo(bx+bw,by+bh,bx,by+bh,r);
+    ctx.arcTo(bx,by+bh,bx,by,r);
+    ctx.arcTo(bx,by,bx+bw,by,r);
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle=(i===0)?'#3b82f6':(i===2)?'#22c55e':'#94a3b8';
+    ctx.lineWidth=1.5;ctx.stroke();
+    const mx=bx+bw/2,my=by+bh/2;
+    ctx.strokeStyle='#0f172a';ctx.lineWidth=1.6;ctx.lineCap='round';
+    if(i===0){
+      ctx.beginPath();
+      ctx.moveTo(mx-13,my+5);ctx.lineTo(mx-4,my-5);
+      ctx.lineTo(mx+5,my+5);ctx.lineTo(mx+14,my-5);
+      ctx.stroke();
+    } else if(i===1){
+      const rr=11;
+      ctx.beginPath();
+      for(let j=0;j<6;j++){
+        const a=-Math.PI/2+j*Math.PI/3;
+        const px=mx+rr*Math.cos(a),py=my+rr*Math.sin(a);
+        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+      ctx.closePath();ctx.stroke();
+      ctx.beginPath();ctx.arc(mx,my,rr*0.6,0,Math.PI*2);ctx.stroke();
+    } else {
+      const rr=10,hcx=mx-5;
+      ctx.beginPath();
+      for(let j=0;j<6;j++){
+        const a=-Math.PI/2+j*Math.PI/3;
+        const px=hcx+rr*Math.cos(a),py=my+rr*Math.sin(a);
+        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+      }
+      ctx.closePath();ctx.stroke();
+      ctx.beginPath();ctx.arc(hcx,my,rr*0.6,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(hcx+rr-1,my);ctx.lineTo(mx+12,my);ctx.stroke();
+      ctx.fillStyle='#dc2626';
+      ctx.beginPath();ctx.arc(mx+15,my,2.5,0,Math.PI*2);ctx.fill();
+    }
+  }
+  for(let i=0;i<2;i++){
+    const x1=x0+(i+1)*bw+i*gap+1;
+    const x2=x0+(i+1)*(bw+gap)-1;
+    const ay=by+bh/2;
+    ctx.strokeStyle='#06b6d4';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2-5,ay);ctx.stroke();
+    ctx.fillStyle='#06b6d4';
+    ctx.beginPath();
+    ctx.moveTo(x2+1,ay);ctx.lineTo(x2-5,ay-4);ctx.lineTo(x2-5,ay+4);
+    ctx.closePath();ctx.fill();
+  }
+  ctx.fillStyle='rgba(34,211,238,0.85)';
+  ctx.font='bold 10px Arial';ctx.textAlign='center';
+  ctx.fillText('Multi-step synthesis',W/2,H-12);
 })();
 
 })();

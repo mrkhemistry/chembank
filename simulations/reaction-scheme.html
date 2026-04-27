@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reaction Scheme Practice — Mr Khemistry</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+a{color:#22d3ee;text-decoration:none}
+a:hover{text-decoration:underline}
+nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:#1e293b;border-bottom:1px solid #334155;flex-wrap:wrap}
+nav .back{font-size:14px;color:#94a3b8}
+nav .title{font-size:18px;font-weight:700;color:#22d3ee}
+nav .tag{display:inline-block;padding:3px 10px;background:#334155;color:#22d3ee;border-radius:12px;font-size:11px;font-weight:600;margin-left:6px}
+nav .tag-new{background:#16a34a;color:#fff}
+.wrap{max-width:1400px;margin:0 auto;padding:18px}
+/* Contents page */
+.contents-page{display:none;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:22px;margin:0 auto 14px;max-width:820px}
+.contents-page.show{display:block}
+.contents-page h2{font-size:22px;color:#22d3ee;margin-bottom:6px;font-weight:700}
+.contents-page .subtitle{font-size:13px;color:#94a3b8;margin-bottom:18px;line-height:1.5}
+.contents-grid{display:flex;flex-direction:column;gap:5px}
+.q-card{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px 14px;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.q-card:hover{border-color:#22d3ee;background:#1c2538}
+.q-card.solved{border-color:#16a34a}
+.q-card.solved:hover{border-color:#22c55e}
+.q-card .q-num{font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;flex-shrink:0;min-width:38px}
+.q-card .q-card-title{font-size:13px;color:#22d3ee;font-weight:700;line-height:1.3;flex-shrink:0;min-width:180px}
+.q-card .q-flow{font-size:12px;color:#cbd5e1;line-height:1.3;flex:1;min-width:200px}
+.q-card .q-flow .arr{color:#06b6d4;margin:0 6px;font-weight:700}
+.q-card .q-steps{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;flex-shrink:0;background:#0b1220;padding:3px 8px;border-radius:5px}
+.q-card .q-solved-pip{background:#16a34a;color:#fff;font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:0.5px;flex-shrink:0}
+.contents-summary{margin-top:18px;padding-top:14px;border-top:1px solid #334155;font-size:13px;color:#94a3b8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.contents-summary .progress-text{font-weight:700;color:#22d3ee;background:#0f172a;padding:5px 12px;border-radius:6px}
+.contents-summary .clear-link{font-size:12px;color:#f87171;cursor:pointer;text-decoration:underline}
+.contents-summary .clear-link:hover{color:#ef4444}
+/* Question view container */
+.question-view{display:none}
+.question-view.show{display:block}
+.qcard{margin-bottom:14px;padding:14px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155}
+.qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.qhead .qnum{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.qhead .qnum .solved-pip{display:inline-block;background:#16a34a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;letter-spacing:0.5px}
+.qhead .qtitle{font-size:18px;font-weight:700;color:#22d3ee}
+.qhead .qspacer{flex:1}
+.qhead .solved-counter{font-size:11px;color:#94a3b8;background:#0f172a;padding:5px 10px;border-radius:6px;font-weight:700;letter-spacing:0.5px}
+.qhead button{background:#334155;color:#e2e8f0;border:1px solid #475569;padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600}
+.qhead button:hover{background:#475569}
+.qhead button:disabled{opacity:0.4;cursor:not-allowed}
+.qhead button.primary{background:#06b6d4;border-color:#06b6d4;color:#fff}
+.qhead button.primary:hover{background:#0891b2}
+.qhead button.danger{background:#7f1d1d;border-color:#991b1b}
+.qdesc{font-size:13px;color:#cbd5e1;line-height:1.5;margin-bottom:12px}
+/* ----- Horizontal scheme: start → step → intermediate → step → ... → target ----- */
+.scheme-wrap{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px;overflow-x:auto;margin-bottom:14px}
+.scheme-wrap::-webkit-scrollbar{height:8px}
+.scheme-wrap::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
+.scheme{display:flex;align-items:stretch;gap:2px;min-width:max-content}
+.scheme-box{flex:0 0 175px;background:#ffffff;border:1px solid #334155;border-radius:8px;display:flex;flex-direction:column;align-items:center;padding:8px 6px;position:relative;min-height:170px}
+.scheme-box.start{border-color:#3b82f6;border-width:2px}
+.scheme-box.target{border-color:#16a34a;border-width:2px}
+.scheme-box.empty{background:#0b1220;border-style:dashed;border-color:#475569;justify-content:center;cursor:default}
+.scheme-box.match{border-color:#22c55e;border-width:3px;background:#f0fdf4;box-shadow:0 0 0 3px rgba(34,197,94,0.25)}
+.scheme-box.mismatch{border-color:#dc2626;border-width:3px;background:#fef2f2;box-shadow:0 0 0 3px rgba(220,38,38,0.3)}
+.scheme-box .corner-icon{position:absolute;top:-10px;right:-10px;width:28px;height:28px;border-radius:50%;display:none;align-items:center;justify-content:center;font-size:16px;font-weight:bold;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.4);z-index:2;line-height:1}
+.scheme-box.match .corner-icon{display:flex;background:#16a34a}
+.scheme-box.mismatch .corner-icon{display:flex;background:#dc2626}
+.target-ref-top{display:flex;align-items:center;gap:14px;padding:10px 14px;background:#f0fdf4;border:2px solid #16a34a;border-radius:10px;margin-bottom:14px;max-width:420px}
+.target-ref-top .target-ref-lbl{font-size:10px;color:#15803d;text-transform:uppercase;letter-spacing:1px;font-weight:700;white-space:nowrap}
+.target-ref-top canvas{width:160px;height:90px;background:#ffffff;border-radius:6px;flex:0 0 auto}
+.target-ref-top .target-ref-name{font-size:13px;font-weight:600;color:#0f172a;flex:1;line-height:1.25}
+.scheme-box .lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:3px}
+.scheme-box.start .lbl{color:#3b82f6}
+.scheme-box.target .lbl{color:#16a34a}
+.scheme-box canvas{width:100%;height:110px;background:#ffffff;border-radius:4px}
+.scheme-box.empty canvas{display:none}
+.scheme-box .empty-content{display:none;font-size:24px;color:#64748b;font-weight:700}
+.scheme-box.empty .empty-content{display:block;margin-top:35px}
+.scheme-box .empty-sub{display:none;font-size:10px;color:#64748b;font-style:italic;margin-top:4px;text-align:center}
+.scheme-box.empty .empty-sub{display:block}
+.scheme-box .name{font-size:10px;font-weight:600;color:#0f172a;text-align:center;margin-top:4px;line-height:1.2;max-width:100%}
+.scheme-box.empty .name{display:none}
+.scheme-box .past-revert{position:absolute;top:4px;right:6px;font-size:9px;color:#94a3b8;cursor:pointer;display:none}
+.scheme-box.past:hover .past-revert{display:block}
+.scheme-box.past:hover{outline:1px solid #22d3ee}
+.scheme-box.past{cursor:pointer}
+.scheme-step{flex:0 0 175px;display:flex;flex-direction:column;justify-content:center;padding:0 6px;position:relative}
+.scheme-step.locked{opacity:0.45}
+.scheme-step .step-num{text-align:center;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:4px}
+.scheme-step.active .step-num{color:#22d3ee}
+.scheme-step.past .step-num{color:#22c55e}
+.step-zone{background:#0f172a;border:1.5px dashed #475569;border-radius:6px;padding:5px 7px;min-height:32px;transition:all 0.15s}
+.step-zone.over{border-color:#22d3ee;background:#1c2538;border-style:solid}
+.scheme-step.active .step-zone{border-color:#22d3ee;border-style:dashed}
+.scheme-step.past .step-zone{border-style:solid;border-color:#475569;background:#1e293b}
+.step-zone .chips-here{display:flex;flex-wrap:wrap;gap:4px;min-height:22px;align-items:center}
+.scheme-step.active .step-zone .chips-here:empty::after{content:'drop here';font-size:10px;color:#64748b;font-style:italic}
+.step-zone .chip{font-size:10px;padding:3px 8px;border-radius:11px;line-height:1.15}
+.step-arrow{position:relative;height:14px;margin:6px 0}
+.step-arrow::before{content:'';position:absolute;left:4px;right:14px;top:50%;height:2px;background:#475569;transform:translateY(-1px);border-radius:1px}
+.step-arrow::after{content:'';position:absolute;right:4px;top:50%;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:10px solid #475569;transform:translateY(-50%)}
+.scheme-step.active .step-arrow::before{background:#06b6d4}
+.scheme-step.active .step-arrow::after{border-left-color:#06b6d4}
+.scheme-step.past .step-arrow::before{background:#22c55e}
+.scheme-step.past .step-arrow::after{border-left-color:#22c55e}
+.scheme-step .apply-btn{display:none;margin-top:6px;align-self:center;background:#06b6d4;color:#fff;border:1px solid #06b6d4;padding:5px 16px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+.scheme-step .apply-btn:hover{background:#0891b2}
+.scheme-step.active .apply-btn{display:block}
+.scheme-step.active .apply-btn.flash-bad{background:#7f1d1d;border-color:#991b1b;animation:shake 0.4s}
+.scheme-progress{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:0 4px;font-size:11px;color:#94a3b8}
+.scheme-progress .progress-num{font-weight:700;color:#22d3ee;background:#0b1220;padding:3px 10px;border-radius:6px}
+.scheme-progress .progress-num.solved{color:#22c55e}
+.scheme-progress .progress-num.over{color:#f87171}
+.chip{display:inline-flex;align-items:center;background:#334155;border:1px solid #475569;color:#e2e8f0;padding:5px 10px;border-radius:14px;font-size:12px;font-weight:600;cursor:grab;user-select:none;transition:all 0.12s;line-height:1.2}
+.chip:hover{background:#475569;border-color:#64748b;transform:translateY(-1px)}
+.chip:active{cursor:grabbing}
+.chip.in-zone{background:#1e3a8a;border-color:#3b82f6;color:#fff}
+.chip.in-zone:hover{background:#dc2626;border-color:#ef4444}
+.chip.in-zone::after{content:' ✕';opacity:0.7;margin-left:4px;font-size:10px}
+.chip.hint-glow{box-shadow:0 0 0 3px rgba(34,197,94,0.6);border-color:#22c55e;background:#15803d;color:#fff}
+.chip.dragging{opacity:0.4}
+.palette{margin-top:14px;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px}
+.palette-section{margin-bottom:12px}
+.palette-section:last-child{margin-bottom:0}
+.palette-section h3{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:8px}
+.palette-section h3::after{content:'';flex:1;height:1px;background:#334155}
+.palette-grid{display:flex;flex-wrap:wrap;gap:6px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#7f1d1d;color:#fff;padding:12px 20px;border-radius:8px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:100}
+.toast.show{opacity:1}
+.toast.good{background:#15803d}
+.success-banner{display:none;margin-bottom:14px;padding:14px 18px;background:linear-gradient(135deg,#15803d,#16a34a);border:1px solid #22c55e;border-radius:10px;color:#fff;font-weight:700;font-size:15px;display:none;align-items:center;gap:14px}
+.success-banner.show{display:flex}
+.success-banner .sb-icon{font-size:22px}
+.success-banner .sb-spacer{flex:1}
+.success-banner button{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:7px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+.success-banner button:hover{background:rgba(255,255,255,0.3)}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:24px}
+.note{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.note h3{font-size:13px;color:#22d3ee;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.note p{font-size:13px;color:#cbd5e1;line-height:1.55}
+.note ul{font-size:13px;color:#cbd5e1;padding-left:18px;line-height:1.7}
+footer{margin-top:24px;padding:18px 24px;text-align:center;color:#64748b;font-size:13px;border-top:1px solid #334155}
+/* mobile media-query for old layout removed; scheme has its own horizontal scroll */
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="./index.html">← All simulations</a>
+  <span class="title">Reaction Scheme Practice</span>
+  <span class="tag">Organic</span>
+  <span class="tag tag-new">New</span>
+</nav>
+
+<div class="wrap">
+  <!-- Contents page (initial view) -->
+  <div class="contents-page" id="contentsPage">
+    <h2>Synthesis Questions</h2>
+    <div class="subtitle">All questions are 3-step syntheses. Click any question to start. Solved questions show a green ✓ badge — solved status persists across reloads.</div>
+    <div class="contents-grid" id="contentsGrid"></div>
+    <div class="contents-summary">
+      <span><span class="progress-text" id="contentsProgress">0 / 0 solved</span></span>
+      <span class="clear-link" id="contentsClearLink">🗑 Clear all progress</span>
+    </div>
+  </div>
+
+  <!-- Question view (hidden until a question is opened) -->
+  <div class="question-view" id="questionView">
+  <div class="qcard">
+    <div class="qhead">
+      <button id="backToContentsBtn">← Contents</button>
+      <span class="qnum" id="qnum">Question 1 of 1</span>
+      <span class="qtitle" id="qtitle">—</span>
+      <span class="qspacer"></span>
+      <span class="solved-counter" id="solvedCounter">0 / 0 solved</span>
+      <button id="prevBtn">← Prev</button>
+      <button id="nextBtn">Next →</button>
+      <button id="hintBtn">💡 Hint</button>
+      <button id="undoBtn">↶ Undo</button>
+      <button id="resetBtn" class="danger">Reset</button>
+    </div>
+    <div class="qdesc" id="qdesc">Loading…</div>
+    <div class="target-ref-top">
+      <div class="target-ref-lbl">Target<br>product</div>
+      <canvas id="targetRefCanvas" width="320" height="180"></canvas>
+      <div class="target-ref-name" id="targetRefName">—</div>
+    </div>
+    <div class="scheme-wrap">
+      <div class="scheme" id="scheme"></div>
+      <div class="scheme-progress">
+        <span>Click a past structure to revert · drag chips below into the active step</span>
+        <span class="progress-num" id="qarrProgress">0 / 3</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-banner" id="successBanner">
+    <span class="sb-icon">✓</span>
+    <span id="successText">Solved!</span>
+    <span class="sb-spacer"></span>
+    <button id="nextQBtn">Next question →</button>
+  </div>
+
+  <div class="palette" id="palette">
+    <div class="palette-section">
+      <h3>Reagents — drag or click to add to the active Reagents box</h3>
+      <div class="palette-grid" id="reagentPalette"></div>
+    </div>
+    <div class="palette-section">
+      <h3>Conditions — drag or click to add to the active Conditions box</h3>
+      <div class="palette-grid" id="conditionPalette"></div>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note">
+      <h3>How to use</h3>
+      <p>Each question gives a starting material and a target product. Click reagents on the right to transform the current structure. Reach the target in the suggested number of steps.</p>
+    </div>
+    <div class="note">
+      <h3>Hints</h3>
+      <p>Click <b>Hint</b> to highlight a valid next reagent on the shortest path. Use <b>Undo</b> to step back, <b>Reset</b> to return to the starting material, or click any structure in your route to branch from there.</p>
+    </div>
+    <div class="note">
+      <h3>Coverage</h3>
+      <ul>
+        <li>Aliphatic: alkenes, halides, alcohols, carbonyls, acids, esters, nitriles, amines, amides, acyl chlorides</li>
+        <li>Aromatic: benzene, phenol, phenylamine, benzoic acid + key transformations</li>
+        <li>Multi-functional molecules (e.g. hydroxynitriles, hydroxyacids)</li>
+      </ul>
+    </div>
+    <div class="note">
+      <h3>Try this</h3>
+      <p>Synthesise <b>ethyl 2-hydroxy-2-methylpropanoate</b> from propanone in 3 steps, or <b>propanenitrile</b> from ethanal in 3 steps (both A-level scheme questions).</p>
+    </div>
+  </div>
+  </div><!-- /.question-view -->
+</div>
+
+<div class="toast" id="toast">No reaction</div>
+
+<footer>
+  © Mr Khemistry · <a href="./index.html">All simulations</a>
+</footer>
+
+<script>
+/* =========================================================================
+   MOLECULE DATABASE
+   Coordinates use unit bond length = 1. Renderer scales to pixels.
+   atoms[i] = {x, y, lab}  where lab='C' draws a bare vertex
+   bonds[i] = [from, to, order]
+   ========================================================================= */
+const MOL = {
+  // ---------- Aliphatic ----------
+  'ethene': {
+    name: 'Ethene', formula: 'CH₂=CH₂', cls: 'Alkene',
+    atoms: [{x:0,y:0,lab:'H₂C'},{x:1.4,y:0,lab:'CH₂'}],
+    bonds: [[0,1,2]]
+  },
+  'propane': {
+    name: 'Propane', formula: 'CH₃CH₂CH₃', cls: 'Alkane',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'}],
+    bonds: [[0,1,1],[1,2,1]]
+  },
+  'propene': {
+    name: 'Propene', formula: 'CH₃CH=CH₂', cls: 'Alkene',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'}],
+    bonds: [[0,1,2],[1,2,1]]
+  },
+  '2-methylpropene': {
+    name: '2-Methylpropene', formula: '(CH₃)₂C=CH₂', cls: 'Alkene',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'C'},{x:1.732,y:0,lab:'C'}],
+    bonds: [[0,1,2],[1,2,1],[1,3,1]]
+  },
+  '12-dibromoethane': {
+    name: '1,2-Dibromoethane', formula: 'BrCH₂CH₂Br', cls: 'Halogenoalkane',
+    atoms: [{x:0,y:0,lab:'Br'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'Br'}],
+    bonds: [[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'bromoethane': {
+    name: 'Bromoethane', formula: 'CH₃CH₂Br', cls: 'Halogenoalkane',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'Br'}],
+    bonds: [[0,1,1],[1,2,1]]
+  },
+  'chloroethane': {
+    name: 'Chloroethane', formula: 'CH₃CH₂Cl', cls: 'Halogenoalkane',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'Cl'}],
+    bonds: [[0,1,1],[1,2,1]]
+  },
+  '2-bromopropane': {
+    name: '2-Bromopropane', formula: '(CH₃)₂CHBr', cls: 'Halogenoalkane',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'Br'}],
+    bonds: [[0,1,1],[1,2,1],[1,3,1]]
+  },
+  '2-bromo-2-methylpropane': {
+    name: '2-Bromo-2-methylpropane', formula: '(CH₃)₃CBr', cls: 'Halogenoalkane (3°)',
+    atoms: [{x:0,y:0,lab:'C'},{x:-1,y:0,lab:'C'},{x:1,y:0,lab:'C'},{x:0,y:1,lab:'C'},{x:0,y:-1,lab:'Br'}],
+    bonds: [[0,1,1],[0,2,1],[0,3,1],[0,4,1]]
+  },
+  'ethanol': {
+    name: 'Ethanol', formula: 'CH₃CH₂OH', cls: 'Primary alcohol',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'OH'}],
+    bonds: [[0,1,1],[1,2,1]]
+  },
+  'propan-1-ol': {
+    name: 'Propan-1-ol', formula: 'CH₃CH₂CH₂OH', cls: 'Primary alcohol',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'OH'}],
+    bonds: [[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'propan-2-ol': {
+    name: 'Propan-2-ol', formula: '(CH₃)₂CHOH', cls: 'Secondary alcohol',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'OH'}],
+    bonds: [[0,1,1],[1,2,1],[1,3,1]]
+  },
+  '2-methylpropan-2-ol': {
+    name: '2-Methylpropan-2-ol', formula: '(CH₃)₃COH', cls: 'Tertiary alcohol',
+    atoms: [{x:0,y:0,lab:'C'},{x:-1,y:0,lab:'C'},{x:1,y:0,lab:'C'},{x:0,y:1,lab:'C'},{x:0,y:-1,lab:'OH'}],
+    bonds: [[0,1,1],[0,2,1],[0,3,1],[0,4,1]]
+  },
+  'ethanal': {
+    name: 'Ethanal', formula: 'CH₃CHO', cls: 'Aldehyde',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'O'},{x:0.866,y:1.5,lab:'H'}],
+    bonds: [[0,1,1],[1,2,2],[1,3,1]]
+  },
+  'propanal': {
+    name: 'Propanal', formula: 'CH₃CH₂CHO', cls: 'Aldehyde',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'O'},{x:1.732,y:-1,lab:'H'}],
+    bonds: [[0,1,1],[1,2,1],[2,3,2],[2,4,1]]
+  },
+  'propanone': {
+    name: 'Propanone', formula: '(CH₃)₂C=O', cls: 'Ketone',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'O'}],
+    bonds: [[0,1,1],[1,2,1],[1,3,2]]
+  },
+  'methanoic-acid': {
+    name: 'Methanoic acid', formula: 'HCOOH', cls: 'Carboxylic acid',
+    atoms: [{x:-1,y:0,lab:'H'},{x:0,y:0,lab:'C'},{x:0,y:1,lab:'O'},{x:1,y:0,lab:'OH'}],
+    bonds: [[0,1,1],[1,2,2],[1,3,1]]
+  },
+  'ethanoic-acid': {
+    name: 'Ethanoic acid', formula: 'CH₃COOH', cls: 'Carboxylic acid',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'OH'},{x:0.866,y:1.5,lab:'O'}],
+    bonds: [[0,1,1],[1,2,1],[1,3,2]]
+  },
+  'propanoic-acid': {
+    name: 'Propanoic acid', formula: 'CH₃CH₂COOH', cls: 'Carboxylic acid',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'OH'},{x:1.732,y:-1,lab:'O'}],
+    bonds: [[0,1,1],[1,2,1],[2,3,1],[2,4,2]]
+  },
+  '2-hydroxy-2-methylpropanenitrile': {
+    name: '2-Hydroxy-2-methylpropanenitrile', formula: '(CH₃)₂C(OH)CN', cls: 'Hydroxynitrile',
+    atoms: [
+      {x:0,y:0,lab:'C'},      // central C
+      {x:-1,y:0,lab:'C'},     // CH₃ left
+      {x:1,y:0,lab:'C'},      // CH₃ right
+      {x:0,y:1,lab:'OH'},     // OH up
+      {x:0,y:-1,lab:'C'},     // C of CN
+      {x:0,y:-2,lab:'N'}      // N
+    ],
+    bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[4,5,3]]
+  },
+  '2-hydroxypropanenitrile': {
+    name: '2-Hydroxypropanenitrile', formula: 'CH₃CH(OH)CN', cls: 'Hydroxynitrile',
+    atoms: [
+      {x:-1,y:0,lab:'C'},
+      {x:0,y:0,lab:'C'},
+      {x:0,y:1,lab:'OH'},
+      {x:0,y:-1,lab:'C'},
+      {x:0,y:-2,lab:'N'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[1,3,1],[3,4,3]]
+  },
+  'propenenitrile': {
+    name: 'Prop-2-enenitrile', formula: 'CH₂=CHCN', cls: 'Unsaturated nitrile',
+    atoms: [
+      {x:0,y:0,lab:'C'},        // =CH₂ (left end)
+      {x:0.866,y:0.5,lab:'C'},  // =CH-
+      {x:1.732,y:0,lab:'C'},    // C of CN
+      {x:2.6,y:-0.5,lab:'N'}    // N
+    ],
+    bonds:[[0,1,2],[1,2,1],[2,3,3]]
+  },
+  '2-hydroxy-2-methylpropanoic-acid': {
+    name: '2-Hydroxy-2-methylpropanoic acid', formula: '(CH₃)₂C(OH)COOH', cls: 'Hydroxyacid',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:1,y:0,lab:'C'},
+      {x:0,y:1,lab:'OH'},
+      {x:0,y:-1,lab:'C'},
+      {x:-0.866,y:-1.5,lab:'O'},
+      {x:0.866,y:-1.5,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[4,5,2],[4,6,1]]
+  },
+  '2-hydroxypropanoic-acid': {
+    name: '2-Hydroxypropanoic acid', formula: 'CH₃CH(OH)COOH', cls: 'Hydroxyacid',
+    atoms: [
+      {x:-1,y:0,lab:'C'},
+      {x:0,y:0,lab:'C'},
+      {x:0,y:1,lab:'OH'},
+      {x:0,y:-1,lab:'C'},
+      {x:-0.866,y:-1.5,lab:'O'},
+      {x:0.866,y:-1.5,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[1,3,1],[3,4,2],[3,5,1]]
+  },
+  'ethyl-2-hydroxy-2-methylpropanoate': {
+    name: 'Ethyl 2-hydroxy-2-methylpropanoate', formula: '(CH₃)₂C(OH)CO₂CH₂CH₃', cls: 'Ester (Compound A)',
+    atoms: [
+      {x:-1,y:0,lab:'C'},          // CH₃ horizontal left of central C
+      {x:0,y:0,lab:'C'},           // central C (α-C: OH + 2 methyls + acyl C)
+      {x:0,y:1,lab:'OH'},          // OH up
+      {x:-0.5,y:-0.866,lab:'C'},   // 2nd CH₃ at lower-left
+      {x:0.866,y:0.5,lab:'C'},     // C=O acyl carbon (upper-right)
+      {x:0.866,y:1.5,lab:'O'},     // =O up
+      {x:1.732,y:0,lab:'O'},       // ester O (lower-right)
+      {x:2.6,y:0.5,lab:'C'},       // CH₂
+      {x:3.46,y:0,lab:'C'}         // CH₃
+    ],
+    bonds:[[0,1,1],[1,2,1],[1,3,1],[1,4,1],[4,5,2],[4,6,1],[6,7,1],[7,8,1]]
+  },
+  'ethyl-ethanoate': {
+    name: 'Ethyl ethanoate', formula: 'CH₃CO₂CH₂CH₃', cls: 'Ester',
+    atoms: [
+      {x:0,y:0,lab:'C'},      // CH₃
+      {x:0.866,y:0.5,lab:'C'}, // C=O
+      {x:0.866,y:1.5,lab:'O'}, // =O
+      {x:1.732,y:0,lab:'O'},   // ester O
+      {x:2.6,y:0.5,lab:'C'},   // CH₂
+      {x:3.46,y:0,lab:'C'}     // CH₃
+    ],
+    bonds:[[0,1,1],[1,2,2],[1,3,1],[3,4,1],[4,5,1]]
+  },
+  'propanenitrile': {
+    name: 'Propanenitrile', formula: 'CH₃CH₂CN', cls: 'Nitrile (Compound B)',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:-0.5,lab:'N'}],
+    bonds:[[0,1,1],[1,2,1],[2,3,3]]
+  },
+  'ethanenitrile': {
+    name: 'Ethanenitrile', formula: 'CH₃CN', cls: 'Nitrile',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'N'}],
+    bonds:[[0,1,1],[1,2,3]]
+  },
+  'ethylamine': {
+    name: 'Ethylamine', formula: 'CH₃CH₂NH₂', cls: 'Primary amine',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'NH₂'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  'propylamine': {
+    name: 'Propylamine', formula: 'CH₃CH₂CH₂NH₂', cls: 'Primary amine',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'NH₂'}],
+    bonds:[[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'ethanoyl-chloride': {
+    name: 'Ethanoyl chloride', formula: 'CH₃COCl', cls: 'Acyl chloride',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'O'},{x:1.732,y:0,lab:'Cl'}],
+    bonds:[[0,1,1],[1,2,2],[1,3,1]]
+  },
+  'ethanamide': {
+    name: 'Ethanamide', formula: 'CH₃CONH₂', cls: 'Amide',
+    atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'O'},{x:1.732,y:0,lab:'NH₂'}],
+    bonds:[[0,1,1],[1,2,2],[1,3,1]]
+  },
+
+  // ---------- Aromatic ----------
+  'benzene': {
+    name: 'Benzene', formula: 'C₆H₆', cls: 'Arene', ring:true,
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1]]
+  },
+  'methylbenzene': {
+    name: 'Methylbenzene', formula: 'C₆H₅CH₃', cls: 'Arene',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'}   // -CH₃
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'nitrobenzene': {
+    name: 'Nitrobenzene', formula: 'C₆H₅NO₂', cls: 'Arene',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'bromobenzene': {
+    name: 'Bromobenzene', formula: 'C₆H₅Br', cls: 'Arene',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'Br'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'chlorobenzene': {
+    name: 'Chlorobenzene', formula: 'C₆H₅Cl', cls: 'Arene',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'Cl'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'phenol': {
+    name: 'Phenol', formula: 'C₆H₅OH', cls: 'Phenol',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'phenylamine': {
+    name: 'Phenylamine', formula: 'C₆H₅NH₂', cls: 'Aromatic amine',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'NH₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'benzoic-acid': {
+    name: 'Benzoic acid', formula: 'C₆H₅COOH', cls: 'Carboxylic acid',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},        // C of COOH
+      {x:2.5,y:0.866,lab:'O'},  // =O
+      {x:2.866,y:-0.5,lab:'OH'} // -OH
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1]]
+  },
+  '246-tribromophenol': {
+    name: '2,4,6-Tribromophenol', formula: 'C₆H₂Br₃OH', cls: 'Bromophenol',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'OH'},
+      {x:1,y:1.732,lab:'Br'},
+      {x:-2,y:0,lab:'Br'},
+      {x:1,y:-1.732,lab:'Br'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[1,7,1],[3,8,1],[5,9,1]]
+  },
+  '246-tribromophenylamine': {
+    name: '2,4,6-Tribromophenylamine', formula: 'C₆H₂Br₃NH₂', cls: 'Tribromoaniline',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'NH₂'},
+      {x:1,y:1.732,lab:'Br'},
+      {x:-2,y:0,lab:'Br'},
+      {x:1,y:-1.732,lab:'Br'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[1,7,1],[3,8,1],[5,9,1]]
+  },
+  'benzoyl-chloride': {
+    name: 'Benzoyl chloride', formula: 'C₆H₅COCl', cls: 'Acyl chloride',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.5,y:0.866,lab:'O'},
+      {x:2.866,y:-0.5,lab:'Cl'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1]]
+  },
+  'phenylmethanol': {
+    name: 'Phenylmethanol', formula: 'C₆H₅CH₂OH', cls: 'Primary alcohol',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.866,y:0.5,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,1]]
+  },
+  'ethyl-benzoate': {
+    name: 'Ethyl benzoate', formula: 'C₆H₅CO₂CH₂CH₃', cls: 'Ester',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.5,y:0.866,lab:'O'},
+      {x:2.866,y:-0.5,lab:'O'},
+      {x:3.732,y:0,lab:'C'},
+      {x:4.598,y:-0.5,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1],[8,9,1],[9,10,1]]
+  },
+  '4-nitromethylbenzene': {
+    name: '4-Nitromethylbenzene', formula: 'CH₃C₆H₄NO₂', cls: 'Arene',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:-2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[3,7,1]]
+  },
+  '4-nitrobenzoic-acid': {
+    name: '4-Nitrobenzoic acid', formula: 'HOOC-C₆H₄-NO₂', cls: 'Carboxylic acid',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.5,y:0.866,lab:'O'},
+      {x:2.866,y:-0.5,lab:'OH'},
+      {x:-2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1],[3,9,1]]
+  },
+  '4-nitrobenzoyl-chloride': {
+    name: '4-Nitrobenzoyl chloride', formula: 'ClOC-C₆H₄-NO₂', cls: 'Acyl chloride',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.5,y:0.866,lab:'O'},
+      {x:2.866,y:-0.5,lab:'Cl'},
+      {x:-2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1],[3,9,1]]
+  }
+};
+
+// Mark which molecules contain a benzene ring at atom indices 0..5.
+// The renderer draws a hexagon with single bonds + inner π circle.
+['benzene','methylbenzene','nitrobenzene','bromobenzene','chlorobenzene',
+ 'phenol','phenylamine','benzoic-acid','246-tribromophenol','246-tribromophenylamine',
+ 'benzoyl-chloride','phenylmethanol','ethyl-benzoate',
+ '4-nitromethylbenzene','4-nitrobenzoic-acid','4-nitrobenzoyl-chloride'].forEach(id => {
+  if(MOL[id]) MOL[id].aromaticRings = [[0,1,2,3,4,5]];
+});
+
+/* =========================================================================
+   REAGENTS (chemical substances — what does the chemistry)
+   ========================================================================= */
+const REAGENTS = {
+  'br2':         {label:'Br₂'},
+  'cl2':         {label:'Cl₂'},
+  'i2':          {label:'I₂'},
+  'hbr':         {label:'HBr'},
+  'h2o-steam':   {label:'H₂O(g)'},
+  'h2':          {label:'H₂'},
+  'koh':         {label:'KOH'},
+  'kcn':         {label:'KCN'},
+  'nh3-excess':  {label:'excess NH₃'},
+  'hcn':         {label:'HCN'},
+  'conc-h2so4':  {label:'conc H₂SO₄'},
+  'dil-h2so4':   {label:'dilute H₂SO₄'},
+  'dil-hcl':     {label:'dilute HCl'},
+  'conc-hcl':    {label:'conc HCl'},
+  'dil-naoh':    {label:'dilute NaOH(aq)'},
+  'pcl5':        {label:'PCl₅'},
+  'k2cr2o7':     {label:'K₂Cr₂O₇'},
+  'kmno4':       {label:'KMnO₄'},
+  'lialh4':      {label:'LiAlH₄'},
+  'sn':          {label:'Sn'},
+  'conc-hno3':   {label:'conc HNO₃'},
+  'mecl':        {label:'CH₃Cl'},
+  'etoh-reagent':{label:'CH₃CH₂OH'}
+};
+
+/* =========================================================================
+   CONDITIONS (solvent, temperature, catalyst, technique)
+   ========================================================================= */
+const CONDITIONS = {
+  'in-ccl4':      {label:'in CCl₄'},
+  'in-ethanol':   {label:'in ethanol'},
+  'aqueous':      {label:'aqueous (aq)'},
+  'in-ether':     {label:'in dry ether'},
+  'distil':       {label:'distil'},
+  'rtp':          {label:'r.t.p.'},
+  '170c':         {label:'170 °C'},
+  '300c':         {label:'300 °C'},
+  '55c':          {label:'55 °C'},
+  '30c':          {label:'30 °C'},
+  'sealed-tube':  {label:'sealed tube'},
+  'high-pressure':{label:'high pressure'},
+  'cold':         {label:'cold'},
+  'h3po4-cat':    {label:'conc H₃PO₄ catalyst'},
+  'febr3-cat':    {label:'FeBr₃ catalyst'},
+  'alcl3-cat':    {label:'AlCl₃ catalyst'},
+  'ni-cat':       {label:'Ni catalyst'},
+  'trace-naoh':   {label:'trace NaOH(aq)'},
+  'then-naoh':    {label:'then NaOH(aq)'},
+  'heat':         {label:'heat'}
+};
+
+/* =========================================================================
+   REACTION GRAPH
+   RXN[currentMolId] = list of {r:[reagent ids], c:[condition ids], p:productId}
+   The student's reagent set must equal r and their condition set must equal c.
+   ========================================================================= */
+const RXN = {
+  // ----- Alkenes -----
+  'ethene': [
+    {r:['br2'],       c:['in-ccl4'],                       p:'12-dibromoethane'},
+    {r:['hbr'],       c:['rtp'],                           p:'bromoethane'},
+    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'}
+  ],
+  'propene': [
+    {r:['hbr'],       c:['rtp'],                           p:'2-bromopropane'},
+    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'propan-2-ol'},
+    {r:['h2'],        c:['ni-cat','heat'],                 p:'propane'}
+  ],
+  'propane': [],
+  '2-methylpropene': [
+    {r:['hbr'],       c:['rtp'],                           p:'2-bromo-2-methylpropane'},
+    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'}
+  ],
+
+  // ----- Halides -----
+  'bromoethane': [
+    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'},
+    {r:['kcn'], c:['in-ethanol','heat'],p:'propanenitrile'},
+    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'}
+  ],
+  'chloroethane': [
+    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'},
+    {r:['kcn'], c:['in-ethanol','heat'],p:'propanenitrile'},
+    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'}
+  ],
+  '12-dibromoethane': [
+    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'}
+  ],
+  '2-bromopropane': [
+    {r:['koh'], c:['aqueous','heat'],   p:'propan-2-ol'},
+    {r:['koh'], c:['in-ethanol','heat'],p:'propene'}
+  ],
+  '2-bromo-2-methylpropane': [
+    {r:['koh'], c:['aqueous','heat'],   p:'2-methylpropan-2-ol'},
+    {r:['koh'], c:['in-ethanol','heat'],p:'2-methylpropene'}
+  ],
+
+  // ----- Alcohols -----
+  'ethanol': [
+    {r:['k2cr2o7','dil-h2so4'], c:['distil'], p:'ethanal'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'ethanoic-acid'},
+    {r:['pcl5'],       c:['rtp'],          p:'chloroethane'},
+    {r:['conc-h2so4'], c:['170c'],         p:'ethene'},
+    {r:['i2','dil-naoh'], c:['heat'],      p:'methanoic-acid'}
+  ],
+  'propan-1-ol': [
+    {r:['k2cr2o7','dil-h2so4'], c:['distil'], p:'propanal'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'propanoic-acid'},
+    {r:['conc-h2so4'], c:['170c'],         p:'propene'}
+  ],
+  'propan-2-ol': [
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'propanone'},
+    {r:['conc-h2so4'], c:['170c'],         p:'propene'},
+    {r:['i2','dil-naoh'], c:['heat'],      p:'ethanoic-acid'}
+  ],
+  '2-methylpropan-2-ol': [
+    {r:['conc-h2so4'], c:['170c'],         p:'2-methylpropene'}
+  ],
+
+  // ----- Aldehydes / Ketones -----
+  'ethanal': [
+    {r:['lialh4'],              c:['in-ether','rtp'], p:'ethanol'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'ethanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'ethanoic-acid'},
+    {r:['hcn'],                 c:['trace-naoh','cold'], p:'2-hydroxypropanenitrile'},
+    {r:['i2','dil-naoh'],       c:['heat'],     p:'methanoic-acid'}
+  ],
+  'propanal': [
+    {r:['lialh4'],              c:['in-ether','rtp'], p:'propan-1-ol'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'propanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'propanoic-acid'}
+  ],
+  'propanone': [
+    {r:['lialh4'], c:['in-ether','rtp'],   p:'propan-2-ol'},
+    {r:['hcn'],    c:['trace-naoh','cold'], p:'2-hydroxy-2-methylpropanenitrile'},
+    {r:['i2','dil-naoh'], c:['heat'],      p:'ethanoic-acid'}
+  ],
+
+  // ----- Nitriles -----
+  'propanenitrile': [
+    {r:['dil-hcl'], c:['heat'],   p:'propanoic-acid'},
+    {r:['lialh4'],  c:['in-ether','rtp'], p:'propylamine'},
+    {r:['h2'],      c:['ni-cat','heat'],   p:'propylamine'}
+  ],
+  'ethanenitrile': [
+    {r:['dil-hcl'], c:['heat'],   p:'ethanoic-acid'},
+    {r:['lialh4'],  c:['in-ether','rtp'], p:'ethylamine'},
+    {r:['h2'],      c:['ni-cat','heat'],   p:'ethylamine'}
+  ],
+  '2-hydroxypropanenitrile': [
+    {r:['dil-hcl'], c:['heat'], p:'2-hydroxypropanoic-acid'},
+    {r:['conc-h2so4'], c:['170c'], p:'propenenitrile'}
+  ],
+  'propenenitrile': [
+    {r:['h2'], c:['ni-cat','heat'], p:'propylamine'}
+  ],
+  '2-hydroxy-2-methylpropanenitrile': [
+    {r:['dil-hcl'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
+  ],
+
+  // ----- Carboxylic acids -----
+  'ethanoic-acid': [
+    {r:['lialh4'], c:['in-ether','rtp'], p:'ethanol'},
+    {r:['pcl5'],   c:['rtp'],      p:'ethanoyl-chloride'},
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-ethanoate'}
+  ],
+  'propanoic-acid': [
+    {r:['lialh4'], c:['in-ether','rtp'], p:'propan-1-ol'}
+  ],
+  '2-hydroxy-2-methylpropanoic-acid': [
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-2-hydroxy-2-methylpropanoate'}
+  ],
+  '2-hydroxypropanoic-acid': [],
+
+  // ----- Acyl chloride / Amide -----
+  'ethanoyl-chloride': [
+    {r:['nh3-excess'], c:['rtp'], p:'ethanamide'}
+  ],
+  'ethanamide': [
+    {r:['lialh4'],  c:['in-ether','rtp'], p:'ethylamine'},
+    {r:['dil-hcl'], c:['heat'],   p:'ethanoic-acid'}
+  ],
+
+  // ----- Esters -----
+  'ethyl-ethanoate': [
+    {r:['dil-hcl'],  c:['heat'], p:'ethanoic-acid'},
+    {r:['dil-naoh'], c:['heat'], p:'ethanoic-acid'}
+  ],
+  'ethyl-2-hydroxy-2-methylpropanoate': [
+    {r:['dil-hcl'],  c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
+    {r:['dil-naoh'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
+  ],
+
+  // ----- Amines -----
+  'ethylamine': [],
+  'propylamine': [],
+  'phenylamine': [
+    {r:['br2'], c:['aqueous','rtp'], p:'246-tribromophenylamine'}
+  ],
+  '246-tribromophenylamine': [],
+
+  // ----- Arenes -----
+  'benzene': [
+    {r:['conc-hno3','conc-h2so4'], c:['55c'],         p:'nitrobenzene'},
+    {r:['br2'],  c:['febr3-cat'],  p:'bromobenzene'},
+    {r:['cl2'],  c:['alcl3-cat'],  p:'chlorobenzene'},
+    {r:['mecl'], c:['alcl3-cat'],  p:'methylbenzene'}
+  ],
+  'methylbenzene': [
+    {r:['kmno4','dil-h2so4'], c:['heat'], p:'benzoic-acid'},
+    {r:['conc-hno3','conc-h2so4'], c:['30c'], p:'4-nitromethylbenzene'}
+  ],
+  '4-nitromethylbenzene': [
+    {r:['kmno4','dil-h2so4'], c:['heat'], p:'4-nitrobenzoic-acid'}
+  ],
+  '4-nitrobenzoic-acid': [
+    {r:['pcl5'], c:['rtp'], p:'4-nitrobenzoyl-chloride'}
+  ],
+  '4-nitrobenzoyl-chloride': [],
+  'nitrobenzene': [
+    {r:['sn','conc-hcl'], c:['heat','then-naoh'], p:'phenylamine'}
+  ],
+  'bromobenzene': [],
+  'chlorobenzene': [],
+  'phenol': [
+    {r:['br2'], c:['aqueous','rtp'], p:'246-tribromophenol'}
+  ],
+  'benzoic-acid': [
+    {r:['pcl5'],   c:['rtp'],            p:'benzoyl-chloride'},
+    {r:['lialh4'], c:['in-ether','rtp'], p:'phenylmethanol'},
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-benzoate'}
+  ],
+  'benzoyl-chloride': [],
+  'phenylmethanol': [],
+  'ethyl-benzoate': [
+    {r:['dil-hcl'],  c:['heat'], p:'benzoic-acid'},
+    {r:['dil-naoh'], c:['heat'], p:'benzoic-acid'}
+  ],
+  '246-tribromophenol': []
+};
+
+/* =========================================================================
+   RENDERER — skeletal drawing on canvas
+   (Each scheme box has its own canvas; drawn via drawSchemeBox below.)
+   ========================================================================= */
+function atomColor(lab){
+  const c = lab.charAt(0);
+  if(lab.startsWith('NH') || lab.startsWith('NO') || c === 'N') return '#1d4ed8';   // blue
+  if(lab.startsWith('OH') || c === 'O') return '#dc2626';                            // red
+  if(lab.startsWith('Br')) return '#92400e';                                          // brown
+  if(lab.startsWith('Cl')) return '#15803d';                                          // green
+  if(lab.startsWith('I')) return '#6b21a8';                                           // purple
+  if(lab.startsWith('F')) return '#0d9488';                                           // teal
+  return '#0f172a';
+}
+
+function getMolBounds(mol){
+  let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+  for(const a of mol.atoms){
+    if(a.x<minX)minX=a.x; if(a.x>maxX)maxX=a.x;
+    if(a.y<minY)minY=a.y; if(a.y>maxY)maxY=a.y;
+  }
+  return {minX,maxX,minY,maxY};
+}
+
+function drawMolecule(ctx, mol, centerX, centerY, scale){
+  const b = getMolBounds(mol);
+  const cxOffset = -((b.minX + b.maxX) / 2);
+  const cyOffset = -((b.minY + b.maxY) / 2);
+  const px = (a) => centerX + (a.x + cxOffset) * scale;
+  const py = (a) => centerY - (a.y + cyOffset) * scale;
+
+  // Bonds
+  ctx.lineCap = 'round';
+  for(const bnd of mol.bonds){
+    const a1 = mol.atoms[bnd[0]], a2 = mol.atoms[bnd[1]];
+    const x1=px(a1), y1=py(a1), x2=px(a2), y2=py(a2);
+    drawBond(ctx, x1, y1, x2, y2, bnd[2], a1.lab !== 'C', a2.lab !== 'C');
+  }
+  // Aromatic π-cloud circles inside benzene rings
+  if(mol.aromaticRings){
+    for(const ring of mol.aromaticRings){
+      drawAromaticCircle(ctx, ring.map(i => ({x:px(mol.atoms[i]), y:py(mol.atoms[i])})), 2);
+    }
+  }
+  // Atom labels (only non-C)
+  for(const a of mol.atoms){
+    if(a.lab === 'C') continue;
+    drawLabel(ctx, px(a), py(a), a.lab);
+  }
+}
+
+function drawAromaticCircle(ctx, pts, lineWidth){
+  // pts is an array of {x,y} screen-space points around the ring
+  let cx = 0, cy = 0;
+  for(const p of pts){ cx += p.x; cy += p.y; }
+  cx /= pts.length; cy /= pts.length;
+  let r = 0;
+  for(const p of pts){ r += Math.hypot(p.x - cx, p.y - cy); }
+  r /= pts.length;
+  ctx.beginPath();
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = lineWidth;
+  ctx.arc(cx, cy, r * 0.62, 0, Math.PI*2);
+  ctx.stroke();
+}
+
+function drawBond(ctx, x1, y1, x2, y2, order, lblA, lblB){
+  const dx = x2-x1, dy = y2-y1;
+  const len = Math.hypot(dx,dy)||1;
+  const ux = dx/len, uy = dy/len;
+  const padA = lblA ? 18 : 0;
+  const padB = lblB ? 18 : 0;
+  const sx1 = x1 + ux*padA, sy1 = y1 + uy*padA;
+  const sx2 = x2 - ux*padB, sy2 = y2 - uy*padB;
+  ctx.strokeStyle = '#0f172a';
+  ctx.lineWidth = 2.4;
+  if(order === 1){
+    ctx.beginPath(); ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2); ctx.stroke();
+  } else if(order === 2){
+    // Two parallel lines, both full length, with clear separation
+    const ox = -uy*4, oy = ux*4;
+    ctx.beginPath();
+    ctx.moveTo(sx1+ox, sy1+oy); ctx.lineTo(sx2+ox, sy2+oy);
+    ctx.moveTo(sx1-ox, sy1-oy); ctx.lineTo(sx2-ox, sy2-oy);
+    ctx.stroke();
+  } else if(order === 3){
+    const ox = -uy*5.5, oy = ux*5.5;
+    ctx.beginPath();
+    ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2);
+    ctx.moveTo(sx1+ox,sy1+oy); ctx.lineTo(sx2+ox,sy2+oy);
+    ctx.moveTo(sx1-ox,sy1-oy); ctx.lineTo(sx2-ox,sy2-oy);
+    ctx.stroke();
+  }
+}
+
+function drawLabel(ctx, x, y, lab){
+  ctx.font = 'bold 18px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(lab).width;
+  // white rectangle clears bond lines under the label
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - w/2 - 4, y - 12, w + 8, 24);
+  ctx.fillStyle = atomColor(lab);
+  ctx.fillText(lab, x, y);
+}
+
+/* =========================================================================
+   QUESTION BANK
+   Each question fixes a starting material and a target product. Student must
+   navigate the reaction graph from start → target.
+   ========================================================================= */
+const QUESTIONS = [
+  // ----- Existing 3-step questions (kept) -----
+  {
+    title: 'Compound A',
+    desc: 'Starting from propanone, devise a 3-step synthesis for ethyl 2-hydroxy-2-methylpropanoate. Suggest reagents and conditions for each step.',
+    start: 'propanone',
+    target: 'ethyl-2-hydroxy-2-methylpropanoate',
+    maxSteps: 3
+  },
+  {
+    title: 'Compound B',
+    desc: 'Starting from ethanal, devise a 3-step synthesis for propanenitrile.',
+    start: 'ethanal',
+    target: 'propanenitrile',
+    maxSteps: 3
+  },
+  {
+    title: 'Ethene → propanoic acid',
+    desc: 'Convert ethene to propanoic acid in 3 steps. (Hint: you will need to add a carbon atom.)',
+    start: 'ethene',
+    target: 'propanoic-acid',
+    maxSteps: 3
+  },
+  // ----- 10 new 3-step questions from synthesis-questions PDF -----
+  {
+    title: 'Hydroxyacid via cyanohydrin',
+    desc: 'Convert ethanol to 2-hydroxypropanoic acid in 3 steps.',
+    start: 'ethanol',
+    target: '2-hydroxypropanoic-acid',
+    maxSteps: 3
+  },
+  {
+    title: 'Alcohol → carboxylic acid (chain extension)',
+    desc: 'Convert ethanol to propanoic acid in 3 steps via a halogenoalkane intermediate.',
+    start: 'ethanol',
+    target: 'propanoic-acid',
+    maxSteps: 3
+  },
+  {
+    title: 'Alcohol → primary amine',
+    desc: 'Convert ethanol to propylamine in 3 steps.',
+    start: 'ethanol',
+    target: 'propylamine',
+    maxSteps: 3
+  },
+  {
+    title: 'Alkene → ester',
+    desc: 'Convert ethene to ethyl ethanoate in 3 steps.',
+    start: 'ethene',
+    target: 'ethyl-ethanoate',
+    maxSteps: 3
+  },
+  {
+    title: 'Halogenoalkane → ester',
+    desc: 'Convert bromoethane to ethyl ethanoate in 3 steps.',
+    start: 'bromoethane',
+    target: 'ethyl-ethanoate',
+    maxSteps: 3
+  },
+  {
+    title: 'Alkene → ester via iodoform',
+    desc: 'Convert propene to ethyl ethanoate in 3 steps. (Hint: the iodoform reaction shortens the chain.)',
+    start: 'propene',
+    target: 'ethyl-ethanoate',
+    maxSteps: 3
+  },
+  {
+    title: 'Carboxylic acid → nitrile (chain extension)',
+    desc: 'Convert ethanoic acid to propanenitrile in 3 steps.',
+    start: 'ethanoic-acid',
+    target: 'propanenitrile',
+    maxSteps: 3
+  },
+  {
+    title: 'Ketone → halogenoalkane (forced via alkene)',
+    desc: 'Convert propanone to 2-bromopropane in 3 steps. PCl₅ would not give a bromide; a different route is needed.',
+    start: 'propanone',
+    target: '2-bromopropane',
+    maxSteps: 3
+  },
+  {
+    title: 'Ketone → alkane',
+    desc: 'Convert propanone to propane in 3 steps.',
+    start: 'propanone',
+    target: 'propane',
+    maxSteps: 3
+  },
+  {
+    title: 'Aromatic synthesis',
+    desc: 'Convert benzene to 2,4,6-tribromophenylamine in 3 steps.',
+    start: 'benzene',
+    target: '246-tribromophenylamine',
+    maxSteps: 3
+  },
+  {
+    title: 'Benzene → ethyl benzoate',
+    desc: 'Convert benzene to ethyl benzoate in 3 steps. Build the side chain first, then oxidise, then esterify.',
+    start: 'benzene',
+    target: 'ethyl-benzoate',
+    maxSteps: 3
+  },
+  {
+    title: 'Benzene → benzoyl chloride',
+    desc: 'Convert benzene to benzoyl chloride in 3 steps.',
+    start: 'benzene',
+    target: 'benzoyl-chloride',
+    maxSteps: 3
+  },
+  {
+    title: 'Benzene → phenylmethanol',
+    desc: 'Convert benzene to phenylmethanol (benzyl alcohol) in 3 steps.',
+    start: 'benzene',
+    target: 'phenylmethanol',
+    maxSteps: 3
+  },
+  {
+    title: '4-nitrobenzoyl chloride',
+    desc: 'Convert methylbenzene to 4-nitrobenzoyl chloride in 3 steps. Order matters — methyl is 2,4-directing while COOH is 3-directing, so nitrate first.',
+    start: 'methylbenzene',
+    target: '4-nitrobenzoyl-chloride',
+    maxSteps: 3
+  }
+];
+
+/* =========================================================================
+   STATE & UI
+   ========================================================================= */
+let qIndex = 0;            // current question index
+let history = [];          // array of {mol, reagents:[], conditions:[]}
+let currentMolId = null;
+let solved = false;
+let everSolved = new Set();   // question indices the student has ever solved
+let pickedReagents = [];      // chips currently in Reagent dropzone
+let pickedConditions = [];    // chips currently in Conditions dropzone
+let view = 'contents';        // 'contents' or 'question'
+
+function setsEqual(a, b){
+  if(a.length !== b.length) return false;
+  const sa = new Set(a), sb = new Set(b);
+  if(sa.size !== sb.size) return false;
+  for(const x of sa) if(!sb.has(x)) return false;
+  return true;
+}
+
+const STORAGE_KEY = 'mrkhem-rxn-scheme-v1';
+
+function saveState(){
+  try {
+    const data = loadStateRaw() || {};
+    data.qIndex = qIndex;
+    data.view = view;
+    data.everSolved = Array.from(everSolved);
+    if(!data.perQ) data.perQ = {};
+    // Save current question's snapshot (history + solved-this-attempt)
+    data.perQ[qIndex] = {
+      history: history.map(h => ({mol: h.mol, reagents: h.reagents, conditions: h.conditions})),
+      solved: solved
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e){ /* localStorage unavailable — no-op */ }
+}
+
+function showContents(){
+  view = 'contents';
+  document.getElementById('contentsPage').classList.add('show');
+  document.getElementById('questionView').classList.remove('show');
+  renderContents();
+  saveState();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function showQuestion(idx){
+  view = 'question';
+  document.getElementById('contentsPage').classList.remove('show');
+  document.getElementById('questionView').classList.add('show');
+  loadQuestion(idx);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function renderContents(){
+  const grid = document.getElementById('contentsGrid');
+  grid.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'q-card' + (everSolved.has(i) ? ' solved' : '');
+    const startName = (MOL[q.start] && MOL[q.start].name) || q.start;
+    const targetName = (MOL[q.target] && MOL[q.target].name) || q.target;
+    const solvedBadge = everSolved.has(i) ? '<div class="q-solved-pip">✓ solved</div>' : '';
+    card.innerHTML = `
+      <div class="q-num">Q${i+1}</div>
+      <div class="q-card-title">${q.title}</div>
+      <div class="q-flow">${startName}<span class="arr">→</span>${targetName}</div>
+      <div class="q-steps">${q.maxSteps} steps</div>
+      ${solvedBadge}
+    `;
+    card.addEventListener('click', () => showQuestion(i));
+    grid.appendChild(card);
+  });
+  document.getElementById('contentsProgress').textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
+}
+
+function loadStateRaw(){
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    return s ? JSON.parse(s) : null;
+  } catch(e){ return null; }
+}
+
+function clearState(){
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  everSolved = new Set();
+}
+
+function curQ(){ return QUESTIONS[qIndex]; }
+
+function shortestPath(start, target){
+  // BFS through reaction graph — returns array of reaction objects {r,c,p}
+  if(start === target) return [];
+  const queue = [[start, []]];
+  const visited = new Set([start]);
+  while(queue.length){
+    const [node, path] = queue.shift();
+    const list = RXN[node] || [];
+    for(const rxn of list){
+      if(!rxn.p || visited.has(rxn.p)) continue;
+      const newPath = path.concat([rxn]);
+      if(rxn.p === target) return newPath;
+      visited.add(rxn.p);
+      queue.push([rxn.p, newPath]);
+    }
+  }
+  return null;
+}
+
+function fillPalette(){
+  // Reagents
+  const rGrid = document.getElementById('reagentPalette');
+  rGrid.innerHTML = '';
+  for(const [id, r] of Object.entries(REAGENTS)){
+    const chip = makeChip(id, r.label, 'r');
+    rGrid.appendChild(chip);
+  }
+  // Conditions
+  const cGrid = document.getElementById('conditionPalette');
+  cGrid.innerHTML = '';
+  for(const [id, c] of Object.entries(CONDITIONS)){
+    const chip = makeChip(id, c.label, 'c');
+    cGrid.appendChild(chip);
+  }
+}
+
+function makeChip(id, label, kind){
+  // kind = 'r' (reagent) or 'c' (condition)
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.textContent = label;
+  chip.draggable = true;
+  if(kind === 'r') chip.dataset.r = id; else chip.dataset.c = id;
+  chip.dataset.kind = kind;
+  chip.title = 'Drag into the active step, or click to add';
+  // Click adds to active step (or removes if already in it)
+  chip.addEventListener('click', () => {
+    const arr = (kind === 'r') ? pickedReagents : pickedConditions;
+    if(arr.indexOf(id) !== -1) removeChipFromActiveStep(id, kind);
+    else addChipToActiveStep(id, kind);
+  });
+  // Drag start
+  chip.addEventListener('dragstart', e => {
+    chip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', JSON.stringify({id, kind}));
+  });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  return chip;
+}
+
+function loadQuestion(idx, opts){
+  opts = opts || {};
+  qIndex = (idx + QUESTIONS.length) % QUESTIONS.length;
+  const q = curQ();
+
+  // Try to restore saved progress for this question (unless forced reset)
+  const saved = loadStateRaw();
+  const savedQ = saved && saved.perQ && saved.perQ[qIndex];
+  if(savedQ && savedQ.history && savedQ.history.length && !opts.fresh){
+    const valid = savedQ.history.every(s => MOL[s.mol]);
+    if(valid && savedQ.history[0].mol === q.start){
+      history = savedQ.history.map(h => ({
+        mol: h.mol,
+        reagents: Array.isArray(h.reagents) ? h.reagents.slice() : [],
+        conditions: Array.isArray(h.conditions) ? h.conditions.slice() : []
+      }));
+      currentMolId = history[history.length-1].mol;
+      solved = !!savedQ.solved;
+    } else {
+      history = [{mol: q.start, reagents: [], conditions: []}];
+      currentMolId = q.start;
+      solved = false;
+    }
+  } else {
+    history = [{mol: q.start, reagents: [], conditions: []}];
+    currentMolId = q.start;
+    solved = false;
+  }
+  pickedReagents = [];
+  pickedConditions = [];
+
+  // Render question card header
+  const solvedBadge = everSolved.has(qIndex) ? ' <span class="solved-pip">✓ solved</span>' : '';
+  document.getElementById('qnum').innerHTML = `Question ${qIndex+1} of ${QUESTIONS.length}${solvedBadge}`;
+  document.getElementById('qtitle').textContent = q.title;
+  document.getElementById('qdesc').textContent = q.desc;
+  updateSolvedCounter();
+
+  // Render top target reference card
+  const refCanvas = document.getElementById('targetRefCanvas');
+  document.getElementById('targetRefName').textContent = (MOL[q.target] && MOL[q.target].name) || '';
+  drawSchemeBox(refCanvas, q.target);
+
+  // Reset / restore success banner
+  document.getElementById('successBanner').classList.remove('show');
+  if(solved){
+    document.getElementById('successText').textContent = `✓ Solved (${history.length-1} steps).`;
+    document.getElementById('successBanner').classList.add('show');
+  }
+
+  // Update prev/next button state
+  document.getElementById('prevBtn').disabled = qIndex === 0;
+  document.getElementById('nextBtn').disabled = qIndex === QUESTIONS.length - 1;
+
+  drawScheme();
+  updateProgress();
+  clearChipHints();
+  saveState();
+}
+
+function updateSolvedCounter(){
+  const el = document.getElementById('solvedCounter');
+  if(el) el.textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
+}
+
+function applyReaction(){
+  if(solved) return;
+  const list = RXN[currentMolId] || [];
+  if(pickedReagents.length === 0 && pickedConditions.length === 0){
+    showToast('Add reagents and conditions first');
+    flashActiveApply();
+    return;
+  }
+  // Look for an exact match
+  let matched = null;
+  for(const rxn of list){
+    if(setsEqual(pickedReagents, rxn.r) && setsEqual(pickedConditions, rxn.c)){
+      matched = rxn; break;
+    }
+  }
+  if(matched){
+    history[history.length-1].reagents = pickedReagents.slice();
+    history[history.length-1].conditions = pickedConditions.slice();
+    history.push({mol: matched.p, reagents: [], conditions: []});
+    currentMolId = matched.p;
+    pickedReagents = [];
+    pickedConditions = [];
+    drawScheme();
+    updateProgress();
+    checkSolved();
+    saveState();
+  } else {
+    flashActiveApply();
+    showSpecificFeedback(list);
+  }
+  clearChipHints();
+}
+
+function showSpecificFeedback(list){
+  if(list.length === 0){
+    showToast('No reactions available from this structure');
+    return;
+  }
+  // Score each candidate by how close it is to picked sets
+  let best = null, bestScore = -1;
+  for(const rxn of list){
+    const rOverlap = pickedReagents.filter(id => rxn.r.includes(id)).length;
+    const cOverlap = pickedConditions.filter(id => rxn.c.includes(id)).length;
+    const rExact = setsEqual(pickedReagents, rxn.r) ? 100 : 0;
+    const cExact = setsEqual(pickedConditions, rxn.c) ? 100 : 0;
+    const score = rExact + cExact + rOverlap + cOverlap;
+    if(score > bestScore){ bestScore = score; best = rxn; }
+  }
+  if(!best){
+    showToast('No reaction with these reagents and conditions');
+    return;
+  }
+  const lblR = id => (REAGENTS[id] && REAGENTS[id].label) || id;
+  const lblC = id => (CONDITIONS[id] && CONDITIONS[id].label) || id;
+  const missingR = best.r.filter(id => !pickedReagents.includes(id));
+  const extraR   = pickedReagents.filter(id => !best.r.includes(id));
+  const missingC = best.c.filter(id => !pickedConditions.includes(id));
+  const extraC   = pickedConditions.filter(id => !best.c.includes(id));
+
+  const reagentsExact = missingR.length === 0 && extraR.length === 0;
+  const conditionsExact = missingC.length === 0 && extraC.length === 0;
+
+  if(reagentsExact && !conditionsExact){
+    const bits = [];
+    if(extraC.length)   bits.push('remove ' + extraC.map(lblC).join(', '));
+    if(missingC.length) bits.push('add ' + missingC.map(lblC).join(', '));
+    showToast('Reagents are right — ' + bits.join(' · '));
+    return;
+  }
+  if(conditionsExact && !reagentsExact){
+    const bits = [];
+    if(extraR.length)   bits.push('remove ' + extraR.map(lblR).join(', '));
+    if(missingR.length) bits.push('add ' + missingR.map(lblR).join(', '));
+    showToast('Conditions are right — ' + bits.join(' · '));
+    return;
+  }
+  showToast('No reaction with these reagents and conditions');
+}
+
+function flashActiveApply(){
+  const btn = document.querySelector('.scheme-step.active .apply-btn');
+  if(!btn) return;
+  btn.classList.add('flash-bad');
+  setTimeout(() => btn.classList.remove('flash-bad'), 500);
+}
+
+function checkSolved(){
+  const q = curQ();
+  if(currentMolId === q.target){
+    solved = true;
+    everSolved.add(qIndex);
+    const stepsUsed = history.length - 1;
+    let msg;
+    if(stepsUsed === q.maxSteps) msg = `✓ Solved in exactly ${stepsUsed} steps. Well done!`;
+    else if(stepsUsed < q.maxSteps) msg = `✓ Solved in ${stepsUsed} steps — even fewer than expected!`;
+    else msg = `✓ Reached target in ${stepsUsed} steps (target was ${q.maxSteps}). Try again for a shorter route?`;
+    document.getElementById('successText').textContent = msg;
+    document.getElementById('successBanner').classList.add('show');
+    const solvedBadge = ' <span class="solved-pip">✓ solved</span>';
+    document.getElementById('qnum').innerHTML = `Question ${qIndex+1} of ${QUESTIONS.length}${solvedBadge}`;
+    updateSolvedCounter();
+    drawScheme();  // refresh boxes (target slot now shows ✓)
+  }
+}
+
+function undoStep(){
+  if(history.length <= 1 || solved) return;
+  history.pop();
+  history[history.length-1].reagents = [];
+  history[history.length-1].conditions = [];
+  currentMolId = history[history.length-1].mol;
+  pickedReagents = [];
+  pickedConditions = [];
+  drawScheme();
+  updateProgress();
+  saveState();
+}
+
+function resetQ(){
+  loadQuestion(qIndex, {fresh: true});
+}
+
+function jumpToStep(idx){
+  if(solved) return;
+  if(idx < 0 || idx >= history.length) return;
+  history = history.slice(0, idx+1);
+  history[history.length-1].reagents = [];
+  history[history.length-1].conditions = [];
+  currentMolId = history[history.length-1].mol;
+  pickedReagents = [];
+  pickedConditions = [];
+  drawScheme();
+  updateProgress();
+  saveState();
+}
+
+function clearAllProgress(){
+  if(!confirm('Clear all saved progress? This will reset every question and forget which ones you have solved.')) return;
+  clearState();
+  qIndex = 0;
+  if(view === 'contents') renderContents();
+  else loadQuestion(0, {fresh: true});
+}
+
+function updateProgress(){
+  const q = curQ();
+  const stepsUsed = history.length - 1;
+  const el = document.getElementById('qarrProgress');
+  el.textContent = `${stepsUsed} / ${q.maxSteps}`;
+  el.classList.remove('solved','over');
+  if(currentMolId === q.target) el.classList.add('solved');
+  else if(stepsUsed > q.maxSteps) el.classList.add('over');
+}
+
+function clearChipHints(){
+  document.querySelectorAll('.palette-grid .chip').forEach(c => c.classList.remove('hint-glow'));
+}
+
+function showHint(){
+  if(solved) return;
+  const path = shortestPath(currentMolId, curQ().target);
+  if(!path || path.length === 0){
+    showToast('No path from here — undo or reset');
+    return;
+  }
+  clearChipHints();
+  const next = path[0];
+  for(const rid of next.r){
+    const el = document.querySelector(`.palette-grid .chip[data-r="${rid}"]`);
+    if(el) el.classList.add('hint-glow');
+  }
+  for(const cid of next.c){
+    const el = document.querySelector(`.palette-grid .chip[data-c="${cid}"]`);
+    if(el) el.classList.add('hint-glow');
+  }
+  const palette = document.getElementById('palette');
+  if(palette) palette.scrollIntoView({behavior:'smooth', block:'nearest'});
+  showToast(`Hint: highlighted chips · ${path.length} step${path.length>1?'s':''} to target`, 'good');
+}
+
+function drawSchemeBox(canvasEl, molId){
+  // Render a molecule into one of the scheme's structure boxes (DPR-aware).
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvasEl.getBoundingClientRect();
+  if(rect.width > 0){
+    canvasEl.width = Math.floor(rect.width * dpr);
+    canvasEl.height = Math.floor(rect.height * dpr);
+  }
+  const ctx = canvasEl.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const W = canvasEl.width / dpr;
+  const H = canvasEl.height / dpr;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,W,H);
+  const mol = MOL[molId];
+  if(!mol) return;
+  const b = getMolBounds(mol);
+  const w = (b.maxX - b.minX) || 1;
+  const h = (b.maxY - b.minY) || 1;
+  const pad = 14;
+  const sx = (W - pad*2) / Math.max(w, 1);
+  const sy = (H - pad*2) / Math.max(h, 1.5);
+  const s = Math.min(sx, sy, 38);
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1.7;
+  const px = (a) => W/2 + (a.x - (b.minX+b.maxX)/2) * s;
+  const py = (a) => H/2 - (a.y - (b.minY+b.maxY)/2) * s;
+  for(const bn of mol.bonds){
+    const a1 = mol.atoms[bn[0]], a2 = mol.atoms[bn[1]];
+    const x1=px(a1), y1=py(a1), x2=px(a2), y2=py(a2);
+    const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1;
+    const ux=dx/len, uy=dy/len;
+    const padA = a1.lab !== 'C' ? 9 : 0, padB = a2.lab !== 'C' ? 9 : 0;
+    const x1a = x1+ux*padA, y1a = y1+uy*padA, x2a = x2-ux*padB, y2a = y2-uy*padB;
+    if(bn[2] === 1){
+      ctx.beginPath(); ctx.moveTo(x1a,y1a); ctx.lineTo(x2a,y2a); ctx.stroke();
+    } else if(bn[2] === 2){
+      const ox=-uy*2.6, oy=ux*2.6;
+      ctx.beginPath();
+      ctx.moveTo(x1a+ox,y1a+oy); ctx.lineTo(x2a+ox,y2a+oy);
+      ctx.moveTo(x1a-ox,y1a-oy); ctx.lineTo(x2a-ox,y2a-oy);
+      ctx.stroke();
+    } else if(bn[2] === 3){
+      const ox=-uy*3, oy=ux*3;
+      ctx.beginPath();
+      ctx.moveTo(x1a,y1a); ctx.lineTo(x2a,y2a);
+      ctx.moveTo(x1a+ox,y1a+oy); ctx.lineTo(x2a+ox,y2a+oy);
+      ctx.moveTo(x1a-ox,y1a-oy); ctx.lineTo(x2a-ox,y2a-oy);
+      ctx.stroke();
+    }
+  }
+  if(mol.aromaticRings){
+    for(const ring of mol.aromaticRings){
+      drawAromaticCircle(ctx, ring.map(i => ({x:px(mol.atoms[i]), y:py(mol.atoms[i])})), 1.4);
+    }
+  }
+  ctx.font = 'bold 11px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for(const a of mol.atoms){
+    if(a.lab === 'C') continue;
+    const x = px(a), y = py(a);
+    const ww = ctx.measureText(a.lab).width;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - ww/2 - 3, y - 8, ww + 6, 16);
+    ctx.fillStyle = atomColor(a.lab);
+    ctx.fillText(a.lab, x, y);
+  }
+}
+
+function drawScheme(){
+  const q = curQ();
+  const N = q.maxSteps;
+  const target = q.target;
+  const activeStep = solved ? -1 : (history.length - 1);  // -1 means none active
+  const scheme = document.getElementById('scheme');
+  scheme.innerHTML = '';
+
+  for(let i = 0; i <= N; i++){
+    // ---- Box i ----
+    const box = document.createElement('div');
+    box.className = 'scheme-box';
+    const isStart = i === 0;
+    const isFinalSlot = i === N;
+    const isFilled = i < history.length;
+    const isPast = isFilled && i < history.length - 1;
+    const molId = isFilled ? history[i].mol : null;
+    if(isStart) box.classList.add('start');
+    if(isFinalSlot && isFilled){
+      if(molId === target) box.classList.add('match');
+      else box.classList.add('mismatch');
+    }
+    if(isPast && !isStart) box.classList.add('past');
+    if(!isFilled) box.classList.add('empty');
+
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    if(isStart) lbl.textContent = 'Starting material';
+    else if(isFinalSlot){
+      if(!isFilled) lbl.textContent = 'Final product';
+      else if(molId === target) lbl.textContent = '✓ Target reached';
+      else lbl.textContent = 'Your final product';
+    } else {
+      lbl.textContent = isFilled ? `After step ${i}` : `Intermediate ${i}`;
+    }
+    box.appendChild(lbl);
+
+    // Corner icon (✓ or ✗) — visible only on match/mismatch via CSS
+    const corner = document.createElement('div');
+    corner.className = 'corner-icon';
+    corner.textContent = box.classList.contains('match') ? '✓' : '✗';
+    box.appendChild(corner);
+
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%'; canvas.style.height = '110px';
+    box.appendChild(canvas);
+
+    const empty = document.createElement('div');
+    empty.className = 'empty-content';
+    empty.textContent = '?';
+    box.appendChild(empty);
+    const sub = document.createElement('div');
+    sub.className = 'empty-sub';
+    sub.textContent = 'fill in below';
+    box.appendChild(sub);
+
+    const name = document.createElement('div');
+    name.className = 'name';
+    if(molId && MOL[molId]) name.textContent = MOL[molId].name;
+    box.appendChild(name);
+
+    if(isPast){
+      const rev = document.createElement('div');
+      rev.className = 'past-revert';
+      rev.textContent = '↶ revert';
+      box.appendChild(rev);
+      box.addEventListener('click', () => jumpToStep(i));
+    }
+
+    scheme.appendChild(box);
+    if(molId && MOL[molId]) drawSchemeBox(canvas, molId);
+
+    // ---- Step i (between box i and box i+1) ----
+    if(i < N){
+      const step = document.createElement('div');
+      step.className = 'scheme-step';
+      step.dataset.step = i;
+      const isPastStep = i < activeStep;
+      const isActiveStep = (i === activeStep);
+      const isFutureStep = (activeStep === -1) ? !isPastStep : i > activeStep;
+      if(isActiveStep) step.classList.add('active');
+      else if(isPastStep) step.classList.add('past');
+      else if(isFutureStep) step.classList.add('locked');
+
+      const num = document.createElement('div');
+      num.className = 'step-num';
+      num.textContent = `step ${i + 1}`;
+      step.appendChild(num);
+
+      const rZone = makeStepZone('r', i, isActiveStep);
+      step.appendChild(rZone);
+
+      const arr = document.createElement('div');
+      arr.className = 'step-arrow';
+      step.appendChild(arr);
+
+      const cZone = makeStepZone('c', i, isActiveStep);
+      step.appendChild(cZone);
+
+      // Apply button — visible for active step only
+      const applyBtn = document.createElement('button');
+      applyBtn.className = 'apply-btn';
+      applyBtn.textContent = 'Apply →';
+      applyBtn.addEventListener('click', applyReaction);
+      step.appendChild(applyBtn);
+
+      scheme.appendChild(step);
+
+      // Populate chips
+      let rIds = [], cIds = [];
+      if(isPastStep){
+        rIds = history[i].reagents || [];
+        cIds = history[i].conditions || [];
+      } else if(isActiveStep){
+        rIds = pickedReagents;
+        cIds = pickedConditions;
+      }
+      const rChipsBox = rZone.querySelector('.chips-here');
+      const cChipsBox = cZone.querySelector('.chips-here');
+      for(const id of rIds){
+        const lab = (REAGENTS[id] && REAGENTS[id].label) || id;
+        rChipsBox.appendChild(makeStepChip(id, lab, 'r', isActiveStep));
+      }
+      for(const id of cIds){
+        const lab = (CONDITIONS[id] && CONDITIONS[id].label) || id;
+        cChipsBox.appendChild(makeStepChip(id, lab, 'c', isActiveStep));
+      }
+    }
+  }
+
+  // Update palette dim states
+  refreshPaletteDim();
+}
+
+function makeStepZone(kind, stepIdx, isActive){
+  const z = document.createElement('div');
+  z.className = 'step-zone';
+  z.dataset.zone = kind;
+  z.dataset.step = stepIdx;
+  const chips = document.createElement('div');
+  chips.className = 'chips-here';
+  z.appendChild(chips);
+  if(isActive){
+    z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('over'); });
+    z.addEventListener('dragleave', () => z.classList.remove('over'));
+    z.addEventListener('drop', e => {
+      e.preventDefault();
+      z.classList.remove('over');
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain') || '{}');
+        if(data.kind === kind) addChipToActiveStep(data.id, data.kind);
+        else if(data.kind) showToast('That chip belongs in the other box');
+      } catch(e){}
+    });
+  }
+  return z;
+}
+
+function makeStepChip(id, label, kind, removable){
+  const chip = document.createElement('div');
+  chip.className = 'chip in-zone';
+  chip.textContent = label;
+  if(kind === 'r') chip.dataset.r = id; else chip.dataset.c = id;
+  if(removable){
+    chip.title = 'Click to remove';
+    chip.addEventListener('click', () => removeChipFromActiveStep(id, kind));
+  } else {
+    chip.style.cursor = 'default';
+  }
+  return chip;
+}
+
+function refreshPaletteDim(){
+  // Dim palette chips that are already in the active step's zone
+  document.querySelectorAll('.palette-grid .chip').forEach(c => c.classList.remove('in-zone'));
+  for(const id of pickedReagents){
+    const el = document.querySelector(`.palette-grid .chip[data-r="${id}"]`);
+    if(el) el.classList.add('in-zone');
+  }
+  for(const id of pickedConditions){
+    const el = document.querySelector(`.palette-grid .chip[data-c="${id}"]`);
+    if(el) el.classList.add('in-zone');
+  }
+}
+
+function addChipToActiveStep(id, kind){
+  if(solved) return;
+  const arr = (kind === 'r') ? pickedReagents : pickedConditions;
+  if(arr.indexOf(id) === -1) arr.push(id);
+  drawScheme();
+  saveState();
+}
+
+function removeChipFromActiveStep(id, kind){
+  if(solved) return;
+  const arr = (kind === 'r') ? pickedReagents : pickedConditions;
+  const i = arr.indexOf(id);
+  if(i !== -1) arr.splice(i, 1);
+  drawScheme();
+  saveState();
+}
+
+function showToast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind === 'good' ? ' good' : '');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => {
+    t.className = 'toast';
+  }, 1600);
+}
+
+/* drawCurrent / drawMini / drawHistory are now obsolete — drawScheme replaces them */
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+fillPalette();
+
+// Restore saved progress from localStorage
+const saved = loadStateRaw();
+if(saved){
+  if(Array.isArray(saved.everSolved)) everSolved = new Set(saved.everSolved);
+  if(typeof saved.qIndex === 'number' && saved.qIndex >= 0 && saved.qIndex < QUESTIONS.length){
+    qIndex = saved.qIndex;
+  }
+  if(saved.view === 'question' || saved.view === 'contents') view = saved.view;
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => loadQuestion(qIndex - 1));
+document.getElementById('nextBtn').addEventListener('click', () => loadQuestion(qIndex + 1));
+document.getElementById('nextQBtn').addEventListener('click', () => loadQuestion(qIndex + 1));
+document.getElementById('undoBtn').addEventListener('click', undoStep);
+document.getElementById('resetBtn').addEventListener('click', resetQ);
+document.getElementById('hintBtn').addEventListener('click', showHint);
+document.getElementById('backToContentsBtn').addEventListener('click', showContents);
+document.getElementById('contentsClearLink').addEventListener('click', clearAllProgress);
+const clrBtn = document.getElementById('clearProgressBtn');
+if(clrBtn) clrBtn.addEventListener('click', clearAllProgress);
+
+// Re-render the scheme on resize so scheme-box canvases re-fit cleanly
+window.addEventListener('resize', () => {
+  if(view === 'question') drawScheme();
+});
+window.addEventListener('load', () => {
+  if(view === 'question') showQuestion(qIndex);
+  else showContents();
+});
+
+// Initial pass
+if(view === 'question') showQuestion(qIndex);
+else showContents();
+</script>
+</body>
+</html>

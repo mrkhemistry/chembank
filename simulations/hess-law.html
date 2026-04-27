@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hess' Law — Mr Khemistry</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #263348;
+    --surface3: #2f3e57;
+    --border: #334155;
+    --border-strong: #475569;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --purple: #c084fc;
+    --orange: #fb923c;
+    /* Path colours. Internal var names cw / ccw are kept for code stability,
+       but user-facing labels now read: cw → "Anticlockwise (direct)", ccw → "Clockwise (via anchor)". */
+    --cw: #ec4899;       /* direct/target path — bright magenta (was red; red reserved for errors) */
+    --ccw: #facc15;      /* indirect/via-anchor path — bright yellow */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 24px; background: var(--surface);
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  nav a:hover { color: var(--text); }
+  .nav-sep { color: var(--border); }
+  .nav-title { color: var(--text); font-weight: 600; font-size: 15px; }
+  .nav-tags { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .tag-thermo { background: #2d1e05; color: #fdba74; }
+  .tag-new { background: #14532d; color: #4ade80; }
+
+  /* CYCLE TABS */
+  .cycle-tabs {
+    display: flex; justify-content: center; gap: 6px;
+    padding: 18px 16px 6px; flex-wrap: wrap;
+  }
+  .cyc-btn {
+    padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 8px; transition: all .15s;
+  }
+  .cyc-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .cyc-btn.active { background: var(--surface2); color: var(--accent); border-color: var(--accent); }
+
+  /* MAIN */
+  .main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+  .problem-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .problem-row label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+  .prob-select {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;
+    flex: 1; min-width: 220px;
+  }
+  .prob-select:focus { outline: none; border-color: var(--accent); }
+
+  /* TARGET */
+  .target-box {
+    background: var(--surface2); border: 1.5px solid var(--accent);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;
+  }
+  .target-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+  .target-eq { font-size: 17px; color: var(--text); text-align: center; }
+  .target-dh { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+
+  /* BUILD LAYOUT */
+  .build-layout {
+    display: grid; grid-template-columns: 1fr 290px; gap: 18px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 820px) { .build-layout { grid-template-columns: 1fr; } }
+
+  .diagram-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; min-height: 520px;
+    position: relative; overflow: auto;
+  }
+  .diagram { position: relative; margin: 0 auto; }
+  .diagram svg.arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* Chemistry super/subscripts — bigger and bolder so charge signs are legible */
+  sup { font-size: 0.95em; font-weight: 700; vertical-align: 0.5em; line-height: 0; }
+  sub { font-size: 0.85em; vertical-align: -0.25em; line-height: 0; }
+
+  /* When Show Mistakes is active, dim everything in the diagram so the red
+     "wrong" indicators stand out clearly. */
+  .diagram.showing-mistakes > * { opacity: 0.28; transition: opacity 0.15s; }
+  .diagram.showing-mistakes .slot.wrong,
+  .diagram.showing-mistakes .arrow-label.wrong { opacity: 1; }
+
+  /* PATH LEGEND */
+  .path-legend {
+    display: flex; justify-content: center; gap: 22px;
+    margin-bottom: 12px; font-size: 12px; flex-wrap: wrap;
+  }
+  .path-legend .item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .path-legend .swatch { width: 22px; height: 3px; border-radius: 2px; }
+  .swatch-cw { background: var(--cw); }
+  .swatch-ccw { background: var(--ccw); }
+
+  /* SLOTS — anchor / species (bright blue theme) */
+  .slot {
+    position: absolute; transform: translate(-50%, -50%);
+    background: rgba(59,130,246,.08); border: 2px dashed #60a5fa;
+    border-radius: 10px; padding: 10px 14px; min-width: 110px; max-width: 240px;
+    text-align: center; cursor: pointer; transition: all .15s;
+    z-index: 2;
+  }
+  .slot:hover { border-color: #93c5fd; }
+  .slot.locked { cursor: default; border-style: solid; border-color: var(--border); background: var(--surface); }
+  .slot.locked:hover { border-color: var(--border); }
+  .slot.filled { border-style: solid; border-color: #3b82f6; background: rgba(59,130,246,.20); }
+  /* Locked slots that are pre-filled (Reactants / Products / Born-Haber endpoints) stay green */
+  .slot.locked.filled { border-color: var(--green); background: rgba(74,222,128,.10); }
+  /* The "elements" slot in a Born-Haber cycle gets a yellow highlight (independent of path colours) */
+  .slot.locked.filled.elements,
+  .slot.elements { border-color: #facc15; background: rgba(250,204,21,.18); }
+  .slot.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,.25); background: rgba(56,189,248,.08); }
+  .slot.wrong { border-color: var(--red) !important; background: rgba(248,113,113,.1) !important; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
+  .slot-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+  .slot-content { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .slot-empty { color: var(--muted); font-style: italic; font-size: 12px; }
+
+  /* ARROW LABELS */
+  .arrow-label {
+    position: absolute; transform: translate(-50%, -50%);
+    background: var(--surface); border: 2px dashed var(--border-strong);
+    border-radius: 8px; padding: 6px 10px; min-width: 110px; max-width: 180px;
+    text-align: center; cursor: pointer; transition: all .15s;
+    z-index: 3; font-size: 12px;
+  }
+  .arrow-label:hover { border-color: var(--accent); }
+  .arrow-label.target { border-style: solid; cursor: default; font-weight: 700; }
+  .arrow-label.cw  { border-color: var(--cw);  background: rgba(236,72,153,.14); color: var(--cw); }
+  .arrow-label.ccw { border-color: var(--ccw); background: rgba(250,204,21,.20); color: #fef3c7; }
+  .arrow-label.filled { border-style: solid; }
+  .arrow-label.selected { box-shadow: 0 0 0 3px rgba(56,189,248,.30); border-color: var(--accent) !important; }
+  .arrow-label.wrong { border-color: var(--red) !important; background: rgba(248,113,113,.1) !important; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
+  .arrow-empty { color: var(--muted); font-style: italic; }
+  .app-list { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .app-item { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text); white-space: nowrap; }
+  .app-item .x-rm { color: var(--muted); margin-left: 4px; cursor: pointer; padding: 0 3px; }
+  .app-item .x-rm:hover { color: var(--red); }
+  .mult-mini {
+    width: 50px; padding: 1px 3px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 3px; color: var(--text); font-size: 11px; text-align: center;
+    color-scheme: dark;
+  }
+  .mult-mini:focus { outline: none; border-color: var(--accent); }
+  /* Force webkit spinner arrows to be visible against the dark input background */
+  .mult-mini::-webkit-inner-spin-button,
+  .mult-mini::-webkit-outer-spin-button {
+    opacity: 1;
+    filter: invert(1) brightness(1.4);
+    cursor: pointer;
+  }
+  .app-plus { font-size: 10px; color: var(--muted); }
+  .arrow-value {
+    margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border);
+    font-size: 12px; font-weight: 700;
+  }
+  .arrow-value.pos { color: var(--green); }
+  .arrow-value.neg { color: var(--orange); }
+
+  /* FLIP BUTTON */
+  .arrow-tools {
+    display: flex; justify-content: center; gap: 6px; margin-top: 5px;
+  }
+  .flip-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 4px; padding: 1px 6px;
+    font-size: 11px; cursor: pointer; transition: all .15s;
+  }
+  .flip-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* PALETTE */
+  .palette {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; overflow-y: auto;
+    /* Stretch to match the diagram's height (set by the grid row) so the two
+       columns are visually inline; scroll inside if chip list is taller. */
+    align-self: stretch; min-height: 0;
+  }
+  .palette-section { margin-bottom: 14px; }
+  .palette-section:last-child { margin-bottom: 0; }
+  .palette-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .palette-hint { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-style: italic; }
+  .chip {
+    display: block; width: 100%; padding: 9px 12px; margin-bottom: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 14px; cursor: pointer;
+    text-align: left; transition: all .15s;
+  }
+  .chip:hover { border-color: var(--accent); background: var(--surface3); }
+  .chip.disabled { opacity: 0.4; cursor: not-allowed; }
+  .chip.disabled:hover { border-color: var(--border); background: var(--surface2); }
+  .chip-val { color: var(--muted); font-size: 11px; margin-left: 4px; }
+  .chip.species { background: rgba(59,130,246,.18); border-color: #60a5fa; color: #dbeafe; }
+  .chip.species:hover { background: rgba(59,130,246,.30); border-color: #93c5fd; }
+  .chip.dh { background: rgba(250,204,21,.18); border-color: #facc15; color: #fef3c7; }
+  .chip.dh:hover { background: rgba(250,204,21,.30); border-color: #fde047; }
+  .chip[draggable="true"] { cursor: grab; }
+  .chip[draggable="true"]:active { cursor: grabbing; }
+  .chip.dragging { opacity: 0.4; }
+
+  /* DRAG-OVER FEEDBACK ON DROP TARGETS */
+  .slot.drag-over,
+  .arrow-label.drag-over {
+    border-style: solid !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 4px rgba(56,189,248,.45) !important;
+  }
+  .slot.drag-over { transform: translate(-50%, -50%) scale(1.04); }
+
+  /* Arrow-label anchor variants: for diagonal labels we anchor the inner
+     corner (closest to the arrow) so the box stays close when empty AND
+     grows outward (away from the arrow) when a chip is dropped in. */
+  .arrow-label.anc-tl { transform: translate(0, 0); }
+  .arrow-label.anc-tr { transform: translate(-100%, 0); }
+
+  /* ACTIONS */
+  .action-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: none; background: var(--accent); color: #0f172a;
+    transition: opacity .15s;
+  }
+  .btn-primary:hover { opacity: .85; }
+  .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: 1px solid var(--border-strong); background: transparent; color: var(--text);
+    transition: all .15s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: 1px solid #6b1f1f; background: transparent; color: var(--red);
+    transition: all .15s;
+  }
+  .btn-danger:hover { background: #2a0e0e; }
+  .btn-warn {
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 700;
+    cursor: pointer; border: 1px solid #7c5e2a; background: #2d1e05; color: var(--amber);
+    transition: all .15s;
+  }
+  .btn-warn:hover { background: #3d2a08; }
+
+  /* RESULT PANEL */
+  .result-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 12px;
+  }
+  .result-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .path-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;
+  }
+  @media (max-width: 700px) { .path-row { grid-template-columns: 1fr; } }
+  .path-card { padding: 12px 14px; border-radius: 8px; border: 1.5px solid; }
+  .path-card.cw  { border-color: var(--cw);  background: rgba(236,72,153,.12); }
+  .path-card.ccw { border-color: var(--ccw); background: rgba(250,204,21,.08); }
+  .path-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .path-card.cw  .path-name { color: var(--cw); }
+  .path-card.ccw .path-name { color: var(--ccw); }
+  .path-trace { font-size: 12px; line-height: 1.6; font-family: 'Consolas', monospace; }
+  .path-total { font-size: 14px; font-weight: 700; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); }
+  .hess-equation {
+    text-align: center; padding: 10px; background: var(--surface2);
+    border-radius: 8px; margin-bottom: 10px; font-size: 14px; font-weight: 600;
+  }
+  .result-final { font-size: 15px; font-weight: 700; padding: 10px 12px; border-radius: 8px; }
+  .result-final.correct { background: #0e2a18; color: var(--green); border: 1px solid #1f6b3a; }
+  .result-final.incorrect { background: #2a0e0e; color: var(--red); border: 1px solid #6b1f1f; }
+  .result-final.partial { background: #2a1e08; color: var(--amber); border: 1px solid #6b4f1f; }
+
+  /* HINT */
+  .hint-box {
+    background: #2d1e05; border: 1px solid #7c5e2a;
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 12px;
+    font-size: 13px; color: #fde68a;
+  }
+
+  /* NOTES */
+  .notes-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px; margin-top: 32px;
+  }
+  .note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .note-icon { font-size: 22px; margin-bottom: 8px; }
+  .note-title { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 5px; }
+  .note-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  footer {
+    text-align: center; padding: 24px; font-size: 12px;
+    color: var(--border); border-top: 1px solid var(--border); margin-top: 40px;
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="./index.html">← Simulations</a>
+  <span class="nav-sep">/</span>
+  <span class="nav-title">Hess' Law — Energy Cycles</span>
+  <div class="nav-tags">
+    <span class="tag tag-thermo">Thermochemistry</span>
+    <span class="tag tag-new">New</span>
+  </div>
+</nav>
+
+<div class="cycle-tabs">
+  <button class="cyc-btn active" data-cycle="formation" onclick="setCycle('formation')">Formation</button>
+  <button class="cyc-btn" data-cycle="combustion" onclick="setCycle('combustion')">Combustion</button>
+  <button class="cyc-btn" data-cycle="be" onclick="setCycle('be')">Bond Energy</button>
+  <button class="cyc-btn" data-cycle="bornhaber" onclick="setCycle('bornhaber')">Born-Haber</button>
+</div>
+
+<div class="main">
+
+  <div class="problem-row">
+    <label>Problem</label>
+    <select class="prob-select" id="probSelect" onchange="loadProblem(this.value)"></select>
+  </div>
+
+  <div class="target-box">
+    <div class="target-dh" id="targetDhHint"></div>
+    <div class="target-eq" id="targetEq"></div>
+  </div>
+
+  <div class="build-layout">
+    <div class="diagram-wrap">
+      <div class="path-legend">
+        <div class="item"><span class="swatch swatch-cw"></span><span id="cwLegendLabel">Clockwise path (direct)</span></div>
+        <div class="item"><span class="swatch swatch-ccw"></span><span id="ccwLegendLabel">Anticlockwise path (via anchor)</span></div>
+      </div>
+      <div class="diagram" id="diagram"></div>
+    </div>
+    <div class="palette" id="palette"></div>
+  </div>
+
+  <div class="action-row">
+    <button class="btn-primary" id="traceBtn" onclick="traceCycle()">→ Trace Cycle &amp; Calculate</button>
+    <button class="btn-warn" id="hintBtn" onclick="toggleHint()">💡 Hint</button>
+    <button class="btn-secondary hidden" id="mistakesBtn" onclick="showMistakes()">🔴 Show Mistakes</button>
+    <button class="btn-danger" onclick="resetBuild()">↺ Reset</button>
+  </div>
+
+  <div class="hint-box hidden" id="hintBox"></div>
+  <div class="result-panel hidden" id="resultPanel">
+    <div class="result-title">Both pathways from R to P</div>
+    <div class="path-row">
+      <div class="path-card cw">
+        <div class="path-name" id="cwPathName">Clockwise (direct)</div>
+        <div class="path-trace" id="cwTrace"></div>
+        <div class="path-total" id="cwTotal"></div>
+      </div>
+      <div class="path-card ccw">
+        <div class="path-name" id="ccwPathName">Anticlockwise (via anchor)</div>
+        <div class="path-trace" id="ccwTrace"></div>
+        <div class="path-total" id="ccwTotal"></div>
+      </div>
+    </div>
+    <div class="hess-equation" id="hessEq"></div>
+    <div class="result-final" id="resultFinal"></div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <div class="note-icon">🔺</div>
+      <div class="note-title">Hess' Law</div>
+      <div class="note-body">ΔH is path-independent — going around a closed cycle by either route gives the same answer. The anticlockwise (direct) and clockwise (via anchor) paths from R to P must be equal.</div>
+    </div>
+    <div class="note-card">
+      <div class="note-icon">🔄</div>
+      <div class="note-title">Going Against an Arrow</div>
+      <div class="note-body">If you traverse an arrow against its direction, flip the sign of ΔH. Use the ⇄ button to redirect an arrow if its natural direction doesn't match what you want.</div>
+    </div>
+    <div class="note-card">
+      <div class="note-icon">⚓</div>
+      <div class="note-title">Choosing the Anchor</div>
+      <div class="note-body">Formation → elements. Combustion → CO₂ + H₂O. Bond energy → gaseous atoms. Born-Haber → ladder between elements and ionic solid.</div>
+    </div>
+    <div class="note-card">
+      <div class="note-icon">✖️</div>
+      <div class="note-title">Multipliers</div>
+      <div class="note-body">If your cycle has 2H₂O on one side, multiply ΔHf[H₂O] by 2. Always match coefficients in the target equation.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <a href="./index.html">← Back to Simulations</a> &nbsp;·&nbsp; © Mr Khemistry
+</footer>
+
+<script>
+// ─── PROBLEM DATA ───────────────────────────────────────────────────────────
+
+const PROBLEMS = {
+
+  formation: [
+    {
+      name: "ΔH for: CO(g) + ½O₂(g) → CO₂(g) using ΔHf data",
+      target: { lhs: "CO(g) + ½O₂(g)", rhs: "CO₂(g)", dhLabel: "ΔH" },
+      answer: -283,
+      anchorPrompt: "Pick the anchor for a formation cycle",
+      anchorOptions: [
+        { id: "ax_a", label: "C(s) + O₂(g)", correct: true },
+        { id: "ax_b", label: "CO(g) + ½O₂(g)", correct: false },
+        { id: "ax_c", label: "C(s) + 2O(g)", correct: false }
+      ],
+      chips: [
+        { id: "f_co",  label: "ΔHf[CO(g)]",  value: -111 },
+        { id: "f_co2", label: "ΔHf[CO₂(g)]", value: -394 }
+      ],
+      // Natural direction for ΔHf chips: anchor → compound
+      arrowDir: { left: "A_to_R", right: "A_to_P" },
+      expected: {
+        anchorId: "ax_a",
+        leftArrows:  [ [{ chipId: "f_co",  mult: 1 }] ],
+        rightArrows: [ [{ chipId: "f_co2", mult: 1 }] ]
+      },
+      hint: "Formation cycle anchor = elements in standard states. ΔHf arrows naturally go UP from elements to compound. Both the clockwise (direct, R → P) and anticlockwise (R → A → P) paths must give the same ΔH."
+    }
+  ],
+
+  combustion: [
+    {
+      name: "ΔH for: C(diamond) → C(graphite) using ΔHc data",
+      target: { lhs: "C(diamond)", rhs: "C(graphite)", dhLabel: "ΔH" },
+      answer: -1.9,
+      anchorPrompt: "Pick the anchor for a combustion cycle",
+      anchorOptions: [
+        { id: "ax_a", label: "CO₂(g)", correct: true },
+        { id: "ax_b", label: "C(s) + O₂(g)", correct: false },
+        { id: "ax_c", label: "CO(g) + ½O₂(g)", correct: false }
+      ],
+      chips: [
+        { id: "c_d", label: "ΔHc[C(diamond)]",  value: -395.4 },
+        { id: "c_g", label: "ΔHc[C(graphite)]", value: -393.5 }
+      ],
+      // Natural direction for ΔHc chips: compound → anchor
+      arrowDir: { left: "R_to_A", right: "P_to_A" },
+      expected: {
+        anchorId: "ax_a",
+        leftArrows:  [ [{ chipId: "c_d", mult: 1 }] ],
+        rightArrows: [ [{ chipId: "c_g", mult: 1 }] ]
+      },
+      hint: "Combustion cycle anchor = combustion products (CO₂, H₂O). ΔHc arrows naturally go DOWN from compound to combustion products."
+    }
+  ],
+
+  be: [
+    {
+      name: "ΔH for: H₂(g) + Cl₂(g) → 2HCl(g) using bond energies",
+      target: { lhs: "H₂(g) + Cl₂(g)", rhs: "2HCl(g)", dhLabel: "ΔH" },
+      answer: -184,
+      anchorPrompt: "Pick the anchor for a bond-energy cycle",
+      anchorOptions: [
+        { id: "ax_a", label: "2H(g) + 2Cl(g)", correct: true },
+        { id: "ax_b", label: "H₂(g) + Cl₂(g)", correct: false },
+        { id: "ax_c", label: "H⁺(g) + Cl⁻(g)", correct: false }
+      ],
+      chips: [
+        { id: "be_hh",   label: "BE(H–H)",   value: 436 },
+        { id: "be_clcl", label: "BE(Cl–Cl)", value: 242 },
+        { id: "be_hcl",  label: "BE(H–Cl)",  value: 431 }
+      ],
+      // Natural direction for BE chips: compound → atoms
+      arrowDir: { left: "R_to_A", right: "P_to_A" },
+      expected: {
+        anchorId: "ax_a",
+        // BE problems: one arrow per reactant / product (each compound's bonds)
+        leftArrows: [
+          [{ chipId: "be_hh",   mult: 1 }],   // H₂(g): one H–H bond
+          [{ chipId: "be_clcl", mult: 1 }]    // Cl₂(g): one Cl–Cl bond
+        ],
+        rightArrows: [
+          [{ chipId: "be_hcl", mult: 2 }]    // 2HCl(g): two H–Cl bonds
+        ]
+      },
+      hint: "Bond-energy cycle anchor = gaseous atoms. Each side's arrow naturally goes UP from compound to atoms (breaking all bonds). Multiply BE chips to match the number of bonds (2HCl has 2× H–Cl bonds)."
+    }
+  ],
+
+  bornhaber: [
+    {
+      name: "ΔHf[NaCl(s)] from a Born-Haber cycle",
+      target: { lhs: "Na(s) + ½Cl₂(g)", rhs: "NaCl(s)", dhLabel: "ΔHf[NaCl(s)]" },
+      answer: -420,
+      ladder: {
+        slots: [
+          { id: "s0", correctLabel: "Na(s) + ½Cl₂(g)", locked: true },
+          { id: "s1", correctLabel: "Na(g) + ½Cl₂(g)" },
+          { id: "s2", correctLabel: "Na(g) + Cl(g)" },
+          { id: "s3", correctLabel: "Na⁺(g) + Cl(g) + e⁻" },
+          { id: "s4", correctLabel: "Na⁺(g) + Cl⁻(g)" },
+          { id: "s5", correctLabel: "NaCl(s)", locked: true }
+        ],
+        speciesOptions: [
+          "Na(s) + ½Cl₂(g)",
+          "Na(g) + ½Cl₂(g)",
+          "Na(g) + Cl(g)",
+          "Na⁺(g) + Cl(g) + e⁻",
+          "Na⁺(g) + Cl⁻(g)",
+          "NaCl(s)",
+          "Na⁻(g) + Cl⁺(g)",
+          "Na(g) + Cl₂(g)"
+        ],
+        steps: [
+          { id: "st01", from: "s0", to: "s1", correctChipId: "bh_at", description: "atomisation of Na (Na(s) → Na(g))" },
+          { id: "st12", from: "s1", to: "s2", correctChipId: "bh_be", description: "breaking ½ Cl–Cl bond (½Cl₂(g) → Cl(g))" },
+          { id: "st23", from: "s2", to: "s3", correctChipId: "bh_ie", description: "1st ionisation of Na (Na(g) → Na⁺(g) + e⁻)" },
+          { id: "st34", from: "s3", to: "s4", correctChipId: "bh_ea", description: "1st electron affinity of Cl (Cl(g) + e⁻ → Cl⁻(g))" },
+          { id: "st45", from: "s4", to: "s5", correctChipId: "bh_le", description: "lattice energy (Na⁺(g) + Cl⁻(g) → NaCl(s))" }
+        ]
+      },
+      chips: [
+        { id: "bh_at", label: "ΔHat[Na(s)]",   value: 109  },
+        { id: "bh_be", label: "½ × BE[Cl–Cl]", value: 121  },
+        { id: "bh_ie", label: "IE₁[Na]",       value: 494  },
+        { id: "bh_ea", label: "EA₁[Cl]",       value: -364 },
+        { id: "bh_le", label: "LE[NaCl(s)]",   value: -780 }
+      ],
+      hint: "Build from elements down to ionic solid. The anticlockwise (direct) path is the single ΔHf arrow; the clockwise (indirect, via the steps) path is the sum of all 5 step ΔH values. Both must be equal."
+    }
+  ]
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  cycleType: "formation",
+  probIdx: 0,
+  selected: null,
+  anchorId: null,
+  // Triangle arrows — arrays now, so we can render multiple arrows per side.
+  // Each element: { flipped: bool, apps: [{chipId, mult}] }
+  leftArrows:  [],
+  rightArrows: [],
+  // Ladder
+  slotFills: {},
+  steps: {},        // { stepId: { flipped, apps } }
+  bhDirect: { flipped: false }, // direction toggle of overall ΔHf arrow
+  showingMistakes: false
+};
+
+// Transient drag state (separate from `state` because it's ephemeral)
+let draggedItem = null;  // { type: 'anchor'|'species'|'chip', id: string }
+
+// Shuffled palette order for the current problem so options aren't presented in sequence
+let paletteOrder = { species: null, chips: null, anchorOptions: null };
+
+// Convert Unicode super/subscripts in chemistry strings to HTML <sup>/<sub>
+// so they can be styled larger and bolder for legibility.
+function chemHtml(text) {
+  if (text == null) return '';
+  const supMap = {'⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
+  const subMap = {'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9'};
+  return String(text)
+    .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻]+/g, m => '<sup>' + m.split('').map(c => supMap[c] || c).join('') + '</sup>')
+    .replace(/[₀₁₂₃₄₅₆₇₈₉]+/g,    m => '<sub>' + m.split('').map(c => subMap[c] || c).join('') + '</sub>');
+}
+
+// Path-direction labels depend on the cycle type:
+//   • Triangle cycles (Formation/Combustion/BE): direct (R→P) is CLOCKWISE, via-anchor is ANTICLOCKWISE
+//   • Born-Haber: direct (elements→ionic) is ANTICLOCKWISE, via-steps is CLOCKWISE (textbook convention)
+function directLabel(cap) {
+  const w = state.cycleType === 'bornhaber' ? 'anticlockwise' : 'clockwise';
+  return cap ? w[0].toUpperCase() + w.slice(1) : w;
+}
+function indirectLabel(cap) {
+  const w = state.cycleType === 'bornhaber' ? 'clockwise' : 'anticlockwise';
+  return cap ? w[0].toUpperCase() + w.slice(1) : w;
+}
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ─── LAYOUT ──────────────────────────────────────────────────────────────────
+const TRI = {
+  W: 720, H: 460,
+  R: { x: 110, y: 90 },
+  P: { x: 610, y: 90 },
+  A: { x: 360, y: 380 },
+  TARGET: { x: 360, y: 90 }
+  // Diagonal label positions are computed dynamically in renderTriangle()
+  // based on number of arrows on each side.
+};
+const LAD = {
+  W: 720, H: 640,
+  X_COL: 270,        // slot column
+  X_STEP_LBL: 100,   // step labels (left of column)
+  X_DHF_LBL: 110,    // ΔHf direct-arrow label (LEFT of slot column, beside the elements/ionic compound area)
+  X_LE_RIGHT: 560,   // long LE arrow's vertical segment x
+  X_LE_LBL: 645,     // LE step label (right of LE arrow)
+  Y_BOTTOM: 600,     // y for ionic compound slot (bottom)
+  STEP: 105          // vertical gap between consecutive slots in column
+};
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function setCycle(t) {
+  state.cycleType = t;
+  state.probIdx = 0;
+  document.querySelectorAll('.cyc-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.cycle === t));
+  populateProbSelect();
+  loadProblem(0);
+}
+
+function populateProbSelect() {
+  const sel = document.getElementById('probSelect');
+  sel.innerHTML = '';
+  PROBLEMS[state.cycleType].forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = (i + 1) + ' — ' + p.name;
+    sel.appendChild(opt);
+  });
+}
+
+function loadProblem(idx) {
+  state.probIdx = parseInt(idx);
+  const p = currProb();
+  resetBuildState();
+  // Shuffle palette items so they're not presented in sequence
+  paletteOrder.chips = p.chips ? shuffleArr(p.chips) : null;
+  paletteOrder.species = (p.ladder && p.ladder.speciesOptions) ? shuffleArr(p.ladder.speciesOptions) : null;
+  paletteOrder.anchorOptions = p.anchorOptions ? shuffleArr(p.anchorOptions) : null;
+  loadWork();  // restore previously-saved work for this problem (if any)
+  document.getElementById('targetEq').textContent = p.target.lhs + ' → ' + p.target.rhs;
+  document.getElementById('targetDhHint').textContent = 'Find: ' + p.target.dhLabel + ' / kJ mol⁻¹';
+  render();
+  saveTabState();
+}
+
+// Persist the student's in-progress work (anchor, chips, flips, etc.) per cycle+problem
+// so refreshing or switching tabs doesn't lose what they've built. Cleared only by Reset.
+function workStorageKey() {
+  return 'hessLawWork_' + state.cycleType + '_' + state.probIdx;
+}
+function saveWork() {
+  try {
+    localStorage.setItem(workStorageKey(), JSON.stringify({
+      anchorId:    state.anchorId,
+      leftArrows:  state.leftArrows,
+      rightArrows: state.rightArrows,
+      slotFills:   state.slotFills,
+      steps:       state.steps,
+      bhDirect:    state.bhDirect
+    }));
+  } catch (_) { /* localStorage unavailable */ }
+}
+function loadWork() {
+  try {
+    const raw = localStorage.getItem(workStorageKey());
+    if (!raw) return;
+    const w = JSON.parse(raw);
+    if (w && typeof w === 'object') {
+      if (w.anchorId !== undefined) state.anchorId = w.anchorId;
+      if (Array.isArray(w.leftArrows))  state.leftArrows  = w.leftArrows;
+      if (Array.isArray(w.rightArrows)) state.rightArrows = w.rightArrows;
+      if (w.slotFills && typeof w.slotFills === 'object') state.slotFills = w.slotFills;
+      if (w.steps     && typeof w.steps     === 'object') state.steps     = w.steps;
+      if (w.bhDirect  && typeof w.bhDirect  === 'object') state.bhDirect  = w.bhDirect;
+    }
+  } catch (_) { /* parse failed — ignore */ }
+}
+
+// Persist current cycle tab + problem so refreshing keeps you on the same view.
+const STORAGE_KEY = 'hessLawTab';
+function saveTabState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      cycleType: state.cycleType,
+      probIdx: state.probIdx
+    }));
+  } catch (_) { /* localStorage unavailable — silently ignore */ }
+}
+function loadTabState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved && saved.cycleType && PROBLEMS[saved.cycleType]) {
+      state.cycleType = saved.cycleType;
+    }
+    if (saved && typeof saved.probIdx === 'number'
+        && PROBLEMS[state.cycleType] && PROBLEMS[state.cycleType][saved.probIdx]) {
+      state.probIdx = saved.probIdx;
+    }
+  } catch (_) { /* ignore */ }
+}
+
+function currProb() { return PROBLEMS[state.cycleType][state.probIdx]; }
+
+function resetBuildState() {
+  state.selected = null;
+  state.anchorId = null;
+  state.leftArrows = [];
+  state.rightArrows = [];
+  state.slotFills = {};
+  state.steps = {};
+  state.bhDirect = { flipped: false };
+  state.showingMistakes = false;
+  // Initialise one empty arrow object per expected arrow on each side
+  const p = currProb();
+  if (p && state.cycleType !== 'bornhaber' && p.expected) {
+    const nL = (p.expected.leftArrows || []).length || 1;
+    const nR = (p.expected.rightArrows || []).length || 1;
+    for (let i = 0; i < nL; i++) state.leftArrows.push({ flipped: false, apps: [] });
+    for (let i = 0; i < nR; i++) state.rightArrows.push({ flipped: false, apps: [] });
+  }
+  document.getElementById('hintBox').classList.add('hidden');
+  document.getElementById('resultPanel').classList.add('hidden');
+  document.getElementById('mistakesBtn').classList.add('hidden');
+}
+
+function resetBuild() {
+  resetBuildState();
+  saveWork();   // overwrite saved work with the cleared state
+  render();
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  if (state.cycleType === 'bornhaber') renderLadder();
+  else renderTriangle();
+  renderPalette();
+  // Persist work to localStorage on every render so refresh/tab-switch keeps progress
+  saveWork();
+  // Sync the path-direction labels (legend + result panel) to current cycle type
+  const cwLeg = document.getElementById('cwLegendLabel');
+  const ccwLeg = document.getElementById('ccwLegendLabel');
+  const cwPN = document.getElementById('cwPathName');
+  const ccwPN = document.getElementById('ccwPathName');
+  // For triangle cycles the indirect path goes via the anchor; for Born-Haber it goes via the steps
+  const indirectSuffix = state.cycleType === 'bornhaber' ? '' : ' (via anchor)';
+  if (cwLeg) cwLeg.textContent = directLabel(true) + ' path (direct)';
+  if (ccwLeg) ccwLeg.textContent = indirectLabel(true) + ' path' + indirectSuffix;
+  if (cwPN) cwPN.textContent = directLabel(true) + ' (direct)';
+  if (ccwPN) ccwPN.textContent = indirectLabel(true) + indirectSuffix;
+  document.getElementById('diagram').classList.toggle('showing-mistakes', !!state.showingMistakes);
+  document.getElementById('traceBtn').disabled = !isReadyToTrace();
+}
+
+function isReadyToTrace() {
+  if (state.cycleType === 'bornhaber') {
+    const p = currProb();
+    const allSlots = p.ladder.slots.every(s => s.locked || state.slotFills[s.id]);
+    const allSteps = p.ladder.steps.every(st => ((state.steps[st.id] || {}).apps || []).length > 0);
+    return allSlots && allSteps;
+  }
+  return !!state.anchorId
+    && state.leftArrows.length > 0  && state.leftArrows.every(a => a.apps.length > 0)
+    && state.rightArrows.length > 0 && state.rightArrows.every(a => a.apps.length > 0);
+}
+
+// Resolve an arrow id like 'L0', 'R1', or a Born-Haber step id, to its data object.
+function getArrowData(id) {
+  if (state.cycleType === 'bornhaber') {
+    state.steps[id] = state.steps[id] || { flipped: false, apps: [] };
+    return state.steps[id];
+  }
+  if (id[0] === 'L') return state.leftArrows[parseInt(id.slice(1))];
+  if (id[0] === 'R') return state.rightArrows[parseInt(id.slice(1))];
+  return null;
+}
+
+// ─── HELPERS: NATURAL DIRECTION & DISPLAYED VALUE ────────────────────────────
+// Each arrow has a "natural" direction (from data). The student can flip it.
+// displayed value = sum(chip.value × mult) × (1 if not flipped else -1)
+// This represents "cost of going from the arrow's current `from` to its `to`".
+
+function arrowEndpoints(arrId) {
+  // arrId is 'L0', 'L1', 'R0', etc. Returns {from, to} for the arrow's drawn direction.
+  const p = currProb();
+  const side = arrId[0] === 'L' ? 'left' : 'right';
+  const idx = parseInt(arrId.slice(1));
+  const nat = p.arrowDir[side]; // e.g. "A_to_R"
+  const arr = (side === 'left') ? state.leftArrows[idx] : state.rightArrows[idx];
+  const [a, b] = nat.split('_to_'); // a -> b
+  const flipped = arr && arr.flipped;
+  return flipped ? { from: b, to: a } : { from: a, to: b };
+}
+
+function arrowDisplayedValue(arr) {
+  // Raw sum of chips × mult, signed by flip
+  const p = currProb();
+  let raw = arr.apps.reduce((s, app) => {
+    const c = p.chips.find(x => x.id === app.chipId);
+    return s + (c ? c.value * app.mult : 0);
+  }, 0);
+  return arr.flipped ? -raw : raw;
+}
+
+// For ladder steps, natural direction is from step's `from` slot to its `to` slot.
+function ladderStepDisplayedValue(stepData, st) {
+  // stepData = state.steps[st.id]
+  const p = currProb();
+  let raw = (stepData.apps || []).reduce((s, app) => {
+    const c = p.chips.find(x => x.id === app.chipId);
+    return s + (c ? c.value * app.mult : 0);
+  }, 0);
+  return stepData.flipped ? -raw : raw;
+}
+
+// ─── TRIANGLE RENDER ─────────────────────────────────────────────────────────
+function renderTriangle() {
+  const p = currProb();
+  const d = document.getElementById('diagram');
+  d.innerHTML = '';
+  d.style.width = TRI.W + 'px';
+  d.style.height = TRI.H + 'px';
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'arrows');
+  svg.setAttribute('viewBox', `0 0 ${TRI.W} ${TRI.H}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.innerHTML = `
+    <defs>
+      <marker id="arrCw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--cw)" stroke="none"/>
+      </marker>
+      <marker id="arrCcw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ccw)" stroke="none"/>
+      </marker>
+    </defs>`;
+
+  // Target (clockwise/direct) arrow R → P (always direction R→P)
+  drawSvgArrow(svg, TRI.R.x + 95, TRI.R.y, TRI.P.x - 95, TRI.P.y, 'var(--cw)', 2.6, 'arrCw');
+
+  // Diagonal arrows — render N arrows per side. For multi-arrow, spread
+  // endpoints HORIZONTALLY along R/P bottom edge and A top edge so each
+  // arrow visually originates from a different reactant / product.
+  const labelSlots = [];
+  ['left', 'right'].forEach(side => {
+    const arrows = (side === 'left') ? state.leftArrows : state.rightArrows;
+    const N = arrows.length;
+    if (N === 0) return;
+    const basePR = (side === 'left') ? TRI.R : TRI.P;
+    const baseA  = TRI.A;
+    // Outward perpendicular (used for label positioning)
+    const dx = baseA.x - basePR.x;
+    const dy = baseA.y - basePR.y;
+    const L = Math.hypot(dx, dy) || 1;
+    let pX = -dy / L;
+    let pY =  dx / L;
+    if (side === 'right') { pX = -pX; pY = -pY; }
+    arrows.forEach((arr, i) => {
+      // Endpoint positions.
+      //  - Single arrow: starts centered on its slot, ends on A's near side
+      //  - Multi-arrow: same spread on both ends so arrows are PARALLEL
+      const f = (N === 1) ? 0 : (i / (N - 1) - 0.5);  // -0.5 .. +0.5
+      const spread = (N === 1) ? 0 : 50;
+      const aBias = (side === 'left') ? -35 : +35;
+      const prXOff = f * spread;
+      const aXOff  = aBias + f * spread;
+      const prY = basePR.y + 55;  // 55 below R/P → 20 below box edge
+      const aY  = baseA.y  - 55;  // 55 above A   → 20 above box edge
+      const prPt = { x: basePR.x + prXOff, y: prY };
+      const aPt  = { x: baseA.x  + aXOff,  y: aY  };
+      const id = (side === 'left' ? 'L' : 'R') + i;
+      const ep = arrowEndpoints(id);
+      const p1 = (ep.from === 'A') ? aPt : prPt;
+      const p2 = (ep.to   === 'A') ? aPt : prPt;
+      drawSvgArrow(svg, p1.x, p1.y, p2.x, p2.y, 'var(--ccw)', 2.4, 'arrCcw');
+      // Label position:
+      //   • Single arrow / outer arrow of multi (i=0): perpendicular OUTWARD
+      //     from arrow midpoint, anchored at the inner corner so box grows outward
+      //   • Inner arrow of multi (i>=1): tucked above the arrow midpoint and
+      //     shifted slightly inward, anchored top-LEFT so box grows down-RIGHT
+      //     (kept clear of the inner arrow's downward path)
+      const midX = (prPt.x + aPt.x) / 2;
+      const midY = (prPt.y + aPt.y) / 2;
+      let lblX, lblY, anchor;
+      if (N === 1 || i === 0) {
+        const lblOff = 30;
+        lblX = midX + pX * lblOff;
+        lblY = midY + pY * lblOff;
+        anchor = (side === 'left') ? 'tr' : 'tl';
+      } else {
+        const inwardSign = (side === 'left') ? +1 : -1;
+        lblX = midX + inwardSign * 40;
+        lblY = midY - 80;
+        anchor = (side === 'left') ? 'tl' : 'tr';
+      }
+      labelSlots.push({ id, x: lblX, y: lblY, data: arr, anchor });
+    });
+  });
+
+  d.appendChild(svg);
+
+  d.appendChild(makeSlot('R', TRI.R.x, TRI.R.y, p.target.lhs, 'Reactants', true));
+  d.appendChild(makeSlot('P', TRI.P.x, TRI.P.y, p.target.rhs, 'Products', true));
+
+  let anchorContent = '';
+  if (state.anchorId) {
+    const a = p.anchorOptions.find(o => o.id === state.anchorId);
+    anchorContent = a ? a.label : '';
+  }
+  d.appendChild(makeSlot('A', TRI.A.x, TRI.A.y, anchorContent, 'Anchor', false));
+
+  // Target label (clockwise / direct path)
+  const tLbl = document.createElement('div');
+  tLbl.className = 'arrow-label target cw filled';
+  tLbl.style.left = TRI.TARGET.x + 'px';
+  tLbl.style.top = (TRI.TARGET.y - 32) + 'px';
+  tLbl.innerHTML = '<div style="font-size:11px;font-weight:700">' + directLabel(true).toUpperCase() + ' (DIRECT)</div><div>ΔH = ?</div>';
+  d.appendChild(tLbl);
+
+  // Diagonal labels (anticlockwise / indirect path)
+  labelSlots.forEach(s => d.appendChild(makeArrowLabel(s.id, s.x, s.y, s.data, 'ccw', s.anchor)));
+}
+
+function drawSvgArrow(svg, x1, y1, x2, y2, col, w, mark) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const line = document.createElementNS(ns, 'line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+  line.setAttribute('stroke', col); line.setAttribute('stroke-width', w);
+  line.setAttribute('marker-end', 'url(#' + mark + ')');
+  svg.appendChild(line);
+}
+
+function makeSlot(id, x, y, content, label, locked, extraClass) {
+  const div = document.createElement('div');
+  div.className = 'slot' + (content ? ' filled' : '') + (locked ? ' locked' : '') + (extraClass ? ' ' + extraClass : '');
+  if (state.selected === 'slot:' + id) div.classList.add('selected');
+  if (state.showingMistakes && isSlotWrong(id)) div.classList.add('wrong');
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+  const labelHtml = label ? `<div class="slot-label">${label}</div>` : '';
+  const contentHtml = content ? chemHtml(content) : '<span class="slot-empty">Click or drop</span>';
+  div.innerHTML = labelHtml + `<div class="slot-content">${contentHtml}</div>`;
+  if (!locked) {
+    div.onclick = () => selectSlot(id);
+    // Drag-and-drop target
+    div.ondragover = (e) => {
+      if (!draggedItem) return;
+      const expected = (state.cycleType === 'bornhaber') ? 'species' : 'anchor';
+      if (draggedItem.type !== expected) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      div.classList.add('drag-over');
+    };
+    div.ondragleave = () => div.classList.remove('drag-over');
+    div.ondrop = (e) => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
+      if (!draggedItem) return;
+      state.selected = 'slot:' + id;
+      if (draggedItem.type === 'anchor')      placeAnchor(draggedItem.id);
+      else if (draggedItem.type === 'species') placeSpecies(draggedItem.id);
+      draggedItem = null;
+    };
+  }
+  return div;
+}
+
+function makeArrowLabel(id, x, y, arrData, pathClass, anchor) {
+  const div = document.createElement('div');
+  const apps = arrData.apps || [];
+  const filled = apps.length > 0;
+  div.className = 'arrow-label ' + pathClass + (filled ? ' filled' : '');
+  if (anchor === 'tl') div.classList.add('anc-tl');
+  else if (anchor === 'tr') div.classList.add('anc-tr');
+  if (state.selected === 'arrow:' + id) div.classList.add('selected');
+  if (state.showingMistakes && isArrowWrong(id)) div.classList.add('wrong');
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+
+  let inner = '';
+  if (!filled) {
+    inner += '<span class="arrow-empty">Click to add ΔH</span>';
+  } else {
+    const html = apps.map((app, i) => {
+      const chip = currProb().chips.find(c => c.id === app.chipId);
+      const lbl = chip ? chemHtml(chip.label) : '?';
+      return `<div class="app-item">${lbl}
+        <input class="mult-mini" type="number" value="${app.mult}" min="0.5" step="0.5"
+               onclick="event.stopPropagation()"
+               oninput="setMult('${id}', ${i}, this.value)">
+        <span class="x-rm" onclick="event.stopPropagation();removeApp('${id}', ${i})">✕</span>
+      </div>`;
+    }).join('<div class="app-plus">+</div>');
+    inner += '<div class="app-list">' + html + '</div>';
+
+    // Displayed value
+    const v = (state.cycleType === 'bornhaber')
+      ? ladderStepDisplayedValue(arrData, null)
+      : arrowDisplayedValue(arrData);
+    const sign = v >= 0 ? '+' : '';
+    const cls = v >= 0 ? 'pos' : 'neg';
+    inner += `<div class="arrow-value ${cls}">= ${sign}${v.toFixed(1)} kJ/mol</div>`;
+  }
+
+  // Tools (flip button)
+  inner += `<div class="arrow-tools">
+    <button class="flip-btn" onclick="event.stopPropagation();flipArrow('${id}')">⇄ Flip direction</button>
+  </div>`;
+
+  div.innerHTML = inner;
+  div.onclick = () => selectArrow(id);
+
+  // Drag-and-drop target (accepts ΔH chips). Drop REPLACES existing apps.
+  div.ondragover = (e) => {
+    if (!draggedItem || draggedItem.type !== 'chip') return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    div.classList.add('drag-over');
+  };
+  div.ondragleave = () => div.classList.remove('drag-over');
+  div.ondrop = (e) => {
+    e.preventDefault();
+    div.classList.remove('drag-over');
+    if (!draggedItem || draggedItem.type !== 'chip') return;
+    state.selected = 'arrow:' + id;
+
+    // Each diagonal arrow now expects exactly one chip configuration (since BE-style
+    // problems get multiple separate arrows). Drop replaces — clear before adding.
+    const arr = getArrowData(id);
+    if (arr) arr.apps = [];
+    placeChip(draggedItem.id);
+    draggedItem = null;
+  };
+
+  return div;
+}
+
+// ─── LADDER (Born-Haber) RENDER ──────────────────────────────────────────────
+function renderLadder() {
+  const p = currProb();
+  const d = document.getElementById('diagram');
+  d.innerHTML = '';
+  d.style.width = LAD.W + 'px';
+  d.style.height = LAD.H + 'px';
+
+  const N = p.ladder.slots.length;
+  // Slot positions:
+  //   • slots[N-1] (ionic compound) at the very BOTTOM
+  //   • slots[0]   (elements)        just above it
+  //   • slots[1..N-2] go UP in a vertical column above the elements
+  const slotPos = {};
+  slotPos[p.ladder.slots[N - 1].id] = { x: LAD.X_COL, y: LAD.Y_BOTTOM };
+  for (let i = 0; i < N - 1; i++) {
+    slotPos[p.ladder.slots[i].id] = { x: LAD.X_COL, y: LAD.Y_BOTTOM - (i + 1) * LAD.STEP };
+  }
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'arrows');
+  svg.setAttribute('viewBox', `0 0 ${LAD.W} ${LAD.H}`);
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.innerHTML = `
+    <defs>
+      <marker id="arrLadCw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--cw)" stroke="none"/>
+      </marker>
+      <marker id="arrLadCcw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--ccw)" stroke="none"/>
+      </marker>
+    </defs>`;
+
+  // Step arrows. The LAST step is the lattice-energy step (ions → ionic solid):
+  // it's drawn as a long L-shaped arrow on the right side. All other steps
+  // are short UP arrows in the slot column.
+  const lastStep = p.ladder.steps[p.ladder.steps.length - 1];
+  p.ladder.steps.forEach((st) => {
+    const stData = state.steps[st.id] || { flipped: false };
+    const fromPos = slotPos[st.from];
+    const toPos = slotPos[st.to];
+
+    if (st.id === lastStep.id) {
+      // L-shaped LE arrow: from "from" (top, gaseous ions) right-then-down-then-left to "to" (bottom, ionic solid)
+      const startX = fromPos.x + 75;  // right edge of from-slot
+      const startY = fromPos.y;
+      const endX   = toPos.x + 75;
+      const endY   = toPos.y;
+      const xRight = LAD.X_LE_RIGHT;
+      const fwd = [[startX, startY], [xRight, startY], [xRight, endY], [endX, endY]];
+      const points = stData.flipped ? fwd.slice().reverse() : fwd;
+      const dAttr = points.map((pt, idx) => (idx === 0 ? 'M' : 'L') + ' ' + pt[0] + ' ' + pt[1]).join(' ');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', dAttr);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'var(--ccw)');
+      path.setAttribute('stroke-width', '2.4');
+      path.setAttribute('marker-end', 'url(#arrLadCcw)');
+      svg.appendChild(path);
+    } else {
+      // Short UP arrow in the column between two consecutive slots
+      const yLow  = fromPos.y - 35 - 5;  // just above "from"'s top edge (start of UP arrow, larger y)
+      const yHigh = toPos.y   + 35 + 5;  // just below "to"'s bottom edge (end of UP arrow, smaller y)
+      if (stData.flipped) drawSvgArrow(svg, LAD.X_COL, yHigh, LAD.X_COL, yLow,  'var(--ccw)', 2.4, 'arrLadCcw');
+      else                drawSvgArrow(svg, LAD.X_COL, yLow,  LAD.X_COL, yHigh, 'var(--ccw)', 2.4, 'arrLadCcw');
+    }
+  });
+
+  // ΔHf direct (clockwise) arrow: short DOWN arrow from elements (s0) to ionic compound (s5)
+  const elementsPos = slotPos[p.ladder.slots[0].id];
+  const ionicPos    = slotPos[p.ladder.slots[N - 1].id];
+  const yDhfTop = elementsPos.y + 35 + 5;  // just below elements' bottom edge
+  const yDhfBot = ionicPos.y    - 35 - 5;  // just above ionic-solid's top edge
+  if (state.bhDirect.flipped) drawSvgArrow(svg, LAD.X_COL, yDhfBot, LAD.X_COL, yDhfTop, 'var(--cw)', 2.6, 'arrLadCw');
+  else                        drawSvgArrow(svg, LAD.X_COL, yDhfTop, LAD.X_COL, yDhfBot, 'var(--cw)', 2.6, 'arrLadCw');
+
+  d.appendChild(svg);
+
+  // Species slots — element slot (index 0) gets a yellow highlight
+  p.ladder.slots.forEach((s, i) => {
+    const pos = slotPos[s.id];
+    let content = '';
+    if (s.locked) content = s.correctLabel;
+    else if (state.slotFills[s.id]) content = state.slotFills[s.id];
+    const extraClass = (i === 0) ? 'elements' : '';
+    d.appendChild(makeSlot(s.id, pos.x, pos.y, content, '', !!s.locked, extraClass));
+  });
+
+  // Step arrow labels
+  p.ladder.steps.forEach((st) => {
+    const fromPos = slotPos[st.from];
+    const toPos = slotPos[st.to];
+    const stData = state.steps[st.id] || { flipped: false, apps: [] };
+    const yMid = (fromPos.y + toPos.y) / 2;
+    const xLbl = (st.id === lastStep.id) ? LAD.X_LE_LBL : LAD.X_STEP_LBL;
+    d.appendChild(makeArrowLabel(st.id, xLbl, yMid, stData, 'ccw'));
+  });
+
+  // ΔHf direct label — placed BESIDE (not on top of) the red arrow
+  const yDhfMid = (elementsPos.y + ionicPos.y) / 2;
+  const fLbl = document.createElement('div');
+  fLbl.className = 'arrow-label target cw filled';
+  fLbl.style.left = LAD.X_DHF_LBL + 'px';
+  fLbl.style.top = yDhfMid + 'px';
+  fLbl.style.maxWidth = '160px';
+  fLbl.innerHTML = `<div style="font-size:11px;font-weight:700">ANTICLOCKWISE (DIRECT)</div>
+    <div>${currProb().target.dhLabel} = ?</div>
+    <div class="arrow-tools">
+      <button class="flip-btn" onclick="event.stopPropagation();flipArrow('bhDirect')">⇄ Flip direction</button>
+    </div>`;
+  d.appendChild(fLbl);
+}
+
+// ─── PALETTE ─────────────────────────────────────────────────────────────────
+// Returns true only if every slot, chip, multiplier, and arrow direction
+// matches the expected setup for the current problem.
+function isSetupFullyCorrect() {
+  const p = currProb();
+  if (state.cycleType === 'bornhaber') {
+    for (const s of p.ladder.slots) {
+      if (s.locked) continue;
+      if (state.slotFills[s.id] !== s.correctLabel) return false;
+    }
+    for (const st of p.ladder.steps) {
+      const apps = ((state.steps[st.id] || {}).apps) || [];
+      if (apps.length !== 1) return false;
+      if (apps[0].chipId !== st.correctChipId) return false;
+      if (apps[0].mult !== 1) return false;
+    }
+    return true;
+  }
+  // Triangle
+  if (state.anchorId !== p.expected.anchorId) return false;
+  const expL = p.expected.leftArrows  || [];
+  const expR = p.expected.rightArrows || [];
+  if (state.leftArrows.length  !== expL.length) return false;
+  if (state.rightArrows.length !== expR.length) return false;
+  const norm = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
+  for (let i = 0; i < expL.length; i++) {
+    if (norm(state.leftArrows[i].apps)  !== norm(expL[i])) return false;
+  }
+  for (let i = 0; i < expR.length; i++) {
+    if (norm(state.rightArrows[i].apps) !== norm(expR[i])) return false;
+  }
+  const expectedLeftFlipped  = (p.arrowDir.left  === 'A_to_R');
+  const expectedRightFlipped = (p.arrowDir.right === 'P_to_A');
+  if (!state.leftArrows.every(a  => a.flipped === expectedLeftFlipped))  return false;
+  if (!state.rightArrows.every(a => a.flipped === expectedRightFlipped)) return false;
+  return true;
+}
+
+function isChipUsed(chipId) {
+  if (state.cycleType === 'bornhaber') {
+    return Object.values(state.steps || {}).some(s => (s.apps || []).some(a => a.chipId === chipId));
+  }
+  const all = (state.leftArrows || []).concat(state.rightArrows || []);
+  return all.some(arr => (arr.apps || []).some(app => app.chipId === chipId));
+}
+
+function renderPalette() {
+  const p = currProb();
+  const pal = document.getElementById('palette');
+  pal.innerHTML = '';
+
+  if (state.cycleType === 'bornhaber') {
+    const sp = document.createElement('div');
+    sp.className = 'palette-section';
+    sp.innerHTML = '<div class="palette-title">Species (chemical states)</div>'
+      + '<div class="palette-hint">Drag onto a slot — or click slot then state.</div>';
+    const speciesList = paletteOrder.species || p.ladder.speciesOptions;
+    speciesList.forEach(opt => {
+      const used = Object.values(state.slotFills).includes(opt);
+      sp.appendChild(makeDraggableChip('species', opt, opt, null, used, () => placeSpecies(opt), 'species'));
+    });
+    pal.appendChild(sp);
+
+    const dh = document.createElement('div');
+    dh.className = 'palette-section';
+    dh.innerHTML = '<div class="palette-title">ΔH values</div>'
+      + '<div class="palette-hint">Drag onto a step arrow — or click arrow then value.</div>';
+    const chipList = paletteOrder.chips || p.chips;
+    chipList.forEach(c => {
+      const sign = c.value >= 0 ? '+' : '';
+      const used = isChipUsed(c.id);
+      dh.appendChild(makeDraggableChip('chip', c.id, c.label, sign + c.value, used, () => placeChip(c.id), 'dh'));
+    });
+    pal.appendChild(dh);
+    return;
+  }
+
+  // Triangle
+  const sec1 = document.createElement('div');
+  sec1.className = 'palette-section';
+  sec1.innerHTML = '<div class="palette-title">' + p.anchorPrompt + '</div>'
+    + '<div class="palette-hint">Drag onto the anchor slot — or click slot then chip.</div>';
+  const anchorList = paletteOrder.anchorOptions || p.anchorOptions;
+  anchorList.forEach(opt => {
+    const used = state.anchorId === opt.id;
+    sec1.appendChild(makeDraggableChip('anchor', opt.id, opt.label, null, used, () => placeAnchor(opt.id), 'species'));
+  });
+  pal.appendChild(sec1);
+
+  const sec2 = document.createElement('div');
+  sec2.className = 'palette-section';
+  sec2.innerHTML = '<div class="palette-title">ΔH values</div>'
+    + '<div class="palette-hint">Drag onto an arrow — or click arrow then chip. Edit × multiplier inline.</div>';
+  const triChipList = paletteOrder.chips || p.chips;
+  triChipList.forEach(c => {
+    const sign = c.value >= 0 ? '+' : '';
+    const used = isChipUsed(c.id);
+    sec2.appendChild(makeDraggableChip('chip', c.id, c.label, sign + c.value, used, () => placeChip(c.id), 'dh'));
+  });
+  pal.appendChild(sec2);
+}
+
+function makeDraggableChip(dragType, dragId, label, valueText, disabled, clickHandler, cssClass) {
+  const chip = document.createElement('div');
+  chip.className = 'chip ' + cssClass + (disabled ? ' disabled' : '');
+  chip.innerHTML = valueText !== null
+    ? chemHtml(label) + ' <span class="chip-val">= ' + valueText + '</span>'
+    : chemHtml(label);
+  chip.onclick = clickHandler;
+  if (!disabled) {
+    chip.draggable = true;
+    chip.ondragstart = (e) => {
+      draggedItem = { type: dragType, id: dragId };
+      e.dataTransfer.effectAllowed = 'copy';
+      try { e.dataTransfer.setData('text/plain', String(dragId)); } catch (_) {}
+      // defer so the dragging style applies after the browser snapshots the drag image
+      setTimeout(() => chip.classList.add('dragging'), 0);
+    };
+    chip.ondragend = () => {
+      chip.classList.remove('dragging');
+      draggedItem = null;
+      // Clean up any lingering drag-over indicators
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    };
+  }
+  return chip;
+}
+
+// ─── INTERACTIONS ────────────────────────────────────────────────────────────
+function selectSlot(id) {
+  state.selected = 'slot:' + id;
+  state.showingMistakes = false;
+  render();
+}
+
+function selectArrow(id) {
+  state.selected = 'arrow:' + id;
+  state.showingMistakes = false;
+  render();
+}
+
+function placeAnchor(optId) {
+  if (state.selected !== 'slot:A') { flashSelectHint('Click the anchor slot first.'); return; }
+  state.anchorId = optId;
+  state.selected = null;
+  state.showingMistakes = false;
+  render();
+}
+
+function placeSpecies(label) {
+  if (!state.selected || !state.selected.startsWith('slot:')) { flashSelectHint('Click an empty slot first.'); return; }
+  const slotId = state.selected.split(':')[1];
+  const slot = currProb().ladder.slots.find(s => s.id === slotId);
+  if (!slot || slot.locked) return;
+  state.slotFills[slotId] = label;
+  state.selected = null;
+  state.showingMistakes = false;
+  render();
+}
+
+function placeChip(chipId) {
+  if (!state.selected || !state.selected.startsWith('arrow:')) { flashSelectHint('Click an arrow first.'); return; }
+  const arrId = state.selected.split(':')[1];
+  const arr = getArrowData(arrId);
+  if (arr) arr.apps.push({ chipId, mult: 1 });
+  state.showingMistakes = false;
+  render();
+}
+
+function setMult(arrId, appIdx, val) {
+  const v = parseFloat(val);
+  if (isNaN(v) || v <= 0) return;
+  const arr = getArrowData(arrId);
+  if (arr && arr.apps[appIdx]) {
+    arr.apps[appIdx].mult = v;
+    state.showingMistakes = false;
+    render();
+  }
+}
+
+function removeApp(arrId, appIdx) {
+  const arr = getArrowData(arrId);
+  if (arr) {
+    arr.apps.splice(appIdx, 1);
+    state.showingMistakes = false;
+    render();
+  }
+}
+
+function flipArrow(arrId) {
+  if (arrId === 'bhDirect') {
+    state.bhDirect.flipped = !state.bhDirect.flipped;
+  } else {
+    const arr = getArrowData(arrId);
+    if (arr) arr.flipped = !arr.flipped;
+  }
+  state.showingMistakes = false;
+  render();
+}
+
+function flashSelectHint(msg) {
+  const box = document.getElementById('hintBox');
+  box.classList.remove('hidden');
+  box.textContent = '👉 ' + msg;
+  clearTimeout(window._hintTimer);
+  window._hintTimer = setTimeout(() => {
+    if (box.textContent === '👉 ' + msg) box.classList.add('hidden');
+  }, 2500);
+}
+
+function toggleHint() {
+  const p = currProb();
+  const box = document.getElementById('hintBox');
+  if (box.classList.contains('hidden') || !box.textContent.startsWith('💡')) {
+    box.classList.remove('hidden');
+    box.textContent = '💡 ' + p.hint;
+  } else {
+    box.classList.add('hidden');
+  }
+}
+
+// ─── TRACE & CALCULATE ───────────────────────────────────────────────────────
+function traceCycle() {
+  if (!isReadyToTrace()) return;
+  if (state.cycleType === 'bornhaber') traceLadder();
+  else traceTriangle();
+}
+
+function traceTriangle() {
+  const p = currProb();
+  // CLOCKWISE / DIRECT: R → P (target arrow, the unknown)
+  // ANTICLOCKWISE / INDIRECT: R → A → P, summing every arrow's displayed value
+  const cwLines = [{ label: 'R → P (target arrow)', value: '?', isQ: true }];
+  const ccwLines = [];
+  let ccwTotal = 0;
+
+  state.leftArrows.forEach((arr, i) => {
+    const v = arrowDisplayedValue(arr);
+    const ep = arrowEndpoints('L' + i);
+    const aligned = (ep.from === 'R' && ep.to === 'A');
+    ccwLines.push({
+      label: 'Left arrow ' + (state.leftArrows.length > 1 ? '#' + (i + 1) + ' ' : '')
+        + (aligned ? '(R → A ✓)' : '(NOT pointing R → A — flip it)'),
+      value: v,
+      warn: !aligned
+    });
+    ccwTotal += v;
+  });
+  state.rightArrows.forEach((arr, i) => {
+    const v = arrowDisplayedValue(arr);
+    const ep = arrowEndpoints('R' + i);
+    const aligned = (ep.from === 'A' && ep.to === 'P');
+    ccwLines.push({
+      label: 'Right arrow ' + (state.rightArrows.length > 1 ? '#' + (i + 1) + ' ' : '')
+        + (aligned ? '(A → P ✓)' : '(NOT pointing A → P — flip it)'),
+      value: v,
+      warn: !aligned
+    });
+    ccwTotal += v;
+  });
+
+  showResult({
+    cwTrace: cwLines, cwTotal: '?',
+    ccwTrace: ccwLines, ccwTotal: ccwTotal,
+    expected: p.answer
+  });
+}
+
+function traceLadder() {
+  const p = currProb();
+  // CLOCKWISE / DIRECT: the ΔHf arrow (the unknown).
+  // ANTICLOCKWISE / INDIRECT: sum of every step's displayed value.
+  // Just like the triangle: NO automatic sign flipping — students must
+  // ensure each step arrow points in the indirect-path direction (top → bottom)
+  // by flipping it themselves if needed.
+
+  const cwLines = [
+    { label: currProb().target.dhLabel + ' (direct ΔHf arrow)', value: '?', isQ: true }
+  ];
+
+  const ccwLines = [];
+  let ccwTotal = 0;
+  p.ladder.steps.forEach((st, i) => {
+    const stData = state.steps[st.id] || { flipped: false, apps: [] };
+    const v = ladderStepDisplayedValue(stData, st);
+    const aligned = !stData.flipped; // natural direction is top → bottom
+    ccwLines.push({
+      label: 'Step ' + (i + 1) + ' (' + (aligned ? 'top → bottom ✓' : 'flipped — should point top → bottom') + ')',
+      value: v,
+      warn: !aligned
+    });
+    ccwTotal += v;
+  });
+
+  showResult({
+    cwTrace: cwLines, cwTotal: '?',
+    ccwTrace: ccwLines, ccwTotal: ccwTotal,
+    expected: p.answer
+  });
+}
+
+function showResult({ cwTrace, cwTotal, ccwTrace, ccwTotal, expected }) {
+  const tol = 5;
+  const correct = (typeof ccwTotal === 'number') && Math.abs(ccwTotal - expected) <= tol;
+
+  // CW pane
+  let cwHtml = cwTrace.map(l => {
+    const v = (l.value === '?') ? '?' : (l.value >= 0 ? '+' : '') + l.value.toFixed(1) + ' kJ/mol';
+    return `<div>${l.label}: ${v}</div>`;
+  }).join('');
+  document.getElementById('cwTrace').innerHTML = cwHtml;
+  document.getElementById('cwTotal').innerHTML = `Direct ΔH = <strong>?</strong> (this is what we solve for)`;
+
+  // CCW pane
+  let ccwHtml = ccwTrace.map(l => {
+    const v = (l.value >= 0 ? '+' : '') + l.value.toFixed(1) + ' kJ/mol';
+    return `<div>${l.label}: ${v}</div>`;
+  }).join('');
+  document.getElementById('ccwTrace').innerHTML = ccwHtml;
+  const cTotSign = ccwTotal >= 0 ? '+' : '';
+  document.getElementById('ccwTotal').innerHTML = `Indirect ΔH = <strong>${cTotSign}${ccwTotal.toFixed(1)} kJ/mol</strong>`;
+
+  // Hess equation
+  document.getElementById('hessEq').innerHTML =
+    `By Hess' Law: ${directLabel(false)} ΔH = ${indirectLabel(false)} ΔH<br>` +
+    `Therefore <strong style="color:var(--cw)">${currProb().target.dhLabel} = ${cTotSign}${ccwTotal.toFixed(1)} kJ mol⁻¹</strong>`;
+
+  // Final compare — math AND setup must both be correct
+  const mathOk = correct;
+  const setupOk = isSetupFullyCorrect();
+  const fullyCorrect = mathOk && setupOk;
+  const finalEl = document.getElementById('resultFinal');
+  const expSign = expected >= 0 ? '+' : '';
+  if (fullyCorrect) {
+    finalEl.className = 'result-final correct';
+    finalEl.textContent = `✅ Correct! ${currProb().target.dhLabel} = ${cTotSign}${ccwTotal.toFixed(1)} kJ mol⁻¹`;
+  } else if (mathOk && !setupOk) {
+    finalEl.className = 'result-final partial';
+    finalEl.textContent = `🟡 The numbers add up to ${cTotSign}${ccwTotal.toFixed(1)} kJ mol⁻¹, but some chips are in the wrong place. Click "Show Mistakes" to see.`;
+  } else {
+    finalEl.className = 'result-final incorrect';
+    finalEl.textContent = `❌ Got ${cTotSign}${ccwTotal.toFixed(1)} kJ mol⁻¹, expected ${expSign}${expected} kJ mol⁻¹. Click "Show Mistakes" to see what's wrong.`;
+  }
+
+  document.getElementById('resultPanel').classList.remove('hidden');
+  document.getElementById('mistakesBtn').classList.toggle('hidden', fullyCorrect);
+  // Use fullyCorrect (instead of just `correct`) for downstream logic
+  const correctForRefresh = fullyCorrect;
+
+  // Re-evaluate the "Issues found" box every time we recalculate so it always
+  // reflects the current state — not stale issues from a previous attempt.
+  const hintBox = document.getElementById('hintBox');
+  const wasShowingIssues = (hintBox.textContent || '').startsWith('🔴');
+  if (wasShowingIssues) {
+    if (correctForRefresh) {
+      hintBox.classList.add('hidden');
+      hintBox.textContent = '';
+      state.showingMistakes = false;
+      render();
+    } else {
+      // Still wrong — refresh the issue list to match the new state
+      showMistakes();
+    }
+    return;
+  }
+
+  state.showingMistakes = false;
+  render();
+}
+
+// ─── SHOW MISTAKES ───────────────────────────────────────────────────────────
+function showMistakes() {
+  state.showingMistakes = true;
+  render();
+  const p = currProb();
+  let issues = [];
+  if (state.cycleType === 'bornhaber') {
+    // Slot mistakes — describe what state should appear after this step in the cycle
+    p.ladder.slots.forEach(s => {
+      if (s.locked) return;
+      const filled = state.slotFills[s.id];
+      const stepInto = p.ladder.steps.find(st => st.to === s.id);
+      const desc = stepInto && stepInto.description ? stepInto.description : 'this step';
+      if (!filled) {
+        issues.push(`After ${desc}, the state is empty — should be "${s.correctLabel}".`);
+      } else if (filled !== s.correctLabel) {
+        issues.push(`After ${desc}, the state should be "${s.correctLabel}" — you placed "${filled}".`);
+      }
+    });
+    // Step mistakes — describe the chemistry of the step
+    p.ladder.steps.forEach(st => {
+      const apps = ((state.steps[st.id] || {}).apps) || [];
+      const correctChip = p.chips.find(c => c.id === st.correctChipId);
+      const fromLabel = (p.ladder.slots.find(s => s.id === st.from) || {}).correctLabel || st.from;
+      const toLabel   = (p.ladder.slots.find(s => s.id === st.to)   || {}).correctLabel || st.to;
+      const desc = st.description ? ` — ${st.description}` : '';
+      if (apps.length === 0) {
+        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: no ΔH assigned. Should be ${correctChip.label}.`);
+      } else if (apps.length > 1 || apps[0].chipId !== st.correctChipId || apps[0].mult !== 1) {
+        const got = apps.map(a => {
+          const c = p.chips.find(x => x.id === a.chipId);
+          return (c ? c.label : '?') + (a.mult !== 1 ? ' × ' + a.mult : '');
+        }).join(' + ');
+        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: should use ${correctChip.label} — you assigned ${got}.`);
+      }
+      if ((state.steps[st.id] || {}).flipped) {
+        issues.push(`Step "${fromLabel}" → "${toLabel}"${desc}: arrow is flipped — should point top → bottom.`);
+      }
+    });
+  } else {
+    if (state.anchorId !== p.expected.anchorId) {
+      const got = p.anchorOptions.find(o => o.id === state.anchorId);
+      const want = p.anchorOptions.find(o => o.id === p.expected.anchorId);
+      issues.push('Wrong anchor: you picked "' + (got ? got.label : '(none)') + '" but it should be "' + want.label + '".');
+    }
+    const expL = p.expected.leftArrows  || [];
+    const expR = p.expected.rightArrows || [];
+    const expectedLeftFlipped  = (p.arrowDir.left  === 'A_to_R');
+    const expectedRightFlipped = (p.arrowDir.right === 'P_to_A');
+    state.leftArrows.forEach((arr, i) => {
+      issues = issues.concat(diffArrow('left' + (state.leftArrows.length > 1 ? '#' + (i + 1) : ''),
+        arr.apps, expL[i] || [], p));
+      if (arr.flipped !== expectedLeftFlipped) {
+        issues.push('Left arrow' + (state.leftArrows.length > 1 ? ' #' + (i + 1) : '')
+          + ' direction is wrong — for the indirect (' + indirectLabel(false) + ') path it must point R → A.');
+      }
+    });
+    state.rightArrows.forEach((arr, i) => {
+      issues = issues.concat(diffArrow('right' + (state.rightArrows.length > 1 ? '#' + (i + 1) : ''),
+        arr.apps, expR[i] || [], p));
+      if (arr.flipped !== expectedRightFlipped) {
+        issues.push('Right arrow' + (state.rightArrows.length > 1 ? ' #' + (i + 1) : '')
+          + ' direction is wrong — for the indirect (' + indirectLabel(false) + ') path it must point A → P.');
+      }
+    });
+  }
+  const msg = issues.length === 0
+    ? "Everything looks right but the calculation is off — double-check the multipliers and arrow directions."
+    : issues.join('\n• ');
+  const box = document.getElementById('hintBox');
+  box.classList.remove('hidden');
+  box.style.whiteSpace = 'pre-wrap';
+  box.textContent = '🔴 Issues found:\n• ' + msg;
+}
+
+function diffArrow(label, gotApps, expApps, p) {
+  const norm = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
+  if (norm(gotApps) === norm(expApps)) return [];
+  const fmt = arr => arr.map(a => {
+    const c = p.chips.find(x => x.id === a.chipId);
+    return (c ? c.label : '?') + (a.mult !== 1 ? ' × ' + a.mult : '');
+  }).join(' + ') || '(empty)';
+  const pretty = label.startsWith('left')  ? 'Left arrow'  + label.slice(4)
+                : label.startsWith('right') ? 'Right arrow' + label.slice(5)
+                : label;
+  return [pretty + ': you assigned ' + fmt(gotApps) + ' but it should be ' + fmt(expApps) + '.'];
+}
+
+function isSlotWrong(id) {
+  if (!state.showingMistakes) return false;
+  const p = currProb();
+  if (state.cycleType === 'bornhaber') {
+    const slot = p.ladder.slots.find(s => s.id === id);
+    if (!slot || slot.locked) return false;
+    return state.slotFills[id] !== slot.correctLabel;
+  }
+  if (id === 'A') return state.anchorId !== p.expected.anchorId;
+  return false;
+}
+
+function isArrowWrong(id) {
+  if (!state.showingMistakes) return false;
+  const p = currProb();
+  const norm = arr => arr.map(a => a.chipId + ':' + a.mult).sort().join(',');
+  if (state.cycleType === 'bornhaber') {
+    const data = state.steps[id] || { apps: [], flipped: false };
+    const apps = data.apps || [];
+    const step = p.ladder.steps.find(s => s.id === id);
+    if (!step) return false;
+    const chipsOk = (apps.length === 1 && apps[0].chipId === step.correctChipId && apps[0].mult === 1);
+    return !chipsOk || data.flipped;
+  }
+  // id is now 'L0', 'L1', 'R0', etc.
+  const side = id[0] === 'L' ? 'left' : 'right';
+  const idx = parseInt(id.slice(1));
+  const arr = side === 'left' ? state.leftArrows[idx] : state.rightArrows[idx];
+  if (!arr) return false;
+  const expArr = side === 'left' ? (p.expected.leftArrows || []) : (p.expected.rightArrows || []);
+  const exp = expArr[idx] || [];
+  const expectedFlipped = side === 'left'
+    ? (p.arrowDir.left  === 'A_to_R')
+    : (p.arrowDir.right === 'P_to_A');
+  return norm(arr.apps) !== norm(exp) || arr.flipped !== expectedFlipped;
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+loadTabState();
+document.querySelectorAll('.cyc-btn').forEach(b =>
+  b.classList.toggle('active', b.dataset.cycle === state.cycleType));
+populateProbSelect();
+document.getElementById('probSelect').value = state.probIdx;
+loadProblem(state.probIdx);
+</script>
+</body>
+</html>

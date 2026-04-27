@@ -76,6 +76,7 @@
   .thumb-gas   { background: linear-gradient(135deg, #0a1f1a, #0f2820); }
   .thumb-mb    { background: linear-gradient(135deg, #1a0a10, #2a0f18); }
   .thumb-pt    { background: linear-gradient(135deg, #0a1528, #0d2030); }
+  .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -86,6 +87,7 @@
   .tag-mech { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
   .tag-new  { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
   .tag-bond { background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.2); }
+  .tag-thermo { background: rgba(251,146,60,0.12); color: #fdba74; border: 1px solid rgba(251,146,60,0.2); }
 
   .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.2; }
   .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
@@ -299,6 +301,26 @@
       <div class="card-desc">Explore all 118 elements with click-for-details. Toggle heatmaps for electronegativity, atomic radius, 1st ionisation energy and melting point — or filter to just the H2 syllabus elements.</div>
       <div class="card-footer">
         <span class="card-meta">Periodicity · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Hess' Law — LIVE -->
+  <a href="./hess-law.html" class="sim-card" data-tags="thermochemistry">
+    <div class="card-thumb thumb-hess">
+      <canvas id="th-hess" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-thermo">Thermochemistry</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Hess' Law</div>
+      <div class="card-desc">Build energy cycles with drag-and-drop. Covers formation, combustion, bond-energy and Born-Haber. Compare clockwise vs anticlockwise paths to solve for ΔH.</div>
+      <div class="card-footer">
+        <span class="card-meta">Energetics · Interactive</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -575,6 +597,68 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   bonds.forEach(b=>drawRod(pA,proj(b[0]*BL,b[1]*BL,b[2]*BL)));
   pts.forEach(({p})=>drawAtom(p,10,'#22d3ee'));
   drawAtom(pA,13,'#f97316');
+})();
+
+// ── Hess' Law thumbnail ─────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-hess');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;
+  ctx.fillStyle='#1f0d05';ctx.fillRect(0,0,W,H);
+  // Three corners of the Hess triangle
+  const A={x:36,y:108,lbl:'A'};      // reactants (bottom-left)
+  const B={x:164,y:108,lbl:'B'};     // products (bottom-right)
+  const C={x:100,y:32,lbl:'C'};      // intermediate (top)
+  // Arrowhead helper
+  function arrowHead(x1,y1,x2,y2,col){
+    const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len;
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(x2-ux*9-uy*4,y2-uy*9+ux*4);
+    ctx.lineTo(x2-ux*9+uy*4,y2-uy*9-ux*4);
+    ctx.closePath();
+    ctx.fillStyle=col;ctx.fill();
+  }
+  function drawArrow(p1,p2,col,pad){
+    pad=pad||14;
+    const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/len,uy=dy/len;
+    const x1=p1.x+ux*pad,y1=p1.y+uy*pad,x2=p2.x-ux*pad,y2=p2.y-uy*pad;
+    ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.setLineDash([]);
+    ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    arrowHead(x1,y1,x2,y2,col);
+  }
+  // Direct path: A → B (orange, the "target")
+  drawArrow(A,B,'#fb923c',18);
+  // Indirect path via C: A → C, C → B (amber)
+  drawArrow(A,C,'#fbbf24',18);
+  drawArrow(C,B,'#fbbf24',18);
+  // Corner discs
+  function disc(p,col){
+    const r=14;
+    const g=ctx.createRadialGradient(p.x-r*.3,p.y-r*.32,r*.05,p.x,p.y,r*1.05);
+    g.addColorStop(0,'#fff');
+    g.addColorStop(.18,'rgba(255,255,255,0.55)');
+    g.addColorStop(.5,col);
+    g.addColorStop(1,'rgba(0,0,0,0.4)');
+    ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='#0f172a';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p.lbl,p.x,p.y+1);
+  }
+  disc(A,'#f97316');
+  disc(B,'#f97316');
+  disc(C,'#a855f7');
+  // ΔH labels along arrows
+  ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  // ΔH on A → B (below the line)
+  ctx.fillStyle='#fb923c';
+  ctx.fillText('ΔH', (A.x+B.x)/2, B.y+14);
+  // ΔH₁ on A → C (left side)
+  ctx.fillStyle='#fbbf24';
+  const m1x=(A.x+C.x)/2-12,m1y=(A.y+C.y)/2;
+  ctx.fillText('ΔH\u2081', m1x, m1y);
+  // ΔH₂ on C → B (right side)
+  const m2x=(C.x+B.x)/2+12,m2y=(C.y+B.y)/2;
+  ctx.fillText('ΔH\u2082', m2x, m2y);
 })();
 
 // ── Periodic Table thumbnail ────────────────────────────────────

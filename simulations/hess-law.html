@@ -1160,7 +1160,7 @@ function renderLadder() {
   // Compute layout dynamically so larger cycles (e.g. MgCl₂ N=7, Fe₂O₃ N≥10)
   // still fit. Step is held at LAD.STEP unless that would push the diagram
   // too tall, in which case it shrinks.
-  const yTopSlot = 95;          // first (top) slot's centre y
+  const yTopSlot = 50;          // first (top) slot's centre y (slot top edge at y≈15)
   const yBottomMargin = 50;     // gap below the ionic-compound slot
   const slotHalfH = 35;
   const idealStep = LAD.STEP;

@@ -146,7 +146,7 @@
 <div class="grid-wrap" id="cardGrid">
 
   <!-- SN2 — LIVE -->
-  <a href="./sn2.html" class="sim-card" data-tags="substitution">
+  <a href="./sn2.html" class="sim-card" data-tags="substitution" data-published="2026-03-23">
     <div class="card-thumb thumb-sn2">
       <canvas id="th-sn2" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -167,7 +167,7 @@
   </a>
 
   <!-- SN1 — LIVE -->
-  <a href="./sn1.html" class="sim-card" data-tags="substitution">
+  <a href="./sn1.html" class="sim-card" data-tags="substitution" data-published="2026-03-24">
     <div class="card-thumb thumb-sn1">
       <canvas id="th-sn1" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -188,7 +188,7 @@
   </a>
 
   <!-- Nucleophilic Addition — LIVE -->
-  <a href="./nucleophilic-addition.html" class="sim-card" data-tags="addition">
+  <a href="./nucleophilic-addition.html" class="sim-card" data-tags="addition" data-published="2026-03-24">
     <div class="card-thumb thumb-na">
       <canvas id="th-na"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -209,7 +209,7 @@
   </a>
 
   <!-- Electrophilic Addition — LIVE -->
-  <a href="./electrophilic-addition.html" class="sim-card" data-tags="addition">
+  <a href="./electrophilic-addition.html" class="sim-card" data-tags="addition" data-published="2026-03-25">
     <div class="card-thumb thumb-ea">
       <canvas id="th-ea"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -230,7 +230,7 @@
   </a>
 
   <!-- Electrophilic Substitution — LIVE -->
-  <a href="./electrophilic-substitution.html" class="sim-card" data-tags="substitution aromatic">
+  <a href="./electrophilic-substitution.html" class="sim-card" data-tags="substitution aromatic" data-published="2026-03-24">
     <div class="card-thumb thumb-es">
       <canvas id="th-es"  width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -251,7 +251,7 @@
   </a>
 
   <!-- Reaction Scheme Practice — LIVE -->
-  <a href="./reaction-scheme.html" class="sim-card" data-tags="synthesis">
+  <a href="./reaction-scheme.html" class="sim-card" data-tags="synthesis" data-published="2026-04-27">
     <div class="card-thumb thumb-rs">
       <canvas id="th-rs" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -272,7 +272,7 @@
   </a>
 
   <!-- VSEPR Theory — LIVE -->
-  <a href="./vsepr.html" class="sim-card" data-tags="bonding">
+  <a href="./vsepr.html" class="sim-card" data-tags="bonding" data-published="2026-03-26">
     <div class="card-thumb thumb-vsepr">
       <canvas id="vseprThumb" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -292,7 +292,7 @@
   </a>
 
   <!-- Gas Laws — LIVE -->
-  <a href="./gas-laws.html" class="sim-card" data-tags="physical">
+  <a href="./gas-laws.html" class="sim-card" data-tags="physical" data-published="2026-04-02">
     <div class="card-thumb thumb-gas">
       <canvas id="th-gas" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -312,7 +312,7 @@
   </a>
 
   <!-- Interactive Periodic Table — LIVE -->
-  <a href="./periodic-table/" class="sim-card" data-tags="inorganic">
+  <a href="./periodic-table/" class="sim-card" data-tags="inorganic" data-published="2026-04-17">
     <div class="card-thumb thumb-pt">
       <canvas id="th-pt" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -332,7 +332,7 @@
   </a>
 
   <!-- Hess' Law — LIVE -->
-  <a href="./hess-law.html" class="sim-card" data-tags="thermochemistry">
+  <a href="./hess-law.html" class="sim-card" data-tags="thermochemistry" data-published="2026-04-27">
     <div class="card-thumb thumb-hess">
       <canvas id="th-hess" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -352,7 +352,7 @@
   </a>
 
   <!-- Maxwell-Boltzmann — LIVE -->
-  <a href="./maxwell-boltzmann.html" class="sim-card" data-tags="physical">
+  <a href="./maxwell-boltzmann.html" class="sim-card" data-tags="physical" data-published="2026-04-02">
     <div class="card-thumb thumb-mb">
       <canvas id="th-mb" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -372,7 +372,7 @@
   </a>
 
   <!-- Electrochemistry — LIVE -->
-  <a href="./electrochemistry.html" class="sim-card" data-tags="electrochemistry redox">
+  <a href="./electrochemistry.html" class="sim-card" data-tags="electrochemistry redox" data-published="2026-04-27">
     <div class="card-thumb thumb-electro">
       <canvas id="th-electro" width="200" height="150" style="position:relative;z-index:1;"></canvas>
     </div>
@@ -406,6 +406,22 @@ function filterCards(tag, btn) {
     card.style.display = (tag === 'all' || tags.includes(tag)) ? '' : 'none';
   });
 }
+
+// Hide "New" badge after 21 days from data-published date
+(function(){
+  const NEW_DAYS = 21;
+  const today = new Date();
+  document.querySelectorAll('.sim-card').forEach(card => {
+    const dateStr = card.dataset.published;
+    if(!dateStr) return;
+    const pubDate = new Date(dateStr);
+    if(isNaN(pubDate)) return;
+    const daysAgo = Math.floor((today - pubDate) / (1000 * 60 * 60 * 24));
+    if(daysAgo > NEW_DAYS){
+      card.querySelectorAll('.tag-new').forEach(t => t.style.display = 'none');
+    }
+  });
+})();
 </script>
 
 <script>

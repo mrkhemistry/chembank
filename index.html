@@ -4565,7 +4565,7 @@ Option D" required></textarea>
 
         async function checkWeakQuestions() {
             // Only show for logged-in students
-            if (!currentUser || userRole === 'admin' || userRole === 'teacher') {
+            if (!currentUser || userRole === 'teacher') {
                 console.log('checkWeakQuestions: skipping, role =', userRole);
                 return;
             }
@@ -4895,7 +4895,7 @@ Option D" required></textarea>
 
             // Detect new personal bests (compare vs prior saved bests before inserting this attempt)
             let newBestTopics = [];
-            if ((userRole === 'student' || userRole === 'premium_student') && currentUser) {
+            if ((userRole === 'student' || userRole === 'premium_student' || userRole === 'admin') && currentUser) {
                 try {
                     const priorBests = await computePersonalBests(currentUser.id);
                     const curByTopic = {};
@@ -5092,7 +5092,7 @@ Option D" required></textarea>
 
         async function loadStreak() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student') return;
+            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
             const row = document.getElementById('gamificationRow');
             const card = document.getElementById('streakCard');
             const content = document.getElementById('streakContent');
@@ -5190,7 +5190,7 @@ Option D" required></textarea>
 
         async function loadPersonalBests() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student') return;
+            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
             const row = document.getElementById('gamificationRow');
             const card = document.getElementById('personalBestsCard');
             const content = document.getElementById('personalBestsContent');
@@ -5284,7 +5284,7 @@ Option D" required></textarea>
 
         async function loadTopicMastery() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student') return;
+            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
             const card = document.getElementById('topicMasteryCard');
             const content = document.getElementById('topicMasteryContent');
             if (!card || !content) return;

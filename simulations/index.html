@@ -77,6 +77,7 @@
   .thumb-mb    { background: linear-gradient(135deg, #1a0a10, #2a0f18); }
   .thumb-pt    { background: linear-gradient(135deg, #0a1528, #0d2030); }
   .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
+  .thumb-electro { background: linear-gradient(135deg, #0a1628, #0f2030); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -88,6 +89,7 @@
   .tag-new  { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
   .tag-bond { background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.2); }
   .tag-thermo { background: rgba(251,146,60,0.12); color: #fdba74; border: 1px solid rgba(251,146,60,0.2); }
+  .tag-electro { background: rgba(252,211,77,0.12); color: #fde68a; border: 1px solid rgba(252,211,77,0.2); }
 
   .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.2; }
   .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
@@ -346,6 +348,26 @@
     </div>
   </a>
 
+  <!-- Electrochemistry — LIVE -->
+  <a href="./electrochemistry.html" class="sim-card" data-tags="electrochemistry redox">
+    <div class="card-thumb thumb-electro">
+      <canvas id="th-electro" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-electro">Electrochemistry</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Galvanic vs Electrolytic Cells</div>
+      <div class="card-desc">Compare a Daniell cell with electrolysis side-by-side. Switch between Cu purification, molten NaCl and brine to see how electrons, ions and electrode polarity flip.</div>
+      <div class="card-footer">
+        <span class="card-meta">Redox · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
 </div>
 
 <footer>
@@ -558,6 +580,84 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   ctx.font='8px Arial';ctx.textAlign='left';
   ctx.fillStyle='#22d3ee';ctx.fillText('Low T',ax+3,ay-ah+12);
   ctx.fillStyle='#f97316';ctx.fillText('High T',ax+3,ay-ah+23);
+})();
+
+// Electrochemistry thumbnail — Daniell cell silhouette (two beakers + salt bridge + bulb)
+(function(){
+  const c=document.getElementById('th-electro');if(!c)return;
+  const ctx=c.getContext('2d'),W=200,H=150;
+  ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);
+
+  // beaker outlines + tinted liquid
+  function beaker(x, y, w, h, liqCol){
+    ctx.fillStyle=liqCol; ctx.fillRect(x+1, y+8, w-2, h-9);
+    ctx.fillStyle='rgba(255,255,255,0.18)'; ctx.fillRect(x+1, y+8, w-2, 2);
+    ctx.strokeStyle='rgba(220,235,255,0.5)'; ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x, y+h); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w, y);
+    ctx.stroke();
+  }
+  const bx1=22, bx2=110, by=70, bw=66, bh=62;
+  beaker(bx1, by, bw, bh, 'rgba(120,180,230,0.50)'); // Zn beaker — pale
+  beaker(bx2, by, bw, bh, 'rgba(70,160,230,0.65)');  // Cu beaker — bright
+
+  // electrodes (Zn grey, Cu orange)
+  function rod(cx, top, bot, col){
+    const grad=ctx.createLinearGradient(cx-4, 0, cx+4, 0);
+    grad.addColorStop(0,'#475569'); grad.addColorStop(0.5,col); grad.addColorStop(1,'#475569');
+    ctx.fillStyle=grad; ctx.fillRect(cx-4, top, 8, bot-top);
+    ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=0.5; ctx.strokeRect(cx-4, top, 8, bot-top);
+  }
+  const znX = bx1+22, cuX = bx2+44;
+  rod(znX, by-3, by+bh*0.85, '#94a3b8');
+  rod(cuX, by-3, by+bh*0.85, '#f97316');
+
+  // salt bridge inverted U (between the rods, going over the top)
+  const sb1 = bx1+50, sb2 = bx2+18;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  // outer
+  ctx.strokeStyle='rgba(15,23,42,0.85)'; ctx.lineWidth=11;
+  ctx.beginPath();
+  ctx.moveTo(sb1, by+18);
+  ctx.lineTo(sb1, by-2);
+  ctx.quadraticCurveTo(sb1, by-12, sb1+10, by-12);
+  ctx.lineTo(sb2-10, by-12);
+  ctx.quadraticCurveTo(sb2, by-12, sb2, by-2);
+  ctx.lineTo(sb2, by+18);
+  ctx.stroke();
+  // body
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=8; ctx.stroke();
+  // inner
+  ctx.strokeStyle='rgba(203,213,225,0.55)'; ctx.lineWidth=3; ctx.stroke();
+
+  // wire — up from each rod, across the top, with a bulb in the middle
+  ctx.strokeStyle='#475569'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(znX, by-3); ctx.lineTo(znX, 28);
+  ctx.lineTo(cuX, 28); ctx.lineTo(cuX, by-3);
+  ctx.stroke();
+
+  // bulb
+  const blbx=W/2, blby=22;
+  // glow
+  const glow=ctx.createRadialGradient(blbx, blby, 2, blbx, blby, 24);
+  glow.addColorStop(0,'rgba(253,230,138,0.5)'); glow.addColorStop(1,'rgba(253,230,138,0)');
+  ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(blbx, blby, 24, 0, Math.PI*2); ctx.fill();
+  // glass
+  const bg=ctx.createRadialGradient(blbx-2, blby-2, 1, blbx, blby, 9);
+  bg.addColorStop(0,'#fffde0'); bg.addColorStop(0.5,'#fde68a'); bg.addColorStop(1,'rgba(251,191,36,0.6)');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.arc(blbx, blby, 9, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=0.8; ctx.stroke();
+  // base
+  ctx.fillStyle='#94a3b8'; ctx.fillRect(blbx-5, blby+8, 10, 3);
+
+  // electron dots flowing along wire (Zn anode → Cu cathode externally)
+  function eDot(x,y){
+    const eg=ctx.createRadialGradient(x-1, y-1, 0.5, x, y, 3.5);
+    eg.addColorStop(0,'#fffbe6'); eg.addColorStop(0.5,'#fbbf24'); eg.addColorStop(1,'#b45309');
+    ctx.fillStyle=eg; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI*2); ctx.fill();
+  }
+  eDot(znX, 50); eDot(blbx-22, 28); eDot(blbx+22, 28); eDot(cuX, 50);
 })();
 
 (function(){

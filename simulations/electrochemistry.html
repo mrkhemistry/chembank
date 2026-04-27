@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electrochemical vs Electrolytic Cells — Mr Khemistry</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f4ff;
+    --muted: #7a8aaa;
+    --accent: #4f9cf9;
+    --gal: #6ee7b7;
+    --elc: #fcd34d;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(79,156,249,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,156,249,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(11,15,26,0.9);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0;
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-back {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; color: var(--muted);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent); }
+  .nav-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; font-weight: 400; color: var(--text);
+  }
+  .nav-tags { display: flex; gap: 6px; }
+  .ntag {
+    font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .ntag-h2     { background: rgba(79,156,249,0.12); color: #93c5fd; border: 1px solid rgba(79,156,249,0.2); }
+  .ntag-electro { background: rgba(252,211,77,0.12); color: #fde68a; border: 1px solid rgba(252,211,77,0.2); }
+
+  /* MAIN */
+  .main {
+    position: relative; z-index: 1;
+    flex: 1; display: flex; flex-direction: column;
+    padding: 24px 32px;
+    gap: 20px;
+    max-width: 1280px; width: 100%; margin: 0 auto;
+  }
+
+  /* SIM */
+  #simw {
+    width: 100%; background: #0f172a;
+    border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  #topRow { display: flex; height: 580px; }
+  #cWrap { flex: 1; position: relative; min-width: 0; }
+  #chemCanvas { display: block; width: 100%; height: 100%; background: #0a1628; }
+
+  /* TWO side panels — galvanic info LEFT, electrolytic info RIGHT.
+     Right panel is slightly wider since it hosts mode buttons + at-a-glance. */
+  .sidePanel {
+    background: #0a1426;
+    flex-shrink: 0;
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
+  .sp-section { padding: 14px 16px; border-bottom: 1px solid #1e293b; }
+  .sp-section:last-child { border-bottom: none; }
+  .sp-label { font-size: 10px; color: #cbd5e1; margin-bottom: 8px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+
+  /* mode pills */
+  .mode-list { display: flex; flex-direction: column; gap: 6px; }
+  .mode-btn {
+    display: block; width: 100%;
+    padding: 9px 11px; background: #0f172a;
+    border: 1px solid #1e293b; border-radius: 8px;
+    color: #94a3b8; font-size: 13px; font-family: inherit;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+  }
+  .mode-btn:hover { border-color: #334155; color: #e2e8f0; }
+  .mode-btn.active { background: rgba(79,156,249,0.08); border-color: var(--accent); color: var(--text); }
+
+  /* side-panel separators */
+  #sidePanelLeft  { width: 230px; border-right: 1px solid #1e293b; }
+  #sidePanelRight { width: 290px; border-left:  1px solid #1e293b; }
+  .mode-btn .mode-sub { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
+  .mode-btn.active .mode-sub { color: #93c5fd; }
+
+  /* equations card */
+  .cell-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .cell-card:last-child { margin-bottom: 0; }
+  .cell-card.gal { border-left: 3px solid var(--gal); }
+  .cell-card.elc { border-left: 3px solid var(--elc); }
+  .cell-name {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cell-card.gal .cell-name { color: var(--gal); }
+  .cell-card.elc .cell-name { color: var(--elc); }
+  .cell-emf { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #94a3b8; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  .heq { font-size: 13px; color: #cbd5e1; line-height: 1.55; font-family: 'Consolas','Menlo',monospace; }
+  .heq .lbl { color: #cbd5e1; font-size: 10px; margin-right: 6px; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'DM Sans',sans-serif; }
+  .heq .ox { color: #fca5a5; }
+  .heq .red { color: #93c5fd; }
+
+  /* contrast list */
+  .contrast { font-size: 12px; color: #94a3b8; line-height: 1.7; }
+  .contrast .row { display: flex; gap: 8px; padding: 2px 0; }
+  .contrast .row .col1 { flex: 1; color: var(--gal); }
+  .contrast .row .col2 { flex: 1; color: var(--elc); text-align: right; }
+
+  /* controls */
+  #botBar {
+    background: #060e1c; border-top: 1px solid #1e293b;
+    padding: 10px 16px; display: flex; align-items: center;
+    gap: 10px; flex-wrap: wrap;
+  }
+  .bp { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 7px 18px; font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600; }
+  .bp:hover { background: #3b82f6; }
+  .bp.pause { background: #1e293b; color: #cbd5e1; }
+  .bp.pause:hover { background: #334155; }
+  .bs { background: #1e293b; color: #94a3b8; border: none; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .bs:hover { background: #334155; color: #e2e8f0; }
+  .divider { width: 1px; height: 22px; background: #1e293b; }
+  .ctrl-label { font-size: 12px; color: #cbd5e1; }
+  #spd { width: 90px; accent-color: #3b82f6; cursor: pointer; }
+  #spdOut { font-size: 12px; color: #94a3b8; min-width: 30px; }
+  #statusBadge { margin-left: auto; font-size: 11px; font-family: 'Consolas',monospace; color: #7dd3fc; background: #0c2340; border: 1px solid #1e4070; border-radius: 4px; padding: 4px 10px; }
+
+  /* legend chips floating on canvas */
+  .legend-toggle {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(15,23,42,0.85); padding: 6px 10px;
+    border-radius: 8px; border: 1px solid #1e293b;
+    font-size: 11px; color: #94a3b8;
+    backdrop-filter: blur(6px);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* learning notes */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .note-card h3 {
+    font-size: 15px; font-weight: 600;
+    color: var(--accent); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .note-card h3::before {
+    content: '';
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: currentColor;
+  }
+  .note-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+  .note-card strong { color: var(--text); font-weight: 500; }
+  .note-card.gal h3 { color: var(--gal); }
+  .note-card.elc h3 { color: var(--elc); }
+
+  footer {
+    position: relative; z-index: 1;
+    text-align: center; padding: 24px 32px;
+    border-top: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 900px) {
+    #topRow { flex-direction: column; height: auto; }
+    .sidePanel { width: 100%; border: none; border-top: 1px solid #1e293b; }
+    #cWrap { height: 480px; }
+  }
+  @media (max-width: 600px) {
+    nav, .main { padding-left: 14px; padding-right: 14px; }
+    #cWrap { height: 380px; }
+    .legend-toggle { font-size: 10px; padding: 5px 8px; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="./index.html" class="nav-back">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"></path></svg>
+      Simulations
+    </a>
+    <div style="width:1px;height:20px;background:var(--border);"></div>
+    <span class="nav-title">Electrochemical vs Electrolytic Cells</span>
+  </div>
+  <div class="nav-tags">
+    <span class="ntag ntag-h2">H2</span>
+    <span class="ntag ntag-electro">Electrochemistry</span>
+  </div>
+</nav>
+
+<div class="main">
+
+  <div id="simw">
+    <div id="topRow">
+      <!-- LEFT side panel: Galvanic-cell info -->
+      <div id="sidePanelLeft" class="sidePanel">
+        <div class="sp-section">
+          <div class="sp-label" style="color:#10b981">Galvanic cell</div>
+          <div class="cell-card gal">
+            <div class="cell-name"><span>Half-equations</span><span class="cell-emf" id="emfGal">E°cell = +1.10 V</span></div>
+            <div class="heq" id="heqGal"></div>
+          </div>
+        </div>
+        <div class="sp-section">
+          <div class="sp-label">Galvanic — at a glance</div>
+          <div class="contrast" style="grid-template-columns: 1fr">
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">spontaneous reaction</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">chemical → electrical</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">anode (−) · cathode (+)</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">E°cell &gt; 0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: simulation canvas -->
+      <div id="cWrap">
+        <canvas id="chemCanvas"></canvas>
+        <div class="legend-toggle">
+          <div class="leg-item"><span class="leg-dot" style="background:#fbbf24"></span>e⁻</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#3b82f6"></span>cation</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#ef4444"></span>anion</div>
+        </div>
+      </div>
+
+      <!-- RIGHT side panel: Electrolytic-cell info + mode selector -->
+      <div id="sidePanelRight" class="sidePanel">
+        <div class="sp-section">
+          <div class="sp-label">Mode</div>
+          <div class="mode-list">
+            <button class="mode-btn active" data-mode="daniell" onclick="setMode('daniell')">
+              Purification of copper
+              <div class="mode-sub">Cu electrodes in CuSO₄(aq)</div>
+            </button>
+            <button class="mode-btn" data-mode="molten" onclick="setMode('molten')">
+              Electrolysis of molten NaCl
+              <div class="mode-sub">Inert (Pt) electrodes in molten NaCl</div>
+            </button>
+            <button class="mode-btn" data-mode="aq" onclick="setMode('aq')">
+              Electrolysis of aqueous NaCl (brine)
+              <div class="mode-sub">Inert (Pt) electrodes in aqueous NaCl</div>
+            </button>
+          </div>
+        </div>
+        <div class="sp-section">
+          <div class="sp-label" style="color:#fcd34d">Electrolytic cell</div>
+          <div class="cell-card elc">
+            <div class="cell-name"><span>Half-equations</span><span class="cell-emf" id="emfElc">requires energy</span></div>
+            <div class="heq" id="heqElc"></div>
+          </div>
+        </div>
+        <div class="sp-section">
+          <div class="sp-label">Electrolytic — at a glance</div>
+          <div class="contrast" style="grid-template-columns: 1fr">
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">non-spontaneous reaction</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">electrical → chemical</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">anode (+) · cathode (−)</div></div>
+            <div class="row" style="grid-template-columns: 1fr"><div class="col1" style="text-align:left">battery sets polarity</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="botBar">
+      <button class="bp" id="playBtn">Pause</button>
+      <button class="bs" id="resetBtn">Reset</button>
+      <div class="divider"></div>
+      <span class="ctrl-label">Speed</span>
+      <input type="range" id="spd" min="0.2" max="2.5" step="0.1" value="1">
+      <span id="spdOut">1.0×</span>
+      <div class="divider"></div>
+      <span class="ctrl-label">Show</span>
+      <button class="bs" id="tglIons">Ions ●</button>
+      <button class="bs" id="tglElec">Electrons ●</button>
+      <span id="statusBadge">Running · Cu purification</span>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card gal">
+      <h3>Galvanic (electrochemical) cell</h3>
+      <p>A <strong>spontaneous</strong> redox reaction does work. Chemical energy → electrical energy. The more reactive metal (Zn) is oxidised at the <strong>negative anode</strong>; less reactive Cu²⁺ is reduced at the <strong>positive cathode</strong>. <strong>E°cell &gt; 0</strong>.</p>
+    </div>
+    <div class="note-card elc">
+      <h3>Electrolytic cell</h3>
+      <p>An external power supply drives a <strong>non-spontaneous</strong> reaction. Electrical energy → chemical energy. The battery pulls electrons from the <strong>anode (now +)</strong> and pushes them onto the <strong>cathode (now −)</strong>. Polarity is set by the battery, not the chemistry.</p>
+    </div>
+    <div class="note-card">
+      <h3>Ion migration</h3>
+      <p>In <strong>both</strong> cells, cations always migrate toward the cathode and anions toward the anode — the electrolyte carries the charge. The signs of the electrodes flip between cell types, but the rule "<strong>cation → cathode</strong>" never does.</p>
+    </div>
+    <div class="note-card">
+      <h3>Selective discharge</h3>
+      <p>In aqueous electrolytes, what is discharged depends on <strong>position in the electrochemical series</strong>, <strong>concentration</strong>, and the electrode material. Compare molten NaCl (Na, Cl₂) with brine (H₂, Cl₂) to see why water can win at the cathode.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <a href="./index.html">← Back to all simulations</a> &nbsp;·&nbsp;
+  <a href="https://mrkhemistry.github.io/chembank/">Mr Khemistry Tuition Centre</a>
+</footer>
+
+<script>
+/* ============================================================
+   ELECTROCHEMICAL vs ELECTROLYTIC CELLS — side-by-side canvas
+   ============================================================ */
+(function(){
+const canvas = document.getElementById('chemCanvas');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('cWrap');
+let W, H;
+
+let mode = 'daniell';   // 'daniell' | 'molten' | 'aq'
+let speed = 1;
+let paused = false;
+let t = 0;              // global time
+let showIons = true;
+let showElec = true;
+
+/* ---------- Colors ---------- */
+const COL = {
+  bgPanel:   '#0a1628',
+  zn:        '#94a3b8',  // zinc grey
+  cu:        '#f97316',  // copper orange
+  pt:        '#cbd5e1',  // inert grey-white
+  zn2:       '#a3b8d6',  // Zn²⁺ pale blue
+  cu2:       '#3b82f6',  // Cu²⁺ blue
+  na:        '#fbbf24',  // Na⁺ yellow
+  cl:        '#22c55e',  // Cl⁻ green
+  oh:        '#22d3ee',  // OH⁻ cyan
+  h:         '#f0f4ff',  // H⁺ near-white
+  so4:       '#ef4444',  // SO₄²⁻ red
+  so4_alt:   '#ef4444',
+  e:         '#fbbf24',  // electron yellow
+  wire:      '#475569',
+  bulb:      '#fde68a',
+  battery:   '#cbd5e1',
+  liquid_zn: 'rgba(190,215,240,0.42)', // zinc sulfate — near-clear with cool tint
+  liquid_cu: 'rgba(70,160,230,0.55)',  // copper sulfate — bright sky blue
+  liquid_molten: 'rgba(251,191,36,0.40)',
+  liquid_brine:  'rgba(120,200,140,0.45)',
+  beaker:    'rgba(255,255,255,0.10)',
+  beakerBd:  'rgba(255,255,255,0.22)',
+  text:      '#e2e8f0',
+  textMute:  '#94a3b8',
+  saltBridge:'rgba(167,139,250,0.30)',
+  saltBridgeBd: 'rgba(167,139,250,0.7)',
+  gal:       '#6ee7b7',
+  elc:       '#fcd34d',
+};
+
+/* ---------- Resize ---------- */
+function resize(){ W = canvas.width = wrap.clientWidth; H = canvas.height = wrap.clientHeight; }
+
+/* ---------- Helpers ---------- */
+function lighten(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r+(255-r)*a)},${Math.round(g+(255-g)*a)},${Math.round(b+(255-b)*a)})`;}
+function darken(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgb(${Math.round(r*(1-a))},${Math.round(g*(1-a))},${Math.round(b*(1-a))})`;}
+
+function drawIon(x,y,r,col,lbl,labelCol){
+  const g=ctx.createRadialGradient(x-r*0.3,y-r*0.32,r*0.05,x,y,r*1.05);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(0.18,lighten(col,0.65));
+  g.addColorStop(0.5,col);     g.addColorStop(1,darken(col,0.55));
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle=darken(col,0.3);ctx.lineWidth=0.8;ctx.stroke();
+  const h=ctx.createRadialGradient(x-r*0.32,y-r*0.35,0,x-r*0.32,y-r*0.35,r*0.42);
+  h.addColorStop(0,'rgba(255,255,255,0.55)');h.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=h;ctx.fill();
+  if(lbl){
+    ctx.fillStyle=labelCol||'#0f172a';
+    ctx.font='bold '+Math.max(8,Math.round(r*0.85))+'px DM Sans, Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(lbl,x,y+0.5);
+  }
+}
+
+function drawElectron(x,y){
+  const r=4.5;
+  const g=ctx.createRadialGradient(x-1,y-1,0.5,x,y,r*1.3);
+  g.addColorStop(0,'#fffbe6'); g.addColorStop(0.5,COL.e); g.addColorStop(1,'#b45309');
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=0.5;ctx.stroke();
+  ctx.fillStyle='#7c2d12';ctx.font='bold 6px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('−',x,y);
+}
+
+/* ---------- Cell layout (computed each frame for responsiveness) ---------- */
+function getLayout(){
+  // Two cells: left=galvanic, right=electrolytic. Each has a beaker w/ two electrodes.
+  // Above each: wire path connecting the two electrodes through the external circuit element.
+  const margin = 16;
+  const halfW = W/2;
+  const beakerY = H*0.42;          // top of beaker
+  const beakerH = H*0.45;
+  const beakerW = halfW - margin*2 - 16;
+  // Galvanic = two beakers side-by-side joined by salt bridge (Daniell cell)
+  // Electrolytic = single beaker
+  return {
+    margin, halfW, beakerY, beakerH, beakerW,
+    // GALVANIC region (Daniell — TWO sub-beakers + salt bridge)
+    gal: {
+      x0: margin,
+      y0: beakerY,
+      x1: halfW - margin,
+      y1: beakerY + beakerH,
+      // sub-beakers
+      bw: (halfW - margin*2 - 18) / 2, // width of each sub-beaker
+      bh: beakerH * 0.78,
+      // wire/circuit top
+      wireY: beakerY - 90,
+      bulbY: beakerY - 110,
+    },
+    // ELECTROLYTIC region (single beaker) — narrower than the galvanic region
+    // so it doesn't dominate the canvas; gives the right side-panel more breathing room.
+    elc: {
+      x0: halfW + margin,
+      y0: beakerY,
+      x1: halfW + margin + (halfW - margin*2)*0.78,
+      y1: beakerY + beakerH,
+      bw: (halfW - margin*2)*0.78,
+      bh: beakerH * 0.85,
+      wireY: beakerY - 90,
+      battY: beakerY - 110,
+    }
+  };
+}
+
+/* ---------- Beaker drawing — clean glass cylinder, bright tinted liquid ---------- */
+function drawBeaker(x,y,w,h, liquidCol, surfaceLabel){
+  const tiltY = 9;
+  const lipH = 16;
+  const liquidTopY = y + lipH;
+  const cx = x + w/2;
+
+  ctx.save();
+
+  // === GLASS BODY — soft frosted cylinder ===
+  // very subtle tint so it reads as glass on dark bg without being noisy
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y+h);
+  ctx.bezierCurveTo(x, y+h+tiltY*0.55,  x+w*0.5-w*0.18, y+h+tiltY,  cx, y+h+tiltY);
+  ctx.bezierCurveTo(x+w*0.5+w*0.18, y+h+tiltY, x+w, y+h+tiltY*0.55, x+w, y+h);
+  ctx.lineTo(x+w, y);
+  ctx.closePath();
+  const glassGrad = ctx.createLinearGradient(x, 0, x+w, 0);
+  glassGrad.addColorStop(0,    'rgba(180,210,240,0.10)');
+  glassGrad.addColorStop(0.15, 'rgba(255,255,255,0.04)');
+  glassGrad.addColorStop(0.5,  'rgba(255,255,255,0.02)');
+  glassGrad.addColorStop(0.85, 'rgba(255,255,255,0.04)');
+  glassGrad.addColorStop(1,    'rgba(180,210,240,0.10)');
+  ctx.fillStyle = glassGrad;
+  ctx.fill();
+
+  // === LIQUID — bright, lit-from-above tint ===
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+1, liquidTopY);
+  ctx.lineTo(x+1, y+h);
+  ctx.bezierCurveTo(x+1, y+h+tiltY*0.5, x+w*0.5-w*0.17, y+h+tiltY-1, cx, y+h+tiltY-1);
+  ctx.bezierCurveTo(x+w*0.5+w*0.17, y+h+tiltY-1, x+w-1, y+h+tiltY*0.5, x+w-1, y+h);
+  ctx.lineTo(x+w-1, liquidTopY);
+  ctx.bezierCurveTo(x+w-1, liquidTopY-tiltY*0.55, x+w*0.5+w*0.18, liquidTopY-tiltY, cx, liquidTopY-tiltY);
+  ctx.bezierCurveTo(x+w*0.5-w*0.18, liquidTopY-tiltY, x+1, liquidTopY-tiltY*0.55, x+1, liquidTopY);
+  ctx.closePath();
+  ctx.clip();
+  // base liquid colour (bright!)
+  ctx.fillStyle = liquidCol;
+  ctx.fillRect(x, liquidTopY-tiltY, w, h+tiltY*2);
+  // top-down lighting: brighter near surface, deeper / saturated near bottom
+  const lightGrad = ctx.createLinearGradient(0, liquidTopY-tiltY, 0, y+h+tiltY);
+  lightGrad.addColorStop(0,   'rgba(255,255,255,0.18)');
+  lightGrad.addColorStop(0.4, 'rgba(255,255,255,0.04)');
+  lightGrad.addColorStop(1,   'rgba(0,20,40,0.30)');
+  ctx.fillStyle = lightGrad;
+  ctx.fillRect(x, liquidTopY-tiltY, w, h+tiltY*2);
+  // left edge highlight on liquid (hint of refraction)
+  const sideGrad = ctx.createLinearGradient(x, 0, x+w, 0);
+  sideGrad.addColorStop(0,   'rgba(255,255,255,0.10)');
+  sideGrad.addColorStop(0.1, 'rgba(255,255,255,0.0)');
+  sideGrad.addColorStop(0.9, 'rgba(255,255,255,0.0)');
+  sideGrad.addColorStop(1,   'rgba(0,0,0,0.10)');
+  ctx.fillStyle = sideGrad;
+  ctx.fillRect(x, liquidTopY-tiltY, w, h+tiltY*2);
+  ctx.restore();
+
+  // === LIQUID SURFACE (meniscus ellipse) ===
+  // Back half — slightly darker (we see the back of the rim through liquid)
+  ctx.beginPath();
+  ctx.ellipse(cx, liquidTopY, w/2-1, tiltY, 0, Math.PI, 0);
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fill();
+  // surface highlight ring
+  ctx.beginPath();
+  ctx.ellipse(cx, liquidTopY, w/2-1, tiltY, 0, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // === GLASS OUTLINE — crisp white-ish line ===
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y+h);
+  ctx.bezierCurveTo(x, y+h+tiltY*0.55, x+w*0.5-w*0.18, y+h+tiltY, cx, y+h+tiltY);
+  ctx.bezierCurveTo(x+w*0.5+w*0.18, y+h+tiltY, x+w, y+h+tiltY*0.55, x+w, y+h);
+  ctx.lineTo(x+w, y);
+  ctx.strokeStyle = 'rgba(220,235,255,0.45)';
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  // === RIM (top opening ellipse) ===
+  ctx.beginPath();
+  ctx.ellipse(cx, y, w/2, tiltY*0.9, 0, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(15,23,42,0.55)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(220,235,255,0.55)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // === LEFT GLASS HIGHLIGHT — vertical sheen ===
+  const sheen = ctx.createLinearGradient(x, 0, x+12, 0);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.18)');
+  sheen.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(x+2, y+tiltY+2, 6, h-tiltY-4);
+  // right faint highlight
+  const sheenR = ctx.createLinearGradient(x+w-12, 0, x+w, 0);
+  sheenR.addColorStop(0, 'rgba(255,255,255,0)');
+  sheenR.addColorStop(1, 'rgba(255,255,255,0.10)');
+  ctx.fillStyle = sheenR;
+  ctx.fillRect(x+w-8, y+tiltY+2, 6, h-tiltY-4);
+
+  ctx.restore();
+
+  // surface label
+  if(surfaceLabel){
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.font='10px DM Sans,Arial'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(surfaceLabel, cx, y+h+tiltY+8);
+  }
+}
+
+/* ---------- Electrode — flat metal strip with subtle highlight ---------- */
+function drawElectrode(cx, topY, botY, col, label, polarity){
+  const w=10;
+  const x=cx-w/2;
+  const h=botY-topY;
+
+  ctx.save();
+  // strip body — vertical centerline highlight, darker edges (flat metal sheet)
+  const grad = ctx.createLinearGradient(x, 0, x+w, 0);
+  grad.addColorStop(0,    darken(col, 0.35));
+  grad.addColorStop(0.25, col);
+  grad.addColorStop(0.5,  lighten(col, 0.40));
+  grad.addColorStop(0.75, col);
+  grad.addColorStop(1,    darken(col, 0.30));
+  ctx.fillStyle = grad;
+  ctx.fillRect(x, topY, w, h);
+
+  // immersion shadow — slightly darker section under liquid surface
+  const liqStart = topY + 16;
+  if(botY > liqStart){
+    const submerged = ctx.createLinearGradient(0, liqStart, 0, botY);
+    submerged.addColorStop(0, 'rgba(0,0,0,0)');
+    submerged.addColorStop(1, 'rgba(0,0,0,0.22)');
+    ctx.fillStyle = submerged;
+    ctx.fillRect(x, liqStart, w, botY-liqStart);
+  }
+
+  // thin top cap
+  ctx.beginPath();
+  ctx.ellipse(cx, topY, w/2, 1.6, 0, 0, Math.PI*2);
+  ctx.fillStyle = lighten(col, 0.45);
+  ctx.fill();
+  ctx.strokeStyle = darken(col, 0.4);
+  ctx.lineWidth = 0.4;
+  ctx.stroke();
+
+  // flat bottom edge
+  ctx.fillStyle = darken(col, 0.55);
+  ctx.fillRect(x-0.5, botY-1.2, w+1, 1.6);
+
+  // crisp side outlines
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(x+0.25, topY); ctx.lineTo(x+0.25, botY);
+  ctx.moveTo(x+w-0.25, topY); ctx.lineTo(x+w-0.25, botY);
+  ctx.stroke();
+  ctx.restore();
+
+  // Stack ALL three labels in one column on the OUTWARD side of the rod
+  // (left of the left rod, right of the right rod). Putting them in the same
+  // column means rods that sit close together (electrolytic cell) can't have
+  // their element labels collide in the middle.
+  // [anode/cathode] (top) → [−/+] (middle) → [Zn/Cu] (bottom, just above rim)
+  const outward = polarity && polarity.side==='L' ? -1 : 1;
+  const sx = cx + outward * 24;
+  ctx.textAlign = outward < 0 ? 'right' : 'left';
+  if(polarity){
+    // role word at top
+    ctx.fillStyle='#94a3b8';
+    ctx.font='11px DM Sans,Arial';
+    ctx.textBaseline='middle';
+    ctx.fillText(polarity.label, sx, topY-30);
+    // sign in the middle
+    ctx.fillStyle = polarity.sign==='+'?'#fca5a5':'#93c5fd';
+    ctx.font='bold 13px DM Sans,Arial';
+    ctx.fillText(polarity.sign, sx, topY-16);
+  }
+  // electrode element label — bottom of the column, just above rod top
+  if(label){
+    ctx.fillStyle='#e2e8f0';
+    ctx.font='bold 11px DM Sans,Arial';
+    ctx.textBaseline='middle';
+    ctx.fillText(label, sx, topY-3);
+  }
+}
+
+/* ---------- Wire path (electrons travel along this) ---------- */
+// Each circuit defines an array of [x,y] waypoints. We compute total length
+// and place electrons at fractional progress along it.
+function pathLength(pts){
+  let L=0; for(let i=1;i<pts.length;i++){L+=Math.hypot(pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]);} return L;
+}
+function pointAt(pts, frac){
+  const total = pathLength(pts);
+  let target = frac*total, acc=0;
+  for(let i=1;i<pts.length;i++){
+    const dx=pts[i][0]-pts[i-1][0], dy=pts[i][1]-pts[i-1][1];
+    const seg=Math.hypot(dx,dy);
+    if(acc+seg>=target){
+      const u=(target-acc)/seg;
+      return [pts[i-1][0]+dx*u, pts[i-1][1]+dy*u];
+    }
+    acc+=seg;
+  }
+  return pts[pts.length-1];
+}
+function drawWirePath(pts, col){
+  ctx.strokeStyle=col||COL.wire; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.beginPath();
+  pts.forEach((p,i)=> i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.stroke();
+  // inner highlight
+  ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1.2;
+  ctx.beginPath();
+  pts.forEach((p,i)=> i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.stroke();
+}
+
+/* ---------- Bulb (galvanic indicator) — sits above wire on a small post ---------- */
+// cy is the BOTTOM of the bulb base (where it meets the wire). The bulb glass
+// sits ABOVE that point.
+function drawBulb(cx, cy, lit){
+  const r = 13;
+  const baseH = 5;          // metal base height
+  const bulbCY = cy - baseH - r; // center of glass bulb sits above cy by base+radius
+
+  // glow first (under everything)
+  if(lit){
+    const glow = ctx.createRadialGradient(cx, bulbCY, r*0.5, cx, bulbCY, r*3);
+    glow.addColorStop(0, 'rgba(253,230,138,0.55)');
+    glow.addColorStop(1, 'rgba(253,230,138,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, bulbCY, r*3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // glass bulb
+  const g = ctx.createRadialGradient(cx-3, bulbCY-4, 1, cx, bulbCY, r);
+  if(lit){
+    g.addColorStop(0, '#fffde0');
+    g.addColorStop(0.5, '#fde68a');
+    g.addColorStop(1, 'rgba(251,191,36,0.6)');
+  } else {
+    g.addColorStop(0, '#475569');
+    g.addColorStop(1, '#1e293b');
+  }
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, bulbCY, r, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+
+  // filament
+  ctx.strokeStyle = lit ? '#f59e0b' : '#475569'; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(cx-5, bulbCY+2);
+  ctx.quadraticCurveTo(cx-2, bulbCY-4, cx, bulbCY+1);
+  ctx.quadraticCurveTo(cx+2, bulbCY+5, cx+5, bulbCY+2);
+  ctx.stroke();
+
+  // metal base — sits between glass and wire
+  const baseY = bulbCY + r - 1;
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillRect(cx-7, baseY, 14, baseH);
+  // ridges
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 0.5;
+  for(let i=1; i<3; i++){
+    ctx.beginPath();
+    ctx.moveTo(cx-7, baseY + i*1.5);
+    ctx.lineTo(cx+7, baseY + i*1.5);
+    ctx.stroke();
+  }
+  // tiny stub down to wire
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(cx-3, baseY + baseH, 6, 2);
+}
+
+/* ---------- Battery (electrolytic driver) — standard cell symbol ---------- */
+// Long line = positive terminal, short line = negative terminal.
+// We draw two cells in series (long-short, long-short) for a clear "battery".
+// cy is the wire centerline; battery is centered on it.
+function drawBattery(cx, cy){
+  ctx.save();
+  const cellGap = 6;        // space between cells
+  const longH = 26;         // long line height
+  const shortH = 14;        // short line height
+  const lineW = 2.5;
+  // total width: 4 lines + 3 gaps
+  const stride = cellGap;
+  // arrangement around cx: [long][short]   [long][short]
+  // From left to right: longA, shortA, gap, longB, shortB
+  const xLA = cx - cellGap*2;
+  const xSA = cx - cellGap;
+  const xLB = cx + cellGap*0.5;
+  const xSB = cx + cellGap*1.5;
+
+  ctx.strokeStyle = '#e2e8f0';
+  ctx.lineCap = 'round';
+  function drawLine(x, h){
+    ctx.lineWidth = lineW;
+    ctx.beginPath();
+    ctx.moveTo(x, cy - h/2);
+    ctx.lineTo(x, cy + h/2);
+    ctx.stroke();
+  }
+  // tiny connector line through battery center (the wire passing through cells)
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(xLA - 4, cy);
+  ctx.lineTo(xSB + 4, cy);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#e2e8f0';
+  // To match polarity: leftmost line = SHORT (−), then long, then short, then long (rightmost = +)
+  drawLine(xLA, shortH);  // − (short)
+  drawLine(xSA, longH);   // + (long)
+  drawLine(xLB, shortH);  // − (short)
+  drawLine(xSB, longH);   // + (long)
+
+  // Polarity labels — placed ABOVE the battery so they don't sit on the wire.
+  // Convention: in this circuit the LEFT end of the battery = − (cathode-side),
+  // RIGHT end = + (anode-side). Drawn larger so they read clearly.
+  ctx.font = 'bold 16px DM Sans,Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const polY = cy - longH/2 - 9;
+  // left end = −  (blue)
+  ctx.fillStyle = '#93c5fd';
+  ctx.fillText('−', xLA - 6, polY);
+  // right end = +  (red)
+  ctx.fillStyle = '#fca5a5';
+  ctx.fillText('+', xSB + 6, polY);
+
+  ctx.restore();
+}
+
+/* ---------- Voltmeter / EMF label above galvanic bulb ---------- */
+function drawEMFLabel(cx, cy, txt, col){
+  ctx.font='bold 11px DM Sans,Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const tw=ctx.measureText(txt).width;
+  ctx.fillStyle='rgba(15,23,42,0.85)';
+  ctx.strokeStyle=col; ctx.lineWidth=1;
+  const pad=6, bw=tw+pad*2, bh=18;
+  const rx=cx-bw/2, ry=cy-bh/2, rr=5;
+  ctx.beginPath();
+  ctx.moveTo(rx+rr,ry);
+  ctx.lineTo(rx+bw-rr,ry); ctx.quadraticCurveTo(rx+bw,ry,rx+bw,ry+rr);
+  ctx.lineTo(rx+bw,ry+bh-rr); ctx.quadraticCurveTo(rx+bw,ry+bh,rx+bw-rr,ry+bh);
+  ctx.lineTo(rx+rr,ry+bh); ctx.quadraticCurveTo(rx,ry+bh,rx,ry+bh-rr);
+  ctx.lineTo(rx,ry+rr); ctx.quadraticCurveTo(rx,ry,rx+rr,ry);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle=col; ctx.fillText(txt, cx, cy+0.5);
+}
+
+/* ---------- Salt bridge — single inverted-U glass tube ---------- */
+// One continuous tube: down into left beaker → up out of beaker → across the top
+// → down into right beaker. Drawn as a single stroked path (so it visually reads
+// as ONE piece of glassware, not three separate parts).
+// Salt bridge is split into TWO calls so the immersed legs can be drawn UNDER the
+// beaker liquid (so they look submerged) while the arch sits over the top.
+//   1. drawSaltBridgeLegs(...)  ← call BEFORE drawBeaker
+//   2. drawSaltBridgeArch(...)  ← call AFTER drawBeaker
+const SB_TUBE_W   = 16;
+const SB_CORNER_R = 14;
+
+function drawSaltBridgeLegs(x1, x2, liqY, legBotY){
+  // Draws just the two vertical immersed segments, from liqY down to legBotY.
+  // Drawing this BEFORE the beaker means the liquid layer paints over the leg,
+  // giving a natural "seen through solution" tint.
+  ctx.save();
+  const tubeW = SB_TUBE_W;
+  function leg(x){
+    ctx.beginPath();
+    ctx.moveTo(x, liqY - 4);   // start a touch above liquid so arch overlaps cleanly
+    ctx.lineTo(x, legBotY);
+  }
+  for(const x of [x1, x2]){
+    // outer border
+    leg(x); ctx.lineCap='round';
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.lineWidth = tubeW + 2; ctx.stroke();
+    // body
+    leg(x);
+    const grad = ctx.createLinearGradient(0, liqY, 0, legBotY);
+    grad.addColorStop(0, '#94a3b8');
+    grad.addColorStop(1, '#475569');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = tubeW; ctx.stroke();
+    // inner channel
+    leg(x);
+    ctx.strokeStyle = 'rgba(203, 213, 225, 0.55)';
+    ctx.lineWidth = tubeW - 6; ctx.stroke();
+    // cotton-wool plug at immersed end
+    ctx.beginPath();
+    ctx.ellipse(x, legBotY, tubeW/2 - 1, 3, 0, 0, Math.PI*2);
+    ctx.fillStyle = '#1e293b'; ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawSaltBridgeArch(x1, x2, liqY, h){
+  // Draws the U-bend above the liquid line, plus the label.
+  ctx.save();
+  const topY    = liqY - h;
+  const tubeW   = SB_TUBE_W;
+  const cornerR = SB_CORNER_R;
+  const archBotY = liqY + 1;   // overlap by 1px to hide the leg/arch seam
+
+  function archPath(){
+    ctx.beginPath();
+    ctx.moveTo(x1, archBotY);
+    ctx.lineTo(x1, topY + cornerR);
+    ctx.quadraticCurveTo(x1, topY, x1 + cornerR, topY);
+    ctx.lineTo(x2 - cornerR, topY);
+    ctx.quadraticCurveTo(x2, topY, x2, topY + cornerR);
+    ctx.lineTo(x2, archBotY);
+  }
+
+  // outer dark border
+  archPath(); ctx.lineCap='round'; ctx.lineJoin='round';
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.8)';
+  ctx.lineWidth = tubeW + 2; ctx.stroke();
+
+  // body — silvery glass gradient
+  archPath();
+  const bodyGrad = ctx.createLinearGradient(0, topY - tubeW, 0, topY + tubeW);
+  bodyGrad.addColorStop(0,   '#e2e8f0');
+  bodyGrad.addColorStop(0.4, '#94a3b8');
+  bodyGrad.addColorStop(1,   '#475569');
+  ctx.strokeStyle = bodyGrad;
+  ctx.lineWidth = tubeW; ctx.stroke();
+
+  // inner channel
+  archPath();
+  ctx.strokeStyle = 'rgba(203, 213, 225, 0.55)';
+  ctx.lineWidth = tubeW - 6; ctx.stroke();
+
+  // specular highlight along upper inner edge
+  ctx.beginPath();
+  ctx.moveTo(x1 - 1, archBotY - 2);
+  ctx.lineTo(x1 - 1, topY + cornerR);
+  ctx.quadraticCurveTo(x1 - 1, topY - 1, x1 + cornerR, topY - 1);
+  ctx.lineTo(x2 - cornerR, topY - 1);
+  ctx.quadraticCurveTo(x2 + 1, topY - 1, x2 + 1, topY + cornerR);
+  ctx.lineTo(x2 + 1, archBotY - 2);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.lineWidth = 1.5; ctx.stroke();
+
+  // tiny meniscus ellipse where each leg meets the liquid surface
+  for(const x of [x1, x2]){
+    ctx.beginPath();
+    ctx.ellipse(x, liqY, tubeW/2 - 1, 2.5, 0, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)';
+    ctx.lineWidth = 0.8; ctx.stroke();
+  }
+
+  // label centred above the horizontal section
+  const midX = (x1 + x2) / 2;
+  ctx.fillStyle = '#cbd5e1';
+  ctx.font = 'bold 11px DM Sans,Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('salt bridge', midX, topY - tubeW/2 - 6);
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '11px DM Sans,Arial';
+  ctx.fillText('KNO₃', midX, topY - tubeW/2 - 18);
+
+  ctx.restore();
+}
+
+/* ============================================================
+   ION SYSTEM — particles confined to a beaker rectangle.
+   Each ion has charge sign that biases drift toward an electrode.
+   ============================================================ */
+class IonField {
+  constructor(){ this.ions=[]; }
+  reset(){ this.ions.length=0; }
+  // bounds: {x0,y0,x1,y1} confining the ion
+  // anodeX, cathodeX: x-coords electrons drift toward (cations→cathode, anions→anode)
+  add(species, col, charge, label, count, bounds, anodeX, cathodeX, opts){
+    opts = opts||{};
+    for(let i=0;i<count;i++){
+      this.ions.push({
+        species, col, charge, label,
+        x: bounds.x0 + Math.random()*(bounds.x1-bounds.x0),
+        y: bounds.y0 + Math.random()*(bounds.y1-bounds.y0),
+        vx: (Math.random()-0.5)*0.4,
+        vy: (Math.random()-0.5)*0.4,
+        bounds, anodeX, cathodeX,
+        radius: opts.radius || 7,
+        labelCol: opts.labelCol || '#0f172a',
+        // discharge zone — if cation reaches cathode (within dx), gets discharged
+        dischargeDir: opts.dischargeDir || null,  // 'cation' | 'anion' | null
+      });
+    }
+  }
+  step(dt){
+    for(const I of this.ions){
+      // brownian (gentler, smoother)
+      I.vx += (Math.random()-0.5)*0.06;
+      I.vy += (Math.random()-0.5)*0.06;
+      // drift toward target electrode
+      if(I.charge>0 && I.cathodeX!=null){
+        const dir = Math.sign(I.cathodeX - I.x);
+        I.vx += dir*0.025;
+      } else if (I.charge<0 && I.anodeX!=null){
+        const dir = Math.sign(I.anodeX - I.x);
+        I.vx += dir*0.025;
+      }
+      // damp more aggressively for smoother motion
+      I.vx *= 0.92; I.vy *= 0.92;
+      I.x += I.vx*dt*0.55*speed;
+      I.y += I.vy*dt*0.55*speed;
+      // bounds
+      const b=I.bounds;
+      if(I.x<b.x0+I.radius){I.x=b.x0+I.radius; I.vx=Math.abs(I.vx);}
+      if(I.x>b.x1-I.radius){I.x=b.x1-I.radius; I.vx=-Math.abs(I.vx);}
+      if(I.y<b.y0+I.radius){I.y=b.y0+I.radius; I.vy=Math.abs(I.vy);}
+      if(I.y>b.y1-I.radius){I.y=b.y1-I.radius; I.vy=-Math.abs(I.vy);}
+    }
+  }
+  draw(){
+    if(!showIons) return;
+    for(const I of this.ions){
+      drawIon(I.x, I.y, I.radius, I.col, I.label, I.labelCol);
+    }
+  }
+}
+
+const ionField = new IonField();
+
+/* ============================================================
+   ELECTRON FLOW — particles riding circuit paths.
+   Each circuit defines pts[] and direction (1 = forward through array).
+   ============================================================ */
+class ElectronFlow {
+  constructor(){ this.circuits=[]; }
+  reset(){ this.circuits.length=0; }
+  add(pts, count, speedMul){
+    const c={ pts, count, speedMul: speedMul||1, electrons: [] };
+    for(let i=0;i<count;i++) c.electrons.push({ frac: i/count });
+    this.circuits.push(c);
+  }
+  step(dt){
+    for(const c of this.circuits){
+      for(const e of c.electrons){
+        e.frac += dt * 0.00018 * c.speedMul * speed;
+        if(e.frac>1) e.frac -= 1;
+      }
+    }
+  }
+  draw(){
+    if(!showElec) return;
+    for(const c of this.circuits){
+      // draw path background
+      drawWirePath(c.pts);
+      for(const e of c.electrons){
+        const p = pointAt(c.pts, e.frac);
+        drawElectron(p[0], p[1]);
+      }
+    }
+  }
+}
+
+const eFlow = new ElectronFlow();
+
+/* ============================================================
+   MODE BUILDERS — set up ions + circuits for each scenario.
+   ============================================================ */
+
+function buildScene(){
+  ionField.reset();
+  eFlow.reset();
+  const L = getLayout();
+
+  // ---- GALVANIC: Daniell cell ----
+  // Two sub-beakers in left half, joined by salt bridge at top
+  const galX = L.gal.x0;
+  const galX1 = L.gal.x1;
+  const galSubW = L.gal.bw;
+  const gap = (galX1-galX) - galSubW*2;
+  const left = { x0: galX, y0: L.gal.y0, x1: galX+galSubW, y1: L.gal.y0+L.gal.bh };
+  const right= { x0: galX1-galSubW, y0: L.gal.y0, x1: galX1, y1: L.gal.y0+L.gal.bh };
+
+  // electrode x-positions (centred in each sub-beaker)
+  const znCx = left.x0  + galSubW*0.55;
+  const cuCx = right.x0 + galSubW*0.45;
+
+  // ion bounds: liquid region inside each sub-beaker
+  const liqLeft  = { x0: left.x0+8,  y0: left.y0+18,  x1: left.x1-8,  y1: left.y1-2 };
+  const liqRight = { x0: right.x0+8, y0: right.y0+18, x1: right.x1-8, y1: right.y1-2 };
+
+  // Zn beaker: Zn²⁺ (cation, → ZnSO4 cathode? No — in the LEFT beaker, the electrode IS the anode; ions accumulate there as Zn dissolves)
+  // For Daniell: in Zn beaker, Zn²⁺ are produced at the Zn rod (anode) and drift away. SO₄²⁻ are anions and drift toward anode (Zn) to balance charge.
+  // We'll treat this as gentle drift: Zn²⁺ slightly biased away from rod, SO₄²⁻ slightly toward.
+  // For simplicity & visual clarity: Zn²⁺ drift toward cathode of THEIR beaker (none — there's no cathode here; just stay near rod)
+  // Use anodeX = znCx for Zn²⁺ as "repulsion source"... easier: use charge=0 pattern so they just diffuse, and we add directional bias manually via salt bridge crossings.
+  // Cleaner: make Zn²⁺ bounce around naturally; visually, the salt bridge connects.
+  ionField.add('Zn2+', COL.zn2, 0, 'Zn²⁺', 8, liqLeft, null, null, {radius:10});
+  ionField.add('SO4-', COL.so4, 0, 'SO₄', 5, liqLeft, null, null, {radius:11});
+  ionField.add('Cu2+', COL.cu2, 0, 'Cu²⁺', 8, liqRight, null, null, {radius:10, labelCol:'#fff'});
+  ionField.add('SO4-', COL.so4, 0, 'SO₄', 5, liqRight, null, null, {radius:11});
+
+  // Galvanic CIRCUIT: external wire goes Zn (anode, −) → up → through bulb → down → Cu (cathode, +)
+  // Electrons flow from Zn out through wire to Cu (anode→cathode externally)
+  const wY = L.gal.wireY;
+  const bulbCx = (znCx+cuCx)/2;
+  const galPath = [
+    [znCx, L.gal.y0-2],   // top of Zn rod
+    [znCx, wY],
+    [bulbCx-18, wY],
+    [bulbCx,   wY],       // bulb position
+    [bulbCx+18, wY],
+    [cuCx, wY],
+    [cuCx, L.gal.y0-2],   // top of Cu rod
+  ];
+  eFlow.add(galPath, 6, 1);
+
+  // ---- ELECTROLYTIC ----
+  const eL = L.elc;
+  const elcLiq = { x0: eL.x0+8, y0: eL.y0+18, x1: eL.x1-8, y1: eL.y0+eL.bh-2 };
+  const lCx = eL.x0 + eL.bw*0.30;
+  const rCx = eL.x0 + eL.bw*0.70;
+
+  // In ALL electrolysis modes, battery's negative terminal connects to the LEFT electrode (cathode, −)
+  // and positive terminal to the RIGHT electrode (anode, +).
+  // Electron flow: battery − → cathode → (in solution: ions carry charge) → anode → battery +.
+  // External wire path goes left→up→battery→down→right.
+  const eWireY = eL.wireY;
+  const battCx = (lCx+rCx)/2;
+  const elcPath = [
+    [lCx, eL.y0-2],
+    [lCx, eWireY+10],
+    [lCx, eWireY],
+    [battCx-35, eWireY],
+    [battCx+35, eWireY],
+    [rCx, eWireY],
+    [rCx, eWireY+10],
+    [rCx, eL.y0-2],
+  ];
+  eFlow.add(elcPath, 6, 1);
+
+  // populate ions per mode
+  if(mode==='daniell'){
+    // Right side: aqueous CuSO4 with Cu electrodes (electrolysis of CuSO4)
+    // Cations: Cu²⁺ → cathode (lCx). Anions: SO4²⁻ → anode (rCx).
+    ionField.add('Cu2+', COL.cu2, +1, 'Cu²⁺', 9, elcLiq, rCx, lCx, {radius:10, labelCol:'#fff'});
+    ionField.add('SO4', COL.so4, -1, 'SO₄', 6, elcLiq, rCx, lCx, {radius:11});
+  } else if(mode==='molten'){
+    // Molten NaCl (no water). Inert C electrodes. Na+ → cathode, Cl- → anode.
+    ionField.add('Na+', COL.na, +1, 'Na⁺', 10, elcLiq, rCx, lCx, {radius:10});
+    ionField.add('Cl-', COL.cl, -1, 'Cl⁻', 10, elcLiq, rCx, lCx, {radius:10});
+  } else if(mode==='aq'){
+    // Aqueous NaCl (brine). Na+, Cl-, plus H+ (trace) and OH- (trace) from water.
+    ionField.add('Na+', COL.na, +1, 'Na⁺', 7, elcLiq, rCx, lCx, {radius:10});
+    ionField.add('Cl-', COL.cl, -1, 'Cl⁻', 7, elcLiq, rCx, lCx, {radius:10});
+    ionField.add('H+',  COL.h, +1, 'H⁺',  4, elcLiq, rCx, lCx, {radius:9});
+    ionField.add('OH-', COL.oh, -1, 'OH⁻', 4, elcLiq, rCx, lCx, {radius:10});
+  }
+
+  scene = { L, znCx, cuCx, lCx, rCx, bulbCx, battCx, galPath, elcPath, liqLeft, liqRight, elcLiq };
+}
+
+let scene = null;
+
+/* ============================================================
+/* ============================================================
+   BUBBLES (gas evolved at electrodes in electrolysis modes)
+   ============================================================ */
+const bubbles = [];
+function spawnBubble(x, y, col){
+  // Bubble parameters: bigger and more varied so they read as gas evolution.
+  bubbles.push({
+    x: x + (Math.random()-0.5)*10,    // slight horizontal jitter at spawn
+    y: y,
+    r: 3 + Math.random()*4,            // 3..7 px radius
+    vy: -(0.6 + Math.random()*0.9),    // upward speed
+    sway: Math.random()*Math.PI*2,     // horizontal-sway phase
+    swayAmp: 0.4 + Math.random()*0.6,
+    col,
+    life: 1,
+  });
+}
+function stepBubbles(dt){
+  for(let i=bubbles.length-1; i>=0; i--){
+    const b = bubbles[i];
+    // rise + gentle horizontal sway like real bubbles
+    b.y += b.vy * dt * 0.08;
+    b.sway += dt*0.005;
+    b.x += Math.sin(b.sway) * b.swayAmp * 0.15;
+    // bubbles grow slightly as they rise (lower pressure)
+    b.r += dt*0.0035;
+    b.life -= dt*0.0006;
+    // pop when reaching surface or end of life
+    if(b.life<=0 || b.y < scene.L.elc.y0 + 22) bubbles.splice(i,1);
+  }
+}
+function drawBubbles(){
+  for(const b of bubbles){
+    const alpha = Math.max(0, Math.min(1, b.life));
+    // soft body
+    ctx.globalAlpha = alpha * 0.85;
+    const grad = ctx.createRadialGradient(b.x - b.r*0.3, b.y - b.r*0.35, b.r*0.1, b.x, b.y, b.r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.85)');
+    grad.addColorStop(0.5, b.col);
+    grad.addColorStop(1, b.col);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    // outline
+    ctx.globalAlpha = alpha * 0.7;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    // specular dot
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath();
+    ctx.arc(b.x - b.r*0.35, b.y - b.r*0.4, b.r*0.25, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ============================================================
+   MAIN DRAW
+   ============================================================ */
+function drawTitleBar(){
+  // GALVANIC label
+  ctx.fillStyle = COL.gal;
+  ctx.font = 'bold 13px DM Sans,Arial';
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText('GALVANIC CELL · spontaneous', scene.L.gal.x0, 18);
+  ctx.fillStyle='#64748b'; ctx.font='11px DM Sans,Arial';
+  ctx.fillText('Galvanic cell  Zn | Zn²⁺ ‖ Cu²⁺ | Cu', scene.L.gal.x0, 36);
+
+  ctx.fillStyle = COL.elc;
+  ctx.font = 'bold 13px DM Sans,Arial';
+  ctx.fillText('ELECTROLYTIC CELL · driven', scene.L.elc.x0, 18);
+  ctx.fillStyle='#64748b'; ctx.font='11px DM Sans,Arial';
+  let sub='';
+  if(mode==='daniell') sub='Purification of copper — Cu electrodes in CuSO₄(aq)';
+  else if(mode==='molten') sub='Inert (Pt) electrodes in molten NaCl';
+  else if(mode==='aq')   sub='Inert (Pt) electrodes in aqueous NaCl';
+  ctx.fillText(sub, scene.L.elc.x0, 36);
+
+  // divider
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(W/2, 8); ctx.lineTo(W/2, H-8); ctx.stroke();
+}
+
+let lastT = performance.now();
+function frame(now){
+  try {
+  // re-check canvas size each frame in case wrap was 0 on load
+  if(canvas.width !== wrap.clientWidth || canvas.height !== wrap.clientHeight){
+    if(wrap.clientWidth > 0 && wrap.clientHeight > 0){
+      resize();
+      scene = null;
+    }
+  }
+  const dt = Math.min(50, now - lastT);
+  lastT = now;
+
+  if(!paused){ t += dt; }
+
+  // bg
+  ctx.fillStyle = COL.bgPanel;
+  ctx.fillRect(0,0,W,H);
+
+  if(!scene || scene._W !== W || scene._H !== H){
+    buildScene();
+    scene._W=W; scene._H=H;
+  }
+
+  drawTitleBar();
+  drawGalvanic();
+  drawElectrolytic();
+
+  if(!paused){
+    ionField.step(dt);
+    eFlow.step(dt);
+    stepBubbles(dt);
+    spawnBubblesMaybe();
+  }
+
+  // draw ions (under electrons, but inside beakers)
+  ionField.draw();
+  drawBubbles();
+
+  // Electrons drawn last so they sit on top of wires
+  eFlow.draw();
+
+  // Discharge flashes at electrodes
+  drawDischargeFlashes();
+
+  } catch(err){
+    console.error('Frame error:', err);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ----- Galvanic visuals ----- */
+function drawGalvanic(){
+  const L=scene.L.gal;
+  const galSubW=L.bw;
+  // two sub-beakers
+  const leftBx = L.x0;
+  const rightBx= L.x1 - galSubW;
+  // Salt bridge geometry — each leg sits about 3/4 of the way across its beaker
+  // (clear of the rod which sits at ~55%/45%).
+  const sbX1 = leftBx + galSubW*0.78;
+  const sbX2 = rightBx + galSubW*0.22;
+  const liqSurfY = L.y0 + 16;          // matches drawBeaker's liquidTopY (y + lipH)
+  const legBotY  = liqSurfY + 32;      // how far the legs reach into the solution
+
+  // 1) Draw the immersed legs FIRST so the beaker liquid covers them and they
+  //    look genuinely submerged rather than floating in front of the beaker.
+  drawSaltBridgeLegs(sbX1, sbX2, liqSurfY, legBotY);
+
+  // 2) Beakers — liquid layer paints over the leg, tinting it like a real "seen
+  //    through solution" view.
+  drawBeaker(leftBx,  L.y0, galSubW, L.bh, COL.liquid_zn, 'ZnSO₄(aq)');
+  drawBeaker(rightBx, L.y0, galSubW, L.bh, COL.liquid_cu, 'CuSO₄(aq)');
+
+  // 3) U-bend arch above the liquid line, drawn over the beakers.
+  drawSaltBridgeArch(sbX1, sbX2, liqSurfY, 38);
+
+  // electrodes
+  const zncx = scene.znCx, cucx = scene.cuCx;
+  drawElectrode(zncx, L.y0-2, L.y0 + L.bh*0.78, COL.zn, 'Zn', {sign:'−', side:'L', label:'anode'});
+  drawElectrode(cucx, L.y0-2, L.y0 + L.bh*0.78, COL.cu, 'Cu', {sign:'+', side:'R', label:'cathode'});
+
+  // EMF label
+  // EMF label — well clear of bulb (bulb radius ~14 + glow)
+  drawEMFLabel(scene.bulbCx, L.wireY-58, 'E°cell = +1.10 V', COL.gal);
+
+  // bulb at top
+  drawBulb(scene.bulbCx, L.wireY, !paused);
+
+  // current direction arrow on wire — placed FAR LEFT of the bulb so neither the
+  // arrow nor its label collide with the bulb glow halo (~30 px radius).
+  const arrowY = L.wireY-12;
+  const arrowEndX = scene.bulbCx - 70;
+  const arrowStartX = scene.bulbCx - 100;
+  drawCurrentArrow(arrowStartX, arrowY, arrowEndX, arrowY, '#fbbf24', 'I');
+  // Label sits ABOVE the arrow, right-aligned to the arrow end so it never reaches the bulb
+  ctx.fillStyle='#94a3b8'; ctx.font='10px DM Sans,Arial';
+  ctx.textAlign='right'; ctx.textBaseline='bottom';
+  ctx.fillText('conventional current', arrowEndX, arrowY-4);
+}
+
+/* ----- Electrolytic visuals ----- */
+function drawElectrolytic(){
+  const L=scene.L.elc;
+  let liqCol = COL.liquid_cu;
+  let surfaceLabel='CuSO₄(aq)';
+  let leftLabel='Cu', rightLabel='Cu';
+  let leftCol=COL.cu, rightCol=COL.cu;
+  if(mode==='molten'){
+    liqCol = COL.liquid_molten; surfaceLabel='molten NaCl';
+    leftLabel='Pt'; rightLabel='Pt';
+    leftCol = COL.pt; rightCol = COL.pt;
+  } else if(mode==='aq'){
+    liqCol = COL.liquid_brine; surfaceLabel='NaCl(aq) brine';
+    leftLabel='Pt'; rightLabel='Pt';
+    leftCol = COL.pt; rightCol = COL.pt;
+  }
+  drawBeaker(L.x0, L.y0, L.bw, L.bh, liqCol, surfaceLabel);
+  // electrodes
+  drawElectrode(scene.lCx, L.y0-2, L.y0+L.bh*0.85, leftCol,  leftLabel,  {sign:'−', side:'L', label:'cathode'});
+  drawElectrode(scene.rCx, L.y0-2, L.y0+L.bh*0.85, rightCol, rightLabel, {sign:'+', side:'R', label:'anode'});
+
+  // Gas evolution callouts — appear ONLY for modes that produce gas at that electrode.
+  // Tiny pill-shaped label floating just above the electrode top, colour-keyed
+  // to the bubble colour so it's visually obvious which gas is which.
+  function gasPill(x, y, label, fill, fg){
+    ctx.font = 'bold 9px DM Sans,Arial';
+    const padX = 5;
+    const w = ctx.measureText(label).width + padX*2;
+    const h = 14;
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x - w/2, y - h, w, h, 6);
+    } else {
+      ctx.rect(x - w/2, y - h, w, h);
+    }
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.lineWidth = 0.6;
+    ctx.stroke();
+    ctx.fillStyle = fg;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y - h/2 + 0.5);
+  }
+  // pills sit slightly above the labelled electrode-top region (above the role/sign labels)
+  const pillY = L.y0 - 50;
+  if(mode==='molten'){
+    gasPill(scene.rCx, pillY, 'Cl₂(g)', 'rgba(190,220,90,0.95)', '#1e2a05');
+  } else if(mode==='aq'){
+    gasPill(scene.lCx, pillY, 'H₂(g)',  'rgba(220,234,255,0.95)', '#0f172a');
+    gasPill(scene.rCx, pillY, 'Cl₂(g)', 'rgba(190,220,90,0.95)',  '#1e2a05');
+  }
+  // 'daniell' mode = no gas, no pill
+
+  // battery
+  drawBattery(scene.battCx, L.wireY);
+  // EMF label
+  drawEMFLabel(scene.battCx, L.wireY-58, 'external supply', COL.elc);
+
+  // current arrow (conventional current opposite to electron flow)
+  const arrowY = L.wireY-12;
+  drawCurrentArrow(scene.battCx+44, arrowY, scene.battCx+74, arrowY, '#fbbf24','I');
+}
+
+/* ----- Current arrow (conventional, opposite to e-) ----- */
+function drawCurrentArrow(x1,y1,x2,y2,col,lbl){
+  ctx.strokeStyle=col; ctx.lineWidth=2; ctx.beginPath();
+  ctx.moveTo(x1,y1); ctx.lineTo(x2-6,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2); ctx.lineTo(x2-7,y2-4); ctx.lineTo(x2-7,y2+4); ctx.closePath();
+  ctx.fillStyle=col; ctx.fill();
+}
+
+/* ----- Discharge flashes — small radial pulse when an ion 'reaches' an electrode ----- */
+const flashes = [];
+function discharge(x,y,col){
+  flashes.push({x,y,col,r:2,life:1});
+}
+function drawDischargeFlashes(){
+  for(let i=flashes.length-1;i>=0;i--){
+    const f=flashes[i];
+    ctx.globalAlpha = f.life;
+    const g=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r);
+    g.addColorStop(0, f.col); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    f.r += 0.6; f.life -= 0.04;
+    if(f.life<=0) flashes.splice(i,1);
+  }
+}
+
+/* ----- Bubble spawning logic per mode ----- */
+let bubbleTimer = 0;
+function spawnBubblesMaybe(){
+  if(paused) return;
+  bubbleTimer += 16*speed;
+  if(bubbleTimer < 130) return;       // faster cadence so streams of bubbles read clearly
+  bubbleTimer = 0;
+  if(!scene) return;
+  const eL = scene.L.elc;
+  const yMid = eL.y0 + eL.bh*0.55;
+  const yLow = eL.y0 + eL.bh*0.70;
+
+  // Spawn 2 bubbles in a small cluster, on alternating sides of the rod surface.
+  function cluster(rodX, yBase, col, n){
+    for(let i=0; i<n; i++){
+      const side = Math.random() < 0.5 ? -1 : 1;
+      const ox = side * (4 + Math.random()*4);
+      const oy = (Math.random()-0.5)*30;
+      spawnBubble(rodX + ox, yBase + oy, col);
+    }
+  }
+
+  if(mode==='molten'){
+    // Cl₂ at anode (right rod) — pale yellow-green halogen gas
+    cluster(scene.rCx, yMid, 'rgba(190, 220, 90, 0.55)', 2);
+  } else if(mode==='aq'){
+    // H₂ at cathode (left rod) — colourless / pale white
+    cluster(scene.lCx, yLow, 'rgba(220, 234, 255, 0.55)', 2);
+    // Cl₂ at anode (right rod) — pale yellow-green
+    cluster(scene.rCx, yMid, 'rgba(190, 220, 90, 0.55)', 2);
+  }
+  // 'daniell' mode = Cu purification: NO gas evolved (correct).
+}
+
+/* ----- Trigger discharge flashes periodically near electrode ends ----- */
+let dischargeTimer = 0;
+function dischargeTick(dt){
+  if(paused || !scene) return;
+  dischargeTimer += dt*speed;
+  if(dischargeTimer < 320) return;
+  dischargeTimer = 0;
+  // galvanic: Zn→Zn²⁺ at anode (Zn loses e), Cu²⁺→Cu at cathode (gains e)
+  const galY = scene.L.gal.y0 + scene.L.gal.bh*0.6;
+  discharge(scene.znCx, galY, 'rgba(168,196,224,0.7)');  // Zn2+ released
+  discharge(scene.cuCx, galY, 'rgba(249,115,22,0.7)');   // Cu deposited
+  // electrolytic: similar at electrodes
+  const eY = scene.L.elc.y0 + scene.L.elc.bh*0.6;
+  if(mode==='daniell'){
+    discharge(scene.lCx, eY, 'rgba(249,115,22,0.7)');  // Cu deposited at cathode
+    discharge(scene.rCx, eY, 'rgba(59,130,246,0.7)');  // Cu→Cu²⁺ released at anode
+  } else if(mode==='molten'){
+    discharge(scene.lCx, eY, 'rgba(251,191,36,0.7)');  // Na deposited
+    discharge(scene.rCx, eY, 'rgba(34,197,94,0.7)');   // Cl2
+  } else {
+    discharge(scene.lCx, eY, 'rgba(240,244,255,0.7)'); // H2
+    discharge(scene.rCx, eY, 'rgba(34,197,94,0.7)');   // Cl2
+  }
+}
+
+// Hook discharge into frame
+const oldFrame = frame;
+
+/* ============================================================
+   MODE INFO (half-equations) — synced with side panel
+   ============================================================ */
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode===m);
+  });
+  buildScene();
+  updateInfoPanel();
+  updateStatus();
+}
+
+function updateInfoPanel(){
+  const heqGal = document.getElementById('heqGal');
+  const heqElc = document.getElementById('heqElc');
+  const emfElc = document.getElementById('emfElc');
+  // Galvanic always Daniell
+  heqGal.innerHTML =
+    '<div><span class="lbl">Anode (−)</span><span class="ox">Zn(s) → Zn²⁺(aq) + 2e⁻</span></div>'+
+    '<div><span class="lbl">Cathode (+)</span><span class="red">Cu²⁺(aq) + 2e⁻ → Cu(s)</span></div>'+
+    '<div><span class="lbl">Overall</span>Zn(s) + Cu²⁺ → Zn²⁺ + Cu(s)</div>';
+  if(mode==='daniell'){
+    heqElc.innerHTML =
+      '<div><span class="lbl">Cathode (−)</span><span class="red">Cu²⁺(aq) + 2e⁻ → Cu(s)</span></div>'+
+      '<div><span class="lbl">Anode (+)</span><span class="ox">Cu(s) → Cu²⁺(aq) + 2e⁻</span></div>'+
+      '<div><span class="lbl">Net</span>Cu transferred from anode to cathode (purification)</div>';
+    emfElc.textContent = 'purification of copper';
+  } else if(mode==='molten'){
+    heqElc.innerHTML =
+      '<div><span class="lbl">Cathode (−)</span><span class="red">Na⁺(l) + e⁻ → Na(l)</span></div>'+
+      '<div><span class="lbl">Anode (+)</span><span class="ox">2Cl⁻(l) → Cl₂(g) + 2e⁻</span></div>'+
+      '<div><span class="lbl">Net</span>2NaCl(l) → 2Na(l) + Cl₂(g)</div>';
+    emfElc.textContent = 'requires ≥ 4 V';
+  } else {
+    heqElc.innerHTML =
+      '<div><span class="lbl">Cathode (−)</span><span class="red">2H₂O + 2e⁻ → H₂(g) + 2OH⁻</span></div>'+
+      '<div><span class="lbl">Anode (+)</span><span class="ox">2Cl⁻ → Cl₂(g) + 2e⁻</span><span style="font-size:9px;color:#64748b;"> (conc.)</span></div>'+
+      '<div><span class="lbl">Net</span>chlor-alkali process → NaOH + H₂ + Cl₂</div>';
+    emfElc.textContent = 'requires ≥ 2.2 V';
+  }
+}
+
+function updateStatus(){
+  const map = {
+    daniell: 'Running · Cu purification',
+    molten:  'Running · Electrolysis of molten NaCl',
+    aq:      'Running · Electrolysis of brine'
+  };
+  document.getElementById('statusBadge').textContent = (paused?'Paused · ':'Running · ') + map[mode].replace('Running · ','');
+}
+
+window.setMode = setMode;
+
+/* ---------- Controls ---------- */
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  paused = !paused;
+  document.getElementById('playBtn').textContent = paused?'Play':'Pause';
+  document.getElementById('playBtn').classList.toggle('pause', !paused);
+  updateStatus();
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  buildScene();
+  bubbles.length=0; flashes.length=0;
+  paused=false;
+  document.getElementById('playBtn').textContent='Pause';
+  updateStatus();
+});
+document.getElementById('spd').addEventListener('input', e=>{
+  speed = parseFloat(e.target.value);
+  document.getElementById('spdOut').textContent = speed.toFixed(1)+'×';
+});
+document.getElementById('tglIons').addEventListener('click', e=>{
+  showIons = !showIons;
+  e.target.style.opacity = showIons?'1':'0.5';
+});
+document.getElementById('tglElec').addEventListener('click', e=>{
+  showElec = !showElec;
+  e.target.style.opacity = showElec?'1':'0.5';
+});
+
+window.addEventListener('resize', ()=>{ resize(); buildScene(); });
+
+/* ---------- Init ---------- */
+resize();
+buildScene();
+updateInfoPanel();
+
+// dischargeTick driver — independent of frame loop
+let lastDischargeT = performance.now();
+function dischargeLoop(now){
+  const dt = Math.min(50, now - lastDischargeT);
+  lastDischargeT = now;
+  dischargeTick(dt);
+  requestAnimationFrame(dischargeLoop);
+}
+requestAnimationFrame(dischargeLoop);
+requestAnimationFrame(frame);
+
+})();
+
+</script>
+
+
+
+</body></html>

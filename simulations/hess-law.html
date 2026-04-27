@@ -86,7 +86,7 @@
 
   .diagram-wrap {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 18px; min-height: 520px;
+    border-radius: 12px; padding: 18px; min-height: 520px; max-height: 760px;
     position: relative; overflow: auto;
   }
   .diagram { position: relative; margin: 0 auto; }
@@ -586,6 +586,60 @@ const PROBLEMS = {
         { id: "ch_le",  label: "LE[MgCl₂(s)]",  value: -2526 }
       ],
       hint: "Mg ionises TWICE (Mg → Mg⁺ → Mg²⁺) so two IE chips needed. Cl gets ONE EA each, but there are 2 Cl atoms — set the EA chip's multiplier × 2. Sum of all 6 step ΔH = ΔHf."
+    },
+    {
+      name: "ΔHf[Fe₂O₃(s)] from a Born-Haber cycle",
+      target: { lhs: "2Fe(s) + 3/2 O₂(g)", rhs: "Fe₂O₃(s)", dhLabel: "ΔHf[Fe₂O₃(s)]" },
+      answer: -824,
+      ladder: {
+        slots: [
+          { id: "s0", correctLabel: "2Fe(s) + 3/2 O₂(g)", locked: true },
+          { id: "s1", correctLabel: "2Fe(g) + 3/2 O₂(g)" },
+          { id: "s2", correctLabel: "2Fe(g) + 3O(g)" },
+          { id: "s3", correctLabel: "2Fe⁺(g) + 2e⁻ + 3O(g)" },
+          { id: "s4", correctLabel: "2Fe²⁺(g) + 4e⁻ + 3O(g)" },
+          { id: "s5", correctLabel: "2Fe³⁺(g) + 6e⁻ + 3O(g)" },
+          { id: "s6", correctLabel: "2Fe³⁺(g) + 3e⁻ + 3O⁻(g)" },
+          { id: "s7", correctLabel: "2Fe³⁺(g) + 3O²⁻(g)" },
+          { id: "s8", correctLabel: "Fe₂O₃(s)", locked: true }
+        ],
+        speciesOptions: [
+          "2Fe(s) + 3/2 O₂(g)",
+          "2Fe(g) + 3/2 O₂(g)",
+          "2Fe(g) + 3O(g)",
+          "2Fe⁺(g) + 2e⁻ + 3O(g)",
+          "2Fe²⁺(g) + 4e⁻ + 3O(g)",
+          "2Fe³⁺(g) + 6e⁻ + 3O(g)",
+          "2Fe³⁺(g) + 3e⁻ + 3O⁻(g)",
+          "2Fe³⁺(g) + 3O²⁻(g)",
+          "Fe₂O₃(s)",
+          "Fe(g) + 3/2 O₂(g)",
+          "2Fe³⁺(g) + 3O(g)",
+          "Fe³⁺(g) + 3/2 O²⁻(g)",
+          "2Fe(g) + 3O₂(g)"
+        ],
+        steps: [
+          { id: "st01", from: "s0", to: "s1", correctApps: [{ chipId: "fe_at",  mult: 2 }],   description: "atomisation of 2 Fe (each Fe(s) → Fe(g))" },
+          { id: "st12", from: "s1", to: "s2", correctApps: [{ chipId: "fe_be",  mult: 1.5 }], description: "breaking 3/2 × O=O bond (3/2 O₂(g) → 3O(g))" },
+          { id: "st23", from: "s2", to: "s3", correctApps: [{ chipId: "fe_ie1", mult: 2 }],   description: "1st ionisation of 2 Fe (each Fe(g) → Fe⁺(g) + e⁻)" },
+          { id: "st34", from: "s3", to: "s4", correctApps: [{ chipId: "fe_ie2", mult: 2 }],   description: "2nd ionisation of 2 Fe (each Fe⁺(g) → Fe²⁺(g) + e⁻)" },
+          { id: "st45", from: "s4", to: "s5", correctApps: [{ chipId: "fe_ie3", mult: 2 }],   description: "3rd ionisation of 2 Fe (each Fe²⁺(g) → Fe³⁺(g) + e⁻)" },
+          { id: "st56", from: "s5", to: "s6", correctApps: [{ chipId: "fe_ea1", mult: 3 }],   description: "1st electron affinity of 3 O (each O(g) + e⁻ → O⁻(g))" },
+          { id: "st67", from: "s6", to: "s7", correctApps: [{ chipId: "fe_ea2", mult: 3 }],   description: "2nd electron affinity of 3 O (each O⁻(g) + e⁻ → O²⁻(g))" },
+          { id: "st78", from: "s7", to: "s8", correctApps: [{ chipId: "fe_le",  mult: 1 }],   description: "lattice energy (2Fe³⁺(g) + 3O²⁻(g) → Fe₂O₃(s))" }
+        ]
+      },
+      chips: [
+        { id: "fe_at",  label: "ΔHat[Fe(s)]",   value: 416   },
+        { id: "fe_be",  label: "BE[O=O]",       value: 496   },
+        { id: "fe_ie1", label: "IE₁[Fe]",       value: 762   },
+        { id: "fe_ie2", label: "IE₂[Fe]",       value: 1562  },
+        { id: "fe_ie3", label: "IE₃[Fe]",       value: 2957  },
+        { id: "fe_ea1", label: "EA₁[O]",        value: -141  },
+        { id: "fe_ea2", label: "EA₂[O]",        value: 798   },
+        { id: "fe_le",  label: "LE[Fe₂O₃(s)]",  value: -14933 }
+      ],
+      hint: "8 steps with multipliers throughout. 2 Fe atoms → multiplier ×2 on ΔHat and on each of the three IEs. 3/2 O₂ broken → BE[O=O] × 1.5. 3 O atoms each gain 2 electrons → EA₁ × 3 AND EA₂ × 3. EA₂[O] is positive (endothermic) — adding to a negative ion is unfavourable. Sum of all 8 steps = ΔHf."
     }
   ]
 };

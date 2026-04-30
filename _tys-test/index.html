@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2024 H2 Chemistry P1 Q1 — Atomic structure Solution</title>
+<meta name="description" content="Step-by-step worked solution to 2024 A-Level H2 Chemistry Paper 1 Question 1 on Atomic structure.">
+<link rel="canonical" href="https://mrkhemistry.com/tys/h2-chem/2024-p1-q1-atomic-structure/">
+<meta property="og:title" content="2024 H2 Chemistry P1 Q1 — Atomic structure Solution">
+<meta property="og:description" content="Step-by-step worked solution to 2024 A-Level H2 Chemistry Paper 1 Question 1 on Atomic structure.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://mrkhemistry.com/tys/h2-chem/2024-p1-q1-atomic-structure/">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)'], ['$', '$']], displayMath: [['\\[', '\\]'], ['$$', '$$']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --brand: #01869E; --brand-dark: #016B80; --brand-light: #E5F3F6;
+  --ink: #1a1a1a; --muted: #4a5563; --line: #e5e7eb;
+  --bg: #fafbfa; --card: #ffffff;
+  --max: 1100px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Open Sans', system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.6; }
+a { color: var(--brand-dark); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { font-family: 'Poppins', sans-serif; line-height: 1.25; color: var(--ink); }
+
+/* Header */
+.site-hdr { background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 50; }
+.site-hdr-inner { max-width: var(--max); margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.site-logo { font-family: 'Poppins', sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--brand-dark); }
+.site-nav { display: flex; gap: 22px; flex-wrap: wrap; }
+.site-nav a { color: var(--muted); font-size: 0.95rem; font-weight: 600; }
+.site-nav a:hover { color: var(--brand-dark); text-decoration: none; }
+.cta-call { background: var(--brand); color: #fff !important; padding: 8px 16px; border-radius: 4px; font-weight: 600; font-size: 0.9rem; }
+.cta-call:hover { background: var(--brand-dark); text-decoration: none; }
+
+/* Layout */
+.wrap { max-width: var(--max); margin: 0 auto; padding: 28px 24px 80px; }
+.crumb { font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
+.crumb a { color: var(--muted); }
+.crumb a:hover { color: var(--brand-dark); }
+
+h1.q-title { font-size: 1.85rem; font-weight: 700; margin-bottom: 6px; }
+.q-meta { font-size: 0.95rem; color: var(--muted); margin-bottom: 24px; }
+.tag { display: inline-block; background: var(--brand-light); color: var(--brand-dark); padding: 3px 10px; border-radius: 100px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 22px 26px; margin-bottom: 22px; }
+.card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; color: var(--brand-dark); }
+.q-text { font-size: 1.02rem; }
+.q-text img { max-width: 100%; height: auto; margin: 12px 0; border-radius: 4px; }
+.q-image { display: block; max-width: 100%; height: auto; margin: 14px auto; border-radius: 4px; }
+
+.options { list-style: none; }
+.opt { padding: 10px 14px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; }
+.opt.correct { border-color: var(--brand); background: var(--brand-light); }
+.opt-letter { font-weight: 700; color: var(--brand-dark); flex-shrink: 0; min-width: 22px; }
+.opt-text { flex: 1; }
+.answer-line { margin-top: 10px; font-weight: 700; color: var(--brand-dark); font-size: 0.95rem; }
+
+.video-wrap { position: relative; padding-top: 56.25%; background: #000; border-radius: 8px; overflow: hidden; }
+.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-fallback { padding: 40px 20px; text-align: center; color: var(--muted); background: #f1f3f5; border-radius: 8px; }
+
+.explanation p { margin-bottom: 10px; }
+.explanation .draft-note { background: #fff8e1; border-left: 3px solid #f59e0b; padding: 10px 14px; font-size: 0.88rem; color: #78350f; border-radius: 4px; margin-bottom: 14px; }
+
+.cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 26px 0; }
+.cta-card { background: var(--brand-light); border: 1px solid #b8e0d9; border-radius: 10px; padding: 20px; text-align: center; }
+.cta-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: var(--brand-dark); }
+.cta-card p { font-size: 0.88rem; color: var(--muted); margin-bottom: 14px; }
+.cta-btn { display: inline-block; background: var(--brand); color: #fff !important; padding: 9px 18px; border-radius: 100px; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.cta-btn:hover { background: var(--brand-dark); text-decoration: none; }
+.cta-btn.outline { background: transparent; color: var(--brand-dark) !important; border: 2px solid var(--brand); }
+.cta-btn.outline:hover { background: var(--brand); color: #fff !important; }
+
+@media (max-width: 600px) { .cta-row { grid-template-columns: 1fr; } }
+
+.nav-bar { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; padding-top: 18px; border-top: 1px solid var(--line); }
+.nav-bar a { font-size: 0.9rem; font-weight: 600; }
+
+.related h2 { font-size: 1.05rem; margin-bottom: 12px; }
+.related ul { list-style: none; padding: 0; }
+.related li { margin-bottom: 6px; font-size: 0.95rem; }
+
+/* Index page styling */
+.idx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.idx-grid a { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: block; transition: border-color 0.15s, transform 0.15s; }
+.idx-grid a:hover { border-color: var(--brand); transform: translateY(-2px); text-decoration: none; }
+.idx-grid .q-no { font-weight: 700; color: var(--brand-dark); font-size: 0.85rem; }
+.idx-grid .q-topic { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
+.idx-grid .q-preview { color: var(--ink); font-size: 0.95rem; margin-top: 6px; line-height: 1.4; }
+
+/* Footer */
+.site-ftr { background: #1a2530; color: #cbd5e1; padding: 36px 24px 24px; margin-top: 60px; }
+.site-ftr-inner { max-width: var(--max); margin: 0 auto; }
+.site-ftr a { color: #cbd5e1; }
+.site-ftr a:hover { color: #fff; text-decoration: underline; }
+.ftr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 24px; }
+.ftr-grid h4 { color: #fff; font-size: 0.95rem; font-weight: 700; margin-bottom: 10px; font-family: 'Poppins', sans-serif; }
+.ftr-grid ul { list-style: none; padding: 0; font-size: 0.88rem; line-height: 1.9; }
+.ftr-bottom { border-top: 1px solid #2a3744; padding-top: 16px; font-size: 0.82rem; color: #94a3b8; text-align: center; }
+</style>
+</head>
+<body>
+
+<header class="site-hdr">
+  <div class="site-hdr-inner">
+    <a href="https://mrkhemistry.com/" class="site-logo">Mr Khemistry</a>
+    <nav class="site-nav">
+      <a href="https://mrkhemistry.com/about/">About</a>
+      <a href="https://mrkhemistry.com/jc-chemistry-tuition/">JC Tuition</a>
+      <a href="https://mrkhemistry.com/secondary-chemistry-tuition/">Secondary</a>
+      <a href="https://mrkhemistry.com/blog/">Blog</a>
+      <a href="https://mrkhemistry.com/tys/">TYS Solutions</a>
+      <a href="https://mrkhemistry.com/contact-us/">Contact</a>
+    </nav>
+    <a href="https://wa.me/6583322534" class="cta-call">WhatsApp Us</a>
+  </div>
+</header>
+
+
+<div class="wrap">
+  <div class="crumb">
+    <a href="https://mrkhemistry.com/">Home</a> ›
+    <a href="https://mrkhemistry.com/tys/">TYS Solutions</a> ›
+    <a href="https://mrkhemistry.com/tys/h2-chem/2024/">2024 H2 Chem</a> ›
+    P1 Q1
+  </div>
+
+  <h1 class="q-title">2024 H2 Chemistry P1 Q1 — Atomic structure Solution</h1>
+  <div class="q-meta">
+    <span class="tag">Atomic structure</span>
+    2024 H2 Chemistry · Paper 1 · Q1
+  </div>
+
+  <div class="card">
+    <h2>Question</h2>
+    <div class="q-text">Cation X has the same number of neutrons as protons. Cation X and an atom of neon have the same number of electrons. What is cation X?</div>
+    <ol class="options"><li class="opt"><span class="opt-letter">A</span><span class="opt-text">\({}^{16}\text{O}^{2-}\)</span></li><li class="opt"><span class="opt-letter">B</span><span class="opt-text">\({}^{19}\text{F}^{-}\)</span></li><li class="opt"><span class="opt-letter">C</span><span class="opt-text">\({}^{23}\text{Na}^{+}\)</span></li><li class="opt correct"><span class="opt-letter">D</span><span class="opt-text">\({}^{24}\text{Mg}^{2+}\)</span></li></ol>
+    <div class="answer-line">Correct answer: D</div>
+  </div>
+
+  <div class="card">
+    <h2>Video Solution</h2>
+    <div class="video-wrap"><iframe src="https://www.youtube.com/embed/ViJBkLUARqo" title="2024 H2 Chemistry P1 Q1 — Atomic structure Solution" frameborder="0" allowfullscreen></iframe></div>
+  </div>
+
+  <div class="card">
+    <h2>Explanation</h2>
+    <div class="explanation"><p>Since X is a cation, option A and B are wrong.
+Neon has 10 electrons. Cation X has 10 electrons.
+Na has 11p 12n, thus not correct. 
+Mg has 12p 12n. Correct.</p></div>
+  </div>
+
+  <div class="cta-row">
+    <div class="cta-card">
+      <h3>Practice this topic</h3>
+      <p>20+ more Atomic structure questions with shuffled options in ChemBank — free for everyone.</p>
+      <a class="cta-btn" href="https://mrkhemistry.github.io/chembank/?topic=Atomic%20structure">Open ChemBank</a>
+    </div>
+    <div class="cta-card">
+      <h3>Get full TYS video solutions + recordings</h3>
+      <p>Every TYS MCQ solution video plus the full lesson recording package.</p>
+      <a class="cta-btn outline" href="https://mrkhemistry.com/contact-us/">Find out more</a>
+    </div>
+  </div>
+
+  <div class="card related"><h2>More on Atomic structure</h2><ul><li><a href="https://mrkhemistry.com/tys/h2-chem/2024-p1-q5-atomic-structure/">2024 P1 Q5 — Atomic structure</a></li><li><a href="https://mrkhemistry.com/tys/h2-chem/2024-p1-q7-atomic-structure/">2024 P1 Q7 — Atomic structure</a></li></ul></div>
+
+  <div class="nav-bar"><a href="https://mrkhemistry.com/tys/h2-chem/2024-p1-q2-chemical-bonding/" style="margin-left:auto">2024 P1 Q2 →</a></div>
+</div>
+
+
+<footer class="site-ftr">
+  <div class="site-ftr-inner">
+    <div class="ftr-grid">
+      <div>
+        <h4>Mr Khemistry</h4>
+        <ul>
+          <li><a href="https://mrkhemistry.com/about/">About</a></li>
+          <li><a href="https://mrkhemistry.com/contact-us/">Contact</a></li>
+          <li><a href="https://mrkhemistry.com/blog/">Blog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Free Resources</h4>
+        <ul>
+          <li><a href="https://mrkhemistry.com/tys/">TYS Solutions</a></li>
+          <li><a href="https://mrkhemistry.github.io/chembank/">ChemBank Question Bank</a></li>
+          <li><a href="https://mrkhemistry.github.io/chembank/simulations/">3D Simulations</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Tuition</h4>
+        <ul>
+          <li><a href="https://mrkhemistry.com/jc-chemistry-tuition/">JC H2 Chemistry</a></li>
+          <li><a href="https://mrkhemistry.com/secondary-chemistry-tuition/">O Level / IP / Combined</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="https://wa.me/6583322534">WhatsApp 8332 2534</a></li>
+          <li><a href="https://mrkhemistry.github.io/chembank/portal.html">Student Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ftr-bottom">© 2026 Eric Kua Education Pte Ltd · <a href="https://mrkhemistry.com/">mrkhemistry.com</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -424,6 +424,11 @@ function filterCards(tag, btn) {
 })();
 </script>
 
+<!-- Auth gating: lock premium sims for non-premium users -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./_auth-guard.js"></script>
+<script>SimAuth.applyHubLocks();</script>
+
 <script>
 (function(){
 // ── Shared helpers ──────────────────────────────────────────────

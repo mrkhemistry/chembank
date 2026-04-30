@@ -56,6 +56,10 @@
   footer a { color:var(--accent); text-decoration:none; }
   @media(max-width:700px){ nav,.main{padding-left:16px;padding-right:16px;} #topRow{flex-direction:column;height:auto;} #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;} #cWrap{height:400px;} #stepPanel{flex-direction:row;overflow-x:auto;} .si{min-width:150px;} }
 </style>
+<!-- Premium-sim access guard -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./_auth-guard.js"></script>
+<script>SimAuth.guardPage();</script>
 </head>
 <body>
 <nav>

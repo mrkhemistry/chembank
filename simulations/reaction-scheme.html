@@ -227,7 +227,7 @@ footer{margin-top:24px;padding:18px 24px;text-align:center;color:#64748b;font-si
       <ul>
         <li>Aliphatic: alkenes, halides, alcohols, carbonyls, acids, esters, nitriles, amines, amides, acyl chlorides</li>
         <li>Aromatic: benzene, phenol, phenylamine, benzoic acid + key transformations</li>
-        <li>Multi-functional molecules (e.g. hydroxynitriles, hydroxyacids)</li>
+        <li>Multi-functional molecules: hydroxynitriles, hydroxyacids, halogenoalcohols, diols</li>
       </ul>
     </div>
     <div class="note">
@@ -311,6 +311,48 @@ const MOL = {
       {x:0.866,y:1.5,lab:'OH'},
       {x:1.732,y:0,lab:'C'},
       {x:2.6,y:0.5,lab:'Br'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[1,3,1],[3,4,1]]
+  },
+  '2-chloroethanol': {
+    name: '2-Chloroethanol', formula: 'HOCH₂CH₂Cl', cls: 'Halogenoalcohol',
+    atoms: [
+      {x:0,y:0,lab:'OH'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'Cl'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[2,3,1]]
+  },
+  '1-chloropropan-2-ol': {
+    name: '1-Chloropropan-2-ol', formula: 'CH₃CH(OH)CH₂Cl', cls: 'Halogenoalcohol',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:0.866,y:1.5,lab:'OH'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'Cl'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[1,3,1],[3,4,1]]
+  },
+  'ethane-12-diol': {
+    name: 'Ethane-1,2-diol', formula: 'HOCH₂CH₂OH', cls: 'Diol',
+    atoms: [
+      {x:0,y:0,lab:'OH'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'OH'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'propane-12-diol': {
+    name: 'Propane-1,2-diol', formula: 'CH₃CH(OH)CH₂OH', cls: 'Diol',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:0.866,y:1.5,lab:'OH'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'OH'}
     ],
     bonds: [[0,1,1],[1,2,1],[1,3,1],[3,4,1]]
   },
@@ -929,26 +971,51 @@ const RXN = {
   'ethene': [
     {r:['br2'],       c:['in-ccl4','rtp'],                 p:'12-dibromoethane'},
     {r:['br2'],       c:['aqueous','rtp'],                 p:'2-bromoethanol'},
+    {r:['cl2'],       c:['aqueous','rtp'],                 p:'2-chloroethanol'},
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'bromoethane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'bromoethane'},
-    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'}
+    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'},
+    {r:['kmno4','dil-naoh'],   c:['cold'], p:'ethane-12-diol'}
   ],
   'propene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromopropane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromopropane'},
     {r:['br2'],       c:['aqueous','rtp'],                 p:'1-bromopropan-2-ol'},
+    {r:['cl2'],       c:['aqueous','rtp'],                 p:'1-chloropropan-2-ol'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'propan-2-ol'},
     {r:['h2'],        c:['ni-cat','heat'],                 p:'propane'},
     {r:['h2'],        c:['pt-cat','rtp'],                  p:'propane'},
-    {r:['h2'],        c:['pd-cat','rtp'],                  p:'propane'}
+    {r:['h2'],        c:['pd-cat','rtp'],                  p:'propane'},
+    {r:['kmno4','dil-naoh'],   c:['cold'], p:'propane-12-diol'},
+    // Hot acidic KMnO₄ cleaves the C=C; the =CH₂ fragment becomes CO₂ + H₂O,
+    // leaving ethanoic acid as the only organic product.
+    {r:['kmno4','dil-h2so4'],  c:['heat'], p:'ethanoic-acid'}
   ],
   'propane': [],
-  '2-bromoethanol': [],
-  '1-bromopropan-2-ol': [],
+  '2-bromoethanol': [
+    {r:['koh'],      c:['aqueous','heat'], p:'ethane-12-diol'},
+    {r:['dil-naoh'], c:['heat'],           p:'ethane-12-diol'}
+  ],
+  '1-bromopropan-2-ol': [
+    {r:['koh'],      c:['aqueous','heat'], p:'propane-12-diol'},
+    {r:['dil-naoh'], c:['heat'],           p:'propane-12-diol'}
+  ],
+  '2-chloroethanol': [
+    {r:['koh'],      c:['aqueous','heat'], p:'ethane-12-diol'},
+    {r:['dil-naoh'], c:['heat'],           p:'ethane-12-diol'}
+  ],
+  '1-chloropropan-2-ol': [
+    {r:['koh'],      c:['aqueous','heat'], p:'propane-12-diol'},
+    {r:['dil-naoh'], c:['heat'],           p:'propane-12-diol'}
+  ],
+  'ethane-12-diol': [],
+  'propane-12-diol': [],
   '2-methylpropene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromo-2-methylpropane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromo-2-methylpropane'},
-    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'}
+    {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'},
+    // Hot acidic KMnO₄ cleaves the C=C; =CH₂ → CO₂ + H₂O, =C(CH₃)₂ → propanone.
+    {r:['kmno4','dil-h2so4'],  c:['heat'], p:'propanone'}
   ],
 
   // ----- Halides -----

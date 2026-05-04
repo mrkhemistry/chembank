@@ -152,11 +152,11 @@
   .arrow-label.wrong { border-color: var(--red) !important; background: rgba(248,113,113,.1) !important; box-shadow: 0 0 0 3px rgba(248,113,113,.25); }
   .arrow-empty { color: var(--muted); font-style: italic; }
   .app-list { display: flex; flex-direction: column; gap: 2px; align-items: center; }
-  .app-item { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text); white-space: nowrap; }
+  .app-item { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; font-size: 11px; color: var(--text); }
   .app-item .x-rm { color: var(--muted); margin-left: 4px; cursor: pointer; padding: 0 3px; }
   .app-item .x-rm:hover { color: var(--red); }
   .mult-mini {
-    width: 42px; padding: 1px 3px; background: var(--surface2); border: 1px solid var(--border);
+    width: 36px; padding: 1px 3px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 3px; color: var(--text); font-size: 11px; text-align: center;
     color-scheme: dark;
   }
@@ -168,11 +168,12 @@
   .mult-group { display: inline-flex; align-items: center; gap: 2px; }
   .mult-btn {
     background: var(--surface3); border: 1px solid var(--border);
-    color: var(--text); width: 22px; height: 22px;
+    color: var(--text); width: 20px; height: 20px;
     border-radius: 3px; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; line-height: 1; padding: 0;
+    font-size: 13px; font-weight: 700; line-height: 1; padding: 0;
     user-select: none; -webkit-user-select: none;
+    flex-shrink: 0;
   }
   .mult-btn:hover { background: var(--accent); color: #0f172a; border-color: var(--accent); }
   .mult-btn:active { transform: translateY(1px); }

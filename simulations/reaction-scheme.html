@@ -293,6 +293,27 @@ const MOL = {
     atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'Br'}],
     bonds: [[0,1,1],[1,2,1],[1,3,1]]
   },
+  '2-bromoethanol': {
+    name: '2-Bromoethanol', formula: 'HOCH₂CH₂Br', cls: 'Halogenoalcohol',
+    atoms: [
+      {x:0,y:0,lab:'OH'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'Br'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[2,3,1]]
+  },
+  '1-bromopropan-2-ol': {
+    name: '1-Bromopropan-2-ol', formula: 'CH₃CH(OH)CH₂Br', cls: 'Halogenoalcohol',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:0.866,y:1.5,lab:'OH'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'Br'}
+    ],
+    bonds: [[0,1,1],[1,2,1],[1,3,1],[3,4,1]]
+  },
   '2-bromo-2-methylpropane': {
     name: '2-Bromo-2-methylpropane', formula: '(CH₃)₃CBr', cls: 'Halogenoalkane (3°)',
     atoms: [{x:0,y:0,lab:'C'},{x:-1,y:0,lab:'C'},{x:1,y:0,lab:'C'},{x:0,y:1,lab:'C'},{x:0,y:-1,lab:'Br'}],
@@ -907,19 +928,26 @@ const RXN = {
   // ----- Alkenes -----
   'ethene': [
     {r:['br2'],       c:['in-ccl4','rtp'],                 p:'12-dibromoethane'},
+    {r:['br2'],       c:['aqueous','rtp'],                 p:'2-bromoethanol'},
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'bromoethane'},
+    {r:['hbr'],       c:['aqueous','rtp'],                 p:'bromoethane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'}
   ],
   'propene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromopropane'},
+    {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromopropane'},
+    {r:['br2'],       c:['aqueous','rtp'],                 p:'1-bromopropan-2-ol'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'propan-2-ol'},
     {r:['h2'],        c:['ni-cat','heat'],                 p:'propane'},
     {r:['h2'],        c:['pt-cat','rtp'],                  p:'propane'},
     {r:['h2'],        c:['pd-cat','rtp'],                  p:'propane'}
   ],
   'propane': [],
+  '2-bromoethanol': [],
+  '1-bromopropan-2-ol': [],
   '2-methylpropene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromo-2-methylpropane'},
+    {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromo-2-methylpropane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'}
   ],
 

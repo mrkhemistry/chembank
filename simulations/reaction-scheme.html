@@ -144,10 +144,6 @@ nav .tag-new{background:#16a34a;color:#fff}
 footer{margin-top:24px;padding:18px 24px;text-align:center;color:#64748b;font-size:13px;border-top:1px solid #334155}
 /* mobile media-query for old layout removed; scheme has its own horizontal scroll */
 </style>
-<!-- Premium-sim access guard -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./_auth-guard.js"></script>
-<script>SimAuth.guardPage();</script>
 </head>
 <body>
 <nav>
@@ -462,6 +458,47 @@ const MOL = {
     atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'O'},{x:1.732,y:0,lab:'Cl'}],
     bonds:[[0,1,1],[1,2,2],[1,3,1]]
   },
+  'methoxyethane': {
+    name: 'Methoxyethane', formula: 'CH₃OCH₂CH₃', cls: 'Ether',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'O'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'ethoxyethane': {
+    name: 'Ethoxyethane', formula: 'CH₃CH₂OCH₂CH₃', cls: 'Ether',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'O'},
+      {x:2.6,y:0.5,lab:'C'},
+      {x:3.46,y:0,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1]]
+  },
+  'sodium-methanoate': {
+    name: 'Sodium methanoate', formula: 'HCOO⁻Na⁺', cls: 'Carboxylate salt',
+    atoms: [
+      {x:-1,y:0,lab:'H'},
+      {x:0,y:0,lab:'C'},
+      {x:0,y:1,lab:'O'},
+      {x:1,y:0,lab:'O⁻ Na⁺'}
+    ],
+    bonds:[[0,1,1],[1,2,2],[1,3,1]]
+  },
+  'sodium-ethanoate': {
+    name: 'Sodium ethanoate', formula: 'CH₃COO⁻Na⁺', cls: 'Carboxylate salt',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'O⁻ Na⁺'},
+      {x:0.866,y:1.5,lab:'O'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[1,3,2]]
+  },
   'ethanamide': {
     name: 'Ethanamide', formula: 'CH₃CONH₂', cls: 'Amide',
     atoms: [{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'O'},{x:1.732,y:0,lab:'NH₂'}],
@@ -719,23 +756,27 @@ const REAGENTS = {
   'hbr':         {label:'HBr'},
   'h2o-steam':   {label:'H₂O(g)'},
   'h2':          {label:'H₂'},
+  'na':          {label:'Na'},
   'koh':         {label:'KOH'},
   'kcn':         {label:'KCN'},
   'nh3-excess':  {label:'excess NH₃'},
   'hcn':         {label:'HCN'},
   'conc-h2so4':  {label:'conc H₂SO₄'},
   'dil-h2so4':   {label:'dilute H₂SO₄'},
+  'conc-h3po4':  {label:'conc H₃PO₄'},
   'dil-hcl':     {label:'dilute HCl'},
   'conc-hcl':    {label:'conc HCl'},
   'dil-naoh':    {label:'dilute NaOH(aq)'},
   'pcl5':        {label:'PCl₅'},
+  'al2o3':       {label:'Al₂O₃'},
   'k2cr2o7':     {label:'K₂Cr₂O₇'},
   'kmno4':       {label:'KMnO₄'},
   'lialh4':      {label:'LiAlH₄'},
   'sn':          {label:'Sn'},
   'conc-hno3':   {label:'conc HNO₃'},
   'mecl':        {label:'CH₃Cl'},
-  'etoh-reagent':{label:'CH₃CH₂OH'}
+  'etoh-reagent':{label:'CH₃CH₂OH'},
+  'meoh-reagent':{label:'CH₃OH'}
 };
 
 /* =========================================================================
@@ -748,7 +789,6 @@ const CONDITIONS = {
   'in-ether':     {label:'in dry ether'},
   'distil':       {label:'distil'},
   'rtp':          {label:'r.t.p.'},
-  '170c':         {label:'170 °C'},
   '300c':         {label:'300 °C'},
   '55c':          {label:'55 °C'},
   '30c':          {label:'30 °C'},
@@ -756,9 +796,14 @@ const CONDITIONS = {
   'high-pressure':{label:'high pressure'},
   'cold':         {label:'cold'},
   'h3po4-cat':    {label:'conc H₃PO₄ catalyst'},
+  'fe-cat':       {label:'Fe catalyst'},
+  'fecl3-cat':    {label:'FeCl₃ catalyst'},
   'febr3-cat':    {label:'FeBr₃ catalyst'},
   'alcl3-cat':    {label:'AlCl₃ catalyst'},
+  'albr3-cat':    {label:'AlBr₃ catalyst'},
   'ni-cat':       {label:'Ni catalyst'},
+  'pt-cat':       {label:'Pt catalyst'},
+  'pd-cat':       {label:'Pd catalyst'},
   'trace-naoh':   {label:'trace NaOH(aq)'},
   'then-naoh':    {label:'then NaOH(aq)'},
   'heat':         {label:'heat'}
@@ -772,117 +817,167 @@ const CONDITIONS = {
 const RXN = {
   // ----- Alkenes -----
   'ethene': [
-    {r:['br2'],       c:['in-ccl4'],                       p:'12-dibromoethane'},
-    {r:['hbr'],       c:['rtp'],                           p:'bromoethane'},
+    {r:['br2'],       c:['in-ccl4','rtp'],                 p:'12-dibromoethane'},
+    {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'bromoethane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'}
   ],
   'propene': [
-    {r:['hbr'],       c:['rtp'],                           p:'2-bromopropane'},
+    {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromopropane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'propan-2-ol'},
-    {r:['h2'],        c:['ni-cat','heat'],                 p:'propane'}
+    {r:['h2'],        c:['ni-cat','heat'],                 p:'propane'},
+    {r:['h2'],        c:['pt-cat','rtp'],                  p:'propane'},
+    {r:['h2'],        c:['pd-cat','rtp'],                  p:'propane'}
   ],
   'propane': [],
   '2-methylpropene': [
-    {r:['hbr'],       c:['rtp'],                           p:'2-bromo-2-methylpropane'},
+    {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromo-2-methylpropane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'}
   ],
 
   // ----- Halides -----
   'bromoethane': [
-    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'},
-    {r:['kcn'], c:['in-ethanol','heat'],p:'propanenitrile'},
-    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'}
+    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['kcn'], c:['in-ethanol','heat'],  p:'propanenitrile'},
+    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'},
+    {r:['na','etoh-reagent'], c:['heat'], p:'ethoxyethane'},
+    {r:['na','meoh-reagent'], c:['heat'], p:'methoxyethane'}
   ],
   'chloroethane': [
-    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'},
-    {r:['kcn'], c:['in-ethanol','heat'],p:'propanenitrile'},
-    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'}
+    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['kcn'], c:['in-ethanol','heat'],  p:'propanenitrile'},
+    {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'},
+    {r:['na','etoh-reagent'], c:['heat'], p:'ethoxyethane'},
+    {r:['na','meoh-reagent'], c:['heat'], p:'methoxyethane'}
   ],
   '12-dibromoethane': [
-    {r:['koh'], c:['aqueous','heat'],   p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],p:'ethene'}
+    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
+    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'}
   ],
   '2-bromopropane': [
-    {r:['koh'], c:['aqueous','heat'],   p:'propan-2-ol'},
-    {r:['koh'], c:['in-ethanol','heat'],p:'propene'}
+    {r:['koh'], c:['aqueous','heat'],     p:'propan-2-ol'},
+    {r:['koh'], c:['in-ethanol','heat'],  p:'propene'}
   ],
   '2-bromo-2-methylpropane': [
-    {r:['koh'], c:['aqueous','heat'],   p:'2-methylpropan-2-ol'},
-    {r:['koh'], c:['in-ethanol','heat'],p:'2-methylpropene'}
+    {r:['koh'], c:['aqueous','heat'],     p:'2-methylpropan-2-ol'},
+    {r:['koh'], c:['in-ethanol','heat'],  p:'2-methylpropene'}
   ],
+
+  // ----- Ethers (sinks) -----
+  'methoxyethane': [],
+  'ethoxyethane': [],
 
   // ----- Alcohols -----
   'ethanol': [
     {r:['k2cr2o7','dil-h2so4'], c:['distil'], p:'ethanal'},
-    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'ethanoic-acid'},
-    {r:['pcl5'],       c:['rtp'],          p:'chloroethane'},
-    {r:['conc-h2so4'], c:['170c'],         p:'ethene'},
-    {r:['i2','dil-naoh'], c:['heat'],      p:'methanoic-acid'}
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'ethanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'ethanoic-acid'},
+    {r:['pcl5'],       c:['rtp'],             p:'chloroethane'},
+    {r:['conc-h2so4'], c:['heat'],            p:'ethene'},
+    {r:['conc-h3po4'], c:['heat'],            p:'ethene'},
+    {r:['al2o3'],      c:['heat'],            p:'ethene'},
+    {r:['i2','dil-naoh'], c:['heat'],         p:'sodium-methanoate'}
   ],
   'propan-1-ol': [
     {r:['k2cr2o7','dil-h2so4'], c:['distil'], p:'propanal'},
-    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'propanoic-acid'},
-    {r:['conc-h2so4'], c:['170c'],         p:'propene'}
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'propanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'propanoic-acid'},
+    {r:['conc-h2so4'], c:['heat'],            p:'propene'},
+    {r:['conc-h3po4'], c:['heat'],            p:'propene'},
+    {r:['al2o3'],      c:['heat'],            p:'propene'}
   ],
   'propan-2-ol': [
-    {r:['k2cr2o7','dil-h2so4'], c:['heat'], p:'propanone'},
-    {r:['conc-h2so4'], c:['170c'],         p:'propene'},
-    {r:['i2','dil-naoh'], c:['heat'],      p:'ethanoic-acid'}
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'propanone'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'propanone'},
+    {r:['conc-h2so4'], c:['heat'],            p:'propene'},
+    {r:['conc-h3po4'], c:['heat'],            p:'propene'},
+    {r:['al2o3'],      c:['heat'],            p:'propene'},
+    {r:['i2','dil-naoh'], c:['heat'],         p:'sodium-ethanoate'}
   ],
   '2-methylpropan-2-ol': [
-    {r:['conc-h2so4'], c:['170c'],         p:'2-methylpropene'}
+    {r:['conc-h2so4'], c:['heat'],            p:'2-methylpropene'},
+    {r:['conc-h3po4'], c:['heat'],            p:'2-methylpropene'},
+    {r:['al2o3'],      c:['heat'],            p:'2-methylpropene'}
   ],
 
   // ----- Aldehydes / Ketones -----
   'ethanal': [
-    {r:['lialh4'],              c:['in-ether','rtp'], p:'ethanol'},
-    {r:['h2'],                  c:['ni-cat','heat'], p:'ethanol'},
-    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'ethanoic-acid'},
-    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'ethanoic-acid'},
-    {r:['hcn'],                 c:['trace-naoh','cold'], p:'2-hydroxypropanenitrile'},
-    {r:['i2','dil-naoh'],       c:['heat'],     p:'methanoic-acid'}
+    {r:['lialh4'],              c:['in-ether','rtp'],     p:'ethanol'},
+    {r:['h2'],                  c:['ni-cat','heat'],      p:'ethanol'},
+    {r:['h2'],                  c:['pt-cat','rtp'],       p:'ethanol'},
+    {r:['h2'],                  c:['pd-cat','rtp'],       p:'ethanol'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],               p:'ethanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],               p:'ethanoic-acid'},
+    {r:['hcn'],                 c:['trace-naoh','cold'],  p:'2-hydroxypropanenitrile'},
+    {r:['i2','dil-naoh'],       c:['heat'],               p:'sodium-methanoate'}
   ],
   'propanal': [
-    {r:['lialh4'],              c:['in-ether','rtp'], p:'propan-1-ol'},
-    {r:['h2'],                  c:['ni-cat','heat'], p:'propan-1-ol'},
-    {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'propanoic-acid'},
-    {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'propanoic-acid'}
+    {r:['lialh4'],              c:['in-ether','rtp'],     p:'propan-1-ol'},
+    {r:['h2'],                  c:['ni-cat','heat'],      p:'propan-1-ol'},
+    {r:['h2'],                  c:['pt-cat','rtp'],       p:'propan-1-ol'},
+    {r:['h2'],                  c:['pd-cat','rtp'],       p:'propan-1-ol'},
+    {r:['k2cr2o7','dil-h2so4'], c:['heat'],               p:'propanoic-acid'},
+    {r:['kmno4','dil-h2so4'],   c:['heat'],               p:'propanoic-acid'}
   ],
   'propanone': [
-    {r:['lialh4'], c:['in-ether','rtp'],   p:'propan-2-ol'},
-    {r:['h2'],     c:['ni-cat','heat'],    p:'propan-2-ol'},
-    {r:['hcn'],    c:['trace-naoh','cold'], p:'2-hydroxy-2-methylpropanenitrile'},
-    {r:['i2','dil-naoh'], c:['heat'],      p:'ethanoic-acid'}
+    {r:['lialh4'], c:['in-ether','rtp'],                  p:'propan-2-ol'},
+    {r:['h2'],     c:['ni-cat','heat'],                   p:'propan-2-ol'},
+    {r:['h2'],     c:['pt-cat','rtp'],                    p:'propan-2-ol'},
+    {r:['h2'],     c:['pd-cat','rtp'],                    p:'propan-2-ol'},
+    {r:['hcn'],    c:['trace-naoh','cold'],               p:'2-hydroxy-2-methylpropanenitrile'},
+    {r:['i2','dil-naoh'], c:['heat'],                     p:'sodium-ethanoate'}
+  ],
+
+  // ----- Sodium carboxylates → acids (acidification) -----
+  'sodium-methanoate': [
+    {r:['dil-hcl'],   c:['rtp'], p:'methanoic-acid'},
+    {r:['dil-h2so4'], c:['rtp'], p:'methanoic-acid'}
+  ],
+  'sodium-ethanoate': [
+    {r:['dil-hcl'],   c:['rtp'], p:'ethanoic-acid'},
+    {r:['dil-h2so4'], c:['rtp'], p:'ethanoic-acid'}
   ],
 
   // ----- Nitriles -----
   'propanenitrile': [
-    {r:['dil-hcl'], c:['heat'],   p:'propanoic-acid'},
-    {r:['lialh4'],  c:['in-ether','rtp'], p:'propylamine'},
-    {r:['h2'],      c:['ni-cat','heat'],   p:'propylamine'}
+    {r:['dil-hcl'],   c:['heat'],            p:'propanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'],            p:'propanoic-acid'},
+    {r:['lialh4'],    c:['in-ether','rtp'],  p:'propylamine'},
+    {r:['h2'],        c:['ni-cat','heat'],   p:'propylamine'},
+    {r:['h2'],        c:['pt-cat','rtp'],    p:'propylamine'},
+    {r:['h2'],        c:['pd-cat','rtp'],    p:'propylamine'}
   ],
   'ethanenitrile': [
-    {r:['dil-hcl'], c:['heat'],   p:'ethanoic-acid'},
-    {r:['lialh4'],  c:['in-ether','rtp'], p:'ethylamine'},
-    {r:['h2'],      c:['ni-cat','heat'],   p:'ethylamine'}
+    {r:['dil-hcl'],   c:['heat'],            p:'ethanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'],            p:'ethanoic-acid'},
+    {r:['lialh4'],    c:['in-ether','rtp'],  p:'ethylamine'},
+    {r:['h2'],        c:['ni-cat','heat'],   p:'ethylamine'},
+    {r:['h2'],        c:['pt-cat','rtp'],    p:'ethylamine'},
+    {r:['h2'],        c:['pd-cat','rtp'],    p:'ethylamine'}
   ],
   '2-hydroxypropanenitrile': [
-    {r:['dil-hcl'], c:['heat'], p:'2-hydroxypropanoic-acid'},
-    {r:['conc-h2so4'], c:['170c'], p:'propenenitrile'}
+    {r:['dil-hcl'],    c:['heat'], p:'2-hydroxypropanoic-acid'},
+    {r:['dil-h2so4'],  c:['heat'], p:'2-hydroxypropanoic-acid'},
+    {r:['conc-h2so4'], c:['heat'], p:'propenenitrile'},
+    {r:['conc-h3po4'], c:['heat'], p:'propenenitrile'},
+    {r:['al2o3'],      c:['heat'], p:'propenenitrile'}
   ],
   'propenenitrile': [
-    {r:['h2'], c:['ni-cat','heat'], p:'propylamine'}
+    {r:['h2'], c:['ni-cat','heat'], p:'propylamine'},
+    {r:['h2'], c:['pt-cat','rtp'],  p:'propylamine'},
+    {r:['h2'], c:['pd-cat','rtp'],  p:'propylamine'}
   ],
   '2-hydroxy-2-methylpropanenitrile': [
-    {r:['dil-hcl'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
+    {r:['dil-hcl'],   c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
   ],
 
   // ----- Carboxylic acids -----
+  'methanoic-acid': [],
   'ethanoic-acid': [
-    {r:['lialh4'], c:['in-ether','rtp'], p:'ethanol'},
-    {r:['pcl5'],   c:['rtp'],      p:'ethanoyl-chloride'},
+    {r:['lialh4'], c:['in-ether','rtp'],          p:'ethanol'},
+    {r:['pcl5'],   c:['rtp'],                     p:'ethanoyl-chloride'},
     {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-ethanoate'}
   ],
   'propanoic-acid': [
@@ -895,21 +990,24 @@ const RXN = {
 
   // ----- Acyl chloride / Amide -----
   'ethanoyl-chloride': [
-    {r:['nh3-excess'], c:['rtp'], p:'ethanamide'}
+    {r:['nh3-excess'],   c:['rtp'], p:'ethanamide'},
+    {r:['etoh-reagent'], c:['rtp'], p:'ethyl-ethanoate'}
   ],
   'ethanamide': [
     {r:['lialh4'],  c:['in-ether','rtp'], p:'ethylamine'},
-    {r:['dil-hcl'], c:['heat'],   p:'ethanoic-acid'}
+    {r:['dil-hcl'], c:['heat'],           p:'ethanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'],         p:'ethanoic-acid'}
   ],
 
   // ----- Esters -----
   'ethyl-ethanoate': [
-    {r:['dil-hcl'],  c:['heat'], p:'ethanoic-acid'},
-    {r:['dil-naoh'], c:['heat'], p:'ethanoic-acid'}
+    {r:['dil-hcl'],   c:['heat'], p:'ethanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'], p:'ethanoic-acid'},
+    {r:['dil-naoh'],  c:['heat'], p:'sodium-ethanoate'}
   ],
   'ethyl-2-hydroxy-2-methylpropanoate': [
-    {r:['dil-hcl'],  c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
-    {r:['dil-naoh'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
+    {r:['dil-hcl'],   c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
+    {r:['dil-h2so4'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
   ],
 
   // ----- Amines -----
@@ -922,10 +1020,24 @@ const RXN = {
 
   // ----- Arenes -----
   'benzene': [
-    {r:['conc-hno3','conc-h2so4'], c:['55c'],         p:'nitrobenzene'},
-    {r:['br2'],  c:['febr3-cat'],  p:'bromobenzene'},
-    {r:['cl2'],  c:['alcl3-cat'],  p:'chlorobenzene'},
-    {r:['mecl'], c:['alcl3-cat'],  p:'methylbenzene'}
+    {r:['conc-hno3','conc-h2so4'], c:['55c'],   p:'nitrobenzene'},
+    // Bromination — accept AlCl₃, AlBr₃, FeCl₃, FeBr₃, Fe (Fe powder allowed for halogenation only)
+    {r:['br2'],  c:['alcl3-cat','rtp'],   p:'bromobenzene'},
+    {r:['br2'],  c:['albr3-cat','rtp'],   p:'bromobenzene'},
+    {r:['br2'],  c:['fecl3-cat','rtp'],   p:'bromobenzene'},
+    {r:['br2'],  c:['febr3-cat','rtp'],   p:'bromobenzene'},
+    {r:['br2'],  c:['fe-cat','rtp'],      p:'bromobenzene'},
+    // Chlorination
+    {r:['cl2'],  c:['alcl3-cat','rtp'],   p:'chlorobenzene'},
+    {r:['cl2'],  c:['albr3-cat','rtp'],   p:'chlorobenzene'},
+    {r:['cl2'],  c:['fecl3-cat','rtp'],   p:'chlorobenzene'},
+    {r:['cl2'],  c:['febr3-cat','rtp'],   p:'chlorobenzene'},
+    {r:['cl2'],  c:['fe-cat','rtp'],      p:'chlorobenzene'},
+    // Alkylation — AlCl₃, AlBr₃, FeCl₃, FeBr₃ only (NO Fe powder)
+    {r:['mecl'], c:['alcl3-cat','rtp'],   p:'methylbenzene'},
+    {r:['mecl'], c:['albr3-cat','rtp'],   p:'methylbenzene'},
+    {r:['mecl'], c:['fecl3-cat','rtp'],   p:'methylbenzene'},
+    {r:['mecl'], c:['febr3-cat','rtp'],   p:'methylbenzene'}
   ],
   'methylbenzene': [
     {r:['kmno4','dil-h2so4'], c:['heat'], p:'benzoic-acid'},
@@ -935,8 +1047,9 @@ const RXN = {
     {r:['kmno4','dil-h2so4'], c:['heat'], p:'4-nitrobenzoic-acid'}
   ],
   '4-nitrobenzoic-acid': [
-    {r:['pcl5'], c:['rtp'], p:'4-nitrobenzoyl-chloride'}
-  ],
+    {r:['pcl5'], c:['rtp'], p:'4-nitrobenzoyl-chloride'},
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:null}
+  ].filter(x => x.p),
   '4-nitrobenzoyl-chloride': [],
   'nitrobenzene': [
     {r:['sn','conc-hcl'], c:['heat','then-naoh'], p:'phenylamine'}
@@ -944,18 +1057,24 @@ const RXN = {
   'bromobenzene': [],
   'chlorobenzene': [],
   'phenol': [
-    {r:['br2'], c:['aqueous','rtp'], p:'246-tribromophenol'}
-  ],
+    {r:['br2'], c:['aqueous','rtp'], p:'246-tribromophenol'},
+    {r:['na'],  c:['rtp'],           p:null}, // sodium phenoxide — out of scope
+    {r:['conc-hno3'], c:['rtp'],     p:null}  // 2,4-dinitrophenol — out of scope
+  ].filter(x => x.p),
   'benzoic-acid': [
     {r:['pcl5'],   c:['rtp'],            p:'benzoyl-chloride'},
     {r:['lialh4'], c:['in-ether','rtp'], p:'phenylmethanol'},
     {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-benzoate'}
   ],
-  'benzoyl-chloride': [],
-  'phenylmethanol': [],
+  'benzoyl-chloride': [
+    {r:['etoh-reagent'], c:['rtp'], p:'ethyl-benzoate'}
+  ],
+  'phenylmethanol': [
+    {r:['pcl5'], c:['rtp'], p:null} // would give chloromethylbenzene — not in MOL
+  ].filter(x => x.p),
   'ethyl-benzoate': [
-    {r:['dil-hcl'],  c:['heat'], p:'benzoic-acid'},
-    {r:['dil-naoh'], c:['heat'], p:'benzoic-acid'}
+    {r:['dil-hcl'],   c:['heat'], p:'benzoic-acid'},
+    {r:['dil-h2so4'], c:['heat'], p:'benzoic-acid'}
   ],
   '246-tribromophenol': []
 };
@@ -1133,10 +1252,10 @@ const QUESTIONS = [
   },
   {
     title: 'Alkene → ester via iodoform',
-    desc: 'Convert propene to ethyl ethanoate in 3 steps. (Hint: the iodoform reaction shortens the chain.)',
+    desc: 'Convert propene to ethyl ethanoate in 4 steps. (Hint: iodoform shortens the chain via a sodium carboxylate, which must then be acidified.)',
     start: 'propene',
     target: 'ethyl-ethanoate',
-    maxSteps: 3
+    maxSteps: 4
   },
   {
     title: 'Carboxylic acid → nitrile',

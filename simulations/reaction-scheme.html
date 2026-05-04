@@ -734,6 +734,93 @@ const MOL = {
       {x:-2,y:0,lab:'NO₂'}
     ],
     bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1],[3,9,1]]
+  },
+  'sodium-ethoxide': {
+    name: 'Sodium ethoxide', formula: 'CH₃CH₂O⁻Na⁺', cls: 'Alkoxide',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'O⁻ Na⁺'}
+    ],
+    bonds: [[0,1,1],[1,2,1]]
+  },
+  'sodium-phenoxide': {
+    name: 'Sodium phenoxide', formula: 'C₆H₅O⁻Na⁺', cls: 'Phenoxide',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'O⁻ Na⁺'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'sodium-propanoate': {
+    name: 'Sodium propanoate', formula: 'CH₃CH₂COO⁻Na⁺', cls: 'Carboxylate salt',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'C'},
+      {x:2.6,y:0.5,lab:'O⁻ Na⁺'},
+      {x:1.732,y:-1,lab:'O'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[2,4,2]]
+  },
+  'sodium-2-hydroxypropanoate': {
+    name: 'Sodium 2-hydroxypropanoate', formula: 'CH₃CH(OH)COO⁻Na⁺', cls: 'Hydroxycarboxylate salt',
+    atoms: [
+      {x:-1,y:0,lab:'C'},
+      {x:0,y:0,lab:'C'},
+      {x:0,y:1,lab:'OH'},
+      {x:0,y:-1,lab:'C'},
+      {x:-0.866,y:-1.5,lab:'O'},
+      {x:0.866,y:-1.5,lab:'O⁻ Na⁺'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[1,3,1],[3,4,2],[3,5,1]]
+  },
+  'sodium-2-hydroxy-2-methylpropanoate': {
+    name: 'Sodium 2-hydroxy-2-methylpropanoate', formula: '(CH₃)₂C(OH)COO⁻Na⁺', cls: 'Hydroxycarboxylate salt',
+    atoms: [
+      {x:0,y:0,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:1,y:0,lab:'C'},
+      {x:0,y:1,lab:'OH'},
+      {x:0,y:-1,lab:'C'},
+      {x:-0.866,y:-1.5,lab:'O'},
+      {x:0.866,y:-1.5,lab:'O⁻ Na⁺'}
+    ],
+    bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1],[4,5,2],[4,6,1]]
+  },
+  '4-nitrophenol': {
+    name: '4-Nitrophenol', formula: 'O₂N-C₆H₄-OH', cls: 'Nitrophenol',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'OH'},
+      {x:-2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[3,7,1]]
+  },
+  '24-dinitrophenol': {
+    name: '2,4-Dinitrophenol', formula: '(O₂N)₂-C₆H₃-OH', cls: 'Dinitrophenol',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'OH'},
+      {x:1,y:1.732,lab:'NO₂'},
+      {x:-2,y:0,lab:'NO₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[1,7,1],[3,8,1]]
   }
 };
 
@@ -742,7 +829,8 @@ const MOL = {
 ['benzene','methylbenzene','nitrobenzene','bromobenzene','chlorobenzene',
  'phenol','phenylamine','benzoic-acid','246-tribromophenol','246-tribromophenylamine',
  'benzoyl-chloride','phenylmethanol','ethyl-benzoate',
- '4-nitromethylbenzene','4-nitrobenzoic-acid','4-nitrobenzoyl-chloride'].forEach(id => {
+ '4-nitromethylbenzene','4-nitrobenzoic-acid','4-nitrobenzoyl-chloride',
+ 'sodium-phenoxide','4-nitrophenol','24-dinitrophenol'].forEach(id => {
   if(MOL[id]) MOL[id].aromaticRings = [[0,1,2,3,4,5]];
 });
 
@@ -774,6 +862,7 @@ const REAGENTS = {
   'lialh4':      {label:'LiAlH₄'},
   'sn':          {label:'Sn'},
   'conc-hno3':   {label:'conc HNO₃'},
+  'dil-hno3':    {label:'dilute HNO₃'},
   'mecl':        {label:'CH₃Cl'},
   'etoh-reagent':{label:'CH₃CH₂OH'},
   'meoh-reagent':{label:'CH₃OH'}
@@ -887,7 +976,8 @@ const RXN = {
     {r:['conc-h2so4'], c:['heat'],            p:'ethene'},
     {r:['conc-h3po4'], c:['heat'],            p:'ethene'},
     {r:['al2o3'],      c:['heat'],            p:'ethene'},
-    {r:['i2','dil-naoh'], c:['heat'],         p:'sodium-methanoate'}
+    {r:['i2','dil-naoh'], c:['heat'],         p:'sodium-methanoate'},
+    {r:['na'],         c:['rtp'],             p:'sodium-ethoxide'}
   ],
   'propan-1-ol': [
     {r:['k2cr2o7','dil-h2so4'], c:['distil'], p:'propanal'},
@@ -948,11 +1038,41 @@ const RXN = {
     {r:['dil-hcl'],   c:['rtp'], p:'ethanoic-acid'},
     {r:['dil-h2so4'], c:['rtp'], p:'ethanoic-acid'}
   ],
+  'sodium-propanoate': [
+    {r:['dil-hcl'],   c:['rtp'], p:'propanoic-acid'},
+    {r:['dil-h2so4'], c:['rtp'], p:'propanoic-acid'}
+  ],
+  'sodium-2-hydroxypropanoate': [
+    {r:['dil-hcl'],   c:['rtp'], p:'2-hydroxypropanoic-acid'},
+    {r:['dil-h2so4'], c:['rtp'], p:'2-hydroxypropanoic-acid'}
+  ],
+  'sodium-2-hydroxy-2-methylpropanoate': [
+    {r:['dil-hcl'],   c:['rtp'], p:'2-hydroxy-2-methylpropanoic-acid'},
+    {r:['dil-h2so4'], c:['rtp'], p:'2-hydroxy-2-methylpropanoic-acid'}
+  ],
+
+  // ----- Alkoxide / Phenoxide → parent (acidification) -----
+  'sodium-ethoxide': [
+    {r:['dil-hcl'],   c:['rtp'], p:'ethanol'},
+    {r:['dil-h2so4'], c:['rtp'], p:'ethanol'}
+  ],
+  'sodium-phenoxide': [
+    {r:['dil-hcl'],   c:['rtp'], p:'phenol'},
+    {r:['dil-h2so4'], c:['rtp'], p:'phenol'}
+  ],
+
+  // ----- Nitrophenols -----
+  '4-nitrophenol': [
+    {r:['conc-hno3'], c:['rtp'], p:'24-dinitrophenol'}
+  ],
+  '24-dinitrophenol': [],
 
   // ----- Nitriles -----
   'propanenitrile': [
     {r:['dil-hcl'],   c:['heat'],            p:'propanoic-acid'},
     {r:['dil-h2so4'], c:['heat'],            p:'propanoic-acid'},
+    {r:['koh'],       c:['aqueous','heat'],  p:'sodium-propanoate'},
+    {r:['dil-naoh'],  c:['heat'],            p:'sodium-propanoate'},
     {r:['lialh4'],    c:['in-ether','rtp'],  p:'propylamine'},
     {r:['h2'],        c:['ni-cat','heat'],   p:'propylamine'},
     {r:['h2'],        c:['pt-cat','rtp'],    p:'propylamine'},
@@ -961,6 +1081,8 @@ const RXN = {
   'ethanenitrile': [
     {r:['dil-hcl'],   c:['heat'],            p:'ethanoic-acid'},
     {r:['dil-h2so4'], c:['heat'],            p:'ethanoic-acid'},
+    {r:['koh'],       c:['aqueous','heat'],  p:'sodium-ethanoate'},
+    {r:['dil-naoh'],  c:['heat'],            p:'sodium-ethanoate'},
     {r:['lialh4'],    c:['in-ether','rtp'],  p:'ethylamine'},
     {r:['h2'],        c:['ni-cat','heat'],   p:'ethylamine'},
     {r:['h2'],        c:['pt-cat','rtp'],    p:'ethylamine'},
@@ -969,6 +1091,8 @@ const RXN = {
   '2-hydroxypropanenitrile': [
     {r:['dil-hcl'],    c:['heat'], p:'2-hydroxypropanoic-acid'},
     {r:['dil-h2so4'],  c:['heat'], p:'2-hydroxypropanoic-acid'},
+    {r:['koh'],        c:['aqueous','heat'], p:'sodium-2-hydroxypropanoate'},
+    {r:['dil-naoh'],   c:['heat'],           p:'sodium-2-hydroxypropanoate'},
     {r:['conc-h2so4'], c:['heat'], p:'propenenitrile'},
     {r:['conc-h3po4'], c:['heat'], p:'propenenitrile'},
     {r:['al2o3'],      c:['heat'], p:'propenenitrile'}
@@ -980,7 +1104,9 @@ const RXN = {
   ],
   '2-hydroxy-2-methylpropanenitrile': [
     {r:['dil-hcl'],   c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
-    {r:['dil-h2so4'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'}
+    {r:['dil-h2so4'], c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
+    {r:['koh'],       c:['aqueous','heat'], p:'sodium-2-hydroxy-2-methylpropanoate'},
+    {r:['dil-naoh'],  c:['heat'],           p:'sodium-2-hydroxy-2-methylpropanoate'}
   ],
 
   // ----- Carboxylic acids -----
@@ -988,15 +1114,20 @@ const RXN = {
   'ethanoic-acid': [
     {r:['lialh4'], c:['in-ether','rtp'],          p:'ethanol'},
     {r:['pcl5'],   c:['rtp'],                     p:'ethanoyl-chloride'},
-    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-ethanoate'}
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-ethanoate'},
+    {r:['na'],     c:['rtp'],                     p:'sodium-ethanoate'}
   ],
   'propanoic-acid': [
-    {r:['lialh4'], c:['in-ether','rtp'], p:'propan-1-ol'}
+    {r:['lialh4'], c:['in-ether','rtp'], p:'propan-1-ol'},
+    {r:['na'],     c:['rtp'],            p:'sodium-propanoate'}
   ],
   '2-hydroxy-2-methylpropanoic-acid': [
-    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-2-hydroxy-2-methylpropanoate'}
+    {r:['etoh-reagent','conc-h2so4'], c:['heat'], p:'ethyl-2-hydroxy-2-methylpropanoate'},
+    {r:['na'],     c:['rtp'],            p:'sodium-2-hydroxy-2-methylpropanoate'}
   ],
-  '2-hydroxypropanoic-acid': [],
+  '2-hydroxypropanoic-acid': [
+    {r:['na'],     c:['rtp'],            p:'sodium-2-hydroxypropanoate'}
+  ],
 
   // ----- Acyl chloride / Amide -----
   'ethanoyl-chloride': [
@@ -1004,9 +1135,11 @@ const RXN = {
     {r:['etoh-reagent'], c:['rtp'], p:'ethyl-ethanoate'}
   ],
   'ethanamide': [
-    {r:['lialh4'],  c:['in-ether','rtp'], p:'ethylamine'},
-    {r:['dil-hcl'], c:['heat'],           p:'ethanoic-acid'},
-    {r:['dil-h2so4'], c:['heat'],         p:'ethanoic-acid'}
+    {r:['lialh4'],   c:['in-ether','rtp'],  p:'ethylamine'},
+    {r:['dil-hcl'],  c:['heat'],            p:'ethanoic-acid'},
+    {r:['dil-h2so4'],c:['heat'],            p:'ethanoic-acid'},
+    {r:['koh'],      c:['aqueous','heat'],  p:'sodium-ethanoate'},
+    {r:['dil-naoh'], c:['heat'],            p:'sodium-ethanoate'}
   ],
 
   // ----- Esters -----
@@ -1067,10 +1200,13 @@ const RXN = {
   'bromobenzene': [],
   'chlorobenzene': [],
   'phenol': [
-    {r:['br2'], c:['aqueous','rtp'], p:'246-tribromophenol'},
-    {r:['na'],  c:['rtp'],           p:null}, // sodium phenoxide — out of scope
-    {r:['conc-hno3'], c:['rtp'],     p:null}  // 2,4-dinitrophenol — out of scope
-  ].filter(x => x.p),
+    {r:['br2'], c:['aqueous','rtp'],    p:'246-tribromophenol'},
+    {r:['na'],         c:['rtp'],       p:'sodium-phenoxide'},
+    {r:['dil-naoh'],   c:['rtp'],       p:'sodium-phenoxide'},
+    {r:['koh'],        c:['aqueous','rtp'], p:'sodium-phenoxide'},
+    {r:['dil-hno3'],   c:['rtp'],       p:'4-nitrophenol'},
+    {r:['conc-hno3'],  c:['rtp'],       p:'24-dinitrophenol'}
+  ],
   'benzoic-acid': [
     {r:['pcl5'],   c:['rtp'],            p:'benzoyl-chloride'},
     {r:['lialh4'], c:['in-ether','rtp'], p:'phenylmethanol'},

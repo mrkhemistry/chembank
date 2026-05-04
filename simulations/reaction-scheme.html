@@ -836,32 +836,42 @@ const RXN = {
 
   // ----- Halides -----
   'bromoethane': [
-    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'},
-    {r:['kcn'], c:['in-ethanol','heat'],  p:'propanenitrile'},
+    {r:['koh'],      c:['aqueous','heat'],     p:'ethanol'},
+    {r:['dil-naoh'], c:['heat'],               p:'ethanol'},
+    {r:['koh'],      c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['dil-naoh'], c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['kcn'],      c:['in-ethanol','heat'],  p:'propanenitrile'},
     {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'},
-    {r:['na','etoh-reagent'], c:['heat'], p:'ethoxyethane'},
-    {r:['na','meoh-reagent'], c:['heat'], p:'methoxyethane'}
+    {r:['na','etoh-reagent'], c:['heat'],      p:'ethoxyethane'},
+    {r:['na','meoh-reagent'], c:['heat'],      p:'methoxyethane'}
   ],
   'chloroethane': [
-    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'},
-    {r:['kcn'], c:['in-ethanol','heat'],  p:'propanenitrile'},
+    {r:['koh'],      c:['aqueous','heat'],     p:'ethanol'},
+    {r:['dil-naoh'], c:['heat'],               p:'ethanol'},
+    {r:['koh'],      c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['dil-naoh'], c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['kcn'],      c:['in-ethanol','heat'],  p:'propanenitrile'},
     {r:['nh3-excess'], c:['in-ethanol','sealed-tube','heat'], p:'ethylamine'},
-    {r:['na','etoh-reagent'], c:['heat'], p:'ethoxyethane'},
-    {r:['na','meoh-reagent'], c:['heat'], p:'methoxyethane'}
+    {r:['na','etoh-reagent'], c:['heat'],      p:'ethoxyethane'},
+    {r:['na','meoh-reagent'], c:['heat'],      p:'methoxyethane'}
   ],
   '12-dibromoethane': [
-    {r:['koh'], c:['aqueous','heat'],     p:'ethanol'},
-    {r:['koh'], c:['in-ethanol','heat'],  p:'ethene'}
+    {r:['koh'],      c:['aqueous','heat'],     p:'ethanol'},
+    {r:['dil-naoh'], c:['heat'],               p:'ethanol'},
+    {r:['koh'],      c:['in-ethanol','heat'],  p:'ethene'},
+    {r:['dil-naoh'], c:['in-ethanol','heat'],  p:'ethene'}
   ],
   '2-bromopropane': [
-    {r:['koh'], c:['aqueous','heat'],     p:'propan-2-ol'},
-    {r:['koh'], c:['in-ethanol','heat'],  p:'propene'}
+    {r:['koh'],      c:['aqueous','heat'],     p:'propan-2-ol'},
+    {r:['dil-naoh'], c:['heat'],               p:'propan-2-ol'},
+    {r:['koh'],      c:['in-ethanol','heat'],  p:'propene'},
+    {r:['dil-naoh'], c:['in-ethanol','heat'],  p:'propene'}
   ],
   '2-bromo-2-methylpropane': [
-    {r:['koh'], c:['aqueous','heat'],     p:'2-methylpropan-2-ol'},
-    {r:['koh'], c:['in-ethanol','heat'],  p:'2-methylpropene'}
+    {r:['koh'],      c:['aqueous','heat'],     p:'2-methylpropan-2-ol'},
+    {r:['dil-naoh'], c:['heat'],               p:'2-methylpropan-2-ol'},
+    {r:['koh'],      c:['in-ethanol','heat'],  p:'2-methylpropene'},
+    {r:['dil-naoh'], c:['in-ethanol','heat'],  p:'2-methylpropene'}
   ],
 
   // ----- Ethers (sinks) -----

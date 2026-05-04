@@ -838,6 +838,7 @@ const RXN = {
   // ----- Aldehydes / Ketones -----
   'ethanal': [
     {r:['lialh4'],              c:['in-ether','rtp'], p:'ethanol'},
+    {r:['h2'],                  c:['ni-cat','heat'], p:'ethanol'},
     {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'ethanoic-acid'},
     {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'ethanoic-acid'},
     {r:['hcn'],                 c:['trace-naoh','cold'], p:'2-hydroxypropanenitrile'},
@@ -845,11 +846,13 @@ const RXN = {
   ],
   'propanal': [
     {r:['lialh4'],              c:['in-ether','rtp'], p:'propan-1-ol'},
+    {r:['h2'],                  c:['ni-cat','heat'], p:'propan-1-ol'},
     {r:['k2cr2o7','dil-h2so4'], c:['heat'],   p:'propanoic-acid'},
     {r:['kmno4','dil-h2so4'],   c:['heat'],   p:'propanoic-acid'}
   ],
   'propanone': [
     {r:['lialh4'], c:['in-ether','rtp'],   p:'propan-2-ol'},
+    {r:['h2'],     c:['ni-cat','heat'],    p:'propan-2-ol'},
     {r:['hcn'],    c:['trace-naoh','cold'], p:'2-hydroxy-2-methylpropanenitrile'},
     {r:['i2','dil-naoh'], c:['heat'],      p:'ethanoic-acid'}
   ],

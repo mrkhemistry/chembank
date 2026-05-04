@@ -156,18 +156,26 @@
   .app-item .x-rm { color: var(--muted); margin-left: 4px; cursor: pointer; padding: 0 3px; }
   .app-item .x-rm:hover { color: var(--red); }
   .mult-mini {
-    width: 50px; padding: 1px 3px; background: var(--surface2); border: 1px solid var(--border);
+    width: 42px; padding: 1px 3px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 3px; color: var(--text); font-size: 11px; text-align: center;
     color-scheme: dark;
   }
   .mult-mini:focus { outline: none; border-color: var(--accent); }
-  /* Force webkit spinner arrows to be visible against the dark input background */
+  /* Hide native spinner arrows — we use explicit −/+ buttons that work on mobile too */
   .mult-mini::-webkit-inner-spin-button,
-  .mult-mini::-webkit-outer-spin-button {
-    opacity: 1;
-    filter: invert(1) brightness(1.4);
-    cursor: pointer;
+  .mult-mini::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .mult-mini[type=number] { -moz-appearance: textfield; }
+  .mult-group { display: inline-flex; align-items: center; gap: 2px; }
+  .mult-btn {
+    background: var(--surface3); border: 1px solid var(--border);
+    color: var(--text); width: 22px; height: 22px;
+    border-radius: 3px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; line-height: 1; padding: 0;
+    user-select: none; -webkit-user-select: none;
   }
+  .mult-btn:hover { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+  .mult-btn:active { transform: translateY(1px); }
   .app-plus { font-size: 10px; color: var(--muted); }
   .arrow-value {
     margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border);
@@ -1104,9 +1112,16 @@ function makeArrowLabel(id, x, y, arrData, pathClass, anchor) {
       const chip = currProb().chips.find(c => c.id === app.chipId);
       const lbl = chip ? chemHtml(chip.label) : '?';
       return `<div class="app-item">${lbl}
-        <input class="mult-mini" type="number" value="${app.mult}" min="0.5" step="0.5"
-               onclick="event.stopPropagation()"
-               oninput="setMult('${id}', ${i}, this.value)">
+        <span class="mult-group">
+          <button class="mult-btn" type="button"
+                  onclick="event.stopPropagation();adjustMult('${id}', ${i}, -0.5)">−</button>
+          <input class="mult-mini" type="number" inputmode="decimal" step="any" min="0.5"
+                 value="${app.mult}"
+                 onclick="event.stopPropagation()"
+                 onchange="setMult('${id}', ${i}, this.value)">
+          <button class="mult-btn" type="button"
+                  onclick="event.stopPropagation();adjustMult('${id}', ${i}, 0.5)">+</button>
+        </span>
         <span class="x-rm" onclick="event.stopPropagation();removeApp('${id}', ${i})">✕</span>
       </div>`;
     }).join('<div class="app-plus">+</div>');
@@ -1447,6 +1462,17 @@ function placeChip(chipId) {
   const arrId = state.selected.split(':')[1];
   const arr = getArrowData(arrId);
   if (arr) arr.apps.push({ chipId, mult: 1 });
+  state.showingMistakes = false;
+  render();
+}
+
+// Step the multiplier by ±delta, clamped at min 0.5. Used by the −/+ buttons
+// (which work on touch devices where number-input spinner arrows aren't shown).
+function adjustMult(arrId, appIdx, delta) {
+  const arr = getArrowData(arrId);
+  if (!arr || !arr.apps[appIdx]) return;
+  const newVal = Math.max(0.5, Math.round((arr.apps[appIdx].mult + delta) * 10) / 10);
+  arr.apps[appIdx].mult = newVal;
   state.showingMistakes = false;
   render();
 }

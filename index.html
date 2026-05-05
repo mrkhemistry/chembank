@@ -3635,11 +3635,13 @@ Option D" required></textarea>
                 updateQuestionCount();
 
                 // Step 2: load prelim + promos school metadata for building school filters
+                // (override Supabase 1000-row default — Prelim alone is >1000)
                 const { data: metaData, error: metaError } = await supabaseClient
                     .from('questions')
                     .select('id, source, source_year, school')
                     .eq('syllabus', 'h2_chem')
-                    .in('source', ['Prelim', 'Promos']);
+                    .in('source', ['Prelim', 'Promos'])
+                    .range(0, 49999);
                 if (metaError) throw metaError;
                 const schoolMeta = metaData || [];
                 // Use a temp copy for building filters without overwriting questionBank
@@ -3770,7 +3772,7 @@ Option D" required></textarea>
                     .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
                     .eq('syllabus', 'h2_chem')
                     .order('id', { ascending: false })
-                    .limit(1000);
+                    .limit(50000);
 
                 if (filterTopic) query = query.contains('topics', [filterTopic]);
                 if (filterDifficulty) query = query.eq('difficulty', filterDifficulty);
@@ -6491,17 +6493,19 @@ Option D" required></textarea>
                     .order('full_name');
                 if (sErr) throw sErr;
 
-                // 2. Load all quiz attempts
+                // 2. Load all quiz attempts (override Supabase 1000-row default)
                 const { data: attempts, error: aErr } = await supabaseClient
                     .from('quiz_attempts')
                     .select('*')
-                    .order('completed_at', { ascending: false });
+                    .order('completed_at', { ascending: false })
+                    .range(0, 49999);
                 if (aErr) throw aErr;
 
-                // 3. Load all question responses with question topic info
+                // 3. Load all question responses (override Supabase 1000-row default)
                 const { data: responses, error: rErr } = await supabaseClient
                     .from('question_responses')
-                    .select('user_id, question_id, is_correct, quiz_attempt_id');
+                    .select('user_id, question_id, is_correct, quiz_attempt_id')
+                    .range(0, 99999);
                 if (rErr) throw rErr;
 
                 // 4. Load question topics for responses
@@ -6512,7 +6516,8 @@ Option D" required></textarea>
                         .from('questions')
                         .select('id, topic')
                         .eq('syllabus', 'h2_chem')
-                        .in('id', questionIds);
+                        .in('id', questionIds)
+                        .range(0, 49999);
                     (questions || []).forEach(q => { questionTopics[q.id] = q.topic; });
                 }
 
@@ -7071,7 +7076,8 @@ Option D" required></textarea>
                 const { data, error } = await supabaseClient
                     .from('questions')
                     .select('topic, source')
-                    .eq('syllabus', 'h2_chem');
+                    .eq('syllabus', 'h2_chem')
+                    .range(0, 49999);
                 if (error) throw error;
 
                 // Tally TYS, Prelim and Promos per topic
@@ -8397,12 +8403,13 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 btn.disabled = true;
                 btn.innerHTML = '⏳ Exporting...';
                 
-                // Fetch all questions from Supabase
+                // Fetch all questions from Supabase (override Supabase 1000-row default)
                 const { data, error } = await supabaseClient
                     .from('questions')
                     .select('*')
-                    .order('id', { ascending: true });
-                
+                    .order('id', { ascending: true })
+                    .range(0, 49999);
+
                 if (error) throw error;
                 
                 // Create backup object with metadata

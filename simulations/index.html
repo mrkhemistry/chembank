@@ -1050,10 +1050,10 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     // 3D ppt particles, scattered through the rounded bottom
     if(pptCol){
       const dots = [
-        [-10,-22,3.0],[2,-18,2.5],[12,-21,3.2],
-        [16,-10,2.6],[-15,-9,2.8],[-5,-7,3.4],
-        [7,-5,2.8],[14,-1,2.5],[-13,1,3.0],
-        [-2,4,3.2],[9,3,2.7],[-8,9,2.8],[3,11,3.0]
+        [-8,-18,2.5],[2,-15,2.1],[10,-17,2.6],
+        [13,-8,2.2],[-12,-7,2.4],[-4,-6,2.8],
+        [6,-4,2.3],[11,-1,2.1],[-10,1,2.5],
+        [-2,3,2.6],[7,2,2.3],[-7,7,2.4],[2,9,2.5]
       ];
       dots.forEach(d => sphere(cx+d[0], bot+d[1], d[2], pptCol));
     }
@@ -1071,9 +1071,9 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     ctx.beginPath(); ctx.ellipse(cx, top+1, r-2.5, 3, 0, 0, Math.PI); ctx.stroke();
   }
 
-  // Bigger tubes — wider & taller, no bottom title
-  tube(56, 26, 116, 22, '#fb923c', '#fb923c');   // positive — orange ppt
-  tube(144, 26, 116, 22, '#7dd3fc', null);       // no change — clear liquid
+  // Tubes sized to match the other hub thumbnails
+  tube(58, 28, 114, 18, '#fb923c', '#fb923c');   // positive — orange ppt
+  tube(142, 28, 114, 18, '#7dd3fc', null);       // no change — clear liquid
 
   // result labels above each tube
   ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center';

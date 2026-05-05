@@ -552,7 +552,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 (function(){
   const c=document.getElementById('th-ea');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
-  const c1X=38,c2X=92,brX=140,br2X=182,y=72,cR=18,brR=15;
+  const c1X=38,c2X=92,brX=140,br2X=182,y=82,cR=18,brR=15;
   dbl(ctx,c1X+cR,y,c2X-cR,y);
   rod(ctx,brX+brR,y,br2X-brR,y);
   const pi=(c1X+c2X)/2;
@@ -567,14 +567,14 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 (function(){
   const c=document.getElementById('th-es');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
-  const cx=72,cy=72,rr=42;
+  const cx=72,cy=82,rr=42;
   const hex=[];
   for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;hex.push({x:cx+rr*Math.cos(a),y:cy+rr*Math.sin(a)});}
   ctx.strokeStyle='#d4ef00';ctx.lineWidth=3;
   ctx.beginPath();hex.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});
   ctx.closePath();ctx.stroke();
   ctx.beginPath();ctx.arc(cx,cy,rr*.55,0,Math.PI*2);ctx.strokeStyle='#d4ef00';ctx.lineWidth=2.4;ctx.stroke();
-  const clX=170,clY=72;
+  const clX=170,clY=82;
   atom(ctx,clX,clY,17,'#22d3ee','Cl\u207a');
   arrow(ctx,cx+rr-4,cy-8,clX-17,clY-3,(cx+clX)/2,cy-46);
 })();
@@ -584,7 +584,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const c=document.getElementById('th-rs');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
   ctx.fillStyle='#082530';ctx.fillRect(0,0,W,H);
-  const bw=52, bh=52, by=24, x0=10, gap=12;
+  const bw=52, bh=52, by=34, gap=18, x0=(W - (3*bw + 2*gap))/2;
   for(let i=0;i<3;i++){
     const bx=x0+i*(bw+gap);
     ctx.fillStyle='#ffffff';

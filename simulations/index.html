@@ -908,23 +908,22 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const c=document.getElementById('th-pt');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
   ctx.fillStyle='#0a1528';ctx.fillRect(0,0,W,H);
-  const tw=9, tg=1;
-  const rowW = 18*tw + 17*tg;
+  const tw=7, hgap=2, vgap=3, depth=2.2;
+  const rowW = 18*tw + 17*hgap + depth;
   const x0 = (W - rowW) / 2;
-  const y0 = 14;
-  // Grid: columns active per row (1-indexed). Null rows are gaps.
+  const y0 = 16;
   const grid = [
     null,
-    [1,18],                                            // period 1
-    [1,2,13,14,15,16,17,18],                           // period 2
-    [1,2,13,14,15,16,17,18],                           // period 3
-    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 4
-    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 5
-    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 6
-    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],    // period 7
+    [1,18],
+    [1,2,13,14,15,16,17,18],
+    [1,2,13,14,15,16,17,18],
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
     null,
-    [3,4,5,6,7,8,9,10,11,12,13,14,15,16],              // lanthanides
-    [3,4,5,6,7,8,9,10,11,12,13,14,15,16]               // actinides
+    [3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+    [3,4,5,6,7,8,9,10,11,12,13,14,15,16]
   ];
   const stops=[[0,[48,18,59]],[.15,[66,70,187]],[.3,[26,227,255]],[.5,[78,252,55]],[.7,[249,186,41]],[.85,[224,75,21]],[1,[180,20,5]]];
   function heat(t){
@@ -933,20 +932,49 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
       if(t<=stops[i][0]){
         const [t0,c0]=stops[i-1],[t1,c1]=stops[i];
         const f=(t-t0)/(t1-t0||1);
-        return 'rgb('+Math.round(c0[0]+(c1[0]-c0[0])*f)+','+Math.round(c0[1]+(c1[1]-c0[1])*f)+','+Math.round(c0[2]+(c1[2]-c0[2])*f)+')';
+        return [Math.round(c0[0]+(c1[0]-c0[0])*f),Math.round(c0[1]+(c1[1]-c0[1])*f),Math.round(c0[2]+(c1[2]-c0[2])*f)];
       }
     }
-    return 'rgb(180,20,5)';
+    return [180,20,5];
   }
+  function rgbStr(c){return 'rgb('+c[0]+','+c[1]+','+c[2]+')';}
+  function lighten(c,t){return [Math.round(c[0]+(255-c[0])*t),Math.round(c[1]+(255-c[1])*t),Math.round(c[2]+(255-c[2])*t)];}
+  function darken(c,t){return [Math.round(c[0]*(1-t)),Math.round(c[1]*(1-t)),Math.round(c[2]*(1-t))];}
+  function drawBlock(x,y,col){
+    // top face — parallelogram going up-right (lighter)
+    ctx.fillStyle=rgbStr(lighten(col,0.45));
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x+depth, y-depth);
+    ctx.lineTo(x+tw+depth, y-depth);
+    ctx.lineTo(x+tw, y);
+    ctx.closePath(); ctx.fill();
+    // right face — parallelogram going down-right (darker)
+    ctx.fillStyle=rgbStr(darken(col,0.42));
+    ctx.beginPath();
+    ctx.moveTo(x+tw, y);
+    ctx.lineTo(x+tw+depth, y-depth);
+    ctx.lineTo(x+tw+depth, y+tw-depth);
+    ctx.lineTo(x+tw, y+tw);
+    ctx.closePath(); ctx.fill();
+    // front face — base colour with subtle vertical gradient
+    const lg=ctx.createLinearGradient(x,y,x,y+tw);
+    lg.addColorStop(0, rgbStr(lighten(col,0.18)));
+    lg.addColorStop(1, rgbStr(darken(col,0.18)));
+    ctx.fillStyle=lg;
+    ctx.fillRect(x, y, tw, tw);
+    // crisp top highlight on front face
+    ctx.fillStyle='rgba(255,255,255,0.20)';
+    ctx.fillRect(x, y, tw, 0.8);
+  }
+  // Painter's order: top-to-bottom, left-to-right (top/right faces of later blocks overlay neighbours cleanly).
   grid.forEach((cols,row)=>{
     if(!cols)return;
     cols.forEach(col=>{
-      const x=x0+(col-1)*(tw+tg), y=y0+(row-1)*(tw+tg);
+      const x=x0+(col-1)*(tw+hgap);
+      const y=y0+(row-1)*(tw+vgap);
       const t=((col-1)/17)*0.65 + ((row-1)/10)*0.35;
-      ctx.fillStyle=heat(t);
-      ctx.fillRect(x,y,tw,tw);
-      ctx.fillStyle='rgba(255,255,255,0.14)';
-      ctx.fillRect(x,y,tw,1);
+      drawBlock(x, y, heat(t));
     });
   });
 })();

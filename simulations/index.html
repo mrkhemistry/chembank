@@ -584,7 +584,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const c=document.getElementById('th-rs');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
   ctx.fillStyle='#082530';ctx.fillRect(0,0,W,H);
-  const bw=52, bh=52, by=34, gap=18, x0=(W - (3*bw + 2*gap))/2;
+  const bw=52, bh=52, by=44, gap=22, x0=(W - (3*bw + 2*gap))/2;
   for(let i=0;i<3;i++){
     const bx=x0+i*(bw+gap);
     ctx.fillStyle='#ffffff';
@@ -630,8 +630,8 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     }
   }
   for(let i=0;i<2;i++){
-    const x1=x0+(i+1)*bw+i*gap+1;
-    const x2=x0+(i+1)*(bw+gap)-1;
+    const x1=x0+(i+1)*bw+i*gap+5;
+    const x2=x0+(i+1)*(bw+gap)-5;
     const ay=by+bh/2;
     ctx.strokeStyle='#06b6d4';ctx.lineWidth=2.2;
     ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2-5,ay);ctx.stroke();

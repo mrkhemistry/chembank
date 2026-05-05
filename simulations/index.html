@@ -692,18 +692,28 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const ax=20,ay=128,aw=168,ah=105;
   ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1.2;
   ctx.beginPath();ctx.moveTo(ax,ay-ah);ctx.lineTo(ax,ay);ctx.lineTo(ax+aw,ay);ctx.stroke();
-  function mbCurve(kT){
-    const pts=[],vmax=4.5,steps=200;let maxF=0;
-    for(let i=0;i<=steps;i++){const v=i/steps*vmax,f=v*v*Math.exp(-v*v/(2*kT));if(f>maxF)maxF=f;pts.push({v,f});}
-    return pts.map(p=>({x:ax+(p.v/vmax)*aw,y:ay-(p.f/maxF)*(ah-8)}));
+  // MB distribution f(v) ∝ kT^(-3/2) · v² · exp(-v²/(2kT)) — area-conserved,
+  // so higher T gives a lower, broader peak (peak height ∝ 1/√kT).
+  const vmax=5,steps=200;
+  function mbValues(kT){
+    const pts=[],pre=Math.pow(kT,-1.5);
+    for(let i=0;i<=steps;i++){const v=i/steps*vmax,f=pre*v*v*Math.exp(-v*v/(2*kT));pts.push({v,f});}
+    return pts;
   }
-  function drawCurve(kT,col){
-    const pts=mbCurve(kT);
+  const lowT=mbValues(0.4),highT=mbValues(1.0);
+  let gMax=0;
+  for(const p of lowT) if(p.f>gMax) gMax=p.f;
+  for(const p of highT) if(p.f>gMax) gMax=p.f;
+  function drawCurve(pts,col){
     ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([]);
-    pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+    pts.forEach((p,i)=>{
+      const x=ax+(p.v/vmax)*aw,y=ay-(p.f/gMax)*(ah-8);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
   }
-  drawCurve(.4,'#22d3ee');
-  drawCurve(1.0,'#f97316');
+  drawCurve(lowT,'#22d3ee');   // Low T — taller, narrower
+  drawCurve(highT,'#f97316');  // High T — flatter, broader
   const eaX=ax+aw*.55;
   ctx.beginPath();ctx.setLineDash([3,3]);
   ctx.moveTo(eaX,ay);ctx.lineTo(eaX,ay-ah+5);

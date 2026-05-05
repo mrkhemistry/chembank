@@ -507,9 +507,9 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 (function(){
   const c=document.getElementById('th-sn2');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
-  const nuX=30,cX=105,brX=148,y=75,nuR=11,cR=17,brR=11;
+  const nuX=28,cX=104,brX=152,y=82,nuR=14,cR=20,brR=14;
   rod(ctx,cX,y,brX,y);
-  arrow(ctx,nuX+11,y,cX-cR-3,y+3,(nuX+cX)/2,y+38);
+  arrow(ctx,nuX+nuR,y,cX-cR-3,y+3,(nuX+cX)/2,y+40);
   atom(ctx,brX,y,brR,'#3b82f6');
   atom(ctx,cX,y,cR,'#fbbf24');
   atom(ctx,nuX,y,nuR,'#dc143c');
@@ -519,10 +519,10 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 (function(){
   const c=document.getElementById('th-sn1');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
-  const nuX=28,cX=100,xX=148,y=75,nuR=11,cR=17,xR=11;
+  const nuX=26,cX=100,xX=152,y=82,nuR=14,cR=20,xR=14;
   rod(ctx,cX,y,xX,y);
   const mid=(cX+xX)/2;
-  arrow(ctx,mid,y+4,xX,y+xR+2,mid,y+42);
+  arrow(ctx,mid,y+4,xX,y+xR+2,mid,y+44);
   atom(ctx,xX,y,xR,'#4ade80');
   atom(ctx,cX,y,cR,'#fbbf24');
   atom(ctx,nuX,y,nuR,'#dc143c');
@@ -533,16 +533,16 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const c=document.getElementById('th-na');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
   // C=O vertical: C centre, O directly above
-  const nuX=28,cX=108,cY=95,oX=108,oY=48,nuR=11,cR=17,oR=14;
+  const nuX=26,cX=108,cY=100,oX=108,oY=48,nuR=14,cR=20,oR=16;
   // Double bond — two vertical parallel lines
   ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(cX-4,cY-cR);ctx.lineTo(oX-4,oY+oR);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cX+4,cY-cR);ctx.lineTo(oX+4,oY+oR);ctx.stroke();
   // Arrow 1: Nu → C, curves below
-  arrow(ctx,nuX+11,cY,cX-cR-3,cY+3,(nuX+cX)/2,cY+40);
+  arrow(ctx,nuX+nuR,cY,cX-cR-3,cY+3,(nuX+cX)/2,cY+42);
   // Arrow 2: pi bond midpoint → O, curves right
   const pmY=(cY-cR+oY+oR)/2;
-  arrow(ctx,cX+6,pmY,oX+oR+4,oY+4,cX+44,pmY-8);
+  arrow(ctx,cX+6,pmY,oX+oR+4,oY+4,cX+46,pmY-8);
   atom(ctx,oX,oY,oR,'#3b82f6');
   atom(ctx,cX,cY,cR,'#fbbf24');
   atom(ctx,nuX,cY,nuR,'#dc143c');

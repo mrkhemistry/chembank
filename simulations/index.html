@@ -85,13 +85,17 @@
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
   .tag { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase; }
-  .tag-h2   { background: rgba(79,156,249,0.12);  color: #93c5fd; border: 1px solid rgba(79,156,249,0.2); }
-  .tag-org  { background: rgba(52,211,153,0.12);  color: #6ee7b7; border: 1px solid rgba(52,211,153,0.2); }
-  .tag-mech { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
-  .tag-new  { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
-  .tag-bond { background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.2); }
-  .tag-thermo { background: rgba(251,146,60,0.12); color: #fdba74; border: 1px solid rgba(251,146,60,0.2); }
-  .tag-electro { background: rgba(252,211,77,0.12); color: #fde68a; border: 1px solid rgba(252,211,77,0.2); }
+  .tag-h2        { background: rgba(79,156,249,0.12);  color: #93c5fd; border: 1px solid rgba(79,156,249,0.2); }
+  .tag-org       { background: rgba(52,211,153,0.12);  color: #6ee7b7; border: 1px solid rgba(52,211,153,0.2); }    /* Organic branch */
+  .tag-physical  { background: rgba(34,211,238,0.12);  color: #67e8f9; border: 1px solid rgba(34,211,238,0.22); }   /* Physical branch */
+  .tag-inorganic { background: rgba(244,114,182,0.14); color: #f9a8d4; border: 1px solid rgba(244,114,182,0.28); }  /* Inorganic branch */
+  .tag-topic     { background: rgba(148,163,184,0.12); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.25); }  /* Topic chip (neutral) */
+  .tag-mech      { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }   /* Mechanism (nucleophilic / electrophilic) */
+  .tag-new       { background: rgba(251,191,36,0.12);  color: #fde68a; border: 1px solid rgba(251,191,36,0.2); }
+  /* Legacy classes — kept for back-compat but no longer used on standard cards */
+  .tag-bond      { background: rgba(34,211,238,0.12);  color: #67e8f9; border: 1px solid rgba(34,211,238,0.2); }
+  .tag-thermo    { background: rgba(251,146,60,0.12);  color: #fdba74; border: 1px solid rgba(251,146,60,0.2); }
+  .tag-electro   { background: rgba(252,211,77,0.12);  color: #fde68a; border: 1px solid rgba(252,211,77,0.2); }
 
   .card-title { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; color: var(--text); line-height: 1.2; }
   .card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; flex: 1; }
@@ -154,7 +158,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Halogenoalkane</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Halogenoalkanes</span>
         <span class="tag tag-mech">Nucleophilic</span>
         <span class="tag tag-new">New</span>
       </div>
@@ -175,7 +180,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Halogenoalkane</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Halogenoalkanes</span>
         <span class="tag tag-mech">Nucleophilic</span>
         <span class="tag tag-new">New</span>
       </div>
@@ -196,7 +202,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Carbonyl</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Carbonyls</span>
         <span class="tag tag-mech">Nucleophilic</span>
         <span class="tag tag-new">New</span>
       </div>
@@ -217,7 +224,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Alkene</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Alkenes</span>
         <span class="tag tag-mech">Electrophilic</span>
         <span class="tag tag-new">New</span>
       </div>
@@ -238,7 +246,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Arene</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Arenes</span>
         <span class="tag tag-mech">Electrophilic</span>
         <span class="tag tag-new">New</span>
       </div>
@@ -259,8 +268,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-org">Synthesis</span>
-        <span class="tag tag-bond">Multi-step</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Synthesis</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Reaction Scheme Practice</div>
@@ -281,7 +290,7 @@
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
         <span class="tag tag-org">Organic</span>
-        <span class="tag tag-bond">Tests</span>
+        <span class="tag tag-topic">Distinguishing tests</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Distinguishing Tests Practice</div>
@@ -301,7 +310,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-bond">Bonding</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Bonding</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">VSEPR Theory</div>
@@ -321,7 +331,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-bond">Physical</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Gases</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Gas Laws</div>
@@ -341,7 +352,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-bond">Inorganic</span>
+        <span class="tag tag-inorganic">Inorganic</span>
+        <span class="tag tag-topic">Periodic Table</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Interactive Periodic Table</div>
@@ -361,7 +373,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-thermo">Thermochemistry</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Thermochemistry</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Hess' Law</div>
@@ -381,7 +394,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-bond">Physical</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Kinetics</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Maxwell-Boltzmann Distribution</div>
@@ -401,7 +415,8 @@
     <div class="card-body">
       <div class="card-tags">
         <span class="tag tag-h2">H2</span>
-        <span class="tag tag-electro">Electrochemistry</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Electrochemistry</span>
         <span class="tag tag-new">New</span>
       </div>
       <div class="card-title">Galvanic vs Electrolytic Cells</div>

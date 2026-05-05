@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distinguishing Tests Practice — Mr Khemistry</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0f172a;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+a{color:#22d3ee;text-decoration:none}
+a:hover{text-decoration:underline}
+nav{display:flex;align-items:center;gap:16px;padding:14px 24px;background:#1e293b;border-bottom:1px solid #334155;flex-wrap:wrap}
+nav .back{font-size:14px;color:#94a3b8}
+nav .title{font-size:18px;font-weight:700;color:#22d3ee}
+nav .tag{display:inline-block;padding:3px 10px;background:#334155;color:#22d3ee;border-radius:12px;font-size:11px;font-weight:600;margin-left:6px}
+nav .tag-new{background:#16a34a;color:#fff}
+.wrap{max-width:1400px;margin:0 auto;padding:18px}
+
+/* Contents page */
+.contents-page{display:none;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:22px;margin:0 auto 14px;max-width:920px}
+.contents-page.show{display:block}
+.contents-page h2{font-size:22px;color:#22d3ee;margin-bottom:6px;font-weight:700}
+.contents-page .subtitle{font-size:13px;color:#94a3b8;margin-bottom:18px;line-height:1.5}
+.contents-section-title{font-size:13px;color:#22d3ee;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:18px 0 8px}
+.contents-section-title:first-child{margin-top:0}
+.contents-grid{display:flex;flex-direction:column;gap:5px}
+.q-card{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:10px 14px;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.q-card:hover{border-color:#22d3ee;background:#1c2538}
+.q-card.solved{border-color:#16a34a}
+.q-card.solved:hover{border-color:#22c55e}
+.q-card .q-num{font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:1px;flex-shrink:0;min-width:40px}
+.q-card .q-card-title{font-size:13px;color:#22d3ee;font-weight:700;line-height:1.3;flex-shrink:0;min-width:200px}
+.q-card .q-flow{font-size:12px;color:#cbd5e1;line-height:1.3;flex:1;min-width:200px}
+.q-card .q-flow .vs{color:#f97316;margin:0 6px;font-weight:700}
+.q-card .q-mode{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;flex-shrink:0;background:#0b1220;padding:3px 8px;border-radius:5px}
+.q-card .q-solved-pip{background:#16a34a;color:#fff;font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;letter-spacing:0.5px;flex-shrink:0}
+.contents-summary{margin-top:18px;padding-top:14px;border-top:1px solid #334155;font-size:13px;color:#94a3b8;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.contents-summary .progress-text{font-weight:700;color:#22d3ee;background:#0f172a;padding:5px 12px;border-radius:6px}
+.contents-summary .clear-link{font-size:12px;color:#f87171;cursor:pointer;text-decoration:underline}
+.contents-summary .clear-link:hover{color:#ef4444}
+
+/* Question view */
+.question-view{display:none}
+.question-view.show{display:block}
+.qcard{margin-bottom:14px;padding:14px 16px;background:#1e293b;border-radius:10px;border:1px solid #334155}
+.qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.qhead .qnum{font-size:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;font-weight:700;display:inline-flex;align-items:center;gap:8px}
+.qhead .qnum .solved-pip{display:inline-block;background:#16a34a;color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;letter-spacing:0.5px}
+.qhead .qtitle{font-size:18px;font-weight:700;color:#22d3ee}
+.qhead .qspacer{flex:1}
+.qhead .solved-counter{font-size:11px;color:#94a3b8;background:#0f172a;padding:5px 10px;border-radius:6px;font-weight:700;letter-spacing:0.5px}
+.qhead button{background:#334155;color:#e2e8f0;border:1px solid #475569;padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600}
+.qhead button:hover{background:#475569}
+.qhead button:disabled{opacity:0.4;cursor:not-allowed}
+.qhead button.primary{background:#06b6d4;border-color:#06b6d4;color:#fff}
+.qhead button.primary:hover{background:#0891b2}
+.qhead button.danger{background:#7f1d1d;border-color:#991b1b}
+.qdesc{font-size:13px;color:#cbd5e1;line-height:1.5;margin-bottom:12px}
+
+/* Compounds row */
+.compounds-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;justify-content:center}
+.compound-box{flex:1 1 200px;max-width:260px;background:#fff;border:2px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;align-items:center}
+.compound-box .cmpd-lbl{font-size:10px;color:#06b6d4;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px}
+.compound-box canvas{width:100%;height:120px;background:#fff;border-radius:4px}
+.compound-box .cmpd-name{font-size:12px;font-weight:700;color:#0f172a;text-align:center;margin-top:4px;line-height:1.2}
+
+/* Test rows + observation rows */
+.test-row{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:10px}
+.test-row .test-row-head{font-size:11px;color:#22d3ee;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.test-row .test-row-head .test-num{background:#06b6d4;color:#fff;padding:3px 9px;border-radius:5px;font-size:10px}
+.test-row .test-row-head .test-status{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 8px;border-radius:5px;display:none}
+.test-row.match .test-row-head .test-status.match{display:inline-block;background:#16a34a;color:#fff}
+.test-row.mismatch .test-row-head .test-status.mismatch{display:inline-block;background:#dc2626;color:#fff}
+.test-zone-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.test-zone-block{flex:1 1 240px;min-width:200px;background:#1e293b;border:1.5px dashed #475569;border-radius:8px;padding:8px 10px;transition:all 0.15s}
+.test-zone-block.over{border-color:#22d3ee;background:#243049;border-style:solid}
+.test-zone-block .tz-lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:5px}
+.test-zone-block .tz-chips{display:flex;flex-wrap:wrap;gap:5px;min-height:26px;align-items:center}
+.test-zone-block .tz-chips:empty::after{content:'drop here';font-size:10px;color:#64748b;font-style:italic}
+
+.obs-row{display:flex;gap:8px;flex-wrap:wrap}
+.obs-cell{flex:1 1 200px;background:#1e293b;border:1.5px dashed #475569;border-radius:8px;padding:8px 10px;transition:all 0.15s;min-width:160px}
+.obs-cell.over{border-color:#22d3ee;background:#243049;border-style:solid}
+.obs-cell.match{border-color:#16a34a;border-style:solid;background:#0c2418}
+.obs-cell.mismatch{border-color:#dc2626;border-style:solid;background:#2c0e0f}
+.obs-cell .oc-lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.obs-cell .oc-lbl .oc-cmpd{color:#cbd5e1}
+.obs-cell .oc-lbl .oc-pip{font-size:9px;padding:1px 6px;border-radius:8px;display:none}
+.obs-cell.match .oc-lbl .oc-pip.match{display:inline-block;background:#16a34a;color:#fff}
+.obs-cell.mismatch .oc-lbl .oc-pip.mismatch{display:inline-block;background:#dc2626;color:#fff}
+.obs-cell .oc-chips{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;align-items:center}
+.obs-cell .oc-chips:empty::after{content:'drop observation';font-size:10px;color:#64748b;font-style:italic}
+
+/* Submit button area */
+.submit-row{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:10px}
+.submit-row button.submit-btn{background:#06b6d4;color:#fff;border:1px solid #06b6d4;padding:9px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.submit-row button.submit-btn:hover{background:#0891b2}
+.submit-row button.submit-btn.flash-bad{background:#7f1d1d;border-color:#991b1b;animation:shake 0.4s}
+
+.feedback-area{display:none;margin:12px 0;padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.55}
+.feedback-area.show{display:block}
+.feedback-area.fail{background:#3a1316;border:1px solid #b91c1c;color:#fecaca}
+.feedback-area.pass{background:#0c2418;border:1px solid #15803d;color:#bbf7d0}
+.feedback-area h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700;color:inherit;opacity:0.85}
+.feedback-area ul{padding-left:18px;margin:0;list-style:disc}
+.feedback-area li{margin-bottom:5px}
+.feedback-area b{color:#fff;font-weight:700}
+.feedback-area .truth{color:#fde68a;font-weight:700}
+.feedback-area .wrong{color:#fca5a5;text-decoration:line-through}
+.success-banner{display:none;margin:14px 0;padding:14px 18px;background:linear-gradient(135deg,#15803d,#16a34a);border:1px solid #22c55e;border-radius:10px;color:#fff;font-weight:700;font-size:15px;align-items:center;gap:14px}
+.success-banner.show{display:flex}
+.success-banner .sb-icon{font-size:22px}
+.success-banner .sb-spacer{flex:1}
+.success-banner button{background:rgba(255,255,255,0.2);color:#fff;border:1px solid rgba(255,255,255,0.4);padding:7px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+.success-banner button:hover{background:rgba(255,255,255,0.3)}
+
+/* Chip palette */
+.palette{margin-top:14px;background:#1e293b;border:1px solid #334155;border-radius:10px;padding:14px}
+.palette-section{margin-bottom:12px}
+.palette-section:last-child{margin-bottom:0}
+.palette-section h3{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:8px}
+.palette-section h3::after{content:'';flex:1;height:1px;background:#334155}
+.palette-grid{display:flex;flex-wrap:wrap;gap:6px}
+
+/* Chip */
+.chip{display:inline-flex;align-items:center;background:#334155;border:1px solid #475569;color:#e2e8f0;padding:5px 10px;border-radius:14px;font-size:12px;font-weight:600;cursor:grab;user-select:none;transition:all 0.12s;line-height:1.2}
+.chip:hover{background:#475569;border-color:#64748b;transform:translateY(-1px)}
+.chip:active{cursor:grabbing}
+.chip.in-zone{background:#1e3a8a;border-color:#3b82f6;color:#fff}
+.chip.in-zone:hover{background:#dc2626;border-color:#ef4444}
+.chip.in-zone::after{content:' ✕';opacity:0.7;margin-left:4px;font-size:10px}
+.chip.kind-o{background:#3f2a13;border-color:#92400e;color:#fde68a}
+.chip.kind-o:hover{background:#5a3d1d;border-color:#b45309}
+.chip.kind-o.in-zone{background:#92400e;border-color:#f59e0b;color:#fff}
+.chip.hint-glow{box-shadow:0 0 0 3px rgba(34,197,94,0.6);border-color:#22c55e;background:#15803d;color:#fff}
+.chip.dragging{opacity:0.4}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#7f1d1d;color:#fff;padding:12px 20px;border-radius:8px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.4);opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:100;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toast.good{background:#15803d}
+
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:24px}
+.note{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.note h3{font-size:13px;color:#22d3ee;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.note p{font-size:13px;color:#cbd5e1;line-height:1.55}
+.note ul{font-size:13px;color:#cbd5e1;padding-left:18px;line-height:1.7}
+
+footer{margin-top:24px;padding:18px 24px;text-align:center;color:#64748b;font-size:13px;border-top:1px solid #334155}
+</style>
+</head>
+<body>
+<nav>
+  <a class="back" href="./index.html">← All simulations</a>
+  <span class="title">Distinguishing Tests Practice</span>
+  <span class="tag">Organic</span>
+  <span class="tag tag-new">New</span>
+</nav>
+
+<div class="wrap">
+  <!-- Contents page -->
+  <div class="contents-page" id="contentsPage">
+    <h2>Distinguishing Tests Questions</h2>
+    <div class="subtitle">Choose chemical tests that give <b>different observations</b> for the compounds shown. 20 pair questions, then 10 advanced set-of-3-or-4 questions. Solved status persists across reloads.</div>
+
+    <div class="contents-section-title">Pair questions (1 test)</div>
+    <div class="contents-grid" id="contentsGridPair"></div>
+
+    <div class="contents-section-title">Set-of-3-or-4 questions (advanced)</div>
+    <div class="contents-grid" id="contentsGridSet"></div>
+
+    <div class="contents-summary">
+      <span><span class="progress-text" id="contentsProgress">0 / 0 solved</span></span>
+      <span class="clear-link" id="contentsClearLink">🗑 Clear all progress</span>
+    </div>
+  </div>
+
+  <!-- Question view -->
+  <div class="question-view" id="questionView">
+    <div class="qcard">
+      <div class="qhead">
+        <button id="backToContentsBtn">← Contents</button>
+        <span class="qnum" id="qnum">Question 1 of 1</span>
+        <span class="qtitle" id="qtitle">—</span>
+        <span class="qspacer"></span>
+        <span class="solved-counter" id="solvedCounter">0 / 0 solved</span>
+        <button id="prevBtn">← Prev</button>
+        <button id="nextBtn">Next →</button>
+        <button id="hintBtn">💡 Hint</button>
+        <button id="resetBtn" class="danger">Reset</button>
+      </div>
+      <div class="qdesc" id="qdesc">Loading…</div>
+
+      <div class="compounds-row" id="compoundsRow"></div>
+
+      <div id="testsArea"></div>
+
+      <div class="submit-row">
+        <span id="submitHint" style="font-size:11px;color:#94a3b8"></span>
+        <button class="submit-btn" id="submitBtn">Submit</button>
+      </div>
+
+      <div class="feedback-area" id="feedbackArea"></div>
+
+      <div class="success-banner" id="successBanner">
+        <span class="sb-icon">✓</span>
+        <span id="successText">Solved!</span>
+        <span class="sb-spacer"></span>
+        <button id="nextQBtn">Next question →</button>
+      </div>
+    </div>
+
+    <div class="palette" id="palette">
+      <div class="palette-section">
+        <h3>Reagents — drag (or click) into a Reagents zone</h3>
+        <div class="palette-grid" id="reagentPalette"></div>
+      </div>
+      <div class="palette-section">
+        <h3>Conditions — drag (or click) into a Conditions zone</h3>
+        <div class="palette-grid" id="conditionPalette"></div>
+      </div>
+      <div class="palette-section">
+        <h3>Observations — drag (or click) into an observation slot</h3>
+        <div class="palette-grid" id="observationPalette"></div>
+      </div>
+    </div>
+
+    <div class="notes-grid">
+      <div class="note">
+        <h3>How to use</h3>
+        <p>Pick a chemical test by dragging reagent + condition chips into the Test zone. Then assign the correct observation chip to each compound. Answer is correct when both observations match the database <b>and</b> are different from each other.</p>
+      </div>
+      <div class="note">
+        <h3>Set questions</h3>
+        <p>For 3- and 4-compound questions, you may need 2 (or 3) different tests. Every compound must end up with a unique combination of observations.</p>
+      </div>
+      <div class="note">
+        <h3>Hints</h3>
+        <p>Click <b>Hint</b> to glow-highlight one valid reagent or condition you're missing in the active test, or one observation chip you haven't placed.</p>
+      </div>
+      <div class="note">
+        <h3>Common tests</h3>
+        <ul>
+          <li>Br₂(aq), KMnO₄/H⁺, K₂Cr₂O₇/H⁺ — alkenes / alcohols / aldehydes</li>
+          <li>2,4-DNPH / Tollens' / Fehling's / I₂/NaOH — carbonyls</li>
+          <li>NaHCO₃ / Na / FeCl₃ — acids vs phenols vs alcohols</li>
+          <li>NaOH(aq) heat then HNO₃ then AgNO₃ — halogenoalkanes</li>
+          <li>Litmus, PCl₅ — bases / OH-containing</li>
+        </ul>
+      </div>
+    </div>
+  </div><!-- /.question-view -->
+</div>
+
+<div class="toast" id="toast">No reaction</div>
+
+<footer>© Mr Khemistry · <a href="./index.html">All simulations</a></footer>
+
+<script>
+/* =========================================================================
+   MOLECULE DATABASE (skeletal coords; unit bond length = 1)
+   ========================================================================= */
+const MOL = {
+  'ethene': {
+    name:'Ethene', formula:'CH₂=CH₂',
+    atoms:[{x:0,y:0,lab:'H₂C'},{x:1.4,y:0,lab:'CH₂'}],
+    bonds:[[0,1,2]]
+  },
+  'ethane': {
+    name:'Ethane', formula:'CH₃CH₃',
+    atoms:[{x:0,y:0,lab:'H₃C'},{x:1.4,y:0,lab:'CH₃'}],
+    bonds:[[0,1,1]]
+  },
+  'propene': {
+    name:'Propene', formula:'CH₃CH=CH₂',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'}],
+    bonds:[[0,1,2],[1,2,1]]
+  },
+  'ethanal': {
+    name:'Ethanal', formula:'CH₃CHO',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'O'},{x:0.866,y:1.5,lab:'H'}],
+    bonds:[[0,1,1],[1,2,2],[1,3,1]]
+  },
+  'propanal': {
+    name:'Propanal', formula:'CH₃CH₂CHO',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'O'},{x:1.732,y:-1,lab:'H'}],
+    bonds:[[0,1,1],[1,2,1],[2,3,2],[2,4,1]]
+  },
+  'propanone': {
+    name:'Propanone', formula:'(CH₃)₂C=O',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'O'}],
+    bonds:[[0,1,1],[1,2,1],[1,3,2]]
+  },
+  'pentan-3-one': {
+    name:'Pentan-3-one', formula:'CH₃CH₂COCH₂CH₃',
+    atoms:[
+      {x:0,y:0,lab:'C'},
+      {x:0.866,y:0.5,lab:'C'},
+      {x:1.732,y:0,lab:'C'},
+      {x:1.732,y:1,lab:'O'},
+      {x:2.6,y:0.5,lab:'C'},
+      {x:3.46,y:0,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,2],[2,4,1],[4,5,1]]
+  },
+  'benzaldehyde': {
+    name:'Benzaldehyde', formula:'C₆H₅CHO',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},{x:2.5,y:0.866,lab:'O'},{x:2.866,y:-0.5,lab:'H'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1]]
+  },
+  'ethanol': {
+    name:'Ethanol', formula:'CH₃CH₂OH',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'OH'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  'propan-1-ol': {
+    name:'Propan-1-ol', formula:'CH₃CH₂CH₂OH',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'OH'}],
+    bonds:[[0,1,1],[1,2,1],[2,3,1]]
+  },
+  'propan-2-ol': {
+    name:'Propan-2-ol', formula:'(CH₃)₂CHOH',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'OH'}],
+    bonds:[[0,1,1],[1,2,1],[1,3,1]]
+  },
+  '2-methylpropan-2-ol': {
+    name:'2-Methylpropan-2-ol', formula:'(CH₃)₃COH',
+    atoms:[{x:0,y:0,lab:'C'},{x:-1,y:0,lab:'C'},{x:1,y:0,lab:'C'},{x:0,y:1,lab:'C'},{x:0,y:-1,lab:'OH'}],
+    bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]
+  },
+  'ethanoic-acid': {
+    name:'Ethanoic acid', formula:'CH₃COOH',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'OH'},{x:0.866,y:1.5,lab:'O'}],
+    bonds:[[0,1,1],[1,2,1],[1,3,2]]
+  },
+  'propanoic-acid': {
+    name:'Propanoic acid', formula:'CH₃CH₂COOH',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:2.6,y:0.5,lab:'OH'},{x:1.732,y:-1,lab:'O'}],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[2,4,2]]
+  },
+  'ethyl-ethanoate': {
+    name:'Ethyl ethanoate', formula:'CH₃CO₂CH₂CH₃',
+    atoms:[
+      {x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:0.866,y:1.5,lab:'O'},
+      {x:1.732,y:0,lab:'O'},{x:2.6,y:0.5,lab:'C'},{x:3.46,y:0,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,2],[1,3,1],[3,4,1],[4,5,1]]
+  },
+  'chloroethane': {
+    name:'Chloroethane', formula:'CH₃CH₂Cl',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'Cl'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  'bromoethane': {
+    name:'Bromoethane', formula:'CH₃CH₂Br',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'Br'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  'iodoethane': {
+    name:'Iodoethane', formula:'CH₃CH₂I',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'I'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  '2-bromopropane': {
+    name:'2-Bromopropane', formula:'(CH₃)₂CHBr',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},{x:0.866,y:1.5,lab:'Br'}],
+    bonds:[[0,1,1],[1,2,1],[1,3,1]]
+  },
+  '2-bromo-2-methylpropane': {
+    name:'2-Bromo-2-methylpropane', formula:'(CH₃)₃CBr',
+    atoms:[{x:0,y:0,lab:'C'},{x:-1,y:0,lab:'C'},{x:1,y:0,lab:'C'},{x:0,y:1,lab:'C'},{x:0,y:-1,lab:'Br'}],
+    bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]]
+  },
+  'benzene': {
+    name:'Benzene', formula:'C₆H₆',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1]]
+  },
+  'methylbenzene': {
+    name:'Methylbenzene', formula:'C₆H₅CH₃',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'phenol': {
+    name:'Phenol', formula:'C₆H₅OH',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'phenylamine': {
+    name:'Phenylamine', formula:'C₆H₅NH₂',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'NH₂'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1]]
+  },
+  'ethylamine': {
+    name:'Ethylamine', formula:'CH₃CH₂NH₂',
+    atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'NH₂'}],
+    bonds:[[0,1,1],[1,2,1]]
+  },
+  'phenylmethanol': {
+    name:'Phenylmethanol', formula:'C₆H₅CH₂OH',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},{x:2.866,y:0.5,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,1]]
+  },
+  'benzoic-acid': {
+    name:'Benzoic acid', formula:'C₆H₅COOH',
+    atoms:[
+      {x:1,y:0,lab:'C'},{x:0.5,y:0.866,lab:'C'},{x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},{x:-0.5,y:-0.866,lab:'C'},{x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},{x:2.5,y:0.866,lab:'O'},{x:2.866,y:-0.5,lab:'OH'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1]]
+  }
+};
+
+// Mark aromatic rings (atom indices 0..5) so renderer draws hexagon + π circle
+['benzene','methylbenzene','phenol','phenylamine','phenylmethanol','benzoic-acid','benzaldehyde'].forEach(id => {
+  if(MOL[id]) MOL[id].aromaticRings = [[0,1,2,3,4,5]];
+});
+
+/* =========================================================================
+   REAGENTS / CONDITIONS / OBSERVATIONS chip databases
+   ========================================================================= */
+const REAGENTS = {
+  'br2':         {label:'Br₂'},
+  'kmno4':       {label:'KMnO₄'},
+  'k2cr2o7':     {label:'K₂Cr₂O₇'},
+  'dil-h2so4':   {label:'dilute H₂SO₄'},
+  '24dnph':      {label:'2,4-DNPH'},
+  'tollens':     {label:"Tollens' reagent"},
+  'fehlings':    {label:"Fehling's solution"},
+  'i2':          {label:'I₂'},
+  'dil-naoh':    {label:'NaOH(aq)'},
+  'fecl3':       {label:'FeCl₃(aq) (neutral)'},
+  'nahco3':      {label:'NaHCO₃(aq)'},
+  'na':          {label:'Na metal'},
+  'agno3-test':  {label:'AgNO₃ (after NaOH/Δ then HNO₃)'},
+  'agno3-eth':   {label:'AgNO₃ in ethanol'},
+  'red-litmus':  {label:'moist red litmus'},
+  'blue-litmus': {label:'moist blue litmus'},
+  'pcl5':        {label:'PCl₅'}
+};
+
+const CONDITIONS = {
+  'aqueous':  {label:'aqueous'},
+  'rtp':      {label:'r.t.p.'},
+  'heat':     {label:'heat'},
+  'cold':     {label:'cold'}
+};
+
+const OBSERVATIONS = {
+  'no-change':       {label:'no observable change'},
+  'orange-decolour': {label:'orange decolourises'},
+  'purple-decolour': {label:'purple decolourises'},
+  'orange-to-green': {label:'orange → green'},
+  'orange-ppt':      {label:'orange ppt'},
+  'silver-mirror':   {label:'silver mirror'},
+  'red-ppt':         {label:'brick-red ppt'},
+  'yellow-ppt':      {label:'yellow ppt'},
+  'white-ppt':       {label:'white ppt'},
+  'cream-ppt':       {label:'cream ppt'},
+  'cream-ppt-fast':  {label:'cream ppt (forms rapidly)'},
+  'cream-ppt-slow':  {label:'cream ppt (forms slowly)'},
+  'violet':          {label:'violet colouration'},
+  'co2-gas':         {label:'effervescence (CO₂)'},
+  'h2-gas':          {label:'effervescence (H₂)'},
+  'steamy-fumes':    {label:'steamy fumes (HCl)'},
+  'red-blue':        {label:'red litmus → blue'},
+  'blue-red':        {label:'blue litmus → red'}
+};
+
+/* =========================================================================
+   TESTS — each defines a (reagents-set, conditions-set) tuple
+   ========================================================================= */
+// Note: 'rtp' is treated as a no-op condition — including it never breaks a match,
+// and tests that don't strictly need it leave it out.
+const TESTS = {
+  'br2-aq':       {reagents:['br2'], conditions:['aqueous'], label:'Br₂(aq)'},
+  'kmno4-h':      {reagents:['kmno4','dil-h2so4'], conditions:['heat'], label:'KMnO₄/H⁺, heat'},
+  'k2cr2o7-h':    {reagents:['k2cr2o7','dil-h2so4'], conditions:['heat'], label:'K₂Cr₂O₇/H⁺, heat'},
+  'dnph':         {reagents:['24dnph'], conditions:['heat'], label:'2,4-DNPH, heat'},
+  'tollens':      {reagents:['tollens'], conditions:['heat'], label:"Tollens', heat"},
+  'fehlings':     {reagents:['fehlings'], conditions:['heat'], label:"Fehling's, heat"},
+  'iodoform':     {reagents:['i2','dil-naoh'], conditions:['heat'], label:'I₂ + NaOH(aq), heat'},
+  'fecl3':        {reagents:['fecl3'], conditions:[], label:'neutral FeCl₃(aq)'},
+  'nahco3':       {reagents:['nahco3'], conditions:[], label:'NaHCO₃(aq)'},
+  'na':           {reagents:['na'], conditions:[], label:'Na metal'},
+  'agno3-test':   {reagents:['agno3-test'], conditions:['heat'], label:'AgNO₃ test (NaOH/Δ → HNO₃ → AgNO₃)'},
+  'agno3-eth':    {reagents:['agno3-eth'], conditions:['heat'], label:'AgNO₃ in ethanol, heat'},
+  'red-litmus':   {reagents:['red-litmus'], conditions:[], label:'moist red litmus paper'},
+  'blue-litmus':  {reagents:['blue-litmus'], conditions:[], label:'moist blue litmus paper'},
+  'pcl5':         {reagents:['pcl5'], conditions:[], label:'PCl₅'}
+};
+
+/* =========================================================================
+   OBS table — for each test, list compounds with non-default observation.
+   Default for any compound not listed is 'no-change'.
+   ========================================================================= */
+const OBS = {
+  'br2-aq': {
+    'ethene':'orange-decolour','propene':'orange-decolour',
+    'phenol':'white-ppt','phenylamine':'white-ppt'
+  },
+  'kmno4-h': {
+    'ethene':'purple-decolour','propene':'purple-decolour',
+    'ethanol':'purple-decolour','propan-1-ol':'purple-decolour','propan-2-ol':'purple-decolour',
+    'ethanal':'purple-decolour','propanal':'purple-decolour',
+    'methylbenzene':'purple-decolour','phenylmethanol':'purple-decolour'
+  },
+  'k2cr2o7-h': {
+    'ethanol':'orange-to-green','propan-1-ol':'orange-to-green','propan-2-ol':'orange-to-green',
+    'ethanal':'orange-to-green','propanal':'orange-to-green',
+    'methylbenzene':'orange-to-green','phenylmethanol':'orange-to-green'
+  },
+  'dnph': {
+    'ethanal':'orange-ppt','propanal':'orange-ppt',
+    'propanone':'orange-ppt','pentan-3-one':'orange-ppt','benzaldehyde':'orange-ppt'
+  },
+  'tollens': {
+    'ethanal':'silver-mirror','propanal':'silver-mirror','benzaldehyde':'silver-mirror'
+  },
+  'fehlings': {
+    'ethanal':'red-ppt','propanal':'red-ppt'
+  },
+  'iodoform': {
+    'ethanol':'yellow-ppt','propan-2-ol':'yellow-ppt',
+    'ethanal':'yellow-ppt','propanone':'yellow-ppt'
+  },
+  'fecl3': {
+    'phenol':'violet'
+  },
+  'nahco3': {
+    'ethanoic-acid':'co2-gas','propanoic-acid':'co2-gas','benzoic-acid':'co2-gas'
+  },
+  'na': {
+    'ethanol':'h2-gas','propan-1-ol':'h2-gas','propan-2-ol':'h2-gas','2-methylpropan-2-ol':'h2-gas',
+    'phenol':'h2-gas','phenylmethanol':'h2-gas',
+    'ethanoic-acid':'h2-gas','propanoic-acid':'h2-gas','benzoic-acid':'h2-gas'
+  },
+  'agno3-test': {
+    'chloroethane':'white-ppt',
+    'bromoethane':'cream-ppt','2-bromopropane':'cream-ppt','2-bromo-2-methylpropane':'cream-ppt',
+    'iodoethane':'yellow-ppt'
+  },
+  'agno3-eth': {
+    'chloroethane':'cream-ppt-slow','bromoethane':'cream-ppt-slow',
+    'iodoethane':'cream-ppt-fast',
+    '2-bromopropane':'cream-ppt-slow','2-bromo-2-methylpropane':'cream-ppt-fast'
+  },
+  'red-litmus': {
+    'ethylamine':'red-blue','phenylamine':'red-blue'
+  },
+  'blue-litmus': {
+    'ethanoic-acid':'blue-red','propanoic-acid':'blue-red','benzoic-acid':'blue-red',
+    'phenol':'blue-red'
+  },
+  'pcl5': {
+    'ethanol':'steamy-fumes','propan-1-ol':'steamy-fumes','propan-2-ol':'steamy-fumes',
+    '2-methylpropan-2-ol':'steamy-fumes','phenol':'steamy-fumes','phenylmethanol':'steamy-fumes',
+    'ethanoic-acid':'steamy-fumes','propanoic-acid':'steamy-fumes','benzoic-acid':'steamy-fumes'
+  }
+};
+
+function obsOf(testId, compoundId){
+  const row = OBS[testId];
+  if(!row) return 'no-change';
+  return row[compoundId] || 'no-change';
+}
+
+/* =========================================================================
+   QUESTIONS — 20 pair + 10 set
+   ========================================================================= */
+const QUESTIONS = [
+  // ----- 20 pair questions -----
+  {mode:'pair', a:'propanal', b:'propanone', title:'Aldehyde vs ketone',
+   desc:'Distinguish propanal from propanone using a single chemical test.'},
+  {mode:'pair', a:'propan-1-ol', b:'propan-2-ol', title:'1° vs 2° alcohol',
+   desc:'Distinguish a primary alcohol from a secondary alcohol.'},
+  {mode:'pair', a:'propan-2-ol', b:'2-methylpropan-2-ol', title:'2° vs 3° alcohol',
+   desc:'Distinguish a secondary alcohol from a tertiary alcohol.'},
+  {mode:'pair', a:'propan-1-ol', b:'2-methylpropan-2-ol', title:'1° vs 3° alcohol',
+   desc:'Distinguish propan-1-ol from 2-methylpropan-2-ol.'},
+  {mode:'pair', a:'ethanol', b:'propan-1-ol', title:'Iodoform-positive alcohol',
+   desc:'Both are primary alcohols. Find a test that gives different observations.'},
+  {mode:'pair', a:'propanone', b:'pentan-3-one', title:'Methyl ketone vs not',
+   desc:'Both are ketones. Find a test that distinguishes a methyl ketone from a non-methyl ketone.'},
+  {mode:'pair', a:'ethanal', b:'propanal', title:'Two aldehydes',
+   desc:'Distinguish ethanal from propanal. (Both reduce Tollens\' / Fehling\'s — choose another test.)'},
+  {mode:'pair', a:'ethanoic-acid', b:'phenol', title:'Carboxylic acid vs phenol',
+   desc:'Both are weakly acidic in water. Find a test that distinguishes them based on relative acidity.'},
+  {mode:'pair', a:'ethanoic-acid', b:'ethanol', title:'Acid vs alcohol',
+   desc:'Distinguish ethanoic acid from ethanol.'},
+  {mode:'pair', a:'phenol', b:'ethanol', title:'Phenol vs alcohol',
+   desc:'Distinguish phenol from ethanol.'},
+  {mode:'pair', a:'ethene', b:'ethane', title:'Alkene vs alkane',
+   desc:'Distinguish an alkene from an alkane.'},
+  {mode:'pair', a:'propene', b:'propanone', title:'Alkene vs ketone',
+   desc:'Distinguish propene from propanone.'},
+  {mode:'pair', a:'propanal', b:'propanoic-acid', title:'Aldehyde vs acid',
+   desc:'Distinguish propanal from propanoic acid.'},
+  {mode:'pair', a:'methylbenzene', b:'benzene', title:'Toluene vs benzene',
+   desc:'Distinguish methylbenzene from benzene. (Side-chain oxidation differs.)'},
+  {mode:'pair', a:'phenylmethanol', b:'methylbenzene', title:'Benzyl alcohol vs toluene',
+   desc:'Distinguish phenylmethanol (benzyl alcohol) from methylbenzene.'},
+  {mode:'pair', a:'phenol', b:'phenylamine', title:'Phenol vs phenylamine',
+   desc:'Both give white ppt with Br₂(aq) — find a different test that distinguishes them.'},
+  {mode:'pair', a:'ethylamine', b:'ethanol', title:'Amine vs alcohol',
+   desc:'Distinguish ethylamine from ethanol.'},
+  {mode:'pair', a:'bromoethane', b:'iodoethane', title:'Bromide vs iodide',
+   desc:'Distinguish bromoethane from iodoethane.'},
+  {mode:'pair', a:'chloroethane', b:'bromoethane', title:'Chloride vs bromide',
+   desc:'Distinguish chloroethane from bromoethane.'},
+  {mode:'pair', a:'2-bromopropane', b:'2-bromo-2-methylpropane', title:'2° vs 3° halide',
+   desc:'Both are bromoalkanes. Find a test where the observation depends on the rate of substitution (1° / 2° / 3°).'},
+
+  // ----- 10 set questions -----
+  {mode:'set', compounds:['propanal','propanone','propan-2-ol'], numTests:2,
+   title:'Aldehyde, ketone, alcohol',
+   desc:'Use 2 chemical tests to distinguish all three compounds. Each compound must end up with a unique combination of observations.'},
+  {mode:'set', compounds:['ethanol','ethanoic-acid','ethyl-ethanoate'], numTests:2,
+   title:'Alcohol, acid, ester',
+   desc:'Distinguish ethanol, ethanoic acid, and ethyl ethanoate using 2 chemical tests.'},
+  {mode:'set', compounds:['phenol','ethanol','ethanoic-acid'], numTests:2,
+   title:'Phenol, alcohol, acid',
+   desc:'Distinguish phenol, ethanol, and ethanoic acid using 2 chemical tests.'},
+  {mode:'set', compounds:['propan-1-ol','propan-2-ol','2-methylpropan-2-ol'], numTests:2,
+   title:'1° / 2° / 3° alcohol',
+   desc:'Distinguish primary, secondary and tertiary alcohols using 2 chemical tests.'},
+  {mode:'set', compounds:['propene','propan-2-ol','propanone'], numTests:2,
+   title:'Alkene, alcohol, ketone',
+   desc:'Distinguish propene, propan-2-ol and propanone using 2 chemical tests.'},
+  {mode:'set', compounds:['phenol','phenylamine','methylbenzene'], numTests:2,
+   title:'Phenol, amine, arene',
+   desc:'Distinguish three aromatic compounds: phenol (acidic), phenylamine (basic), methylbenzene (neutral).'},
+  {mode:'set', compounds:['ethanal','propanone','propanal','pentan-3-one'], numTests:2,
+   title:'Aldehydes & ketones',
+   desc:'Distinguish four carbonyl compounds using 2 chemical tests. Each must end with a unique observation pair.'},
+  {mode:'set', compounds:['phenol','methylbenzene','phenylmethanol','benzoic-acid'], numTests:3,
+   title:'Aromatic mix',
+   desc:'Distinguish four aromatic compounds. You will need 3 chemical tests.'},
+  {mode:'set', compounds:['ethanol','propan-1-ol','2-methylpropan-2-ol','ethanal'], numTests:3,
+   title:'Alcohols & aldehyde',
+   desc:'Distinguish three alcohols and an aldehyde using 3 chemical tests.'},
+  {mode:'set', compounds:['bromoethane','iodoethane','ethanol','ethanoic-acid'], numTests:2,
+   title:'Halides, alcohol & acid',
+   desc:'Distinguish two halogenoalkanes, an alcohol and a carboxylic acid using 2 chemical tests.'}
+];
+
+/* =========================================================================
+   Skeletal molecule renderer
+   ========================================================================= */
+function atomColor(lab){
+  const c = lab.charAt(0);
+  if(lab.startsWith('NH') || lab.startsWith('NO') || c === 'N') return '#1d4ed8';
+  if(lab.startsWith('OH') || c === 'O') return '#dc2626';
+  if(lab.startsWith('Br')) return '#92400e';
+  if(lab.startsWith('Cl')) return '#15803d';
+  if(c === 'I') return '#6b21a8';
+  return '#0f172a';
+}
+function molBounds(mol){
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const a of mol.atoms){
+    if(a.x<minX)minX=a.x; if(a.x>maxX)maxX=a.x;
+    if(a.y<minY)minY=a.y; if(a.y>maxY)maxY=a.y;
+  }
+  return {minX,maxX,minY,maxY};
+}
+function drawMolecule(ctx, mol, cx, cy, scale){
+  const b = molBounds(mol);
+  const ox = -((b.minX + b.maxX)/2);
+  const oy = -((b.minY + b.maxY)/2);
+  const px = a => cx + (a.x + ox)*scale;
+  const py = a => cy - (a.y + oy)*scale;
+  ctx.lineCap = 'round';
+  for(const bnd of mol.bonds){
+    const a1 = mol.atoms[bnd[0]], a2 = mol.atoms[bnd[1]];
+    drawBond(ctx, px(a1), py(a1), px(a2), py(a2), bnd[2], a1.lab !== 'C', a2.lab !== 'C');
+  }
+  if(mol.aromaticRings){
+    for(const ring of mol.aromaticRings){
+      drawAromaticCircle(ctx, ring.map(i => ({x:px(mol.atoms[i]), y:py(mol.atoms[i])})));
+    }
+  }
+  for(const a of mol.atoms){
+    if(a.lab === 'C') continue;
+    drawLabel(ctx, px(a), py(a), a.lab);
+  }
+}
+function drawAromaticCircle(ctx, pts){
+  let cx=0, cy=0;
+  for(const p of pts){ cx += p.x; cy += p.y; }
+  cx /= pts.length; cy /= pts.length;
+  let r = 0;
+  for(const p of pts){ r += Math.hypot(p.x-cx, p.y-cy); }
+  r /= pts.length;
+  ctx.beginPath(); ctx.strokeStyle='#0f172a'; ctx.lineWidth=2;
+  ctx.arc(cx, cy, r*0.62, 0, Math.PI*2); ctx.stroke();
+}
+function drawBond(ctx, x1,y1,x2,y2, order, lblA, lblB){
+  const dx=x2-x1, dy=y2-y1;
+  const len = Math.hypot(dx,dy)||1;
+  const ux = dx/len, uy = dy/len;
+  const padA = lblA?18:0, padB = lblB?18:0;
+  const sx1=x1+ux*padA, sy1=y1+uy*padA, sx2=x2-ux*padB, sy2=y2-uy*padB;
+  ctx.strokeStyle='#0f172a'; ctx.lineWidth=2.4;
+  if(order === 1){
+    ctx.beginPath(); ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2); ctx.stroke();
+  } else if(order === 2){
+    const ox=-uy*4, oy=ux*4;
+    ctx.beginPath();
+    ctx.moveTo(sx1+ox, sy1+oy); ctx.lineTo(sx2+ox, sy2+oy);
+    ctx.moveTo(sx1-ox, sy1-oy); ctx.lineTo(sx2-ox, sy2-oy);
+    ctx.stroke();
+  } else if(order === 3){
+    const ox=-uy*5.5, oy=ux*5.5;
+    ctx.beginPath();
+    ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2);
+    ctx.moveTo(sx1+ox, sy1+oy); ctx.lineTo(sx2+ox, sy2+oy);
+    ctx.moveTo(sx1-ox, sy1-oy); ctx.lineTo(sx2-ox, sy2-oy);
+    ctx.stroke();
+  }
+}
+function drawLabel(ctx, x, y, lab){
+  ctx.font = 'bold 16px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(lab).width;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x - w/2 - 4, y - 11, w + 8, 22);
+  ctx.fillStyle = atomColor(lab);
+  ctx.fillText(lab, x, y);
+}
+function drawCompoundCanvas(canvas, molId){
+  const mol = MOL[molId]; if(!mol) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.clientWidth || 220;
+  const cssH = canvas.clientHeight || 120;
+  canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cssW,cssH);
+  // Pick scale to fit
+  const b = molBounds(mol);
+  const w = (b.maxX - b.minX) || 1, h = (b.maxY - b.minY) || 1;
+  const scale = Math.min((cssW - 30)/(w + 0.5), (cssH - 30)/(h + 0.5), 38);
+  drawMolecule(ctx, mol, cssW/2, cssH/2, scale);
+}
+
+/* =========================================================================
+   APP STATE
+   ========================================================================= */
+const STORAGE_KEY = 'mrkhem-distinguishing-tests-v1';
+let qIndex = 0;
+let view = 'contents';        // 'contents' | 'question'
+let everSolved = new Set();
+let solvedNow = false;
+let showFeedback = false;     // tick/cross marks only appear after a Submit attempt
+
+// Per-question state — array of test rows; each row has reagents[], conditions[], obs[compoundIdx]
+let testState = [];
+
+function curQ(){ return QUESTIONS[qIndex]; }
+function compoundsOf(q){ return q.mode === 'pair' ? [q.a, q.b] : q.compounds.slice(); }
+function numTestsOf(q){ return q.mode === 'pair' ? 1 : (q.numTests || 2); }
+
+function setsEqual(a, b){
+  if(a.length !== b.length) return false;
+  const sa = new Set(a), sb = new Set(b);
+  if(sa.size !== sb.size) return false;
+  for(const x of sa) if(!sb.has(x)) return false;
+  return true;
+}
+
+function findMatchingTest(reagents, conditions){
+  // 'rtp' is a no-op default condition — ignore it when matching so students
+  // don't have to drop it for tests like 2,4-DNPH, NaHCO₃, FeCl₃ etc.
+  const cleanConds = conditions.filter(c => c !== 'rtp');
+  for(const [tid, t] of Object.entries(TESTS)){
+    const tConds = t.conditions.filter(c => c !== 'rtp');
+    if(setsEqual(t.reagents, reagents) && setsEqual(tConds, cleanConds)) return tid;
+  }
+  return null;
+}
+
+function blankTestRow(numCompounds){
+  return {reagents:[], conditions:[], obs: Array(numCompounds).fill(null)};
+}
+
+function blankTestState(q){
+  const n = compoundsOf(q).length;
+  const k = numTestsOf(q);
+  return Array.from({length:k}, () => blankTestRow(n));
+}
+
+/* =========================================================================
+   STORAGE
+   ========================================================================= */
+function loadStateRaw(){
+  try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; }
+  catch(e){ return null; }
+}
+function saveState(){
+  try {
+    const data = loadStateRaw() || {};
+    data.qIndex = qIndex;
+    data.view = view;
+    data.everSolved = Array.from(everSolved);
+    if(!data.perQ) data.perQ = {};
+    data.perQ[qIndex] = {testState: testState, solved: solvedNow};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch(e){}
+}
+function clearState(){
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+  everSolved = new Set();
+}
+
+/* =========================================================================
+   CONTENTS PAGE
+   ========================================================================= */
+function showContents(){
+  view = 'contents';
+  document.getElementById('contentsPage').classList.add('show');
+  document.getElementById('questionView').classList.remove('show');
+  renderContents();
+  saveState();
+  window.scrollTo({top: 0, behavior:'smooth'});
+}
+function showQuestion(idx){
+  view = 'question';
+  document.getElementById('contentsPage').classList.remove('show');
+  document.getElementById('questionView').classList.add('show');
+  loadQuestion(idx);
+  window.scrollTo({top: 0, behavior:'smooth'});
+}
+function compoundLabel(id){ return (MOL[id] && MOL[id].name) || id; }
+function renderContents(){
+  const gridP = document.getElementById('contentsGridPair');
+  const gridS = document.getElementById('contentsGridSet');
+  gridP.innerHTML = ''; gridS.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'q-card' + (everSolved.has(i) ? ' solved' : '');
+    const flow = q.mode === 'pair'
+      ? `${compoundLabel(q.a)}<span class="vs">vs</span>${compoundLabel(q.b)}`
+      : q.compounds.map(compoundLabel).join(' · ');
+    const modeTag = q.mode === 'pair'
+      ? `basic`
+      : `${q.compounds.length} compounds · ${q.numTests || 2} tests`;
+    const solvedBadge = everSolved.has(i) ? '<div class="q-solved-pip">✓ solved</div>' : '';
+    card.innerHTML = `
+      <div class="q-num">Q${i+1}</div>
+      <div class="q-card-title">${q.title}</div>
+      <div class="q-flow">${flow}</div>
+      <div class="q-mode">${modeTag}</div>
+      ${solvedBadge}
+    `;
+    card.addEventListener('click', () => showQuestion(i));
+    if(q.mode === 'pair') gridP.appendChild(card); else gridS.appendChild(card);
+  });
+  document.getElementById('contentsProgress').textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
+}
+
+/* =========================================================================
+   QUESTION VIEW
+   ========================================================================= */
+function loadQuestion(idx){
+  qIndex = idx;
+  const q = curQ();
+  // Try to restore saved state
+  const data = loadStateRaw();
+  const saved = data && data.perQ && data.perQ[idx];
+  if(saved && saved.testState && saved.testState.length === numTestsOf(q)
+     && saved.testState.every(r => r.obs && r.obs.length === compoundsOf(q).length)){
+    testState = saved.testState.map(r => ({
+      reagents: r.reagents.slice(), conditions: r.conditions.slice(), obs: r.obs.slice()
+    }));
+    solvedNow = !!saved.solved;
+  } else {
+    testState = blankTestState(q);
+    solvedNow = false;
+  }
+  showFeedback = solvedNow;
+  // Header
+  document.getElementById('qnum').innerHTML =
+    `Question ${idx+1} of ${QUESTIONS.length}` +
+    (everSolved.has(idx) ? ' <span class="solved-pip">✓ solved</span>' : '');
+  document.getElementById('qtitle').textContent = q.title;
+  document.getElementById('qdesc').textContent = q.desc;
+  document.getElementById('prevBtn').disabled = (idx === 0);
+  document.getElementById('nextBtn').disabled = (idx === QUESTIONS.length - 1);
+  document.getElementById('solvedCounter').textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
+  // Build compounds row
+  buildCompoundsRow(q);
+  // Build tests area
+  buildTestsArea(q);
+  // Banner & feedback area
+  document.getElementById('successBanner').classList.toggle('show', solvedNow);
+  document.getElementById('successText').textContent =
+    solvedNow ? `✓ ${q.title} — solved!` : '';
+  if(solvedNow) setFeedback('pass', ['All observations correct and every compound has a unique profile. ✓']);
+  else clearFeedback();
+  // Render saved chips
+  renderAllChips();
+  saveState();
+}
+function buildCompoundsRow(q){
+  const row = document.getElementById('compoundsRow');
+  row.innerHTML = '';
+  const comps = compoundsOf(q);
+  comps.forEach((cid, i) => {
+    const box = document.createElement('div');
+    box.className = 'compound-box';
+    const lbl = q.mode === 'pair' ? (i === 0 ? 'Compound A' : 'Compound B') : `Compound ${String.fromCharCode(65+i)}`;
+    box.innerHTML = `
+      <div class="cmpd-lbl">${lbl}</div>
+      <canvas data-cid="${cid}"></canvas>
+      <div class="cmpd-name">${compoundLabel(cid)}</div>
+    `;
+    row.appendChild(box);
+  });
+  // Draw canvases (after layout)
+  setTimeout(() => {
+    row.querySelectorAll('canvas').forEach(cv => drawCompoundCanvas(cv, cv.dataset.cid));
+  }, 0);
+}
+function buildTestsArea(q){
+  const area = document.getElementById('testsArea');
+  area.innerHTML = '';
+  const k = numTestsOf(q);
+  const comps = compoundsOf(q);
+  for(let i = 0; i < k; i++){
+    const div = document.createElement('div');
+    div.className = 'test-row'; div.dataset.testIdx = i;
+    const obsCells = comps.map((cid, ci) => `
+      <div class="obs-cell" data-test-idx="${i}" data-cmpd-idx="${ci}">
+        <div class="oc-lbl">
+          <span class="oc-cmpd">${compoundLabel(cid)}</span>
+          <span class="oc-pip match">✓</span>
+          <span class="oc-pip mismatch">✕</span>
+        </div>
+        <div class="oc-chips"></div>
+      </div>
+    `).join('');
+    div.innerHTML = `
+      <div class="test-row-head">
+        <span class="test-num">Test ${i+1}</span>
+        <span class="test-status match">✓ recognised</span>
+        <span class="test-status mismatch">✕ unknown test</span>
+      </div>
+      <div class="test-zone-grid">
+        <div class="test-zone-block" data-zone-kind="r" data-test-idx="${i}">
+          <div class="tz-lbl">Reagents</div>
+          <div class="tz-chips"></div>
+        </div>
+        <div class="test-zone-block" data-zone-kind="c" data-test-idx="${i}">
+          <div class="tz-lbl">Conditions</div>
+          <div class="tz-chips"></div>
+        </div>
+      </div>
+      <div class="obs-row">${obsCells}</div>
+    `;
+    area.appendChild(div);
+  }
+  attachZoneHandlers();
+}
+
+/* =========================================================================
+   PALETTE & CHIPS
+   ========================================================================= */
+function fillPalette(){
+  const r = document.getElementById('reagentPalette'); r.innerHTML = '';
+  for(const [id, m] of Object.entries(REAGENTS)) r.appendChild(makePaletteChip(id, m.label, 'r'));
+  const c = document.getElementById('conditionPalette'); c.innerHTML = '';
+  for(const [id, m] of Object.entries(CONDITIONS)) c.appendChild(makePaletteChip(id, m.label, 'c'));
+  const o = document.getElementById('observationPalette'); o.innerHTML = '';
+  for(const [id, m] of Object.entries(OBSERVATIONS)) o.appendChild(makePaletteChip(id, m.label, 'o'));
+}
+function makePaletteChip(id, label, kind){
+  const chip = document.createElement('div');
+  chip.className = 'chip kind-' + kind;
+  chip.textContent = label;
+  chip.draggable = true;
+  chip.dataset.id = id; chip.dataset.kind = kind;
+  chip.title = 'Drag into a zone, or click to add to the active test';
+  chip.addEventListener('click', () => paletteChipClicked(id, kind));
+  chip.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', JSON.stringify({id, kind, fromZone:false}));
+    chip.classList.add('dragging');
+  });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  return chip;
+}
+function activeTestIdx(){
+  // First test row that is incomplete (no recognised test) or has empty obs cells
+  for(let i = 0; i < testState.length; i++){
+    const row = testState[i];
+    const tid = findMatchingTest(row.reagents, row.conditions);
+    if(!tid) return i;
+    if(row.obs.some(o => !o)) return i;
+  }
+  return testState.length - 1;
+}
+function paletteChipClicked(id, kind){
+  if(view !== 'question') return;
+  const i = activeTestIdx();
+  const row = testState[i];
+  if(kind === 'r'){
+    if(!row.reagents.includes(id)) row.reagents.push(id);
+  } else if(kind === 'c'){
+    if(!row.conditions.includes(id)) row.conditions.push(id);
+  } else if(kind === 'o'){
+    // Find the first empty obs cell in the active test
+    const ci = row.obs.findIndex(o => !o);
+    if(ci >= 0) row.obs[ci] = id;
+    else { showToast('All observation slots in Test ' + (i+1) + ' are filled.'); return; }
+  }
+  showFeedback = false;
+  clearFeedback();
+  renderAllChips(); saveState();
+}
+function attachZoneHandlers(){
+  // Test zones (reagents / conditions)
+  document.querySelectorAll('.test-zone-block').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('over');
+      let payload; try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch(_) { return; }
+      if(!payload) return;
+      const ti = parseInt(zone.dataset.testIdx, 10);
+      const kind = zone.dataset.zoneKind;
+      if(payload.kind !== kind){
+        showToast(kind === 'r' ? 'Drop reagent chips here.' : 'Drop condition chips here.');
+        return;
+      }
+      const row = testState[ti];
+      if(payload.fromZone){
+        // Moving between test rows or removing from old one — remove first
+        const fromRow = testState[payload.fromTestIdx];
+        if(kind === 'r') fromRow.reagents = fromRow.reagents.filter(x => x !== payload.id);
+        else fromRow.conditions = fromRow.conditions.filter(x => x !== payload.id);
+      }
+      if(kind === 'r' && !row.reagents.includes(payload.id)) row.reagents.push(payload.id);
+      if(kind === 'c' && !row.conditions.includes(payload.id)) row.conditions.push(payload.id);
+      showFeedback = false;
+      renderAllChips(); saveState();
+    });
+  });
+  // Obs cells
+  document.querySelectorAll('.obs-cell').forEach(cell => {
+    cell.addEventListener('dragover', e => { e.preventDefault(); cell.classList.add('over'); });
+    cell.addEventListener('dragleave', () => cell.classList.remove('over'));
+    cell.addEventListener('drop', e => {
+      e.preventDefault(); cell.classList.remove('over');
+      let payload; try { payload = JSON.parse(e.dataTransfer.getData('text/plain')); } catch(_) { return; }
+      if(!payload) return;
+      if(payload.kind !== 'o'){ showToast('Drop observation chips here.'); return; }
+      const ti = parseInt(cell.dataset.testIdx, 10);
+      const ci = parseInt(cell.dataset.cmpdIdx, 10);
+      if(payload.fromZone){
+        const fromRow = testState[payload.fromTestIdx];
+        if(payload.fromCmpdIdx !== undefined){
+          fromRow.obs[payload.fromCmpdIdx] = null;
+        }
+      }
+      testState[ti].obs[ci] = payload.id;
+      showFeedback = false;
+      renderAllChips(); saveState();
+    });
+  });
+}
+
+function renderAllChips(){
+  // For each test row, populate reagent / condition / obs chips & update status classes
+  const q = curQ(); const comps = compoundsOf(q);
+  testState.forEach((row, ti) => {
+    const rowEl = document.querySelector(`.test-row[data-test-idx="${ti}"]`);
+    if(!rowEl) return;
+    const rZone = rowEl.querySelector('.test-zone-block[data-zone-kind="r"] .tz-chips');
+    const cZone = rowEl.querySelector('.test-zone-block[data-zone-kind="c"] .tz-chips');
+    rZone.innerHTML = ''; cZone.innerHTML = '';
+    row.reagents.forEach(id => rZone.appendChild(makeZoneChip(id, REAGENTS[id].label, 'r', ti)));
+    row.conditions.forEach(id => cZone.appendChild(makeZoneChip(id, CONDITIONS[id].label, 'c', ti)));
+    // Test recognised? — only style as match/mismatch after submit
+    const tid = findMatchingTest(row.reagents, row.conditions);
+    rowEl.classList.remove('match','mismatch');
+    if(showFeedback && (row.reagents.length || row.conditions.length)){
+      rowEl.classList.add(tid ? 'match' : 'mismatch');
+    }
+    // Obs cells
+    comps.forEach((cmpdId, ci) => {
+      const cell = rowEl.querySelector(`.obs-cell[data-cmpd-idx="${ci}"]`);
+      const chipsBox = cell.querySelector('.oc-chips');
+      chipsBox.innerHTML = '';
+      cell.classList.remove('match','mismatch');
+      const placedObs = row.obs[ci];
+      if(placedObs){
+        chipsBox.appendChild(makeZoneChip(placedObs, OBSERVATIONS[placedObs].label, 'o', ti, ci));
+        if(showFeedback && tid){
+          const truth = obsOf(tid, cmpdId);
+          if(placedObs === truth) cell.classList.add('match');
+          else cell.classList.add('mismatch');
+        }
+      }
+    });
+  });
+  updateSubmitHint();
+}
+function makeZoneChip(id, label, kind, testIdx, cmpdIdx){
+  const chip = document.createElement('div');
+  chip.className = 'chip kind-' + kind + ' in-zone';
+  chip.textContent = label;
+  chip.draggable = true;
+  chip.dataset.id = id; chip.dataset.kind = kind;
+  chip.addEventListener('click', () => {
+    const row = testState[testIdx];
+    if(kind === 'r') row.reagents = row.reagents.filter(x => x !== id);
+    else if(kind === 'c') row.conditions = row.conditions.filter(x => x !== id);
+    else if(kind === 'o') row.obs[cmpdIdx] = null;
+    showFeedback = false;
+    renderAllChips(); saveState();
+  });
+  chip.addEventListener('dragstart', e => {
+    const payload = {id, kind, fromZone:true, fromTestIdx:testIdx};
+    if(cmpdIdx !== undefined) payload.fromCmpdIdx = cmpdIdx;
+    e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+    chip.classList.add('dragging');
+  });
+  chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+  return chip;
+}
+
+/* =========================================================================
+   SUBMISSION & VALIDATION
+   ========================================================================= */
+function updateSubmitHint(){
+  const q = curQ();
+  const k = numTestsOf(q);
+  const comps = compoundsOf(q);
+  let missing = 0;
+  for(let i = 0; i < k; i++){
+    const row = testState[i];
+    const tid = findMatchingTest(row.reagents, row.conditions);
+    if(!tid) missing++;
+    if(row.obs.some(o => !o)) missing++;
+  }
+  document.getElementById('submitHint').textContent =
+    missing === 0 ? 'Ready to submit.' : `Fill in ${missing} more zone${missing===1?'':'s'}.`;
+}
+
+function attemptSubmit(){
+  const q = curQ();
+  const k = numTestsOf(q);
+  const comps = compoundsOf(q);
+  // Reveal tick/cross feedback on this attempt
+  showFeedback = true;
+  renderAllChips();
+
+  const errors = [];
+  const tids = [];
+
+  // 1. Each test must be recognised
+  for(let i = 0; i < k; i++){
+    const row = testState[i];
+    if(row.reagents.length === 0 && row.conditions.length === 0){
+      errors.push(`<b>Test ${i+1}:</b> empty — drag reagent and condition chips in.`);
+      tids.push(null); continue;
+    }
+    const tid = findMatchingTest(row.reagents, row.conditions);
+    if(!tid){
+      errors.push(`<b>Test ${i+1}:</b> not a recognised distinguishing test. Check that the reagent + condition chips together describe a standard test (e.g. <i>2,4-DNPH + heat</i>, <i>Br₂(aq)</i>, <i>NaHCO₃(aq)</i>).`);
+      tids.push(null); continue;
+    }
+    tids.push(tid);
+  }
+
+  // 2. All observation chips placed and correct
+  for(let i = 0; i < k; i++){
+    const row = testState[i];
+    const tid = tids[i];
+    for(let ci = 0; ci < comps.length; ci++){
+      const placed = row.obs[ci];
+      if(!placed){
+        errors.push(`<b>Test ${i+1} → ${compoundLabel(comps[ci])}:</b> no observation chip placed.`);
+        continue;
+      }
+      if(!tid) continue; // can't grade obs if test not recognised
+      const truth = obsOf(tid, comps[ci]);
+      if(placed !== truth){
+        const placedLbl = OBSERVATIONS[placed] ? OBSERVATIONS[placed].label : placed;
+        const truthLbl = OBSERVATIONS[truth] ? OBSERVATIONS[truth].label : truth;
+        const testLbl = TESTS[tid].label;
+        errors.push(
+          `<b>Test ${i+1} (${testLbl}) → ${compoundLabel(comps[ci])}:</b> ` +
+          `you placed <span class="wrong">${placedLbl}</span>; correct observation is <span class="truth">${truthLbl}</span>.`
+        );
+      }
+    }
+  }
+
+  // 3. If everything else is fine, check uniqueness of observation profiles
+  const allTestsOk = tids.every(t => !!t);
+  const allObsOk = errors.length === 0;
+  if(allTestsOk && allObsOk){
+    const tuples = comps.map((_, ci) => tids.map(tid => obsOf(tid, comps[ci])).join('|'));
+    const seen = {};
+    for(let ci = 0; ci < tuples.length; ci++){
+      if(seen[tuples[ci]] !== undefined){
+        const otherIdx = seen[tuples[ci]];
+        errors.push(
+          `<b>${compoundLabel(comps[ci])}</b> and <b>${compoundLabel(comps[otherIdx])}</b> ` +
+          `have the same observation profile across your tests — they cannot be told apart. ` +
+          `Choose a different test that gives them different observations.`
+        );
+        break;
+      }
+      seen[tuples[ci]] = ci;
+    }
+  }
+
+  if(errors.length > 0){
+    flashSubmit();
+    setFeedback('fail', errors);
+    return;
+  }
+
+  // Solved!
+  solvedNow = true;
+  everSolved.add(qIndex);
+  setFeedback('pass', [`All observations correct and every compound has a unique profile. ✓`]);
+  document.getElementById('successBanner').classList.add('show');
+  document.getElementById('successText').textContent = `✓ ${q.title} — solved!`;
+  document.getElementById('qnum').innerHTML =
+    `Question ${qIndex+1} of ${QUESTIONS.length} <span class="solved-pip">✓ solved</span>`;
+  document.getElementById('solvedCounter').textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
+  showToast('Solved! ✓', true);
+  saveState();
+}
+
+function setFeedback(level, msgs){
+  const el = document.getElementById('feedbackArea');
+  el.className = 'feedback-area show ' + level;
+  const heading = level === 'fail'
+    ? `${msgs.length} issue${msgs.length === 1 ? '' : 's'} to fix`
+    : 'Correct';
+  el.innerHTML = `<h4>${heading}</h4><ul>${msgs.map(m => `<li>${m}</li>`).join('')}</ul>`;
+}
+function clearFeedback(){
+  const el = document.getElementById('feedbackArea');
+  el.className = 'feedback-area';
+  el.innerHTML = '';
+}
+function flashSubmit(){
+  const b = document.getElementById('submitBtn');
+  b.classList.add('flash-bad');
+  setTimeout(() => b.classList.remove('flash-bad'), 400);
+}
+
+/* =========================================================================
+   HINT — glow-highlight one missing piece
+   ========================================================================= */
+function showHint(){
+  const q = curQ();
+  const k = numTestsOf(q);
+  const comps = compoundsOf(q);
+  // Find which test row to hint at
+  let ti = activeTestIdx();
+  if(ti < 0) ti = 0;
+  const row = testState[ti];
+  const tid = findMatchingTest(row.reagents, row.conditions);
+
+  // If test not yet recognised, hint a valid test that distinguishes the compounds
+  // (excluding observations identical to an already-used test)
+  if(!tid){
+    const usedTids = testState.slice(0, ti).map(r => findMatchingTest(r.reagents, r.conditions)).filter(Boolean);
+    // For pair: any test where obsA != obsB
+    // For set: pick any test that differentiates ANY of the as-yet-undifferentiated compounds
+    let targetTid = null;
+    for(const candTid of Object.keys(TESTS)){
+      if(usedTids.includes(candTid)) continue;
+      // Compute observation profile so far (using usedTids) + cand
+      const profiles = comps.map(cid => usedTids.map(t => obsOf(t, cid)).concat([obsOf(candTid, cid)]).join('|'));
+      // Check if cand reduces grouping (i.e., adds at least one new distinction)
+      const baseProfiles = comps.map(cid => usedTids.map(t => obsOf(t, cid)).join('|'));
+      const baseGroups = countDistinct(baseProfiles);
+      const newGroups = countDistinct(profiles);
+      if(newGroups > baseGroups){ targetTid = candTid; break; }
+    }
+    if(!targetTid) targetTid = Object.keys(TESTS)[0];
+    const t = TESTS[targetTid];
+    const missingR = t.reagents.find(rid => !row.reagents.includes(rid));
+    const missingC = t.conditions.find(cid => !row.conditions.includes(cid));
+    const extraR  = row.reagents.find(rid => !t.reagents.includes(rid));
+    const extraC  = row.conditions.find(cid => !t.conditions.includes(cid));
+    if(missingR){ glowPaletteChip(missingR, 'r'); return; }
+    if(missingC){ glowPaletteChip(missingC, 'c'); return; }
+    if(extraR){ glowZoneChip(extraR, 'r', ti); return; }
+    if(extraC){ glowZoneChip(extraC, 'c', ti); return; }
+    showToast('Hint: try ' + t.label);
+    return;
+  }
+  // Test recognised — find a missing/wrong observation
+  for(let ci = 0; ci < comps.length; ci++){
+    const truth = obsOf(tid, comps[ci]);
+    if(row.obs[ci] !== truth){
+      glowPaletteChip(truth, 'o');
+      return;
+    }
+  }
+  showToast('All observations correct in Test ' + (ti+1) + ' — submit when all tests are filled.');
+}
+function countDistinct(arr){ return new Set(arr).size; }
+function glowPaletteChip(id, kind){
+  const sel = '#' + (kind === 'r' ? 'reagentPalette' : kind === 'c' ? 'conditionPalette' : 'observationPalette') + ' .chip';
+  const chips = document.querySelectorAll(sel);
+  chips.forEach(c => {
+    if(c.dataset.id === id){
+      c.classList.add('hint-glow');
+      setTimeout(() => c.classList.remove('hint-glow'), 2200);
+    }
+  });
+}
+function glowZoneChip(id, kind, testIdx){
+  const rowEl = document.querySelector(`.test-row[data-test-idx="${testIdx}"]`);
+  if(!rowEl) return;
+  const chips = rowEl.querySelectorAll('.chip.in-zone.kind-' + kind);
+  chips.forEach(c => {
+    if(c.dataset.id === id){
+      c.classList.add('hint-glow');
+      setTimeout(() => c.classList.remove('hint-glow'), 2200);
+    }
+  });
+}
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer = null;
+function showToast(msg, good){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.toggle('good', !!good);
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* =========================================================================
+   BUTTON HANDLERS & INIT
+   ========================================================================= */
+function resetCurrent(){
+  testState = blankTestState(curQ());
+  solvedNow = false;
+  showFeedback = false;
+  document.getElementById('successBanner').classList.remove('show');
+  renderAllChips(); saveState();
+}
+function nextQ(){ if(qIndex < QUESTIONS.length - 1) loadQuestion(qIndex + 1); }
+function prevQ(){ if(qIndex > 0) loadQuestion(qIndex - 1); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  fillPalette();
+  // Load progress
+  const data = loadStateRaw();
+  if(data){
+    if(Array.isArray(data.everSolved)) everSolved = new Set(data.everSolved);
+    if(typeof data.qIndex === 'number') qIndex = Math.max(0, Math.min(QUESTIONS.length - 1, data.qIndex));
+  }
+  // Buttons
+  document.getElementById('backToContentsBtn').addEventListener('click', showContents);
+  document.getElementById('prevBtn').addEventListener('click', prevQ);
+  document.getElementById('nextBtn').addEventListener('click', nextQ);
+  document.getElementById('hintBtn').addEventListener('click', showHint);
+  document.getElementById('resetBtn').addEventListener('click', resetCurrent);
+  document.getElementById('submitBtn').addEventListener('click', attemptSubmit);
+  document.getElementById('nextQBtn').addEventListener('click', nextQ);
+  document.getElementById('contentsClearLink').addEventListener('click', () => {
+    if(confirm('Clear all progress for the distinguishing tests practice?')){
+      clearState();
+      renderContents();
+    }
+  });
+  // Open last view
+  if(data && data.view === 'question') showQuestion(qIndex);
+  else showContents();
+  // Re-render canvases on resize
+  window.addEventListener('resize', () => {
+    if(view === 'question'){
+      document.querySelectorAll('#compoundsRow canvas').forEach(cv => drawCompoundCanvas(cv, cv.dataset.cid));
+    }
+  });
+});
+</script>
+</body>
+</html>

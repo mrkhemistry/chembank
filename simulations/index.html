@@ -79,6 +79,7 @@
   .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
   .thumb-electro { background: linear-gradient(135deg, #0a1628, #0f2030); }
   .thumb-rs    { background: linear-gradient(135deg, #08222a, #062430); }
+  .thumb-dt    { background: linear-gradient(135deg, #0a2030, #082030); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -266,6 +267,27 @@
       <div class="card-desc">Plan 3-step organic syntheses. Drag reagents and conditions onto each arrow, watch intermediates appear, and reach the target product. 17 questions covering aliphatic and aromatic routes.</div>
       <div class="card-footer">
         <span class="card-meta">Organic Synthesis · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Distinguishing Tests Practice — LIVE -->
+  <a href="./distinguishing-tests.html" class="sim-card" data-tags="organic" data-published="2026-05-05">
+    <div class="card-thumb thumb-dt">
+      <canvas id="th-dt" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-bond">Tests</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Distinguishing Tests Practice</div>
+      <div class="card-desc">Pick chemical tests that give different observations for the compounds shown. 20 pair questions and 10 advanced sets of 3 or 4 compounds. Drag reagent, condition, and observation chips, then submit.</div>
+      <div class="card-footer">
+        <span class="card-meta">Organic · Practice</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -917,6 +939,58 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
       ctx.fillRect(x,y,tw,1);
     });
   });
+})();
+
+// ── Distinguishing Tests Practice ─────────────────────────────────────
+(function(){
+  const c = document.getElementById('th-dt'); if(!c) return;
+  const ctx = c.getContext('2d'); const W = 200, H = 150;
+  ctx.fillStyle = '#0a2030'; ctx.fillRect(0,0,W,H);
+
+  function tube(cx, cy, fill, pptCol){
+    // glass outline
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx-13, cy-30);
+    ctx.lineTo(cx-13, cy+22);
+    ctx.arc(cx, cy+22, 13, Math.PI, 0, true);
+    ctx.lineTo(cx+13, cy-30);
+    ctx.stroke();
+    // rim
+    ctx.beginPath();
+    ctx.moveTo(cx-17, cy-30); ctx.lineTo(cx+17, cy-30); ctx.stroke();
+    // liquid (clipped to tube interior)
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx-11, cy-12);
+    ctx.lineTo(cx-11, cy+22);
+    ctx.arc(cx, cy+22, 11, Math.PI, 0, true);
+    ctx.lineTo(cx+11, cy-12);
+    ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = fill;
+    ctx.fillRect(cx-15, cy-12, 30, 50);
+    if(pptCol){
+      ctx.fillStyle = pptCol;
+      const dots = [[-7,8],[3,12],[-2,18],[6,20],[-6,22],[1,15],[-5,14],[4,6],[7,16]];
+      dots.forEach(d => { ctx.beginPath(); ctx.arc(cx+d[0], cy+d[1], 1.7, 0, Math.PI*2); ctx.fill(); });
+    }
+    ctx.restore();
+  }
+
+  tube(64, 70, 'rgba(251,146,60,0.25)', '#fb923c');   // positive observation
+  tube(136, 70, 'rgba(148,163,184,0.10)', null);      // no change
+
+  ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#fb923c'; ctx.fillText('+ ve', 64, 28);
+  ctx.fillStyle = '#94a3b8'; ctx.fillText('— ve', 136, 28);
+
+  ctx.fillStyle = '#06b6d4'; ctx.font = 'bold 14px Arial';
+  ctx.fillText('vs', 100, 75);
+
+  ctx.fillStyle = 'rgba(34,211,238,0.85)';
+  ctx.font = 'bold 10px Arial';
+  ctx.fillText('Distinguishing tests', W/2, H-12);
 })();
 </script>
 </body>

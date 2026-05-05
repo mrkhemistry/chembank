@@ -3635,13 +3635,10 @@ Option D" required></textarea>
                 updateQuestionCount();
 
                 // Step 2: load prelim + promos school metadata for building school filters
-                // (override Supabase 1000-row default — Prelim alone is >1000)
-                const { data: metaData, error: metaError } = await supabaseClient
-                    .from('questions')
-                    .select('id, source, source_year, school')
-                    .eq('syllabus', 'h2_chem')
-                    .in('source', ['Prelim', 'Promos'])
-                    .range(0, 49999);
+                // (paginate past PostgREST 1000-row cap — Prelim alone is >1000)
+                const metaData = await fetchAllPaginated(() =>
+                    supabaseClient.from('questions').select('id, source, source_year, school').eq('syllabus', 'h2_chem').in('source', ['Prelim', 'Promos']).order('id'));
+                const metaError = null;
                 if (metaError) throw metaError;
                 const schoolMeta = metaData || [];
                 // Use a temp copy for building filters without overwriting questionBank
@@ -3767,22 +3764,22 @@ Option D" required></textarea>
             const filterIdTo = document.getElementById('filterIdTo').value;
 
             try {
-                let query = supabaseClient
-                    .from('questions')
-                    .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                    .eq('syllabus', 'h2_chem')
-                    .order('id', { ascending: false })
-                    .limit(50000);
+                // Build a query factory so we can paginate past PostgREST 1000-row cap
+                const buildQuery = () => {
+                    let q = supabaseClient
+                        .from('questions')
+                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', 'h2_chem')
+                        .order('id', { ascending: false });
+                    if (filterTopic) q = q.contains('topics', [filterTopic]);
+                    if (filterDifficulty) q = q.eq('difficulty', filterDifficulty);
+                    if (filterSource) q = q.eq('source', filterSource);
+                    if (filterIdFrom) q = q.gte('id', parseInt(filterIdFrom));
+                    if (filterIdTo) q = q.lte('id', parseInt(filterIdTo));
+                    return q;
+                };
 
-                if (filterTopic) query = query.contains('topics', [filterTopic]);
-                if (filterDifficulty) query = query.eq('difficulty', filterDifficulty);
-                if (filterSource) query = query.eq('source', filterSource);
-                if (filterIdFrom) query = query.gte('id', parseInt(filterIdFrom));
-                if (filterIdTo) query = query.lte('id', parseInt(filterIdTo));
-
-                const { data, error } = await query;
-                if (error) throw error;
-                const results = data || [];
+                const results = await fetchAllPaginated(buildQuery);
 
                 document.getElementById('filterResultInfo').textContent = `${results.length} question${results.length !== 1 ? 's' : ''} found`;
                 displayQuestionsFromData(results);
@@ -6493,32 +6490,26 @@ Option D" required></textarea>
                     .order('full_name');
                 if (sErr) throw sErr;
 
-                // 2. Load all quiz attempts (override Supabase 1000-row default)
-                const { data: attempts, error: aErr } = await supabaseClient
-                    .from('quiz_attempts')
-                    .select('*')
-                    .order('completed_at', { ascending: false })
-                    .range(0, 49999);
-                if (aErr) throw aErr;
+                // 2. Load all quiz attempts (paginate past PostgREST 1000-row cap)
+                const attempts = await fetchAllPaginated(() =>
+                    supabaseClient.from('quiz_attempts').select('*').order('completed_at', { ascending: false }));
 
-                // 3. Load all question responses (override Supabase 1000-row default)
-                const { data: responses, error: rErr } = await supabaseClient
-                    .from('question_responses')
-                    .select('user_id, question_id, is_correct, quiz_attempt_id')
-                    .range(0, 99999);
-                if (rErr) throw rErr;
+                // 3. Load all question responses (paginate past PostgREST 1000-row cap)
+                const responses = await fetchAllPaginated(() =>
+                    supabaseClient.from('question_responses').select('user_id, question_id, is_correct, quiz_attempt_id').order('id'));
 
-                // 4. Load question topics for responses
+                // 4. Load question topics for responses (paginate in chunks of 1000 ids)
                 const questionIds = [...new Set(responses.map(r => r.question_id))];
                 let questionTopics = {};
                 if (questionIds.length > 0) {
-                    const { data: questions } = await supabaseClient
-                        .from('questions')
-                        .select('id, topic')
-                        .eq('syllabus', 'h2_chem')
-                        .in('id', questionIds)
-                        .range(0, 49999);
-                    (questions || []).forEach(q => { questionTopics[q.id] = q.topic; });
+                    // Fetch in chunks to avoid huge .in() lists AND row cap
+                    const CHUNK = 500;
+                    for (let i = 0; i < questionIds.length; i += CHUNK) {
+                        const chunkIds = questionIds.slice(i, i + CHUNK);
+                        const chunk = await fetchAllPaginated(() =>
+                            supabaseClient.from('questions').select('id, topic').eq('syllabus', 'h2_chem').in('id', chunkIds).order('id'));
+                        chunk.forEach(q => { questionTopics[q.id] = q.topic; });
+                    }
                 }
 
                 analyticsData = { students: students || [], attempts: attempts || [], responses: responses || [], questionTopics };
@@ -7070,14 +7061,29 @@ Option D" required></textarea>
             document.getElementById('topicChartContainer').innerHTML = html;
         }
 
+        // Helper: fetch all rows from a Supabase query, paginating around the server max-rows cap (1000).
+        // Pass a function that returns a fresh PostgrestFilterBuilder; it will be called for each page.
+        async function fetchAllPaginated(queryFactory, pageSize = 1000) {
+            let all = [];
+            let from = 0;
+            while (true) {
+                const { data, error } = await queryFactory().range(from, from + pageSize - 1);
+                if (error) throw error;
+                if (!data || data.length === 0) break;
+                all = all.concat(data);
+                if (data.length < pageSize) break;
+                from += pageSize;
+            }
+            return all;
+        }
+
         async function renderQuestionBankChart() {
             const container = document.getElementById('questionBankContainer');
             try {
-                const { data, error } = await supabaseClient
-                    .from('questions')
-                    .select('topic, source')
-                    .eq('syllabus', 'h2_chem')
-                    .range(0, 49999);
+                // Paginate to bypass PostgREST server-side max-rows cap (1000)
+                const data = await fetchAllPaginated(() =>
+                    supabaseClient.from('questions').select('topic, source').eq('syllabus', 'h2_chem').order('id'));
+                const error = null;
                 if (error) throw error;
 
                 // Tally TYS, Prelim and Promos per topic
@@ -8403,13 +8409,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 btn.disabled = true;
                 btn.innerHTML = '⏳ Exporting...';
                 
-                // Fetch all questions from Supabase (override Supabase 1000-row default)
-                const { data, error } = await supabaseClient
-                    .from('questions')
-                    .select('*')
-                    .order('id', { ascending: true })
-                    .range(0, 49999);
-
+                // Fetch all questions from Supabase (paginate past PostgREST 1000-row cap)
+                const data = await fetchAllPaginated(() =>
+                    supabaseClient.from('questions').select('*').order('id', { ascending: true }));
+                const error = null;
                 if (error) throw error;
                 
                 // Create backup object with metadata

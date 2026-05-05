@@ -584,7 +584,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const c=document.getElementById('th-rs');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
   ctx.fillStyle='#082530';ctx.fillRect(0,0,W,H);
-  const bw=48, bh=48, by=64, gap=28, x0=(W - (3*bw + 2*gap))/2;
+  const bw=44, bh=44, by=66, gap=34, x0=(W - (3*bw + 2*gap))/2;
   for(let i=0;i<3;i++){
     const bx=x0+i*(bw+gap);
     ctx.fillStyle='#ffffff';

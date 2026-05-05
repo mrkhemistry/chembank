@@ -2880,8 +2880,8 @@ Option D" required></textarea>
             try {
                 const { data, error } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
-                    .select('count', { count: 'exact', head: true });
+                    .select('count', { count: 'exact', head: true })
+                    .eq('syllabus', 'h2_chem');
                 
                 clearTimeout(timeout);
                 
@@ -3628,8 +3628,8 @@ Option D" required></textarea>
                 // Step 1: get total count
                 const { count, error: countError } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
-                    .select('*', { count: 'exact', head: true });
+                    .select('*', { count: 'exact', head: true })
+                    .eq('syllabus', 'h2_chem');
                 if (countError) throw countError;
                 totalQuestionCount = count || 0;
                 updateQuestionCount();
@@ -3637,8 +3637,8 @@ Option D" required></textarea>
                 // Step 2: load prelim + promos school metadata for building school filters
                 const { data: metaData, error: metaError } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
                     .select('id, source, source_year, school')
+                    .eq('syllabus', 'h2_chem')
                     .in('source', ['Prelim', 'Promos']);
                 if (metaError) throw metaError;
                 const schoolMeta = metaData || [];
@@ -3657,8 +3657,8 @@ Option D" required></textarea>
                     while (true) {
                         const { data: pageData, error: pageError } = await supabaseClient
                             .from('questions')
-                            .eq('syllabus', 'h2_chem')
                             .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                            .eq('syllabus', 'h2_chem')
                             .order('id', { ascending: false })
                             .range(from, from + PAGE_SIZE - 1);
                         if (pageError) throw pageError;
@@ -3709,8 +3709,8 @@ Option D" required></textarea>
                     // No filters: just show 10 most recent
                     const { data, error } = await supabaseClient
                         .from('questions')
-                        .eq('syllabus', 'h2_chem')
                         .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', 'h2_chem')
                         .order('id', { ascending: false })
                         .limit(10);
                     if (error) throw error;
@@ -3725,8 +3725,8 @@ Option D" required></textarea>
 
                     // Step 2: fetch first PAGE_SIZE rows
                     let dataQuery = applyFilters(supabaseClient.from('questions')
-                        .eq('syllabus', 'h2_chem')
                         .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', 'h2_chem')
                         .order('id', { ascending: false })
                         .limit(PAGE_SIZE));
                     const { data, error } = await dataQuery;
@@ -3767,8 +3767,8 @@ Option D" required></textarea>
             try {
                 let query = supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
                     .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                    .eq('syllabus', 'h2_chem')
                     .order('id', { ascending: false })
                     .limit(1000);
 
@@ -4674,8 +4674,8 @@ Option D" required></textarea>
                 // Fetch weak questions directly from Supabase by ID
                 const { data: weakData, error: weakError } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
                     .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                    .eq('syllabus', 'h2_chem')
                     .in('id', wrongIds);
                 if (weakError) throw weakError;
                 let weakQuestions = weakData || [];
@@ -4743,8 +4743,8 @@ Option D" required></textarea>
                 while (true) {
                     let query = supabaseClient
                         .from('questions')
-                        .eq('syllabus', 'h2_chem')
                         .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', 'h2_chem')
                         .in('difficulty', selectedDifficulties)
                         .range(from, from + PAGE_SIZE - 1);
                     const { data: pageData, error: pageError } = await query;
@@ -5248,8 +5248,8 @@ Option D" required></textarea>
             const qIds = [...new Set(responses.map(r => r.question_id))];
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .eq('syllabus', 'h2_chem')
                 .select('id, topic')
+                .eq('syllabus', 'h2_chem')
                 .in('id', qIds);
             if (qErr) throw qErr;
             const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, q.topic]));
@@ -5357,8 +5357,8 @@ Option D" required></textarea>
             const qIds = [...new Set(responses.map(r => r.question_id))];
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .eq('syllabus', 'h2_chem')
                 .select('id, topic')
+                .eq('syllabus', 'h2_chem')
                 .in('id', qIds);
             if (qErr) throw qErr;
             const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, q.topic]));
@@ -5509,8 +5509,8 @@ Option D" required></textarea>
             const qIds = responses.map(r => r.question_id);
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .eq('syllabus', 'h2_chem')
                 .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                .eq('syllabus', 'h2_chem')
                 .in('id', qIds);
             if (qErr) throw qErr;
 
@@ -6029,8 +6029,8 @@ Option D" required></textarea>
                 while (true) {
                     const { data, error } = await supabaseClient
                         .from('questions')
-                        .eq('syllabus', 'h2_chem')
                         .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', 'h2_chem')
                         .in('difficulty', selectedDiffs)
                         .range(from, from + PAGE_SIZE - 1);
                     if (error) throw error;
@@ -6301,8 +6301,8 @@ Option D" required></textarea>
             try {
                 const { data, error } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
                     .select('*')
+                    .eq('syllabus', 'h2_chem')
                     .eq('id', id)
                     .single();
                 if (error) throw error;
@@ -6510,8 +6510,8 @@ Option D" required></textarea>
                 if (questionIds.length > 0) {
                     const { data: questions } = await supabaseClient
                         .from('questions')
-                        .eq('syllabus', 'h2_chem')
                         .select('id, topic')
+                        .eq('syllabus', 'h2_chem')
                         .in('id', questionIds);
                     (questions || []).forEach(q => { questionTopics[q.id] = q.topic; });
                 }
@@ -7070,8 +7070,8 @@ Option D" required></textarea>
             try {
                 const { data, error } = await supabaseClient
                     .from('questions')
-                    .eq('syllabus', 'h2_chem')
-                    .select('topic, source');
+                    .select('topic, source')
+                    .eq('syllabus', 'h2_chem');
                 if (error) throw error;
 
                 // Tally TYS, Prelim and Promos per topic

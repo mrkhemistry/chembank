@@ -758,6 +758,8 @@ function drawVolumeLabel() {
 
 /* --- Main draw loop --- */
 function drawLoop() {
+  // Bail if SimAuth lock screen replaced <body> for anonymous users
+  if (!document.getElementById('chemCanvas')) return;
   ctx.clearRect(0, 0, W, H);
 
   wallBottom = H - WALL_BOTTOM_OFFSET;

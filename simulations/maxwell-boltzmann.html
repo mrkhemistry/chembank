@@ -760,6 +760,8 @@ const presetCompare = () => {
 
 /* ===== MAIN LOOP ===== */
 const loop = () => {
+  // Bail if SimAuth lock screen replaced <body> for anonymous users
+  if (!document.getElementById('chartCanvas')) return;
   drawChart();
   drawParticles();
   requestAnimationFrame(loop);

@@ -15,7 +15,7 @@
   const SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
   const FREE_SIMS = ['vsepr', 'nucleophilic-addition'];
   const PREMIUM_ROLES = ['premium_student', 'admin', 'teacher'];
-  const PORTAL_URL = 'https://mrkhemistry.github.io/chembank/portal.html';
+  const PORTAL_URL = 'https://chembank.mrkhemistry.com/portal.html';
   const SIMS_HUB_URL = './';
 
   let _client = null;

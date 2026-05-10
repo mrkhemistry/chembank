@@ -6,9 +6,13 @@
 // USAGE:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="./_auth-guard.js"></script>
-//   <script>SimAuth.guardPage();</script>   // on a premium sim page
-//   // OR for the hub:
-//   <script>SimAuth.applyHubLocks();</script>
+//
+// The script auto-detects mode from the URL path:
+//   /simulations/ or /simulations/index.html  → hub mode (applyHubLocks)
+//   anything else under /simulations/         → sim-page mode (guardPage)
+// Free sims (vsepr, nucleophilic-addition) are handled inside guardPage.
+//
+// SimAuth.* methods remain on window for manual invocation if ever needed.
 // ─────────────────────────────────────────────────────────────────────
 (function (global) {
   const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
@@ -225,4 +229,22 @@
     guardPage,
     showUpgradeModal,
   };
+
+  // ───────── AUTO-BOOTSTRAP ─────────
+  // Avoids the historical race where an inline <script>SimAuth.guardPage()</script>
+  // could run before this file finished loading (or before MIME/CDN issues resolved).
+  // By owning the trigger here, there's only one script tag per page and zero
+  // ordering hazard between the global definition and its first use.
+  const HUB_PATH_RE = /\/simulations\/(index\.html)?$/;
+  if (HUB_PATH_RE.test(global.location.pathname)) {
+    // Hub needs .sim-card elements to exist before locking them
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', applyHubLocks);
+    } else {
+      applyHubLocks();
+    }
+  } else {
+    // Sim page: run synchronously so the visibility-hidden style lands before <body> renders
+    guardPage();
+  }
 })(window);

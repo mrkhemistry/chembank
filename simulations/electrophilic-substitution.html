@@ -206,6 +206,7 @@ function setStep(n){
 }
 
 function drawLoop(){
+  if(!document.getElementById('chemCanvas')) return;
   if(!paused){
     if(state===1){
       prog+=0.004*speed;

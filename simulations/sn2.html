@@ -412,6 +412,7 @@ function getSubPos(t,idx){
 }
 
 function drawLoop(){
+  if(!document.getElementById('chemCanvas')) return;
   if(!paused){
     if(state===1){
       prog+=0.005*speed;

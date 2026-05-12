@@ -3717,7 +3717,7 @@ Option D" required></textarea>
                     displayQuestionsFromData(data || []);
                 } else {
                     // Step 1: fast count query (no data transferred)
-                    let countQuery = applyFilters(supabaseClient.from('questions').select('id', { count: 'exact', head: true }));
+                    let countQuery = applyFilters(supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('syllabus', 'h2_chem'));
                     const { count, error: countError } = await countQuery;
                     if (countError) throw countError;
                     const totalCount = count || 0;

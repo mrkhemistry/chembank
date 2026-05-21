@@ -2120,6 +2120,7 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()" style="display:none;">Practice Weak Questions</button>
                     <button class="btn btn-secondary" id="resumeQuizBtn" onclick="resumeQuizProgress()" style="display:none;">Resume Quiz</button>
                 </div>
+                <div id="masteredThisWeekStat" style="display:none; margin-top: 0.75rem; font-size: 0.85rem; color: #06FFA5; font-family: 'DM Sans', sans-serif;"></div>
             </div>
             </div><!-- end studentQuizPanel -->
 
@@ -4630,6 +4631,50 @@ Option D" required></textarea>
             return displayedLetter === question.correct_answer;
         }
 
+        // Computes weak-question state for a user.
+        // A question graduates out of "weak" once the student has answered it correctly
+        // on >=2 distinct SGT calendar dates AFTER their most recent wrong answer.
+        // masteredThisWeek = graduations whose 2nd-distinct-day correct landed in last 7 days.
+        async function computeWeakQuestionState(userId) {
+            const data = await fetchAllPaginated(() =>
+                supabaseClient.from('question_responses')
+                    .select('question_id, is_correct, answered_at')
+                    .eq('user_id', userId)
+                    .order('answered_at', { ascending: true }));
+            if (!data || data.length === 0) return { weakIds: [], masteredThisWeek: 0 };
+            const sgFmt = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Singapore', year: 'numeric', month: '2-digit', day: '2-digit'
+            });
+            const sgDate = (ts) => sgFmt.format(new Date(ts));
+            const byQuestion = new Map();
+            for (const r of data) {
+                if (!byQuestion.has(r.question_id)) byQuestion.set(r.question_id, []);
+                byQuestion.get(r.question_id).push(r);
+            }
+            const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const weakIds = [];
+            let masteredThisWeek = 0;
+            for (const [qid, responses] of byQuestion.entries()) {
+                const wrongs = responses.filter(r => r.is_correct === false);
+                if (wrongs.length === 0) continue;
+                const mostRecentWrongTs = Math.max(...wrongs.map(r => new Date(r.answered_at).getTime()));
+                const correctsAfter = responses
+                    .filter(r => r.is_correct === true && new Date(r.answered_at).getTime() > mostRecentWrongTs)
+                    .sort((a, b) => new Date(a.answered_at) - new Date(b.answered_at));
+                const distinctDates = new Set(correctsAfter.map(r => sgDate(r.answered_at)));
+                if (distinctDates.size >= 2) {
+                    const firstDate = sgDate(correctsAfter[0].answered_at);
+                    const gradResponse = correctsAfter.find(r => sgDate(r.answered_at) !== firstDate);
+                    if (gradResponse && new Date(gradResponse.answered_at).getTime() >= sevenDaysAgo) {
+                        masteredThisWeek++;
+                    }
+                } else {
+                    weakIds.push(qid);
+                }
+            }
+            return { weakIds, masteredThisWeek };
+        }
+
         async function checkWeakQuestions() {
             // Only show for logged-in students
             if (!currentUser || userRole === 'teacher') {
@@ -4637,17 +4682,24 @@ Option D" required></textarea>
                 return;
             }
             try {
-                console.log('checkWeakQuestions: querying for user', currentUser.id);
-                const { data, error } = await supabaseClient
-                    .from('question_responses')
-                    .select('question_id')
-                    .eq('user_id', currentUser.id)
-                    .eq('is_correct', false);
-                console.log('checkWeakQuestions: data =', data, 'error =', error);
+                const { weakIds, masteredThisWeek } = await computeWeakQuestionState(currentUser.id);
                 const weakBtn = document.getElementById('weakQuestionsBtn');
-                console.log('checkWeakQuestions: button found?', !!weakBtn, 'count =', data?.length);
                 if (weakBtn) {
-                    weakBtn.style.display = data && data.length > 0 ? 'inline-block' : 'none';
+                    if (weakIds.length > 0) {
+                        weakBtn.textContent = `Practice Weak Questions (${weakIds.length})`;
+                        weakBtn.style.display = 'inline-block';
+                    } else {
+                        weakBtn.style.display = 'none';
+                    }
+                }
+                const masteredEl = document.getElementById('masteredThisWeekStat');
+                if (masteredEl) {
+                    if (masteredThisWeek > 0) {
+                        masteredEl.textContent = `Mastered this week: ${masteredThisWeek} question${masteredThisWeek === 1 ? '' : 's'}`;
+                        masteredEl.style.display = 'block';
+                    } else {
+                        masteredEl.style.display = 'none';
+                    }
                 }
             } catch (e) {
                 console.log('Could not check weak questions:', e.message);
@@ -4657,25 +4709,18 @@ Option D" required></textarea>
         async function startWeakQuiz() {
             if (!currentUser) return;
             try {
-                // Fetch all questions the student has ever gotten wrong
-                const { data: wrongResponses, error } = await supabaseClient
-                    .from('question_responses')
-                    .select('question_id')
-                    .eq('user_id', currentUser.id)
-                    .eq('is_correct', false);
-                if (error) throw error;
-                if (!wrongResponses || wrongResponses.length === 0) {
-                    alert('No weak questions found! Take some quizzes first.');
+                // Get non-graduated weak question IDs (excludes questions mastered via 2+ distinct-day corrects)
+                const { weakIds } = await computeWeakQuestionState(currentUser.id);
+                if (weakIds.length === 0) {
+                    alert('No weak questions found! Take some quizzes first, or you have mastered all your previous weak questions.');
                     return;
                 }
-                // Get unique question IDs
-                const wrongIds = [...new Set(wrongResponses.map(r => r.question_id))];
                 // Fetch weak questions directly from Supabase by ID
                 const { data: weakData, error: weakError } = await supabaseClient
                     .from('questions')
                     .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
                     .eq('syllabus', 'h2_chem')
-                    .in('id', wrongIds);
+                    .in('id', weakIds);
                 if (weakError) throw weakError;
                 let weakQuestions = weakData || [];
                 // Apply Prelim/Promos restriction for regular students (non-premium)

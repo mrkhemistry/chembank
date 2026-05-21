@@ -6585,19 +6585,27 @@ Option D" required></textarea>
                 : 0;
             document.getElementById('statAvgScore').textContent = activeAttempts.length > 0 ? avgScore + '%' : 'N/A';
 
-            // Find weakest topic from responses
+            // Find weakest topic from responses.
+            // Min 30 responses to avoid small-sample bias (a topic with only 2-3 wrong answers
+            // out of 4 total would otherwise dominate over topics with hundreds of responses).
             const topicStats = computeTopicStats();
             let weakest = 'N/A';
+            let weakestN = 0;
             let lowestPct = 101;
             for (const [topic, stats] of Object.entries(topicStats)) {
-                if (stats.total >= 3) {
+                if (stats.total >= 30) {
                     const pct = Math.round((stats.correct / stats.total) * 100);
-                    if (pct < lowestPct) { lowestPct = pct; weakest = topic; }
+                    if (pct < lowestPct) { lowestPct = pct; weakest = topic; weakestN = stats.total; }
                 }
             }
             const weakestEl = document.getElementById('statWeakestTopic');
-            weakestEl.textContent = weakest === 'N/A' ? 'N/A' : weakest;
-            weakestEl.style.fontSize = weakest.length > 12 ? '1.2rem' : '';
+            if (weakest === 'N/A') {
+                weakestEl.textContent = 'N/A';
+                weakestEl.style.fontSize = '';
+            } else {
+                weakestEl.innerHTML = `${weakest} <span style="font-size:0.65em; opacity:0.6; font-weight:400;">(n=${weakestN})</span>`;
+                weakestEl.style.fontSize = weakest.length > 12 ? '1.2rem' : '';
+            }
 
             // Populate year filter and render enrolment chart
             populateEnrolmentYearFilter();

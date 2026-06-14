@@ -78,6 +78,7 @@
   .thumb-pt    { background: linear-gradient(135deg, #0a1528, #0d2030); }
   .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
   .thumb-electro { background: linear-gradient(135deg, #0a1628, #0f2030); }
+  .thumb-eq    { background: linear-gradient(135deg, #2a1505, #1a0f08); }
   .thumb-rs    { background: linear-gradient(135deg, #08222a, #062430); }
   .thumb-dt    { background: linear-gradient(135deg, #0a2030, #082030); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
@@ -423,6 +424,27 @@
       <div class="card-desc">Compare a Daniell cell with electrolysis side-by-side. Switch between Cu purification, molten NaCl and brine to see how electrons, ions and electrode polarity flip.</div>
       <div class="card-footer">
         <span class="card-meta">Redox · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Le Chatelier's Principle — LIVE -->
+  <a href="./equilibrium.html" class="sim-card" data-tags="physical equilibrium" data-published="2026-06-14">
+    <div class="card-thumb thumb-eq">
+      <canvas id="th-eq" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-physical">Physical</span>
+        <span class="tag tag-topic">Equilibria</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Le Chatelier's Principle</div>
+      <div class="card-desc">Watch the N₂O₄ ⇌ 2NO₂ equilibrium shift as you heat, compress or inject gas. The brown colour deepens and fades in real time as the position of equilibrium re-establishes.</div>
+      <div class="card-footer">
+        <span class="card-meta">Equilibria · Interactive</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -1095,6 +1117,42 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   // "vs" in the middle
   ctx.fillStyle = 'rgba(6,182,212,0.95)'; ctx.font = 'bold 18px Arial';
   ctx.fillText('vs', 100, 75);
+})();
+
+// ── Le Chatelier (N2O4 <=> 2 NO2) thumbnail — colour-shade tube ──
+(function(){
+  const c=document.getElementById('th-eq');if(!c)return;
+  const ctx=c.getContext('2d'),W=200,H=150;
+  ctx.fillStyle='#1a0f08';ctx.fillRect(0,0,W,H);
+  const bx=28,by=26,bw=124,bh=94,pw=14;
+  // dark interior
+  ctx.fillStyle='#0b1322';ctx.fillRect(bx,by,bw,bh);
+  // brown gas shade: pale on the left, deepening to the right (the colour shift)
+  const hg=ctx.createLinearGradient(bx,0,bx+bw,0);
+  hg.addColorStop(0,'rgba(176,84,28,0.10)');
+  hg.addColorStop(0.5,'rgba(176,84,28,0.45)');
+  hg.addColorStop(1,'rgba(150,64,20,0.82)');
+  ctx.fillStyle=hg;ctx.fillRect(bx,by,bw,bh);
+  // vertical depth shading
+  const vg=ctx.createLinearGradient(0,by,0,by+bh);
+  vg.addColorStop(0,'rgba(255,255,255,0.05)');
+  vg.addColorStop(1,'rgba(0,0,0,0.18)');
+  ctx.fillStyle=vg;ctx.fillRect(bx,by,bw,bh);
+  // glass highlight down the left edge
+  const hl=ctx.createLinearGradient(bx,0,bx+18,0);
+  hl.addColorStop(0,'rgba(255,255,255,0.12)');hl.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=hl;ctx.fillRect(bx,by,18,bh);
+  // tube border
+  ctx.strokeStyle='#475569';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+  // piston on the right
+  const pg=ctx.createLinearGradient(bx+bw,0,bx+bw+pw,0);
+  pg.addColorStop(0,'#475569');pg.addColorStop(0.5,'#64748b');pg.addColorStop(1,'#475569');
+  ctx.fillStyle=pg;ctx.fillRect(bx+bw,by,pw,bh);
+  // piston grip lines
+  ctx.strokeStyle='#94a3b8';ctx.lineWidth=1;
+  for(let i=0;i<3;i++){const lx=bx+bw+4+i*4;ctx.beginPath();ctx.moveTo(lx,by+bh/2-12);ctx.lineTo(lx,by+bh/2+12);ctx.stroke();}
+  // piston rod
+  ctx.fillStyle='#64748b';ctx.fillRect(bx+bw+pw,by+bh/2-2,W-6-(bx+bw+pw),4);
 })();
 </script>
 </body>

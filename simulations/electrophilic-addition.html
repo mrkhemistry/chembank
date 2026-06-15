@@ -55,6 +55,8 @@
   footer { position:relative; z-index:1; text-align:center; padding:24px 32px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
   footer a { color:var(--accent); text-decoration:none; }
   @media(max-width:700px){ nav,.main{padding-left:16px;padding-right:16px;} #topRow{flex-direction:column;height:auto;} #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;} #cWrap{height:400px;} #stepPanel{flex-direction:row;overflow-x:auto;} .si{min-width:150px;} }
+  .bs.von{background:#1b8c9c;color:#fff;}
+  .bs:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 <!-- Premium-sim access guard -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -95,12 +97,13 @@
     <div id="botBar">
       <button class="bp" id="startBtn">Start</button>
       <button class="bs" id="resetBtn">Reset</button>
+      <button class="bs von" id="voiceBtn">Voice: On</button>
       <button id="resumeBtn">Resume</button>
       <button id="step2Btn" class="bs">Skip to Step 2</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">Speed:</span>
-      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0&#215;</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="2.6" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">2.6&#215;</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>
@@ -126,7 +129,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1,paused=false;
+let W,H,state=0,prog=0,speed=2.6,paused=false;
 let arrowProg=0,straightProg=0;
 let brBondFade=0;
 let arrow2Prog=0,straight2Prog=0;
@@ -240,10 +243,29 @@ function drawBond(x1,y1,x2,y2,col,w,dashed){
   ctx.strokeStyle=col||COLS.bond;ctx.lineWidth=w||2;ctx.stroke();ctx.setLineDash([]);
 }
 
+/* --- Voiceover (Web Speech API) --- */
+const canSpeak='speechSynthesis' in window;
+let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
+let narrate=false, lastSpokenStep=-1;
+const NARR=[
+  "Bromine approaches the electron-rich carbon to carbon double bond and becomes polarised. The nearer bromine atom becomes slightly positive.",
+  "In the slow step, the pi electrons of the double bond attack the slightly positive bromine. The bromine to bromine bond breaks heterolytically, forming a carbocation and a bromide ion.",
+  "One carbon now carries a positive charge, with the bromide ion nearby. The simulation pauses here. Click resume to continue to step 2.",
+  "In the fast step, the bromide ion uses a lone pair to attack the carbocation, forming a new carbon to bromine bond.",
+  "The product is 1,2-dibromoethane. The electrophilic addition is complete."
+];
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+const voiceBtn=document.getElementById('voiceBtn');
+function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
+if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
+updVoiceBtn();
+
 function setStep(n){
   for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('active',i===n);
   const lbs=['Ready','&#960; attacks Br','Carbocation','Br&#8315; attacks C&#8314;','1,2-dibromoethane'];
   document.getElementById('statusBadge').textContent=lbs[n].replace(/&#\d+;/g,'');
+  if(narrate&&n!==lastSpokenStep)speak(NARR[n]);
+  lastSpokenStep=n;
 }
 
 function drawLoop(){
@@ -522,10 +544,12 @@ function drawLoop(){
 
 document.getElementById('spd').addEventListener('input',e=>{speed=parseFloat(e.target.value);document.getElementById('spdOut').textContent=speed.toFixed(1)+'\u00d7';});
 document.getElementById('startBtn').addEventListener('click',()=>{
+  narrate=true;lastSpokenStep=-1;if(canSpeak)speechSynthesis.cancel();
   state=1;prog=0;paused=false;arrowProg=0;straightProg=0;brBondFade=0;arrow2Prog=0;straight2Prog=0;
   document.getElementById('resumeBtn').style.display='none';setStep(1);
 });
 document.getElementById('resetBtn').addEventListener('click',()=>{
+  narrate=false;if(canSpeak)speechSynthesis.cancel();
   state=0;prog=0;paused=false;arrowProg=0;straightProg=0;brBondFade=0;arrow2Prog=0;straight2Prog=0;
   document.getElementById('resumeBtn').style.display='none';setStep(0);
 });
@@ -535,6 +559,7 @@ document.getElementById('resumeBtn').addEventListener('click',()=>{
 });
 document.getElementById('step2Btn').addEventListener('click',()=>{
   state=3;prog=0;paused=false;arrowProg=1;straightProg=1;brBondFade=1;arrow2Prog=0;straight2Prog=0;
+  narrate=true;lastSpokenStep=-1;if(canSpeak)speechSynthesis.cancel();
   document.getElementById('resumeBtn').style.display='none';setStep(3);
 });
 

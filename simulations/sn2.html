@@ -154,6 +154,8 @@
     #stepPanel { flex-direction: row; overflow-x: auto; gap: 8px; }
     .si { min-width: 150px; }
   }
+  .bs.von{background:#1b8c9c;color:#fff;}
+  .bs:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 <!-- Premium-sim access guard -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -201,6 +203,7 @@
     <div id="botBar">
       <button class="bp" id="startBtn">Start</button>
       <button class="bs" id="resetBtn">Reset</button>
+      <button class="bs von" id="voiceBtn">Voice: On</button>
       <button id="resumeBtn">Resume</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">View:</span>
@@ -210,8 +213,8 @@
       <button class="bs" id="v3" onclick="setView(3)">Free</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">Speed:</span>
-      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0×</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="2.6" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">2.6×</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>
@@ -251,7 +254,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1,paused=false;
+let W,H,state=0,prog=0,speed=2.6,paused=false;
 let arrowProg=0,straightProg=0,brFadeProg=0,ohSolidProg=0;
 let aX=0.28,aY=0.6,dragging=false,lx,ly;
 const BL=100;
@@ -389,10 +392,29 @@ function drawTSBracket(pC,pOH,pBr,subPs){
   ctx.fillText('[Transition State]\u2021',(minX+maxX)/2,minY-14);
 }
 
+/* --- Voiceover (Web Speech API) --- */
+const canSpeak='speechSynthesis' in window;
+let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
+let narrate=false, lastSpokenStep=-1;
+const NARR=[
+  "We start with 2-bromobutane. Hydroxide is lined up directly opposite the bromine, ready for backside attack.",
+  "Hydroxide attacks the carbon from the side directly opposite the bromine, donating its lone pair as the carbon to bromine bond begins to weaken.",
+  "At the transition state, the carbon is partially bonded to both the incoming hydroxide and the leaving bromine. The simulation pauses here. Click resume to continue.",
+  "Bromide leaves with the bonding electrons, and the other three groups sweep through to the opposite side, inverting the geometry.",
+  "The configuration at the carbon has been turned inside out. This is the Walden inversion, characteristic of the S N 2 mechanism."
+];
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+const voiceBtn=document.getElementById('voiceBtn');
+function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
+if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
+updVoiceBtn();
+
 function setStep(n){
   for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('active',i===n);
   const lbs=['Ready','Backside attack','Transition state \u2021','Bond breaking','Walden inversion'];
   document.getElementById('statusBadge').textContent=lbs[n];
+  if(narrate&&n!==lastSpokenStep)speak(NARR[n]);
+  lastSpokenStep=n;
 }
 
 function getSubPos(t,idx){
@@ -559,12 +581,14 @@ document.getElementById('spd').addEventListener('input',e=>{
   document.getElementById('spdOut').textContent=speed.toFixed(1)+'\u00d7';
 });
 document.getElementById('startBtn').addEventListener('click',()=>{
+  narrate=true;lastSpokenStep=-1;if(canSpeak)speechSynthesis.cancel();
   state=1;prog=0;paused=false;
   arrowProg=0;straightProg=0;brFadeProg=0;ohSolidProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(1);
 });
 document.getElementById('resetBtn').addEventListener('click',()=>{
+  narrate=false;if(canSpeak)speechSynthesis.cancel();
   state=0;prog=0;paused=false;
   arrowProg=0;straightProg=0;brFadeProg=0;ohSolidProg=0;
   document.getElementById('resumeBtn').style.display='none';

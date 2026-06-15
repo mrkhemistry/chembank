@@ -61,6 +61,8 @@
     #stepPanel{flex-direction:row;overflow-x:auto;gap:8px;}
     .si{min-width:150px;}
   }
+  .bs.von{background:#1b8c9c;color:#fff;}
+  .bs:disabled{opacity:0.5;cursor:not-allowed;}
 </style>
 <!-- Premium-sim access guard -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -107,6 +109,7 @@
     <div id="botBar">
       <button class="bp" id="startBtn">Start</button>
       <button class="bs" id="resetBtn">Reset</button>
+      <button class="bs von" id="voiceBtn">Voice: On</button>
       <button id="resumeBtn">Resume</button>
       <button class="bs" id="step2Btn">Skip to Step 2</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
@@ -116,8 +119,8 @@
       <button class="bs" id="v2" onclick="setView(2)">Free</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">Speed:</span>
-      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0&#215;</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="2.6" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">2.6&#215;</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>
@@ -155,7 +158,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1,paused=false;
+let W,H,state=0,prog=0,speed=2.6,paused=false;
 let brArrowProg=0,ohArrowProg=0,ohStraightProg=0;
 let aX=0.2,aY=0.5,dragging=false,lx,ly;
 const BL=92;
@@ -320,10 +323,29 @@ function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
   }
 }
 
+/* --- Voiceover (Web Speech API) --- */
+const canSpeak='speechSynthesis' in window;
+let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
+let narrate=false, lastSpokenStep=-1;
+const NARR=[
+  "We start with 2-bromo-2-methylpropane, a tertiary halogenoalkane. The carbon to bromine bond is polarised.",
+  "In the slow, rate-determining step, the carbon to bromine bond breaks heterolytically. Bromide leaves, taking both bonding electrons.",
+  "This forms a trigonal planar carbocation, with an empty p orbital exposed above and below the plane. The simulation pauses here. Click resume to continue to step 2.",
+  "In the fast step, hydroxide attacks the flat carbocation from both faces with equal likelihood.",
+  "Equal amounts of the two mirror-image products form, giving a racemic mixture with no overall optical activity. This is the S N 1 mechanism."
+];
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+const voiceBtn=document.getElementById('voiceBtn');
+function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
+if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
+updVoiceBtn();
+
 function setStep(n){
   for(let i=0;i<=4;i++)document.getElementById('s'+i).classList.toggle('active',i===n);
   const lbs=['Ready','C\u2013Br bond breaks','Carbocation intermediate','Nucleophilic attack','Racemic mixture'];
   document.getElementById('statusBadge').textContent=lbs[n];
+  if(narrate&&n!==lastSpokenStep)speak(NARR[n]);
+  lastSpokenStep=n;
 }
 
 // Get substituent position interpolated between tetrahedral and planar
@@ -555,12 +577,14 @@ document.getElementById('spd').addEventListener('input',e=>{
   document.getElementById('spdOut').textContent=speed.toFixed(1)+'\u00d7';
 });
 document.getElementById('startBtn').addEventListener('click',()=>{
+  narrate=true;lastSpokenStep=-1;if(canSpeak)speechSynthesis.cancel();
   state=1;prog=0;paused=false;
   brArrowProg=0;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
   setStep(1);
 });
 document.getElementById('resetBtn').addEventListener('click',()=>{
+  narrate=false;if(canSpeak)speechSynthesis.cancel();
   state=0;prog=0;paused=false;
   brArrowProg=0;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
@@ -576,6 +600,7 @@ document.getElementById('step2Btn').addEventListener('click',()=>{
   state=3;prog=0;paused=false;
   brArrowProg=1;ohArrowProg=0;ohStraightProg=0;
   document.getElementById('resumeBtn').style.display='none';
+  narrate=true;lastSpokenStep=-1;if(canSpeak)speechSynthesis.cancel();
   setStep(3);
 });
 

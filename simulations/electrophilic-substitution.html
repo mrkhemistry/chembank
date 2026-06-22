@@ -100,8 +100,8 @@
       <button class="bs" id="step2Btn">Skip to Step 2</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">Speed:</span>
-      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="2" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">2.0&#215;</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1.2" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.2&#215;</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>
@@ -127,7 +127,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=2,paused=false;
+let W,H,state=0,prog=0,speed=1.2,paused=false;
 let arrowProg=0,straightProg=0,arrow2Prog=0,straight2Prog=0,arcRestoreProg=0;
 
 function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight;}

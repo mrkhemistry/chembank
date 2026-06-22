@@ -119,8 +119,8 @@
       <button class="bs" id="v2" onclick="setView(2)">Free</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
       <span style="font-size:11px;color:#64748b;">Speed:</span>
-      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1.6" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.6&#215;</span>
+      <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
+      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0&#215;</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>
@@ -158,7 +158,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1.6,paused=false;
+let W,H,state=0,prog=0,speed=1,paused=false;
 let brArrowProg=0,ohArrowProg=0,ohStraightProg=0;
 let aX=0.2,aY=0.5,dragging=false,lx,ly;
 const BL=92;

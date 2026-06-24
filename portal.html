@@ -297,25 +297,29 @@
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
 
   function init() {
+    // Detect PKCE recovery code BEFORE Supabase processes the URL.
+    // Portal only uses PKCE for password recovery (no OAuth/magic links/PKCE signup),
+    // so any ?code= parameter is guaranteed to be from a password reset link.
+    // Supabase v2 PKCE often fires SIGNED_IN before PASSWORD_RECOVERY, so we must
+    // detect this synchronously to avoid a race condition.
+    var isRecoveryHash = false;
+    try {
+      var _initSearch = window.location.search;
+      var _initHash = window.location.hash;
+      if (new URLSearchParams(_initSearch).has('code') || _initHash.indexOf('type=recovery') !== -1) {
+        console.log('Password recovery detected synchronously at page load');
+        isRecoveryHash = true;
+      }
+    } catch (e) { console.error('Recovery URL check failed:', e); }
+
     var sb;
     try {
-      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: {
-          flowType: 'pkce',
-          detectSessionInUrl: false, // we route the recovery / sign-in redirect ourselves
-          persistSession: true,
-          autoRefreshToken: true
-        }
-      });
+      sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch(e) {
       document.getElementById('loginError').textContent = 'Portal failed to load. Please refresh the page.';
       document.getElementById('loginError').classList.add('visible');
       return;
     }
-
-    // true only once a *valid* recovery session is established; controls whether the
-    // reset button updates the password vs. requests a fresh link.
-    var isRecoveryHash = false;
 
     function showView(id) {
       document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
@@ -346,152 +350,33 @@
       }).catch(function(e) { console.error('role check failed:', e); });
     }
 
-    // Reset view, "set a new password" mode — only reached with a valid recovery session.
     function showRecoveryView() {
-      isRecoveryHash = true;
       showView('resetView');
       document.querySelector('.reset-card h2').textContent = 'Set New Password';
       document.querySelector('.reset-card p').textContent = 'Enter your new password below.';
-      var input = document.getElementById('resetEmail');
-      input.style.display = '';
-      input.type = 'password';
-      input.value = '';
-      input.placeholder = 'New password';
-      document.getElementById('resetSuccess').classList.remove('visible');
-      document.getElementById('resetError').classList.remove('visible');
-      var btn = document.getElementById('resetBtn');
-      btn.style.display = '';
-      btn.textContent = 'Update Password';
+      document.getElementById('resetEmail').type = 'password';
+      document.getElementById('resetEmail').placeholder = 'New password';
+      document.getElementById('resetBtn').textContent = 'Update Password';
     }
 
-    // Reset view, "request a fresh link" mode — shown when a recovery link is expired,
-    // already used, or opened in a different browser (no session could be established).
-    function showResetRequest(message) {
-      isRecoveryHash = false;
-      showView('resetView');
-      document.querySelector('.reset-card h2').textContent = 'Reset Your Password';
-      document.querySelector('.reset-card p').textContent = 'Enter your email and we’ll send you a reset link.';
-      var input = document.getElementById('resetEmail');
-      input.style.display = '';
-      input.type = 'email';
-      input.value = '';
-      input.placeholder = 'you@school.edu.sg';
-      document.getElementById('resetSuccess').classList.remove('visible');
-      var btn = document.getElementById('resetBtn');
-      btn.style.display = '';
-      btn.textContent = 'Send Reset Link';
-      var err = document.getElementById('resetError');
-      if (message) {
-        err.textContent = message;
-        err.classList.add('visible');
-      } else {
-        err.classList.remove('visible');
+    // If we already detected a recovery URL synchronously, show the reset view immediately
+    if (isRecoveryHash) {
+      showRecoveryView();
+    }
+
+    // Listen for auth state changes — fallback for legacy hash flow
+    sb.auth.onAuthStateChange(function(event, session) {
+      console.log('Auth event:', event);
+      if (event === 'PASSWORD_RECOVERY') {
+        isRecoveryHash = true;
+        showRecoveryView();
+      } else if (event === 'SIGNED_IN' && !isRecoveryHash) {
+        showDashboard(session.user);
       }
-    }
-
-    function parseHashParams() {
-      return new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
-    }
-
-    function cleanAuthParamsFromUrl() {
-      try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
-    }
-
-    function prettifyAuthError(raw) {
-      return decodeURIComponent(String(raw).replace(/\+/g, ' '));
-    }
-
-    var EXPIRED_MSG = 'That reset link has expired or was already used. Enter your email to get a new one.';
-
-    // Deterministically route an auth redirect (recovery / magic link / error) before
-    // falling back to the normal "already signed in?" check. Resolves to true when it has
-    // shown a terminal recovery or error view (so the dashboard check is skipped).
-    function handleAuthRedirect() {
-      var search = new URLSearchParams(window.location.search);
-      var hashParams = parseHashParams();
-
-      // Show an interim "verifying" state immediately so a recovery landing never flashes
-      // the login form (and never shows the password box before the session is confirmed).
-      if (search.has('code') || hashParams.get('type') === 'recovery') {
-        showView('resetView');
-        document.querySelector('.reset-card h2').textContent = 'Verifying…';
-        document.querySelector('.reset-card p').textContent = 'Checking your reset link, one moment.';
-        document.getElementById('resetEmail').style.display = 'none';
-        document.getElementById('resetBtn').style.display = 'none';
-        document.getElementById('resetError').classList.remove('visible');
-      }
-
-      // Supabase appends error_description=... when a link is invalid or expired.
-      var errDesc = search.get('error_description') || hashParams.get('error_description');
-      if (errDesc) {
-        cleanAuthParamsFromUrl();
-        showResetRequest(prettifyAuthError(errDesc) + '. Enter your email to get a new link.');
-        return Promise.resolve(true);
-      }
-
-      // PKCE link (portal-initiated reset): ?code=...
-      if (search.has('code')) {
-        isRecoveryHash = true; // guard against any stray SIGNED_IN before the exchange resolves
-        return sb.auth.exchangeCodeForSession(search.get('code')).then(function(res) {
-          cleanAuthParamsFromUrl();
-          if (res.error || !(res.data && res.data.session)) {
-            showResetRequest(EXPIRED_MSG);
-          } else {
-            showRecoveryView();
-          }
-          return true;
-        }).catch(function() {
-          cleanAuthParamsFromUrl();
-          showResetRequest(EXPIRED_MSG);
-          return true;
-        });
-      }
-
-      // Implicit hash link: #access_token=...&type=recovery|magiclink|signup
-      if (hashParams.get('access_token')) {
-        var type = hashParams.get('type');
-        if (type === 'recovery') { isRecoveryHash = true; }
-        return sb.auth.setSession({
-          access_token: hashParams.get('access_token'),
-          refresh_token: hashParams.get('refresh_token')
-        }).then(function(r) {
-          cleanAuthParamsFromUrl();
-          if (type === 'recovery') {
-            if (r.error || !(r.data && r.data.session)) {
-              showResetRequest(EXPIRED_MSG);
-            } else {
-              showRecoveryView();
-            }
-            return true;
-          }
-          // magic link / signup confirmation: session is set, let getSession() show the dashboard
-          if (r.error) {
-            var le = document.getElementById('loginError');
-            le.textContent = 'Your sign-in link has expired. Please request a new one or sign in with your password.';
-            le.classList.add('visible');
-            return true;
-          }
-          return false;
-        }).catch(function() {
-          cleanAuthParamsFromUrl();
-          if (type === 'recovery') {
-            showResetRequest(EXPIRED_MSG);
-            return true;
-          }
-          return false;
-        });
-      }
-
-      return Promise.resolve(false);
-    }
-
-    // Log auth events to the console to aid future debugging (no UI side effects here —
-    // every view transition is driven explicitly).
-    sb.auth.onAuthStateChange(function(event) { console.log('Auth event:', event); });
+    });
 
     // Open the signup view with a join code prefilled when linked as portal.html?join=CODE
-    // (used by the public TYS lead-magnet "free practice" CTA). We deliberately use ?join=
-    // and NOT ?code=, because ?code= is reserved above for PKCE password-reset links.
+    // (used by the public TYS lead-magnet "free practice" CTA).
     function maybeOpenSignupFromQuery() {
       try {
         var code = new URLSearchParams(window.location.search).get('join');
@@ -504,17 +389,14 @@
       } catch (e) {}
     }
 
-    // Boot: route any auth redirect first, then fall back to the normal session check.
-    handleAuthRedirect().then(function(handled) {
-      if (handled) return;
-      return sb.auth.getSession().then(function(result) {
-        if (result.data && result.data.session) {
-          showDashboard(result.data.session.user);
-        } else {
-          maybeOpenSignupFromQuery();
-        }
-      });
-    }).catch(function(e) { console.error('Auth init failed:', e); });
+    // Also check existing session for normal page loads (no hash)
+    sb.auth.getSession().then(function(result) {
+      if (result.data && result.data.session && !isRecoveryHash) {
+        showDashboard(result.data.session.user);
+      } else if (!isRecoveryHash) {
+        maybeOpenSignupFromQuery();
+      }
+    }).catch(function(e) { console.error('Session check failed:', e); });
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
@@ -618,7 +500,7 @@
 
     document.getElementById('forgotLink').addEventListener('click', function(e) {
       e.preventDefault();
-      showResetRequest();
+      showView('resetView');
     });
 
     document.getElementById('backToLogin').addEventListener('click', function(e) {
@@ -627,63 +509,33 @@
     });
 
     document.getElementById('resetBtn').addEventListener('click', function() {
+      var isRecovery = isRecoveryHash;
       var btn = document.getElementById('resetBtn');
-      var errEl = document.getElementById('resetError');
-      if (isRecoveryHash) {
+      if (isRecovery) {
         var newPass = document.getElementById('resetEmail').value.trim();
-        errEl.classList.remove('visible');
-        if (newPass.length < 6) {
-          errEl.textContent = 'Password must be at least 6 characters.';
-          errEl.classList.add('visible');
-          return;
-        }
-        btn.disabled = true;
-        btn.textContent = 'Updating...';
-        // Confirm the recovery session is still valid before attempting the update,
-        // so an expired/used link shows a clear message instead of "Auth session missing!".
-        sb.auth.getSession().then(function(s) {
-          if (!s.data || !s.data.session) {
-            btn.disabled = false;
-            showResetRequest('Your reset link is no longer valid. Enter your email to get a new one.');
-            return;
+        sb.auth.updateUser({ password: newPass }).then(function(result) {
+          if (result.error) {
+            document.getElementById('resetError').textContent = result.error.message;
+            document.getElementById('resetError').classList.add('visible');
+          } else {
+            alert('Password updated! Please sign in.');
+            window.location.hash = '';
+            showView('loginView');
           }
-          return sb.auth.updateUser({ password: newPass }).then(function(result) {
-            btn.disabled = false;
-            btn.textContent = 'Update Password';
-            if (result.error) {
-              errEl.textContent = result.error.message;
-              errEl.classList.add('visible');
-            } else {
-              cleanAuthParamsFromUrl();
-              isRecoveryHash = false;
-              alert('Password updated! Please sign in.');
-              showView('loginView');
-            }
-          });
-        }).catch(function(err) {
-          btn.disabled = false;
-          btn.textContent = 'Update Password';
-          errEl.textContent = 'Something went wrong: ' + err.message;
-          errEl.classList.add('visible');
         });
       } else {
         var email = document.getElementById('resetEmail').value.trim();
-        errEl.classList.remove('visible');
+        document.getElementById('resetError').classList.remove('visible');
         document.getElementById('resetSuccess').classList.remove('visible');
-        if (!email) {
-          errEl.textContent = 'Please enter your email address.';
-          errEl.classList.add('visible');
-          return;
-        }
         btn.disabled = true;
         btn.textContent = 'Sending...';
-        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname })
+        sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href })
           .then(function(result) {
             btn.disabled = false;
             btn.textContent = 'Send Reset Link';
             if (result.error) {
-              errEl.textContent = result.error.message;
-              errEl.classList.add('visible');
+              document.getElementById('resetError').textContent = result.error.message;
+              document.getElementById('resetError').classList.add('visible');
             } else {
               document.getElementById('resetSuccess').classList.add('visible');
             }

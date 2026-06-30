@@ -127,7 +127,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1.2,paused=false,lastT=0;
+let W,H,state=0,prog=0,speed=1.2,paused=false,lastT=0,holdSince=0;
 let arrowProg=0,straightProg=0,arrow2Prog=0,straight2Prog=0,arcRestoreProg=0;
 
 function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight;}
@@ -282,6 +282,9 @@ const NARR=[
   "The product is chlorobenzene, with aromaticity fully restored and the iron three chloride catalyst regenerated."
 ];
 function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+// True while the current step's narration is still being spoken — used to hold the
+// animation at the end of a stage so the voiceover is never cut off mid-sentence.
+function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }
 const voiceBtn=document.getElementById('voiceBtn');
 function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
 if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
@@ -306,18 +309,38 @@ function drawLoop(ts){
   const sf=speed*f;
   if(!paused){
     if(state===1){
-      prog+=0.004*sf;
-      arrowProg=Math.min(1,arrowProg+0.007*sf);
-      if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.008*sf);
-      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
+      if(prog<1){
+        prog=Math.min(1,prog+0.004*sf);
+        arrowProg=Math.min(1,arrowProg+0.007*sf);
+        if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.008*sf);
+        holdSince=0;
+      } else {
+        // Attack animation done — hold here until the step-1 narration finishes
+        // (or a 14s safety cap) so the voiceover is not cut off mid-sentence.
+        straightProg=Math.min(1,straightProg+0.008*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
+        }
+      }
     } else if(state===3){
-      prog+=0.005*sf;
-      arrow2Prog=Math.min(1,arrow2Prog+0.007*sf);
-      if(arrow2Prog>=1){
+      if(prog<1){
+        prog=Math.min(1,prog+0.005*sf);
+        arrow2Prog=Math.min(1,arrow2Prog+0.007*sf);
+        if(arrow2Prog>=1){
+          straight2Prog=Math.min(1,straight2Prog+0.008*sf);
+          arcRestoreProg=Math.min(1,arcRestoreProg+0.008*sf);
+        }
+        holdSince=0;
+      } else {
+        // Keep restoring aromaticity visuals while the step-2 narration finishes.
         straight2Prog=Math.min(1,straight2Prog+0.008*sf);
         arcRestoreProg=Math.min(1,arcRestoreProg+0.008*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;state=4;prog=1;setStep(4);
+        }
       }
-      if(prog>=1){state=4;prog=1;setStep(4);}
     } else if(state===4){
       arcRestoreProg=Math.min(1,arcRestoreProg+0.008*sf);
       straight2Prog=Math.min(1,straight2Prog+0.008*sf);

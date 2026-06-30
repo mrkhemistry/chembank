@@ -491,20 +491,20 @@ function drawLoop(ts){
   // Carbocation + charge on C2 in state 2+
   if(state>=2&&state<4||(state===3&&straight2Prog<1)){
     ctx.font='bold 18px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';
-    ctx.fillText('+',C1x-26,C1y-24);
+    ctx.fillText('+',C1x+26,C1y-24);
     ctx.font='10px Arial';ctx.fillStyle='#94a3b8';
     ctx.fillText('sp\u00b3',C1x,C1y+34);
   }
 
   // Br- label and lone pair in state 2,3
   if(state===2||state===3){
-    ctx.font='11px Arial';ctx.fillStyle='#a78bfa';ctx.textAlign='center';
+    ctx.font='11px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';
     ctx.fillText('Br\u207b',br2x,br2y-32);
     const lpAlpha=state===3?Math.max(0,1-arrow2Prog):1;
     const lpDx=C1x-br2x, lpDy=C1y-br2y, lpDl=Math.sqrt(lpDx*lpDx+lpDy*lpDy)||1;
     const lpAngle=Math.atan2(lpDy,lpDx);
     ctx.globalAlpha=lpAlpha;
-    drawLonePair(br2x+lpDx/lpDl*22, br2y+lpDy/lpDl*22, lpAngle,'#a78bfa');
+    drawLonePair(br2x+lpDx/lpDl*22, br2y+lpDy/lpDl*22, lpAngle,'#fbbf24');
     ctx.globalAlpha=1;
   }
 

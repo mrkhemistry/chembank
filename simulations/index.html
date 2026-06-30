@@ -613,10 +613,27 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const cx=72,cy=82,rr=42;
   const hex=[];
   for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3;hex.push({x:cx+rr*Math.cos(a),y:cy+rr*Math.sin(a)});}
-  ctx.strokeStyle='#d4ef00';ctx.lineWidth=3;
-  ctx.beginPath();hex.forEach((p,i)=>{if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);});
-  ctx.closePath();ctx.stroke();
-  ctx.beginPath();ctx.arc(cx,cy,rr*.55,0,Math.PI*2);ctx.strokeStyle='#d4ef00';ctx.lineWidth=2.4;ctx.stroke();
+  // Ring bonds \u2014 thick 3D bonds
+  for(let i=0;i<6;i++) rod(ctx,hex[i].x,hex[i].y,hex[(i+1)%6].x,hex[(i+1)%6].y);
+  // Aromatic pi system \u2014 pale-yellow 3D donut
+  (function(midR,tube){
+    const inner=midR-tube, outer=midR+tube;
+    const g=ctx.createRadialGradient(cx,cy,inner,cx,cy,outer);
+    g.addColorStop(0,'rgba(253,224,71,.85)');
+    g.addColorStop(.5,'rgba(254,240,138,1)');
+    g.addColorStop(1,'rgba(253,224,71,.8)');
+    ctx.beginPath();ctx.arc(cx,cy,outer,0,Math.PI*2);ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fillStyle=g;ctx.fill('evenodd');
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,outer,0,Math.PI*2);ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.clip('evenodd');
+    const hl=ctx.createRadialGradient(cx-midR*.55,cy-midR*.55,tube*.2,cx-midR*.3,cy-midR*.3,midR*1.5);
+    hl.addColorStop(0,'rgba(255,255,255,.45)');hl.addColorStop(.55,'rgba(255,255,255,0)');
+    ctx.fillStyle=hl;ctx.fillRect(cx-outer,cy-outer,outer*2,outer*2);ctx.restore();
+    ctx.strokeStyle='rgba(254,240,138,.5)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(cx,cy,outer,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.stroke();
+  })(rr*.55,4.5);
+  // Grey 3D carbon atoms at the ring vertices
+  for(let i=0;i<6;i++) atom(ctx,hex[i].x,hex[i].y,6,'#94a3b8');
+  // Cl+ electrophile + curly arrow
   const clX=170,clY=82;
   atom(ctx,clX,clY,17,'#22d3ee','Cl\u207a');
   arrow(ctx,cx+rr-4,cy-8,clX-17,clY-3,(cx+clX)/2,cy-46);

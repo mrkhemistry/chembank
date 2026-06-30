@@ -127,7 +127,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1.2,paused=false;
+let W,H,state=0,prog=0,speed=1.2,paused=false,lastT=0;
 let arrowProg=0,straightProg=0,arrow2Prog=0,straight2Prog=0,arcRestoreProg=0;
 
 function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight;}
@@ -195,11 +195,79 @@ function drawAtomSphere(x,y,r,col,lbl){
   h.addColorStop(1,'rgba(255,255,255,0)');
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
   ctx.fillStyle=h;ctx.fill();
-  const isLight=col==='#e2e8f0'||col==='#22d3ee';
+  const isLight=col==='#e2e8f0'||col==='#22d3ee'||col==='#bbf7d0';
   ctx.fillStyle=isLight?'#0f172a':'rgba(255,255,255,0.92)';
   ctx.font='bold '+Math.max(8,Math.round(r*0.55))+'px Arial';
   ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText(lbl,x,y+1);
+}
+
+// Draws the delocalised aromatic pi system as a shaded 3D torus (donut).
+function drawPiTorus(cx,cy,midR,tube,alpha){
+  if(alpha<=0) return;
+  const inner=Math.max(0,midR-tube), outer=midR+tube;
+  // Rounded-tube cross-section: dark inner/outer edges, bright crown along the middle
+  const g=ctx.createRadialGradient(cx,cy,inner,cx,cy,outer);
+  g.addColorStop(0,   'rgba(253,224,71,'+(alpha*0.85)+')');
+  g.addColorStop(0.5, 'rgba(254,240,138,'+(alpha*1.0)+')');
+  g.addColorStop(1,   'rgba(253,224,71,'+(alpha*0.8)+')');
+  ctx.beginPath();
+  ctx.arc(cx,cy,outer,0,Math.PI*2);
+  ctx.arc(cx,cy,inner,0,Math.PI*2);
+  ctx.fillStyle=g;ctx.fill('evenodd');
+  // Directional gloss (light from upper-left), clipped to the tube
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx,cy,outer,0,Math.PI*2);
+  ctx.arc(cx,cy,inner,0,Math.PI*2);
+  ctx.clip('evenodd');
+  const hl=ctx.createRadialGradient(cx-midR*0.55,cy-midR*0.55,tube*0.2,cx-midR*0.3,cy-midR*0.3,midR*1.5);
+  hl.addColorStop(0,'rgba(255,255,255,'+(alpha*0.5)+')');
+  hl.addColorStop(0.55,'rgba(255,255,255,0)');
+  ctx.fillStyle=hl;ctx.fillRect(cx-outer,cy-outer,outer*2,outer*2);
+  ctx.restore();
+  // Crisp edges for definition
+  ctx.strokeStyle='rgba(254,240,138,'+(alpha*0.45)+')';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,outer,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.stroke();
+}
+
+// Draws an incomplete (arc) section of the pi tube — used for the arenium ion,
+// where delocalisation only spans 5 of the 6 carbons (the sp3 carbon breaks the ring).
+function drawPiTorusArc(cx,cy,midR,tube,a0,a1,alpha){
+  if(alpha<=0) return;
+  const inner=Math.max(0,midR-tube), outer=midR+tube;
+  const sector=function(){
+    ctx.beginPath();
+    ctx.arc(cx,cy,outer,a0,a1,false);
+    ctx.arc(cx,cy,inner,a1,a0,true);
+    ctx.closePath();
+  };
+  // Concentric cross-section shading (same yellow tube as the full ring)
+  const g=ctx.createRadialGradient(cx,cy,inner,cx,cy,outer);
+  g.addColorStop(0,   'rgba(253,224,71,'+(alpha*0.85)+')');
+  g.addColorStop(0.5, 'rgba(254,240,138,'+(alpha*1.0)+')');
+  g.addColorStop(1,   'rgba(253,224,71,'+(alpha*0.8)+')');
+  sector();ctx.fillStyle=g;ctx.fill();
+  // Rounded tube ends
+  [a0,a1].forEach(function(a){
+    const ex=cx+midR*Math.cos(a), ey=cy+midR*Math.sin(a);
+    const cg=ctx.createRadialGradient(ex,ey,0,ex,ey,tube);
+    cg.addColorStop(0,'rgba(254,240,138,'+(alpha*1.0)+')');
+    cg.addColorStop(1,'rgba(253,224,71,'+(alpha*0.82)+')');
+    ctx.beginPath();ctx.arc(ex,ey,tube,0,Math.PI*2);ctx.fillStyle=cg;ctx.fill();
+  });
+  // Directional gloss, clipped to the sector
+  ctx.save();sector();ctx.clip();
+  const hl=ctx.createRadialGradient(cx-midR*0.55,cy-midR*0.55,tube*0.2,cx-midR*0.3,cy-midR*0.3,midR*1.5);
+  hl.addColorStop(0,'rgba(255,255,255,'+(alpha*0.45)+')');
+  hl.addColorStop(0.55,'rgba(255,255,255,0)');
+  ctx.fillStyle=hl;ctx.fillRect(cx-outer,cy-outer,outer*2,outer*2);
+  ctx.restore();
+  // Crisp curved edges (not the radial ends — those are rounded by the caps)
+  ctx.strokeStyle='rgba(254,240,138,'+(alpha*0.45)+')';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,outer,a0,a1,false);ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,inner,a0,a1,false);ctx.stroke();
 }
 
 /* --- Voiceover (Web Speech API) --- */
@@ -213,7 +281,7 @@ const NARR=[
   "In the fast step, the tetrachloroferrate ion removes a hydrogen ion from that carbon. The bonding electrons return to the ring, restoring aromaticity.",
   "The product is chlorobenzene, with aromaticity fully restored and the iron three chloride catalyst regenerated."
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
 const voiceBtn=document.getElementById('voiceBtn');
 function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
 if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
@@ -227,25 +295,32 @@ function setStep(n){
   lastSpokenStep=n;
 }
 
-function drawLoop(){
+function drawLoop(ts){
   if(!document.getElementById('chemCanvas')) return;
+  // Frame-rate independent timing: normalise increments to a 60fps baseline so the
+  // animation runs at the same real-world speed on 60/120/144Hz displays.
+  if(ts===undefined) ts=lastT;
+  let f=(lastT&&ts>lastT)?(ts-lastT)/(1000/60):1;
+  lastT=ts;
+  if(f>4)f=4;  // cap after a tab-switch/stall so progress can't leap forward
+  const sf=speed*f;
   if(!paused){
     if(state===1){
-      prog+=0.004*speed;
-      arrowProg=Math.min(1,arrowProg+0.007*speed);
-      if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.008*speed);
+      prog+=0.004*sf;
+      arrowProg=Math.min(1,arrowProg+0.007*sf);
+      if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.008*sf);
       if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
     } else if(state===3){
-      prog+=0.005*speed;
-      arrow2Prog=Math.min(1,arrow2Prog+0.007*speed);
+      prog+=0.005*sf;
+      arrow2Prog=Math.min(1,arrow2Prog+0.007*sf);
       if(arrow2Prog>=1){
-        straight2Prog=Math.min(1,straight2Prog+0.008*speed);
-        arcRestoreProg=Math.min(1,arcRestoreProg+0.008*speed);
+        straight2Prog=Math.min(1,straight2Prog+0.008*sf);
+        arcRestoreProg=Math.min(1,arcRestoreProg+0.008*sf);
       }
       if(prog>=1){state=4;prog=1;setStep(4);}
     } else if(state===4){
-      arcRestoreProg=Math.min(1,arcRestoreProg+0.008*speed);
-      straight2Prog=Math.min(1,straight2Prog+0.008*speed);
+      arcRestoreProg=Math.min(1,arcRestoreProg+0.008*sf);
+      straight2Prog=Math.min(1,straight2Prog+0.008*sf);
     }
   }
 
@@ -293,22 +368,20 @@ function drawLoop(){
   // === DRAW ===
 
   // Ring bonds
-  ctx.strokeStyle='rgba(255,255,255,0.65)';ctx.lineWidth=2.5;
+  ctx.strokeStyle='rgba(255,255,255,0.8)';ctx.lineWidth=4;ctx.lineCap='round';
   for(let i=0;i<6;i++){
     ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[(i+1)%6].x,pts[(i+1)%6].y);ctx.stroke();
   }
 
-  // Pi arc (full circle)
+  // Pi system (full delocalised ring) — rendered as a shaded 3D donut
   if(arcAlpha>0){
-    ctx.beginPath();ctx.arc(cx,cy,ringR*0.55,0,Math.PI*2,false);
-    ctx.strokeStyle='rgba(255,255,255,'+(arcAlpha*0.6)+')';ctx.lineWidth=2;ctx.setLineDash([]);ctx.stroke();
+    drawPiTorus(cx,cy,ringR*0.55,ringR*0.07,arcAlpha);
   }
   // Partial arc (arenium ion bottom 5 carbons) — shown in state 3 before aromaticity fully restores
   if(state===3){
-    const partialAlpha=Math.max(0,1-arcRestoreProg)*0.6;
+    const partialAlpha=Math.max(0,1-arcRestoreProg);
     if(partialAlpha>0){
-      ctx.beginPath();ctx.arc(cx,cy,ringR*0.55,-Math.PI/6,Math.PI+Math.PI/6,false);
-      ctx.strokeStyle='rgba(255,255,255,'+partialAlpha+')';ctx.lineWidth=2;ctx.setLineDash([]);ctx.stroke();
+      drawPiTorusArc(cx,cy,ringR*0.55,ringR*0.07,-Math.PI/6,Math.PI+Math.PI/6,partialAlpha);
     }
     // Also show + in centre fading out
     if(partialAlpha>0){
@@ -317,32 +390,34 @@ function drawLoop(){
     }
   }
 
-  // Ring vertices
-  for(let i=0;i<6;i++){
-    ctx.beginPath();ctx.arc(pts[i].x,pts[i].y,6,0,Math.PI*2);
-    ctx.fillStyle='rgba(148,163,184,0.9)';ctx.fill();
-  }
+  // Ring carbon atoms are drawn later (after the C-Cl / C-H bonds) so the
+  // 3D spheres sit cleanly on top of the bond ends.
 
   // Cl-C bond fades in as straightProg completes
   if(state===1&&straightProg>0.8){
-    ctx.strokeStyle='rgba(255,255,255,'+((straightProg-0.8)/0.2*0.5)+')';ctx.lineWidth=2;
+    ctx.strokeStyle='rgba(255,255,255,'+((straightProg-0.8)/0.2*0.7)+')';ctx.lineWidth=3.5;
     ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(clX,clY);ctx.stroke();
   }
   if(state>=2&&state<4){
-    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=3.5;
     ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(clX,clY);ctx.stroke();
   }
   if(state===4){
-    ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;
+    ctx.strokeStyle='rgba(255,255,255,0.7)';ctx.lineWidth=3.5;
     ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);ctx.lineTo(clX,clY);ctx.stroke();
   }
 
   // H bond — fades as H drifts in state 3
   if(showH){
-    const hBondAlpha=state===3?(1-straight2Prog)*0.5:0.5;
-    ctx.strokeStyle='rgba(255,255,255,'+hBondAlpha+')';ctx.lineWidth=2;
+    const hBondAlpha=state===3?(1-straight2Prog)*0.7:0.7;
+    ctx.strokeStyle='rgba(255,255,255,'+hBondAlpha+')';ctx.lineWidth=3.5;
     ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
     ctx.lineTo(state===3?hDriftX:hX,state===3?hDriftY:hY);ctx.stroke();
+  }
+
+  // Ring carbon atoms — grey 3D spheres (matches atom styling in the other animations)
+  for(let i=0;i<6;i++){
+    drawAtomSphere(pts[i].x,pts[i].y,10,'#94a3b8','');
   }
 
   // Cl label
@@ -353,14 +428,13 @@ function drawLoop(){
   if(showH){
     const hLblX=state===3?hDriftX:hX+8;
     const hLblY=state===3?hDriftY:hY-6;
-    drawAtomSphere(hLblX,hLblY,14,'#e2e8f0','H');
+    drawAtomSphere(hLblX,hLblY,14,'#bbf7d0','H');
   }
 
   // Arenium ion intermediate
   if(state===2&&paused){
-    // Solid arc bottom 5 carbons (delocalised pi)
-    ctx.beginPath();ctx.arc(cx,cy,ringR*0.55,-Math.PI/6,Math.PI+Math.PI/6,false);
-    ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2;ctx.setLineDash([]);ctx.stroke();
+    // Incomplete pi tube over the 5 delocalised carbons (sp3 carbon breaks the ring)
+    drawPiTorusArc(cx,cy,ringR*0.55,ringR*0.07,-Math.PI/6,Math.PI+Math.PI/6,1);
     // + in centre
     ctx.font='bold 24px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText('+',cx,cy);

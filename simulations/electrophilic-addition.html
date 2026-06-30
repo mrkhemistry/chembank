@@ -129,7 +129,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1.2,paused=false;
+let W,H,state=0,prog=0,speed=1.2,paused=false,lastT=0,holdSince=0;
 let arrowProg=0,straightProg=0;
 let brBondFade=0;
 let arrow2Prog=0,straight2Prog=0;
@@ -254,7 +254,10 @@ const NARR=[
   "In the fast step, the bromide ion uses a lone pair to attack the carbocation, forming a new carbon to bromine bond.",
   "The product is 1,2-dibromoethane. The electrophilic addition is complete."
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+// True while the current step's narration is still being spoken — used to hold the
+// animation at the end of a stage so the voiceover is never cut off mid-sentence.
+function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }
 const voiceBtn=document.getElementById('voiceBtn');
 function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
 if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
@@ -268,22 +271,49 @@ function setStep(n){
   lastSpokenStep=n;
 }
 
-function drawLoop(){
+function drawLoop(ts){
   if(!document.getElementById('chemCanvas')) return;
+  // Frame-rate independent timing: normalise increments to a 60fps baseline so the
+  // animation runs at the same real-world speed on 60/120/144Hz displays.
+  if(ts===undefined) ts=lastT;
+  let f=(lastT&&ts>lastT)?(ts-lastT)/(1000/60):1;
+  lastT=ts;
+  if(f>4)f=4;  // cap after a tab-switch/stall so progress can't leap forward
+  const sf=speed*f;
   if(!paused){
     if(state===1){
-      prog+=0.004*speed;
-      arrowProg=Math.min(1,arrowProg+0.007*speed);
-      if(arrowProg>=1){
-        straightProg=Math.min(1,straightProg+0.008*speed);
-        brBondFade=Math.min(1,brBondFade+0.01*speed);
+      if(prog<1){
+        prog=Math.min(1,prog+0.004*sf);
+        arrowProg=Math.min(1,arrowProg+0.007*sf);
+        if(arrowProg>=1){
+          straightProg=Math.min(1,straightProg+0.008*sf);
+          brBondFade=Math.min(1,brBondFade+0.01*sf);
+        }
+        holdSince=0;
+      } else {
+        // Attack animation done — hold here until the step-1 narration finishes
+        // (or a 14s safety cap) so the voiceover is not cut off mid-sentence.
+        straightProg=Math.min(1,straightProg+0.008*sf);
+        brBondFade=Math.min(1,brBondFade+0.01*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
+        }
       }
-      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
     } else if(state===3){
-      prog+=0.005*speed;
-      arrow2Prog=Math.min(1,arrow2Prog+0.008*speed);
-      if(arrow2Prog>=1) straight2Prog=Math.min(1,straight2Prog+0.009*speed);
-      if(prog>=1){state=4;prog=1;setStep(4);}
+      if(prog<1){
+        prog=Math.min(1,prog+0.005*sf);
+        arrow2Prog=Math.min(1,arrow2Prog+0.008*sf);
+        if(arrow2Prog>=1) straight2Prog=Math.min(1,straight2Prog+0.009*sf);
+        holdSince=0;
+      } else {
+        // Keep forming the C-Br bond while the step-2 narration finishes.
+        straight2Prog=Math.min(1,straight2Prog+0.009*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;state=4;prog=1;setStep(4);
+        }
+      }
     }
   }
 
@@ -509,8 +539,9 @@ function drawLoop(){
     if(straightProg<1){
       drawCurlyArrow(startX,startY,endX,endY,cpX,cpY,'#ffffff',arrowProg);
     }
-    // Simultaneously: Br-Br bond midpoint → Br2
-    if(arrowProg>0.3){
+    // Simultaneously: Br-Br bond midpoint → Br2 (hide once fission completes so it
+    // doesn't linger while the step holds for narration)
+    if(arrowProg>0.3&&brBondFade<1){
       const t2=Math.min(1,(arrowProg-0.3)/0.7);
       const bbMidX=(br1x+br2x)/2, bbMidY=(br1y+br2y)/2;
       const cpBrX=bbMidX, cpBrY=bbMidY-45;

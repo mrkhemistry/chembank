@@ -483,8 +483,10 @@ function drawLoop(ts){
     ctx.fillStyle='#94a3b8';ctx.fillText('benzene',cx,cy+ringR+32);
   }
 
-  // State 1: ring centre → Cl+, arrow traces then straightens into C-Cl bond
-  if(state===1){
+  // State 1: ring centre → Cl+, arrow traces then straightens into C-Cl bond.
+  // Stop once fully straight so the arrowhead doesn't linger while the step holds
+  // for narration (the C-Cl bond line takes over).
+  if(state===1&&straightProg<1){
     // Start from ring centre (middle of circle)
     const endX=clX, endY=clY-12;
     // Start lerps from ring centre → pts[0] as it straightens

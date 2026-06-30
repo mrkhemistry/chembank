@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Plane-Polarised Light &amp; Optical Activity — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Premium-sim access guard -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./_auth-guard.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e8eef6;font-family:'Inter',sans-serif;min-height:100vh}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#1e293b;border-bottom:1px solid #334155}
+nav a{color:#e8eef6;text-decoration:none;font-size:0.9rem;display:flex;align-items:center;gap:6px;transition:color 0.2s}
+nav a:hover{color:#7adce8}
+nav .title{font-family:'Poppins',sans-serif;font-weight:700;font-size:1.15rem;color:#fff}
+nav .tags{display:flex;gap:8px}
+nav .tag{font-size:0.7rem;padding:3px 10px;border-radius:50px;background:#1b8c9c22;color:#7adce8;font-weight:600;letter-spacing:0.03em}
+
+#defBox{max-width:1100px;margin:18px auto 0;padding:0 20px}
+#defBox .def-inner{background:#1e293b;border:1px solid #334155;border-left:3px solid #1b8c9c;border-radius:12px;padding:14px 18px}
+#defBox .def-label{font-family:'Poppins',sans-serif;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:#e8eef6;margin-bottom:5px}
+#defBox .def-text{font-size:0.95rem;line-height:1.6;color:#e8eef6}
+
+#simw{max-width:1100px;margin:18px auto;padding:0 20px}
+#topRow{display:flex;gap:18px;margin-bottom:18px}
+#cWrap{flex:1;background:#0b1322;border-radius:12px;border:1px solid #334155;overflow:hidden;position:relative;min-height:430px}
+#chemCanvas{display:block;width:100%;height:100%}
+#sidePanel{width:262px;display:flex;flex-direction:column;gap:12px}
+
+.panel{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:15px}
+.panel h3{font-family:'Poppins',sans-serif;font-size:0.8rem;color:#e8eef6;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px}
+#stepText{font-size:0.9rem;line-height:1.6;color:#e8eef6}
+#stepText .hl{color:#fbbf24;font-weight:600}
+.rd-row{display:flex;justify-content:space-between;align-items:baseline;font-size:0.86rem;margin-bottom:9px;color:#e8eef6}
+.rd-row:last-child{margin-bottom:0}
+.rd-row .val{font-family:'Poppins',sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
+.val.theta{color:#fbbf24}
+.val.ana{color:#7adce8}
+.val.bright{color:#86efac}
+#alignBadge{margin-top:6px;display:inline-flex;align-items:center;gap:6px;font-size:0.74rem;font-weight:600;padding:4px 11px;border-radius:50px;background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.3)}
+#alignBadge.ok{background:rgba(52,211,153,0.16);color:#6ee7b7;border-color:rgba(52,211,153,0.4)}
+#alignBadge .pip{width:7px;height:7px;border-radius:50%;background:currentColor}
+.rd-foot{margin-top:11px;padding-top:11px;border-top:1px solid #334155;font-size:0.76rem;color:#e8eef6;line-height:1.5}
+
+#botBar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.ctrl-group{display:flex;align-items:center;gap:8px;background:#1e293b;padding:8px 14px;border-radius:10px;border:1px solid #334155}
+.ctrl-group label{font-size:0.78rem;color:#e8eef6;white-space:nowrap}
+.ctrl-group input[type=range]{width:140px;accent-color:#1b8c9c}
+.ctrl-group .val-display{color:#7adce8;font-weight:600;font-size:0.85rem;min-width:78px;text-align:right}
+.bp{padding:8px 18px;background:#1b8c9c;color:#fff;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s}
+.bp:hover{background:#136d7a;transform:translateY(-1px)}
+.bs{padding:8px 14px;background:#334155;color:#e8eef6;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:500;font-size:0.82rem;cursor:pointer;transition:all 0.2s}
+.bs:hover{background:#475569}
+.bs.von{background:#1b8c9c;color:#fff}
+.bs.von:hover{background:#136d7a}
+.bs:disabled{opacity:0.5;cursor:not-allowed}
+
+.notes-grid{max-width:1100px;margin:0 auto 40px;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:16px}
+.note-card{background:#1e293b;border-radius:12px;border:1px solid #334155;padding:20px;transition:all 0.3s}
+.note-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.note-card h4{font-family:'Poppins',sans-serif;font-size:0.95rem;color:#e8eef6;margin-bottom:8px}
+.note-card p{font-size:0.85rem;line-height:1.6;color:#e8eef6}
+
+footer{text-align:center;padding:24px;color:#e8eef6;font-size:0.8rem;border-top:1px solid #1e293b}
+footer a{color:#1b8c9c;text-decoration:none}
+
+@media(max-width:768px){
+  #topRow{flex-direction:column}
+  #sidePanel{width:100%;flex-direction:row;flex-wrap:wrap}
+  .panel{flex:1;min-width:220px}
+  #cWrap{min-height:340px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="./index.html">← Back to Simulations</a>
+  <span class="title">Plane-Polarised Light &amp; Optical Activity</span>
+  <div class="tags">
+    <span class="tag">Interactive</span>
+    <span class="tag">Optical Activity</span>
+  </div>
+</nav>
+
+<section id="defBox">
+  <div class="def-inner">
+    <div class="def-label">Plane-polarised light</div>
+    <div class="def-text">Ordinary light vibrates in <strong>all</strong> planes perpendicular to its direction of travel. A polariser blocks every plane but one, so the light that emerges vibrates in just a <strong>single plane</strong> — this is plane-polarised light.</div>
+  </div>
+</section>
+
+<div id="simw">
+  <div id="topRow">
+    <div id="cWrap">
+      <canvas id="chemCanvas"></canvas>
+    </div>
+    <div id="sidePanel">
+      <div class="panel">
+        <h3>What's happening</h3>
+        <div id="stepText">Press <span class="hl">Start</span> to send light down the polarimeter, one stage at a time.</div>
+      </div>
+      <div class="panel">
+        <h3>Readout</h3>
+        <div class="rd-row"><span>Solution rotation</span><span class="val theta" id="thetaOut">+30°</span></div>
+        <div class="rd-row"><span>Analyser axis</span><span class="val ana" id="anaOut">0°</span></div>
+        <div class="rd-row"><span>Light reaching eye</span><span class="val bright" id="brightOut">0%</span></div>
+        <div id="alignBadge"><span class="pip"></span><span id="alignText">Analyser not aligned</span></div>
+        <div class="rd-foot">Drag the <strong>analyser</strong> disc to rotate it. When its axis matches the rotated plane, the light passes through and the angle read off is the optical rotation.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="botBar">
+    <button class="bp" id="startBtn">Start</button>
+    <button class="bs" id="resetBtn">Reset</button>
+    <div class="ctrl-group">
+      <label>Solution rotation</label>
+      <input type="range" id="rotSlider" min="-90" max="90" value="30" step="5">
+      <span class="val-display" id="rotVal">+30° (d)</span>
+    </div>
+    <button class="bs" id="alignBtn">Align analyser</button>
+    <button class="bs von" id="voiceBtn">Voice: On</button>
+  </div>
+</div>
+
+<div class="notes-grid">
+  <div class="note-card">
+    <h4>Unpolarised vs plane-polarised</h4>
+    <p>Light from an ordinary source vibrates in every plane at right angles to its path. <strong style="color:#fbbf24">Plane-polarised light</strong> vibrates in only one plane. A polariser (such as Polaroid) transmits one plane and absorbs the rest.</p>
+  </div>
+  <div class="note-card">
+    <h4>Optically active substances</h4>
+    <p>A substance is <strong style="color:#fbbf24">optically active</strong> if it rotates the plane of polarisation. This happens when its molecules are <strong>chiral</strong> (non-superimposable on their mirror image), e.g. a single enantiomer of a compound with a chiral carbon.</p>
+  </div>
+  <div class="note-card">
+    <h4>Clockwise or anticlockwise</h4>
+    <p>One enantiomer rotates the plane <strong>clockwise</strong> (<strong style="color:#fbbf24">dextrorotatory, +</strong>); its mirror image rotates it equally <strong>anticlockwise</strong> (<strong style="color:#fbbf24">laevorotatory, −</strong>). A 50:50 racemic mixture gives no net rotation.</p>
+  </div>
+  <div class="note-card">
+    <h4>The analyser measures it</h4>
+    <p>The <strong style="color:#fbbf24">analyser</strong> is a second polariser, rotated until the light passes through brightest. The angle it must be turned through is the <strong>observed rotation</strong>, which depends on the substance, concentration and path length.</p>
+  </div>
+</div>
+
+<footer>
+  <a href="./index.html">← Back to Simulations</a> &nbsp;·&nbsp; © Mr Khemistry
+</footer>
+
+<script>
+/* ===== POLARIMETER SIMULATION — 3D perspective, time-based ======= */
+const canvas = document.getElementById('chemCanvas');
+const ctx = canvas.getContext('2d');
+const DEG = Math.PI / 180;
+let W, H;
+function resize() { const wr = document.getElementById('cWrap'); W = canvas.width = wr.clientWidth; H = canvas.height = wr.clientHeight; }
+window.addEventListener('resize', resize);
+
+/* --- World layout (beam along world X; vibration drawn in an upright,
+       horizontally-foreshortened plane so discs read as clean ellipses) --- */
+const BULB = -300, BEAMSTART = -272, POL = -140, SAMPL = -50, SAMPR = 90, ANA = 210, EYE = 320;
+const R = 46, RT = 34, AMP = 25;          // disc radius, tube radius, wave amplitude
+const WK = 0.085, WW = 4.6;               // wave number, angular speed (slowed ~30%)
+const AY = 0.62, TILT = -0.2, FOV = 950, VS = 0.84;   // yaw, screen tilt, perspective scale
+
+/* --- State --- */
+let playing = false, done = false, front = BEAMSTART;
+let theta = 30, analyser = 0, draggingAna = false;
+let lastTs = 0, tSec = 0;
+
+/* --- Voiceover (Web Speech API) --- */
+const canSpeak = 'speechSynthesis' in window;
+let voiceOn = true; try { const sv = localStorage.getItem('simVoice'); if (sv !== null) voiceOn = sv === '1'; } catch (e) {}
+const NARR = {
+  '1': 'Light from the source vibrates in all planes at right angles to its path. This is unpolarised light.',
+  '2': 'The polariser lets through light vibrating in only one plane. The light is now plane-polarised.',
+  '3': 'As the light passes through the optically active solution, the chiral molecules rotate its plane of polarisation.',
+  '4': 'Rotate the analyser until the light passes through to the observer. The angle you turn it through is the optical rotation, clockwise or anticlockwise.'
+};
+function speak(t) { if (!voiceOn || !canSpeak || !t) return; try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-GB'; u.rate = 1.1; speechSynthesis.speak(u); } catch (e) {} }
+const voiceBtn = document.getElementById('voiceBtn');
+function updVoiceBtn() { if (!voiceBtn) return; if (!canSpeak) { voiceBtn.textContent = 'Voice N/A'; voiceBtn.disabled = true; return; } voiceBtn.textContent = voiceOn ? 'Voice: On' : 'Voice: Off'; voiceBtn.classList.toggle('von', voiceOn); }
+if (voiceBtn) voiceBtn.addEventListener('click', function () { voiceOn = !voiceOn; try { localStorage.setItem('simVoice', voiceOn ? '1' : '0'); } catch (e) {} if (!voiceOn && canSpeak) speechSynthesis.cancel(); updVoiceBtn(); });
+updVoiceBtn();
+
+/* --- True 3D: yaw the beam into depth, then a rigid screen tilt so it rises to
+       the right. There is no Y/Z shear, so discs project to clean ellipses, and
+       waves vibrating "into the page" really do recede with perspective. --- */
+function proj(x, y, z) {
+  const x1 = x * Math.cos(AY) - z * Math.sin(AY);
+  const z1 = x * Math.sin(AY) + z * Math.cos(AY);
+  const xr = x1 * Math.cos(TILT) - y * Math.sin(TILT);
+  const yr = x1 * Math.sin(TILT) + y * Math.cos(TILT);
+  const s = FOV / (FOV + z1) * VS;
+  return { x: W * 0.5 + xr * s, y: H * 0.52 + yr * s, s: s };
+}
+function planeAngleAt(x) {
+  if (x < SAMPL) return 0;
+  if (x >= SAMPR) return theta;
+  return theta * (x - SAMPL) / (SAMPR - SAMPL);
+}
+
+/* --- Transverse wave along the beam, vibrating in plane phiFn(x) --- */
+function wave(x0, x1, phiFn, A, col, lw) {
+  if (x1 <= x0) return;
+  ctx.beginPath(); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  let started = false;
+  for (let x = x0; x <= x1; x += 3.5) {
+    const ph = phiFn(x) * DEG, disp = A * Math.sin(x * WK - tSec * WW);
+    const p = proj(x, disp * Math.cos(ph), disp * Math.sin(ph));   // vibration lives in the Y–Z plane
+    if (!started) { ctx.moveTo(p.x, p.y); started = true; } else ctx.lineTo(p.x, p.y);
+  }
+  ctx.stroke();
+}
+
+/* --- Disc (polariser / analyser): clean upright ellipse + grating along its axis --- */
+function disc(x, axisPhi, lit, name, sub) {
+  function ring(rr) { const a = []; for (let d = 0; d <= 360; d += 9) a.push(proj(x, rr * Math.cos(d * DEG), rr * Math.sin(d * DEG))); return a; }
+  const out = ring(R);
+  function trace() { ctx.beginPath(); out.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); }
+  trace(); ctx.fillStyle = lit ? 'rgba(34,197,94,0.32)' : 'rgba(71,85,105,0.30)'; ctx.fill();
+  // grating parallel to the transmission axis (axis dir u, perpendicular w, in the Y–Z plane)
+  ctx.save(); trace(); ctx.clip();
+  const uY = Math.cos(axisPhi * DEG), uZ = Math.sin(axisPhi * DEG), wY = -uZ, wZ = uY;
+  ctx.strokeStyle = lit ? 'rgba(190,242,160,0.5)' : 'rgba(203,213,225,0.4)'; ctx.lineWidth = 1;
+  for (let o = -R; o <= R; o += 6) {
+    const a = proj(x, -uY * R + wY * o, -uZ * R + wZ * o), b = proj(x, uY * R + wY * o, uZ * R + wZ * o);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  ctx.restore();
+  // bright transmission axis
+  const a1 = proj(x, uY * R, uZ * R), a2 = proj(x, -uY * R, -uZ * R);
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2.4;
+  ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.stroke();
+  // rim
+  trace(); ctx.strokeStyle = lit ? '#86efac' : '#94a3b8'; ctx.lineWidth = 1.6; ctx.stroke();
+  // labels below (world +Y projects downward)
+  const lc = proj(x, R + 22, 0); txt(name, lc.x, lc.y);
+  if (sub) { const sc = proj(x, R + 38, 0); ctx.fillStyle = '#7adce8'; ctx.font = '600 11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(sub, sc.x, sc.y); }
+}
+
+/* --- Sample tube (cylinder along the beam) --- */
+function tube() {
+  function ring(x) { const a = []; for (let d = 0; d <= 360; d += 12) a.push(proj(x, RT * Math.cos(d * DEG), RT * Math.sin(d * DEG))); return a; }
+  const r1 = ring(SAMPL), r2 = ring(SAMPR);
+  ctx.beginPath();
+  r1.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+  for (let i = r2.length - 1; i >= 0; i--) ctx.lineTo(r2[i].x, r2[i].y);
+  ctx.closePath(); ctx.fillStyle = 'rgba(122,220,232,0.06)'; ctx.fill();
+  [r1, r2].forEach(function (r) { ctx.beginPath(); r.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.6; ctx.stroke(); });
+  const c = proj((SAMPL + SAMPR) / 2, RT + 22, 0); txt('Optically active solution', c.x, c.y);
+}
+
+function bulb() {
+  const c = proj(BULB, 0, 0), r = 17 * c.s;
+  const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, r * 2.4);
+  g.addColorStop(0, 'rgba(253,230,138,0.85)'); g.addColorStop(0.5, 'rgba(251,191,36,0.35)'); g.addColorStop(1, 'rgba(251,191,36,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, r * 2.4, 0, Math.PI * 2); ctx.fill();
+  const bg = ctx.createRadialGradient(c.x - r * 0.3, c.y - r * 0.3, 1, c.x, c.y, r);
+  bg.addColorStop(0, '#fffdf0'); bg.addColorStop(0.6, '#fde68a'); bg.addColorStop(1, '#f59e0b');
+  ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.fill();
+  const lc = proj(BULB, R + 18, 0); txt('Light source', lc.x, lc.y);
+}
+
+function eye(brightness) {
+  const c = proj(EYE, 0, 0), s = c.s;
+  if (brightness > 0.02) {
+    const g = ctx.createRadialGradient(c.x, c.y, 2, c.x, c.y, 24 * s);
+    g.addColorStop(0, 'rgba(253,230,138,' + (0.7 * brightness).toFixed(3) + ')'); g.addColorStop(1, 'rgba(253,230,138,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, c.y, 24 * s, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = '#e8eef6'; ctx.lineWidth = 2; ctx.fillStyle = '#0b1322';
+  ctx.beginPath();
+  ctx.moveTo(c.x - 15 * s, c.y); ctx.quadraticCurveTo(c.x, c.y - 12 * s, c.x + 15 * s, c.y);
+  ctx.quadraticCurveTo(c.x, c.y + 12 * s, c.x - 15 * s, c.y); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#7adce8'; ctx.beginPath(); ctx.arc(c.x, c.y, 5 * s, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#0b1322'; ctx.beginPath(); ctx.arc(c.x, c.y, 2.3 * s, 0, Math.PI * 2); ctx.fill();
+  const lc = proj(EYE, R + 14, 0); txt('Observer', lc.x, lc.y);
+}
+
+function txt(t, x, y) { ctx.fillStyle = '#e8eef6'; ctx.font = '12px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); }
+
+/* --- Step caption --- */
+function setStep(html) { document.getElementById('stepText').innerHTML = html; }
+let stepKey = '';
+function updateStep() {
+  let k = front < POL ? '1' : front < SAMPL ? '2' : front < ANA ? '3' : '4';
+  if (k === stepKey) return; stepKey = k;
+  if (k === '1') setStep('<span class="hl">1. Unpolarised light.</span> The source emits light vibrating in <strong>all</strong> planes at right angles to its path — seen here as waves at many angles.');
+  else if (k === '2') setStep('<span class="hl">2. The polariser.</span> Only light vibrating in one plane gets through — this is <strong>plane-polarised light</strong> (vertical here).');
+  else if (k === '3') setStep('<span class="hl">3. Optically active solution.</span> The chiral molecules rotate the plane of polarisation as the light passes through.');
+  else setStep('<span class="hl">4. The analyser.</span> Drag the analyser disc until the light passes through to the eye. The angle you turn it through is the optical rotation.');
+  speak(NARR[k]);
+}
+
+/* --- Readout --- */
+function fmtAngle(a) { return (a > 0 ? '+' : a < 0 ? '−' : '') + Math.abs(Math.round(a)) + '°'; }
+function updateReadout(b) {
+  document.getElementById('thetaOut').textContent = fmtAngle(theta) + (theta > 0 ? ' (d)' : theta < 0 ? ' (l)' : '');
+  document.getElementById('anaOut').textContent = fmtAngle(analyser);
+  document.getElementById('brightOut').textContent = Math.round(b * 100) + '%';
+  const badge = document.getElementById('alignBadge'), t = document.getElementById('alignText');
+  const reached = front >= ANA;
+  if (reached && Math.abs(((analyser - theta + 540) % 360) - 180) < 2.5) { badge.className = 'ok'; t.textContent = 'Aligned — rotation = ' + fmtAngle(theta); }
+  else { badge.className = ''; t.textContent = reached ? 'Rotate the analyser to align' : 'Analyser not aligned'; }
+}
+
+/* --- Main loop --- */
+function frame(ts) {
+  if (!document.getElementById('chemCanvas')) return;
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs) / 1000; lastTs = ts; if (dt > 0.05) dt = 0.05;
+  tSec += dt;
+
+  if (playing) { front += (EYE - BEAMSTART) / 6.2 * dt; if (front >= EYE) { front = EYE; playing = false; done = true; } updateStep(); }
+
+  ctx.clearRect(0, 0, W, H);
+  const f = Math.min(front, EYE);
+  const dA = (analyser - theta) * DEG, bright = Math.cos(dA) * Math.cos(dA);
+
+  // back-to-front: eye, analyser, tube, polariser, then waves over, then bulb
+  eye(f >= ANA ? bright : 0);
+  if (f >= POL) disc(ANA, analyser, f >= ANA, 'Analyser', 'drag to rotate');
+  else disc(ANA, analyser, false, 'Analyser', 'drag to rotate');
+  tube();
+  disc(POL, 0, f >= POL, 'Polariser', 'axis 0°');
+
+  // light waves
+  if (f > BEAMSTART) {            // unpolarised: several planes, each its own colour
+    const xe = Math.min(f, POL);
+    const planes = [0, 36, 72, 108, 144];
+    const cols = ['#fde68a', '#7adce8', '#f9a8d4', '#86efac', '#c4b5fd'];
+    planes.forEach(function (ph, i) { wave(BEAMSTART, xe, function () { return ph; }, AMP * 0.85, cols[i], 2.1); });
+  }
+  if (f > POL) wave(POL, Math.min(f, ANA), planeAngleAt, AMP, '#fde68a', 2.6);   // polarised -> rotated
+  if (f > ANA) wave(ANA, Math.min(f, EYE), function () { return analyser; }, AMP * Math.abs(Math.cos(dA)), 'rgba(253,230,138,' + Math.max(0, bright).toFixed(2) + ')', 2.6);  // Malus: amplitude and brightness both fall, so it fades out when crossed
+
+  bulb();
+  updateReadout(f >= ANA ? bright : 0);
+
+  ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = '#fff'; ctx.font = '11px Arial'; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('© Mr Khemistry', W - 12, H - 10); ctx.restore();
+  requestAnimationFrame(frame);
+}
+
+/* --- Controls --- */
+document.getElementById('startBtn').addEventListener('click', function () { front = BEAMSTART; playing = true; done = false; analyser = 0; stepKey = ''; if (canSpeak) speechSynthesis.cancel(); updateStep(); });
+document.getElementById('resetBtn').addEventListener('click', function () { front = BEAMSTART; playing = false; done = false; analyser = 0; stepKey = ''; if (canSpeak) speechSynthesis.cancel(); setStep('Press <span class="hl">Start</span> to send light down the polarimeter, one stage at a time.'); });
+document.getElementById('alignBtn').addEventListener('click', function () { analyser = theta; if (!playing && front < ANA) { front = EYE; done = true; updateStep(); } });
+document.getElementById('rotSlider').addEventListener('input', function (e) { theta = parseInt(e.target.value); document.getElementById('rotVal').textContent = fmtAngle(theta) + (theta > 0 ? ' (d)' : theta < 0 ? ' (l)' : ''); });
+
+/* --- Drag the analyser (map screen angle back to a plane tilt) --- */
+function setAnaFromPoint(mx, my) {
+  const Pc = proj(ANA, 0, 0), target = Math.atan2(my - Pc.y, mx - Pc.x);
+  let best = 0, bestd = 1e9;
+  for (let d = -90; d <= 89; d += 1) {
+    const p1 = proj(ANA, Math.cos(d * DEG) * R, Math.sin(d * DEG) * R);
+    let delta = Math.atan2(p1.y - Pc.y, p1.x - Pc.x) - target;
+    delta = Math.atan2(Math.sin(2 * delta), Math.cos(2 * delta)) / 2;   // 180°-symmetric
+    if (Math.abs(delta) < bestd) { bestd = Math.abs(delta); best = d; }
+  }
+  analyser = best;
+}
+function nearAnalyser(mx, my) { const Pc = proj(ANA, 0, 0); return Math.hypot(mx - Pc.x, my - Pc.y) < R * Pc.s + 22; }
+canvas.addEventListener('mousedown', function (e) { const r = canvas.getBoundingClientRect(); const mx = (e.clientX - r.left) * (W / r.width), my = (e.clientY - r.top) * (H / r.height); if (nearAnalyser(mx, my)) { draggingAna = true; setAnaFromPoint(mx, my); } });
+canvas.addEventListener('mousemove', function (e) { if (!draggingAna) return; const r = canvas.getBoundingClientRect(); setAnaFromPoint((e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)); });
+window.addEventListener('mouseup', function () { draggingAna = false; });
+canvas.addEventListener('touchstart', function (e) { const r = canvas.getBoundingClientRect(); const mx = (e.touches[0].clientX - r.left) * (W / r.width), my = (e.touches[0].clientY - r.top) * (H / r.height); if (nearAnalyser(mx, my)) { draggingAna = true; setAnaFromPoint(mx, my); e.preventDefault(); } }, { passive: false });
+canvas.addEventListener('touchmove', function (e) { if (!draggingAna) return; const r = canvas.getBoundingClientRect(); setAnaFromPoint((e.touches[0].clientX - r.left) * (W / r.width), (e.touches[0].clientY - r.top) * (H / r.height)); e.preventDefault(); }, { passive: false });
+window.addEventListener('touchend', function () { draggingAna = false; });
+
+function init() { resize(); requestAnimationFrame(frame); }
+init();
+</script>
+</body>
+</html>

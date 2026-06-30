@@ -79,6 +79,7 @@
   .thumb-hess  { background: linear-gradient(135deg, #2a1505, #1f0a1a); }
   .thumb-electro { background: linear-gradient(135deg, #0a1628, #0f2030); }
   .thumb-eq    { background: linear-gradient(135deg, #2a1505, #1a0f08); }
+  .thumb-polar { background: linear-gradient(135deg, #0a1020, #16082a); }
   .thumb-rs    { background: linear-gradient(135deg, #08222a, #062430); }
   .thumb-dt    { background: linear-gradient(135deg, #0a2030, #082030); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
@@ -445,6 +446,27 @@
       <div class="card-desc">Watch the N₂O₄ ⇌ 2NO₂ equilibrium shift as you heat, compress or inject gas. The brown colour deepens and fades in real time as the position of equilibrium re-establishes.</div>
       <div class="card-footer">
         <span class="card-meta">Equilibria · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Plane-Polarised Light & Optical Activity — LIVE -->
+  <a href="./polarimetry.html" class="sim-card" data-tags="organic optical" data-published="2026-06-30">
+    <div class="card-thumb thumb-polar">
+      <canvas id="th-polar" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Optical isomerism</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Plane-Polarised Light &amp; Optical Activity</div>
+      <div class="card-desc">A 3D polarimeter walkthrough: unpolarised light is filtered to a single plane, an optically active solution rotates that plane, and you turn the analyser to measure the optical rotation.</div>
+      <div class="card-footer">
+        <span class="card-meta">Optical activity · Interactive</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -1153,6 +1175,39 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   for(let i=0;i<3;i++){const lx=bx+bw+4+i*4;ctx.beginPath();ctx.moveTo(lx,by+bh/2-12);ctx.lineTo(lx,by+bh/2+12);ctx.stroke();}
   // piston rod
   ctx.fillStyle='#64748b';ctx.fillRect(bx+bw+pw,by+bh/2-2,W-6-(bx+bw+pw),4);
+})();
+
+// ── Plane-Polarised Light & Optical Activity thumbnail ──
+(function(){
+  const c=document.getElementById('th-polar');if(!c)return;
+  const ctx=c.getContext('2d'),W=200,H=150,cy=78;
+  ctx.fillStyle='#0a1020';ctx.fillRect(0,0,W,H);
+  // unpolarised: a few short coloured waves at different tilts
+  const cols=['#fde68a','#7adce8','#f9a8d4','#86efac'];
+  cols.forEach(function(col,i){
+    const a=(i*36-54)*Math.PI/180, ux=Math.sin(a)*0.5, uy=-Math.cos(a);
+    ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.lineCap='round';
+    let st=false;
+    for(let x=8;x<=64;x+=2.5){const d=8*Math.sin(x*0.45);const px=x+d*ux,py=cy+d*uy;st?ctx.lineTo(px,py):(ctx.moveTo(px,py),st=true);}
+    ctx.stroke();
+  });
+  // disc helper (clean vertical ellipse + vertical grating + axis)
+  function disc(x){
+    ctx.save();ctx.beginPath();ctx.ellipse(x,cy,11,30,0,0,Math.PI*2);ctx.clip();
+    ctx.fillStyle='rgba(34,197,94,0.32)';ctx.fillRect(x-12,cy-31,24,62);
+    ctx.strokeStyle='rgba(190,242,160,0.55)';ctx.lineWidth=1;
+    for(let o=-9;o<=9;o+=3){ctx.beginPath();ctx.moveTo(x+o,cy-30);ctx.lineTo(x+o,cy+30);ctx.stroke();}
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,255,255,0.85)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(x,cy-29);ctx.lineTo(x,cy+29);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(x,cy,11,30,0,0,Math.PI*2);ctx.strokeStyle='#86efac';ctx.lineWidth=1.4;ctx.stroke();
+  }
+  disc(84);   // polariser
+  disc(164);  // analyser
+  // plane-polarised yellow wave between the discs
+  ctx.beginPath();ctx.strokeStyle='#fde68a';ctx.lineWidth=2;ctx.lineCap='round';
+  let s2=false;
+  for(let x=96;x<=152;x+=2.5){const d=10*Math.sin(x*0.45);s2?ctx.lineTo(x,cy-d):(ctx.moveTo(x,cy-d),s2=true);}
+  ctx.stroke();
 })();
 </script>
 </body>

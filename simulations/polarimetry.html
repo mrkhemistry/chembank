@@ -249,8 +249,8 @@ function tube() {
   ctx.beginPath();
   r1.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
   for (let i = r2.length - 1; i >= 0; i--) ctx.lineTo(r2[i].x, r2[i].y);
-  ctx.closePath(); ctx.fillStyle = 'rgba(122,220,232,0.06)'; ctx.fill();
-  [r1, r2].forEach(function (r) { ctx.beginPath(); r.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.6; ctx.stroke(); });
+  ctx.closePath(); ctx.fillStyle = 'rgba(120,205,235,0.22)'; ctx.fill();   // solution tint (body)
+  [r1, r2].forEach(function (r) { ctx.beginPath(); r.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); ctx.fillStyle = 'rgba(120,205,235,0.16)'; ctx.fill(); ctx.strokeStyle = '#8fb8cc'; ctx.lineWidth = 1.6; ctx.stroke(); });
   const c = proj((SAMPL + SAMPR) / 2, RT + 22, 0); txt('Optically active solution', c.x, c.y);
 }
 

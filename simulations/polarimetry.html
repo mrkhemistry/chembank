@@ -249,19 +249,32 @@ function tube() {
   function ext(r) { let t = r[0], b = r[0]; r.forEach(function (p) { if (p.y < t.y) t = p; if (p.y > b.y) b = p; }); return { t: t, b: b }; }
   const e1 = ext(r1), e2 = ext(r2);
   function trace(r) { ctx.beginPath(); r.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); }
-  // far end cap (back of the tube), drawn first
-  trace(r2); ctx.fillStyle = 'rgba(95,170,205,0.22)'; ctx.fill(); ctx.strokeStyle = '#8fb8cc'; ctx.lineWidth = 1.6; ctx.stroke();
-  // tube wall with cylindrical shading: bright down the centre line, dark at the silhouette edges
   const tMid = { x: (e1.t.x + e2.t.x) / 2, y: (e1.t.y + e2.t.y) / 2 }, bMid = { x: (e1.b.x + e2.b.x) / 2, y: (e1.b.y + e2.b.y) / 2 };
+  // convex hull of both end rings = the cylinder silhouette (a capsule); fill it ONCE, so there is no overlap seam
+  function hull(pts) {
+    pts = pts.slice().sort(function (a, b) { return a.x - b.x || a.y - b.y; });
+    const cr = function (o, a, b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); };
+    const lo = [], up = [];
+    for (let i = 0; i < pts.length; i++) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], pts[i]) <= 0) lo.pop(); lo.push(pts[i]); }
+    for (let i = pts.length - 1; i >= 0; i--) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], pts[i]) <= 0) up.pop(); up.push(pts[i]); }
+    lo.pop(); up.pop(); return lo.concat(up);
+  }
+  const H = hull(r1.concat(r2));
+  function fillHull() { ctx.beginPath(); H.forEach(function (p, i) { i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); }); ctx.closePath(); }
+  // 1) uniform solution tint over the whole cylinder (single fill = no two-tone seam)
+  fillHull(); ctx.fillStyle = 'rgba(110,198,232,0.30)'; ctx.fill();
+  // 2) 3D gloss across the whole tube: highlight near the top, soft shadow at the bottom
   const grad = ctx.createLinearGradient(tMid.x, tMid.y, bMid.x, bMid.y);
-  grad.addColorStop(0, 'rgba(55,105,135,0.40)'); grad.addColorStop(0.45, 'rgba(165,228,248,0.40)'); grad.addColorStop(0.55, 'rgba(165,228,248,0.40)'); grad.addColorStop(1, 'rgba(55,105,135,0.40)');
-  ctx.beginPath(); ctx.moveTo(e1.t.x, e1.t.y); ctx.lineTo(e2.t.x, e2.t.y); ctx.lineTo(e2.b.x, e2.b.y); ctx.lineTo(e1.b.x, e1.b.y); ctx.closePath();
-  ctx.fillStyle = grad; ctx.fill();
-  // silhouette edges (the straight sides of the cylinder)
-  ctx.strokeStyle = '#9cc4d6'; ctx.lineWidth = 1.5;
+  grad.addColorStop(0, 'rgba(255,255,255,0)');
+  grad.addColorStop(0.2, 'rgba(240,250,255,0.38)');
+  grad.addColorStop(0.46, 'rgba(255,255,255,0)');
+  grad.addColorStop(1, 'rgba(15,45,70,0.20)');
+  fillHull(); ctx.fillStyle = grad; ctx.fill();
+  // 3) rims and side edges
+  trace(r2); ctx.strokeStyle = '#a9c2d4'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = '#cfe0ec'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(e1.t.x, e1.t.y); ctx.lineTo(e2.t.x, e2.t.y); ctx.moveTo(e1.b.x, e1.b.y); ctx.lineTo(e2.b.x, e2.b.y); ctx.stroke();
-  // near end cap (front rim), translucent so you see into the tube
-  trace(r1); ctx.fillStyle = 'rgba(150,222,248,0.14)'; ctx.fill(); ctx.strokeStyle = '#b6d8e6'; ctx.lineWidth = 1.6; ctx.stroke();
+  trace(r1); ctx.strokeStyle = '#eaf2f8'; ctx.lineWidth = 2.2; ctx.stroke();
   const c = proj((SAMPL + SAMPR) / 2, RT + 22, 0); txt('Optically active solution', c.x, c.y);
 }
 

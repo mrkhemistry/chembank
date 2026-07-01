@@ -650,19 +650,19 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   ctx.lineCap='round';ctx.lineJoin='round';
 
-  // Three boxes containing benzene, nitrobenzene, phenylamine
-  const bw=46, bh=70, by=40;
-  const bxs=[3, 73, 143];
-  const rr=17;
-  const rcy=by+25;       // ring centre (upper portion of box)
-  const rcxs=bxs.map(x=>x+bw/2);
+  // Q13 endpoints: benzene → phenylamine (start → target of aromatic synthesis)
+  const bw=76, bh=110, by=20;
+  const bxs=[10, 114];
+  const rr=36;
+  const rcy=by+42;                    // ring centre (upper portion of box)
+  const rcxs=bxs.map(x=>x+bw/2);      // [48, 152]
 
   // Draw the containment boxes: subtle dark fill + soft white border
   bxs.forEach(bx=>{
     ctx.fillStyle='rgba(0,0,0,0.18)';
     ctx.strokeStyle='rgba(255,255,255,0.22)';
-    ctx.lineWidth=1.2;
-    const rc=5;
+    ctx.lineWidth=1.4;
+    const rc=7;
     ctx.beginPath();
     ctx.moveTo(bx+rc, by);
     ctx.arcTo(bx+bw, by, bx+bw, by+bh, rc);
@@ -673,10 +673,10 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     ctx.fill(); ctx.stroke();
   });
 
-  const white='#ffffff', blue='#93c5fd', cyan='#06b6d4';
+  const white='#ffffff', blue='#3b82f6', cyan='#06b6d4';
 
   function drawRing(cx){
-    ctx.strokeStyle=white; ctx.lineWidth=2.4;
+    ctx.strokeStyle=blue; ctx.lineWidth=3.2;
     ctx.beginPath();
     for(let j=0;j<6;j++){
       const a=-Math.PI/2+j*Math.PI/3;
@@ -684,34 +684,38 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
       if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
     }
     ctx.closePath(); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, rcy, rr*0.58, 0, Math.PI*2); ctx.stroke();
+    // π-cloud circle in blue (no fill)
+    ctx.beginPath(); ctx.arc(cx, rcy, rr*0.58, 0, Math.PI*2);
+    ctx.strokeStyle=blue; ctx.lineWidth=2.6; ctx.stroke();
   }
   function drawSub(cx, label){
-    ctx.strokeStyle=white; ctx.lineWidth=2.4;
+    ctx.strokeStyle=blue; ctx.lineWidth=3;
     ctx.beginPath();
-    ctx.moveTo(cx, rcy+rr); ctx.lineTo(cx, rcy+rr+8);
+    ctx.moveTo(cx, rcy+rr); ctx.lineTo(cx, rcy+rr+10);
     ctx.stroke();
-    ctx.font='bold 12px Arial';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='bold 14px Arial';
+    ctx.textBaseline='middle';
+    // Align the first character (the heteroatom, e.g. N) under the bond
+    ctx.textAlign='left';
+    const firstChar = label.charAt(0);
+    const firstW = ctx.measureText(firstChar).width;
     ctx.fillStyle=blue;
-    ctx.fillText(label, cx, rcy+rr+17);
+    ctx.fillText(label, cx - firstW/2, rcy+rr+21);
   }
 
-  drawRing(rcxs[0]);                              // benzene
-  drawRing(rcxs[1]); drawSub(rcxs[1], 'NO\u2082');      // nitrobenzene
-  drawRing(rcxs[2]); drawSub(rcxs[2], 'NH\u2082');      // phenylamine
+  drawRing(rcxs[0]);                                     // benzene
+  drawRing(rcxs[1]); drawSub(rcxs[1], 'NH\u2082');         // phenylamine
 
-  // Cyan arrows in the gaps between boxes, with breathing room on each side
-  ctx.strokeStyle=cyan; ctx.fillStyle=cyan; ctx.lineWidth=2.1;
-  const pad=6;
+  // Single cyan arrow between the two boxes
+  ctx.strokeStyle=cyan; ctx.fillStyle=cyan; ctx.lineWidth=2.6;
+  const pad=4;
   const arrow=(x1,x2,ay)=>{
-    ctx.beginPath(); ctx.moveTo(x1,ay); ctx.lineTo(x2-5,ay); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x1,ay); ctx.lineTo(x2-6,ay); ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x2+1,ay); ctx.lineTo(x2-5,ay-4); ctx.lineTo(x2-5,ay+4);
+    ctx.moveTo(x2+1,ay); ctx.lineTo(x2-6,ay-5); ctx.lineTo(x2-6,ay+5);
     ctx.closePath(); ctx.fill();
   };
   arrow(bxs[0]+bw+pad, bxs[1]-pad, rcy);
-  arrow(bxs[1]+bw+pad, bxs[2]-pad, rcy);
 })();
 
 })();

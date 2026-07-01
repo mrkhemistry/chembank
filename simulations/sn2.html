@@ -585,8 +585,9 @@ function drawLoop(ts){
     drawLonePair(lpX,lpY,'#f43f5e');
     ctx.globalAlpha=1;
     if(state===1){
-      // Arrow 1: OH lone pair → C (traces then straightens into partial C-OH bond)
-      const perpX=-normY*60, perpY=normX*60;
+      // Arrow 1: OH lone pair → C (traces then straightens into partial C-OH bond).
+      // Curve bulges downward (U shape) so it sweeps under the nucleophile.
+      const perpX=normY*60, perpY=-normX*60;
       const midX=(lpX+pC.x)/2, midY=(lpY+pC.y)/2;
       const curveCpX=midX+perpX, curveCpY=midY+perpY;
       const cpX=curveCpX+(midX-curveCpX)*straightProg;

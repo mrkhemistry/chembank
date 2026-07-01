@@ -999,36 +999,47 @@
         .ws-preview-content .ws-footer { border-top-color: rgba(0,217,255,0.2); color: rgba(240,244,248,0.5); }
         .ws-preview-content .name-line { color: var(--light); }
 
-        /* Gamification row — streak + personal bests side by side on desktop, stacked on mobile */
+        /* Gamification row — streak + personal bests + topic mastery in one compact row */
         .gamification-row {
             display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            align-items: start;
+        }
+        /* Compact stat cards inside the gamification row */
+        .gamification-row .panel { padding: 1rem 1.15rem; }
+        .gamification-row .panel-header {
+            margin-bottom: 0.6rem;
+            padding-bottom: 0.55rem;
+        }
+        .gamification-row .panel-header span { font-size: 1.02rem; }
+        @media (max-width: 900px) {
+            .gamification-row { grid-template-columns: 1fr; }
         }
         /* Referral CTA — only shown to premium_student / admin */
         .referral-card {
             background: var(--surface);
             border: 1px solid rgba(0, 229, 255, 0.35);
             border-radius: 10px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
+            padding: 0.55rem 1rem;
+            margin-bottom: 1.25rem;
             display: none;
             align-items: center;
             justify-content: space-between;
-            gap: 1.25rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }
         .referral-card.show { display: flex; }
         .referral-card-text { flex: 1; min-width: 220px; }
         .referral-card-headline {
             font-family: 'DM Serif Display', serif;
-            font-size: 1.15rem;
+            font-size: 1.02rem;
             color: var(--primary);
-            line-height: 1.3;
-            margin-bottom: 0.2rem;
+            line-height: 1.25;
+            margin-bottom: 0.1rem;
         }
-        .referral-card-sub { font-size: 0.85rem; color: #ccc; line-height: 1.5; }
+        .referral-card-sub { font-size: 0.8rem; color: #ccc; line-height: 1.4; }
         .referral-card-btn {
             background: var(--primary);
             color: #000;
@@ -1073,6 +1084,79 @@
         .mastery-gold   { color: #ffd700; border-color: #ffd700; }
         .mastery-silver { color: #c0c0c0; border-color: #c0c0c0; }
         .mastery-bronze { color: #cd7f32; border-color: #cd7f32; }
+
+        /* Red "new update" dot on stat cards */
+        .update-dot {
+            display: none;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #ff3b30;
+            box-shadow: 0 0 6px rgba(255, 59, 48, 0.9);
+            margin-left: 5px;
+            vertical-align: middle;
+            animation: updateDotBlink 1s steps(1, end) infinite;
+        }
+        @keyframes updateDotBlink { 50% { opacity: 0; } }
+        @media (prefers-reduced-motion: reduce) {
+            .update-dot { animation: none; }
+        }
+
+        /* Collapsible groups (topics, TYS, prelim/promos years) */
+        .topic-group, .source-group, .source-year-group {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 0.6rem;
+            background: rgba(255, 255, 255, 0.015);
+            overflow: hidden;
+        }
+        .source-year-group { margin-bottom: 0.4rem; }
+        .topic-group[open], .source-group[open], .source-year-group[open] {
+            border-color: var(--cyan-border);
+        }
+        .topic-group > summary, .source-group > summary, .source-year-group > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            user-select: none;
+        }
+        .topic-group > summary::-webkit-details-marker,
+        .source-group > summary::-webkit-details-marker,
+        .source-year-group > summary::-webkit-details-marker { display: none; }
+        .topic-group > summary:hover, .source-group > summary:hover, .source-year-group > summary:hover {
+            background: var(--cyan-dim);
+        }
+        .group-caret {
+            transition: transform 0.15s ease;
+            font-size: 0.75rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        details[open] > summary .group-caret { transform: rotate(90deg); }
+        .group-title { flex: 1; }
+        .group-count {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--primary);
+            border: 1px solid var(--cyan-border);
+            border-radius: 999px;
+            padding: 0.05rem 0.5rem;
+        }
+        .topic-group-body, .source-year-body {
+            padding: 0.25rem 0.85rem 0.7rem 0.85rem;
+        }
+        .group-all {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.15);
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+        }
+        .group-all span { color: var(--primary); font-weight: 600; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -1828,14 +1912,15 @@ Option D" required></textarea>
 
             <!-- Quiz Panel -->
             <div id="studentQuizPanel">
-            <!-- Gamification Row: Streak + Personal Bests -->
+            <!-- Gamification Row: Streak + Personal Bests + Topic Mastery -->
             <div class="gamification-row" id="gamificationRow" style="display:none;">
                 <!-- Streak Card -->
                 <div class="panel" id="streakCard">
-                    <div class="panel-header">
-                        <span>Practice Streak</span>
+                    <div class="panel-header" style="cursor:pointer;" onclick="toggleStreak()">
+                        <span>Practice Streak <span class="update-dot" id="streakDot"></span></span>
+                        <span id="streakToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
                     </div>
-                    <div id="streakContent">
+                    <div id="streakContent" style="display:none;">
                         <div style="padding:1rem; color:#777; text-align:center;">Loading...</div>
                     </div>
                 </div>
@@ -1843,11 +1928,23 @@ Option D" required></textarea>
                 <!-- Personal Bests Card -->
                 <div class="panel" id="personalBestsCard">
                     <div class="panel-header" style="cursor:pointer;" onclick="togglePersonalBests()">
-                        <span>Your Personal Bests</span>
-                        <span id="personalBestsToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Hide</span>
+                        <span>Your Personal Bests <span class="update-dot" id="personalBestsDot"></span></span>
+                        <span id="personalBestsToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
                     </div>
-                    <div id="personalBestsContent">
+                    <div id="personalBestsContent" style="display:none;">
                         <div style="padding:1rem; color:#777;">Loading your personal bests...</div>
+                    </div>
+                </div>
+
+                <!-- Topic Mastery Card -->
+                <div class="panel" id="topicMasteryCard" style="display:none;">
+                    <div class="panel-header" style="cursor:pointer;" onclick="toggleTopicMastery()">
+                        <span>Topic Mastery <span class="update-dot" id="topicMasteryDot"></span></span>
+                        <span id="topicMasteryToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
+                    </div>
+                    <div id="topicMasteryNote" style="padding:0.35rem 0 0.15rem 0; color:#777; font-size:0.72rem; line-height:1.4; display:none;">Bronze 60% &middot; Silver 75% &middot; Gold 90% (min 20 Qs)</div>
+                    <div id="topicMasteryContent" style="display:none;">
+                        <div style="padding:1rem; color:#777;">Loading your topic mastery...</div>
                     </div>
                 </div>
             </div>
@@ -1864,18 +1961,6 @@ Option D" required></textarea>
                 </a>
             </div>
 
-            <!-- Topic Mastery Card -->
-            <div class="panel" id="topicMasteryCard" style="display:none; margin-bottom:1.5rem;">
-                <div class="panel-header" style="cursor:pointer;" onclick="toggleTopicMastery()">
-                    <span>Topic Mastery</span>
-                    <span id="topicMasteryToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Hide</span>
-                </div>
-                <div style="padding:0.5rem 1rem 0 1rem; color:#777; font-size:0.8rem;">Bronze 60% &middot; Silver 75% &middot; Gold 90% (min 20 questions attempted)</div>
-                <div id="topicMasteryContent">
-                    <div style="padding:1rem; color:#777;">Loading your topic mastery...</div>
-                </div>
-            </div>
-
             <div class="panel">
                 <div class="panel-header">
                     <span>Select Quiz Parameters</span>
@@ -1884,119 +1969,86 @@ Option D" required></textarea>
                 <div class="filters">
                     <div class="form-group">
                         <label>Topics (Select multiple)</label>
-                        <div class="checkbox-group" id="topicCheckboxes">
-                            <label class="checkbox-label" style="grid-column: 1 / -1; border-bottom: 1px solid rgba(0, 217, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 0.5rem;">
+                        <div id="topicCheckboxes">
+                            <label class="checkbox-label" style="display:flex; border-bottom: 1px solid rgba(0, 217, 255, 0.3); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
                                 <input type="checkbox" id="selectAllTopics" onchange="toggleAllTopics()">
                                 <span style="font-weight: 700; color: var(--accent);">✓ All Topics</span>
                             </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Acid base equilibrium" class="topic-checkbox">
-                                <span>Acid base equilibrium</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Atomic structure" class="topic-checkbox">
-                                <span>Atomic structure</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Chemical bonding" class="topic-checkbox">
-                                <span>Chemical bonding</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Chemical equilibrium" class="topic-checkbox">
-                                <span>Chemical equilibrium</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Electrolysis" class="topic-checkbox">
-                                <span>Electrolysis</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Electrochemical cell" class="topic-checkbox">
-                                <span>Electrochemical cell</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Thermochemistry" class="topic-checkbox">
-                                <span>Thermochemistry</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Thermodynamics" class="topic-checkbox">
-                                <span>Thermodynamics</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Gases" class="topic-checkbox">
-                                <span>Gases</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Kinetics" class="topic-checkbox">
-                                <span>Kinetics</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Mole" class="topic-checkbox">
-                                <span>Mole</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Periodic table" class="topic-checkbox">
-                                <span>Periodic table</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Group 2" class="topic-checkbox">
-                                <span>Group 2</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Group 17" class="topic-checkbox">
-                                <span>Group 17</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Redox" class="topic-checkbox">
-                                <span>Redox</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Transition elements" class="topic-checkbox">
-                                <span>Transition elements</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Solubility" class="topic-checkbox">
-                                <span>Solubility</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Introduction to Organic" class="topic-checkbox">
-                                <span>Introduction to Organic</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Alkane" class="topic-checkbox">
-                                <span>Alkane</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Alkene" class="topic-checkbox">
-                                <span>Alkene</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Arene" class="topic-checkbox">
-                                <span>Arene</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Halogenoalkane" class="topic-checkbox">
-                                <span>Halogenoalkane</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Hydroxyl Compounds" class="topic-checkbox">
-                                <span>Hydroxyl Compounds</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Carbonyl Compound" class="topic-checkbox">
-                                <span>Carbonyl Compound</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Carboxylic Acid" class="topic-checkbox">
-                                <span>Carboxylic Acid</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Nitrogen Compound" class="topic-checkbox">
-                                <span>Nitrogen Compound</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" value="Polymers" class="topic-checkbox">
-                                <span>Polymers</span>
-                            </label>
+
+                            <details class="topic-group">
+                                <summary>
+                                    <span class="group-caret">▸</span>
+                                    <span class="group-title">Physical Chemistry</span>
+                                    <span class="group-count">13</span>
+                                </summary>
+                                <div class="topic-group-body">
+                                    <label class="checkbox-label group-all">
+                                        <input type="checkbox" onchange="toggleTopicGroup(this)">
+                                        <span>✓ All Physical</span>
+                                    </label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label"><input type="checkbox" value="Atomic structure" class="topic-checkbox"><span>Atomic structure</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Chemical bonding" class="topic-checkbox"><span>Chemical bonding</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Mole" class="topic-checkbox"><span>Mole</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Gases" class="topic-checkbox"><span>Gases</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Thermochemistry" class="topic-checkbox"><span>Thermochemistry</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Thermodynamics" class="topic-checkbox"><span>Thermodynamics</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Kinetics" class="topic-checkbox"><span>Kinetics</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Chemical equilibrium" class="topic-checkbox"><span>Chemical equilibrium</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Acid base equilibrium" class="topic-checkbox"><span>Acid base equilibrium</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Solubility" class="topic-checkbox"><span>Solubility</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Redox" class="topic-checkbox"><span>Redox</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Electrolysis" class="topic-checkbox"><span>Electrolysis</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Electrochemical cell" class="topic-checkbox"><span>Electrochemical cell</span></label>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="topic-group">
+                                <summary>
+                                    <span class="group-caret">▸</span>
+                                    <span class="group-title">Inorganic Chemistry</span>
+                                    <span class="group-count">4</span>
+                                </summary>
+                                <div class="topic-group-body">
+                                    <label class="checkbox-label group-all">
+                                        <input type="checkbox" onchange="toggleTopicGroup(this)">
+                                        <span>✓ All Inorganic</span>
+                                    </label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label"><input type="checkbox" value="Periodic table" class="topic-checkbox"><span>Periodic table</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Group 2" class="topic-checkbox"><span>Group 2</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Group 17" class="topic-checkbox"><span>Group 17</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Transition elements" class="topic-checkbox"><span>Transition elements</span></label>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="topic-group">
+                                <summary>
+                                    <span class="group-caret">▸</span>
+                                    <span class="group-title">Organic Chemistry</span>
+                                    <span class="group-count">10</span>
+                                </summary>
+                                <div class="topic-group-body">
+                                    <label class="checkbox-label group-all">
+                                        <input type="checkbox" onchange="toggleTopicGroup(this)">
+                                        <span>✓ All Organic</span>
+                                    </label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label"><input type="checkbox" value="Introduction to Organic" class="topic-checkbox"><span>Introduction to Organic</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Alkane" class="topic-checkbox"><span>Alkane</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Alkene" class="topic-checkbox"><span>Alkene</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Arene" class="topic-checkbox"><span>Arene</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Halogenoalkane" class="topic-checkbox"><span>Halogenoalkane</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Hydroxyl Compounds" class="topic-checkbox"><span>Hydroxyl Compounds</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Carbonyl Compound" class="topic-checkbox"><span>Carbonyl Compound</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Carboxylic Acid" class="topic-checkbox"><span>Carboxylic Acid</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Nitrogen Compound" class="topic-checkbox"><span>Nitrogen Compound</span></label>
+                                        <label class="checkbox-label"><input type="checkbox" value="Polymers" class="topic-checkbox"><span>Polymers</span></label>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
                     
@@ -2026,9 +2078,12 @@ Option D" required></textarea>
                         <label>Sources & Years (Select multiple - Optional)</label>
                         <div id="sourceYearFilters" style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- TYS Years -->
-                            <div>
-                                <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">TYS (Ten Year Series)</div>
-                                <div class="checkbox-group">
+                            <details class="source-group">
+                                <summary>
+                                    <span class="group-caret">▸</span>
+                                    <span class="group-title">TYS (Ten Year Series)</span>
+                                </summary>
+                                <div class="checkbox-group" style="margin-top:0.6rem;">
                                     <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
                                         <input type="checkbox" id="selectAllTYS" onchange="toggleAllTYS(this)">
                                         <span style="color: var(--primary); font-weight: 600;">✓ All TYS</span>
@@ -2070,8 +2125,8 @@ Option D" required></textarea>
                                         <span>2017</span>
                                     </label>
                                 </div>
-                            </div>
-                            
+                            </details>
+
                             <!-- Prelim Years & Schools - will be populated dynamically -->
                             <div id="prelimFilters">
                                 <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">Prelim (by School & Year)</div>
@@ -3831,15 +3886,18 @@ Option D" required></textarea>
                 const schools = Array.from(schoolsByYear[year]).sort();
                 
                 html += `
-                    <div style="margin-bottom: 1rem;">
-                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; font-size: 0.95rem;">${year}</div>
-                        <div class="checkbox-group" style="margin-left: 1rem;">
+                    <details class="source-year-group">
+                        <summary>
+                            <span class="group-caret">▸</span>
+                            <span class="group-title">${year}</span>
+                        </summary>
+                        <div class="checkbox-group" style="padding: 0.25rem 0.85rem 0.7rem 0.85rem;">
                 `;
-                
+
                 html += `
-                        <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
+                        <label class="checkbox-label group-all">
                             <input type="checkbox" onchange="toggleAllSchoolsForYear(this, 'Prelim', ${year})">
-                            <span style="color: var(--primary); font-weight: 600;">✓ All ${year}</span>
+                            <span>✓ All ${year}</span>
                         </label>
                 `;
                 schools.forEach(school => {
@@ -3850,10 +3908,10 @@ Option D" required></textarea>
                         </label>
                     `;
                 });
-                
+
                 html += `
                         </div>
-                    </div>
+                    </details>
                 `;
             });
             
@@ -3976,15 +4034,18 @@ Option D" required></textarea>
                 const schools = Array.from(schoolsByYear[year]).sort();
                 
                 html += `
-                    <div style="margin-bottom: 1rem;">
-                        <div style="font-weight: 600; color: var(--accent); margin-bottom: 0.5rem; font-size: 0.95rem;">${year}</div>
-                        <div class="checkbox-group" style="margin-left: 1rem;">
+                    <details class="source-year-group">
+                        <summary>
+                            <span class="group-caret">▸</span>
+                            <span class="group-title">${year}</span>
+                        </summary>
+                        <div class="checkbox-group" style="padding: 0.25rem 0.85rem 0.7rem 0.85rem;">
                 `;
-                
+
                 html += `
-                        <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
+                        <label class="checkbox-label group-all">
                             <input type="checkbox" onchange="toggleAllSchoolsForYear(this, 'Promos', ${year})">
-                            <span style="color: var(--primary); font-weight: 600;">✓ All ${year}</span>
+                            <span>✓ All ${year}</span>
                         </label>
                 `;
                 schools.forEach(school => {
@@ -3995,10 +4056,10 @@ Option D" required></textarea>
                         </label>
                     `;
                 });
-                
+
                 html += `
                         </div>
-                    </div>
+                    </details>
                 `;
             });
             
@@ -4607,6 +4668,19 @@ Option D" required></textarea>
             const topicCheckboxes = document.querySelectorAll('.topic-checkbox');
             topicCheckboxes.forEach(checkbox => {
                 checkbox.checked = selectAll.checked;
+            });
+            // Keep the per-group "All" boxes in sync with the master
+            document.querySelectorAll('#topicCheckboxes .group-all input[type="checkbox"]').forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+        }
+
+        // Selects/deselects every topic checkbox within one collapsible group
+        function toggleTopicGroup(masterCb) {
+            const group = masterCb.closest('details');
+            if (!group) return;
+            group.querySelectorAll('.topic-checkbox').forEach(cb => {
+                cb.checked = masterCb.checked;
             });
         }
 
@@ -5236,6 +5310,36 @@ Option D" required></textarea>
             card.classList.add('show');
         }
 
+        // ── "New since last opened" update dots on stat cards ─────
+        // Shows a red dot when a card's data changed since the student
+        // last acknowledged it (per-user, remembered in localStorage).
+        const _cardUpdateSig = {};
+        function _dotStorageKey(card) {
+            const uid = (currentUser && currentUser.id) ? currentUser.id : 'anon';
+            return 'khembankSeen:' + card + ':' + uid;
+        }
+        function refreshUpdateDot(card, signature) {
+            _cardUpdateSig[card] = signature;
+            const dot = document.getElementById(card + 'Dot');
+            if (!dot) return;
+            let seen = null;
+            try { seen = localStorage.getItem(_dotStorageKey(card)); } catch (e) {}
+            if (seen === null) {
+                // First time we've computed this for the user: record it silently, no dot.
+                try { localStorage.setItem(_dotStorageKey(card), signature); } catch (e) {}
+                dot.style.display = 'none';
+            } else {
+                dot.style.display = (seen === signature) ? 'none' : 'inline-block';
+            }
+        }
+        function acknowledgeCard(card) {
+            if (_cardUpdateSig[card] !== undefined) {
+                try { localStorage.setItem(_dotStorageKey(card), _cardUpdateSig[card]); } catch (e) {}
+            }
+            const dot = document.getElementById(card + 'Dot');
+            if (dot) dot.style.display = 'none';
+        }
+
         async function loadStreak() {
             if (!currentUser) return;
             if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
@@ -5247,6 +5351,7 @@ Option D" required></textarea>
             row.style.display = 'grid';
             try {
                 const { current, longest } = await computeStreaks(currentUser.id);
+                refreshUpdateDot('streak', current + '|' + longest);
                 if (current === 0) {
                     content.innerHTML =
                         '<div style="text-align:center; padding:1.2rem 0 0.8rem 0;">'
@@ -5346,6 +5451,7 @@ Option D" required></textarea>
             row.style.display = 'grid';
             try {
                 const best = await computePersonalBests(currentUser.id);
+                refreshUpdateDot('personalBests', Object.keys(best).sort().map(t => t + ':' + best[t].score).join('|'));
                 const bests = Object.entries(best)
                     .map(([topic, d]) => ({ topic, ...d }))
                     .sort((a, b) => b.score - a.score);
@@ -5371,7 +5477,22 @@ Option D" required></textarea>
             }
         }
 
+        function toggleStreak() {
+            acknowledgeCard('streak');
+            const content = document.getElementById('streakContent');
+            const toggle = document.getElementById('streakToggle');
+            if (!content || !toggle) return;
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = 'Hide';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = 'Show';
+            }
+        }
+
         function togglePersonalBests() {
+            acknowledgeCard('personalBests');
             const content = document.getElementById('personalBestsContent');
             const toggle = document.getElementById('personalBestsToggle');
             if (!content || !toggle) return;
@@ -5440,6 +5561,7 @@ Option D" required></textarea>
             card.style.display = 'block';
             try {
                 const mastery = await computeTopicMastery(currentUser.id);
+                refreshUpdateDot('topicMastery', Object.keys(mastery).sort().map(t => t + ':' + (mastery[t].badge || '-')).join('|'));
                 const entries = Object.entries(mastery);
 
                 if (entries.length === 0) {
@@ -5483,14 +5605,18 @@ Option D" required></textarea>
         }
 
         function toggleTopicMastery() {
+            acknowledgeCard('topicMastery');
             const content = document.getElementById('topicMasteryContent');
             const toggle = document.getElementById('topicMasteryToggle');
+            const note = document.getElementById('topicMasteryNote');
             if (!content || !toggle) return;
             if (content.style.display === 'none') {
                 content.style.display = 'block';
+                if (note) note.style.display = 'block';
                 toggle.textContent = 'Hide';
             } else {
                 content.style.display = 'none';
+                if (note) note.style.display = 'none';
                 toggle.textContent = 'Show';
             }
         }

@@ -1122,7 +1122,7 @@
             gap: 0.5rem;
             padding: 0.6rem 0.85rem;
             font-weight: 600;
-            color: var(--primary);
+            color: var(--accent);
             user-select: none;
         }
         .topic-group > summary::-webkit-details-marker,
@@ -1134,7 +1134,7 @@
         .group-caret {
             transition: transform 0.15s ease;
             font-size: 0.75rem;
-            color: var(--primary);
+            color: var(--accent);
             flex-shrink: 0;
         }
         details[open] > summary .group-caret { transform: rotate(90deg); }
@@ -1142,8 +1142,8 @@
         .group-count {
             font-size: 0.72rem;
             font-weight: 700;
-            color: var(--primary);
-            border: 1px solid var(--cyan-border);
+            color: var(--accent);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 999px;
             padding: 0.05rem 0.5rem;
         }
@@ -1156,7 +1156,7 @@
             padding-bottom: 6px;
             margin-bottom: 6px;
         }
-        .group-all span { color: var(--primary); font-weight: 600; }
+        .group-all span { color: var(--accent); font-weight: 600; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -2086,7 +2086,7 @@ Option D" required></textarea>
                                 <div class="checkbox-group" style="margin-top:0.6rem;">
                                     <label class="checkbox-label" style="border-bottom: 1px solid rgba(0,217,255,0.15); padding-bottom: 6px; margin-bottom: 4px;">
                                         <input type="checkbox" id="selectAllTYS" onchange="toggleAllTYS(this)">
-                                        <span style="color: var(--primary); font-weight: 600;">✓ All TYS</span>
+                                        <span style="color: var(--accent); font-weight: 600;">✓ All TYS</span>
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2025">

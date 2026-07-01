@@ -595,10 +595,10 @@ function drawLoop(ts){
     // H still on HCN before transfer
     if(showHonHCN){
       const pHCN_H=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
-      // White bond H-CN — fades in step with the H-CN→CN curly arrow: the fade
-      // starts as the arrow starts tracing and the bond is gone once it reaches CN.
-      // Squared curve keeps the bond clearly visible until near the end of the trace.
-      const hcnBondAlpha=0.7*Math.max(0,1-arrow3Prog*arrow3Prog);
+      // White bond H-CN — stays fully solid while the H-CN→CN curly arrow travels,
+      // then breaks over the final stretch (arrow3Prog 0.7→1) as the arrowhead
+      // reaches the CN atom, so it never looks gone before the arrow gets there.
+      const hcnBondAlpha=0.7*Math.max(0,Math.min(1,(1-arrow3Prog)/0.3));
       if(hcnBondAlpha>0) drawBond(pHCN_H,pHCN_N,false,'rgba(255,255,255,'+hcnBondAlpha+')');
       drawAtom(pHCN_H,13,COLS.H,'H');
     }

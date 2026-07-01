@@ -279,7 +279,7 @@ function drawBond(p1,p2,dashed,col,double){
   if(len<2)return;
   const nx=-dy/len*3,ny=dx/len*3;
   ctx.setLineDash(dashed?[5,5]:[]);
-  ctx.lineWidth=Math.max(1.5,2*Math.min(p1.s,p2.s));
+  ctx.lineWidth=Math.max(2,2.6*Math.min(p1.s,p2.s));
   ctx.strokeStyle=col||'rgba(255,255,255,0.22)';
   if(double){
     ctx.beginPath();ctx.moveTo(p1.x+nx,p1.y+ny);ctx.lineTo(p2.x+nx,p2.y+ny);ctx.stroke();

@@ -640,69 +640,61 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 })();
 
 // \u2500\u2500 Reaction Scheme Practice \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+// Depicts Q13's aromatic synthesis slice: benzene \u2192 nitrobenzene \u2192 phenylamine
+// (real steps: nitration with HNO\u2083/H\u2082SO\u2084, then Sn/HCl reduction).
 (function(){
   const c=document.getElementById('th-rs');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
-  // Gradient background matches the CSS thumb-rs but painted here for canvas export.
   const bg=ctx.createLinearGradient(0,0,W,H);
   bg.addColorStop(0,'#08222a');bg.addColorStop(1,'#062430');
   ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
 
   ctx.lineCap='round';ctx.lineJoin='round';
-  const y=78;
-  const s1x=32, s2x=100, s3x=155;
+  const y=64;         // ring midline (leaves room for substituent labels below)
+  const r=14;         // hexagon radius
+  const s1x=32, s2x=100, s3x=168;
+  const white='#ffffff';
+  const blue='#93c5fd';   // heteroatom label \u2014 light blue reads on dark bg
+  const cyan='#06b6d4';
 
-  // ---- Structure 1: ethene (C=C horizontal double bond) ----
-  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
-  const ex1=s1x-11, ex2=s1x+11, eoy=3;
-  ctx.beginPath();
-  ctx.moveTo(ex1, y-eoy); ctx.lineTo(ex2, y-eoy);
-  ctx.moveTo(ex1, y+eoy); ctx.lineTo(ex2, y+eoy);
-  ctx.stroke();
-
-  // ---- Structure 2: benzene ring with \u03c0 circle ----
-  const r2=15;
-  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
-  ctx.beginPath();
-  for(let j=0;j<6;j++){
-    const a=-Math.PI/2+j*Math.PI/3;
-    const px=s2x+r2*Math.cos(a), py=y+r2*Math.sin(a);
-    if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  function drawRing(cx){
+    ctx.strokeStyle=white;ctx.lineWidth=2.1;
+    ctx.beginPath();
+    for(let j=0;j<6;j++){
+      const a=-Math.PI/2+j*Math.PI/3;
+      const px=cx+r*Math.cos(a), py=y+r*Math.sin(a);
+      if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.closePath();ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,y,r*0.58,0,Math.PI*2);ctx.stroke();
   }
-  ctx.closePath();ctx.stroke();
-  ctx.beginPath();ctx.arc(s2x,y,r2*0.58,0,Math.PI*2);ctx.stroke();
-
-  // ---- Structure 3: phenol (benzene + OH) ----
-  const r3=15;
-  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
-  ctx.beginPath();
-  for(let j=0;j<6;j++){
-    const a=-Math.PI/2+j*Math.PI/3;
-    const px=s3x+r3*Math.cos(a), py=y+r3*Math.sin(a);
-    if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  function drawSub(cx, label){
+    // Bond from bottom vertex down to substituent label
+    ctx.strokeStyle=white;ctx.lineWidth=2.1;
+    ctx.beginPath();
+    ctx.moveTo(cx, y+r); ctx.lineTo(cx, y+r+7);
+    ctx.stroke();
+    ctx.font='bold 11px Arial';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=blue;
+    ctx.fillText(label, cx, y+r+16);
   }
-  ctx.closePath();ctx.stroke();
-  ctx.beginPath();ctx.arc(s3x,y,r3*0.58,0,Math.PI*2);ctx.stroke();
-  // Bond from right-hand ring vertex to OH label
-  ctx.beginPath();
-  ctx.moveTo(s3x+r3, y); ctx.lineTo(s3x+r3+7, y);
-  ctx.stroke();
-  // OH label \u2014 red to signal heteroatom, matching the sim's atom colour
-  ctx.font='bold 12px Arial';
-  ctx.textAlign='left';ctx.textBaseline='middle';
-  ctx.fillStyle='#ef4444';
-  ctx.fillText('OH', s3x+r3+9, y);
 
-  // ---- Cyan arrows between structures ----
-  ctx.strokeStyle='#06b6d4';ctx.fillStyle='#06b6d4';ctx.lineWidth=2.1;
+  drawRing(s1x);                       // benzene
+  drawRing(s2x); drawSub(s2x, 'NO\u2082');   // nitrobenzene
+  drawRing(s3x); drawSub(s3x, 'NH\u2082');   // phenylamine
+
+  // Cyan arrows between structures (start/end just past each ring's silhouette)
+  ctx.strokeStyle=cyan;ctx.fillStyle=cyan;ctx.lineWidth=2.1;
+  const edge=r*0.866+2;   // horizontal half-width of hex at midline + tiny gap
   const arrow=(x1,x2,ay)=>{
     ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2-5,ay);ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(x2+1,ay); ctx.lineTo(x2-5,ay-4); ctx.lineTo(x2-5,ay+4);
     ctx.closePath();ctx.fill();
   };
-  arrow(s1x+18, s2x-r2-4, y);
-  arrow(s2x+r2+4, s3x-r3-4, y);
+  arrow(s1x+edge, s2x-edge, y);
+  arrow(s2x+edge, s3x-edge, y);
 })();
 
 })();

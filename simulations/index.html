@@ -643,63 +643,66 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
 (function(){
   const c=document.getElementById('th-rs');if(!c)return;
   const ctx=c.getContext('2d');const W=200,H=150;
-  ctx.fillStyle='#082530';ctx.fillRect(0,0,W,H);
-  const bw=44, bh=44, by=66, gap=34, x0=(W - (3*bw + 2*gap))/2;
-  for(let i=0;i<3;i++){
-    const bx=x0+i*(bw+gap);
-    ctx.fillStyle='#ffffff';
-    ctx.beginPath();const r=5;
-    ctx.moveTo(bx+r,by);
-    ctx.arcTo(bx+bw,by,bx+bw,by+bh,r);
-    ctx.arcTo(bx+bw,by+bh,bx,by+bh,r);
-    ctx.arcTo(bx,by+bh,bx,by,r);
-    ctx.arcTo(bx,by,bx+bw,by,r);
-    ctx.closePath();ctx.fill();
-    ctx.strokeStyle=(i===0)?'#3b82f6':(i===2)?'#22c55e':'#94a3b8';
-    ctx.lineWidth=1.8;ctx.stroke();
-    const mx=bx+bw/2,my=by+bh/2;
-    ctx.strokeStyle='#0f172a';ctx.lineWidth=1.9;ctx.lineCap='round';
-    if(i===0){
-      ctx.beginPath();
-      ctx.moveTo(mx-15,my+6);ctx.lineTo(mx-5,my-6);
-      ctx.lineTo(mx+6,my+6);ctx.lineTo(mx+16,my-6);
-      ctx.stroke();
-    } else if(i===1){
-      const rr=13;
-      ctx.beginPath();
-      for(let j=0;j<6;j++){
-        const a=-Math.PI/2+j*Math.PI/3;
-        const px=mx+rr*Math.cos(a),py=my+rr*Math.sin(a);
-        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-      }
-      ctx.closePath();ctx.stroke();
-      ctx.beginPath();ctx.arc(mx,my,rr*0.6,0,Math.PI*2);ctx.stroke();
-    } else {
-      const rr=12,hcx=mx-6;
-      ctx.beginPath();
-      for(let j=0;j<6;j++){
-        const a=-Math.PI/2+j*Math.PI/3;
-        const px=hcx+rr*Math.cos(a),py=my+rr*Math.sin(a);
-        if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-      }
-      ctx.closePath();ctx.stroke();
-      ctx.beginPath();ctx.arc(hcx,my,rr*0.6,0,Math.PI*2);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(hcx+rr-1,my);ctx.lineTo(mx+15,my);ctx.stroke();
-      ctx.fillStyle='#dc2626';
-      ctx.beginPath();ctx.arc(mx+18,my,3,0,Math.PI*2);ctx.fill();
-    }
+  // Gradient background matches the CSS thumb-rs but painted here for canvas export.
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#08222a');bg.addColorStop(1,'#062430');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  ctx.lineCap='round';ctx.lineJoin='round';
+  const y=78;
+  const s1x=32, s2x=100, s3x=155;
+
+  // ---- Structure 1: ethene (C=C horizontal double bond) ----
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
+  const ex1=s1x-11, ex2=s1x+11, eoy=3;
+  ctx.beginPath();
+  ctx.moveTo(ex1, y-eoy); ctx.lineTo(ex2, y-eoy);
+  ctx.moveTo(ex1, y+eoy); ctx.lineTo(ex2, y+eoy);
+  ctx.stroke();
+
+  // ---- Structure 2: benzene ring with \u03c0 circle ----
+  const r2=15;
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
+  ctx.beginPath();
+  for(let j=0;j<6;j++){
+    const a=-Math.PI/2+j*Math.PI/3;
+    const px=s2x+r2*Math.cos(a), py=y+r2*Math.sin(a);
+    if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
   }
-  for(let i=0;i<2;i++){
-    const x1=x0+(i+1)*bw+i*gap+5;
-    const x2=x0+(i+1)*(bw+gap)-5;
-    const ay=by+bh/2;
-    ctx.strokeStyle='#06b6d4';ctx.lineWidth=2.2;
+  ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.arc(s2x,y,r2*0.58,0,Math.PI*2);ctx.stroke();
+
+  // ---- Structure 3: phenol (benzene + OH) ----
+  const r3=15;
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=2.1;
+  ctx.beginPath();
+  for(let j=0;j<6;j++){
+    const a=-Math.PI/2+j*Math.PI/3;
+    const px=s3x+r3*Math.cos(a), py=y+r3*Math.sin(a);
+    if(j===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();ctx.stroke();
+  ctx.beginPath();ctx.arc(s3x,y,r3*0.58,0,Math.PI*2);ctx.stroke();
+  // Bond from right-hand ring vertex to OH label
+  ctx.beginPath();
+  ctx.moveTo(s3x+r3, y); ctx.lineTo(s3x+r3+7, y);
+  ctx.stroke();
+  // OH label \u2014 red to signal heteroatom, matching the sim's atom colour
+  ctx.font='bold 12px Arial';
+  ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillStyle='#ef4444';
+  ctx.fillText('OH', s3x+r3+9, y);
+
+  // ---- Cyan arrows between structures ----
+  ctx.strokeStyle='#06b6d4';ctx.fillStyle='#06b6d4';ctx.lineWidth=2.1;
+  const arrow=(x1,x2,ay)=>{
     ctx.beginPath();ctx.moveTo(x1,ay);ctx.lineTo(x2-5,ay);ctx.stroke();
-    ctx.fillStyle='#06b6d4';
     ctx.beginPath();
-    ctx.moveTo(x2+1,ay);ctx.lineTo(x2-5,ay-4);ctx.lineTo(x2-5,ay+4);
+    ctx.moveTo(x2+1,ay); ctx.lineTo(x2-5,ay-4); ctx.lineTo(x2-5,ay+4);
     ctx.closePath();ctx.fill();
-  }
+  };
+  arrow(s1x+18, s2x-r2-4, y);
+  arrow(s2x+r2+4, s3x-r3-4, y);
 })();
 
 })();

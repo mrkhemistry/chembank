@@ -651,17 +651,17 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   ctx.lineCap='round';ctx.lineJoin='round';
 
   // Q13 endpoints: benzene → phenylamine (start → target of aromatic synthesis)
-  const bw=76, bh=110, by=20;
-  const bxs=[10, 114];
-  const rr=36;
-  const rcy=by+42;                    // ring centre (upper portion of box)
-  const rcxs=bxs.map(x=>x+bw/2);      // [48, 152]
+  const bw=68, bh=110, by=20;
+  const bxs=[6, 126];                 // slimmer boxes pushed to canvas edges for wider gap
+  const rr=26;                        // ring leaves ~11px horizontal + ~18px top margin inside box
+  const rcy=by+44;                    // ring centre pushed further down for top margin
+  const rcxs=bxs.map(x=>x+bw/2);      // [40, 160]
 
   // Draw the containment boxes: subtle dark fill + soft white border
   bxs.forEach(bx=>{
     ctx.fillStyle='rgba(0,0,0,0.18)';
-    ctx.strokeStyle='rgba(255,255,255,0.22)';
-    ctx.lineWidth=1.4;
+    ctx.strokeStyle='#ffffff';
+    ctx.lineWidth=1.6;
     const rc=7;
     ctx.beginPath();
     ctx.moveTo(bx+rc, by);
@@ -673,7 +673,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     ctx.fill(); ctx.stroke();
   });
 
-  const white='#ffffff', blue='#3b82f6', cyan='#06b6d4';
+  const white='#ffffff', blue='#3b82f6', red='#ef4444';
 
   function drawRing(cx){
     ctx.strokeStyle=blue; ctx.lineWidth=3.2;
@@ -706,8 +706,8 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   drawRing(rcxs[0]);                                     // benzene
   drawRing(rcxs[1]); drawSub(rcxs[1], 'NH\u2082');         // phenylamine
 
-  // Single cyan arrow between the two boxes
-  ctx.strokeStyle=cyan; ctx.fillStyle=cyan; ctx.lineWidth=2.6;
+  // Single red arrow between the two boxes
+  ctx.strokeStyle=red; ctx.fillStyle=red; ctx.lineWidth=2.6;
   const pad=4;
   const arrow=(x1,x2,ay)=>{
     ctx.beginPath(); ctx.moveTo(x1,ay); ctx.lineTo(x2-6,ay); ctx.stroke();

@@ -651,10 +651,10 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   ctx.lineCap='round';ctx.lineJoin='round';
 
   // Three boxes containing benzene, nitrobenzene, phenylamine
-  const bw=42, bh=60, by=45;
-  const bxs=[10, 79, 148];
-  const rr=13;
-  const rcy=by+22;       // ring centre
+  const bw=46, bh=70, by=40;
+  const bxs=[3, 73, 143];
+  const rr=17;
+  const rcy=by+25;       // ring centre (upper portion of box)
   const rcxs=bxs.map(x=>x+bw/2);
 
   // Draw the containment boxes: subtle dark fill + soft white border
@@ -676,7 +676,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   const white='#ffffff', blue='#93c5fd', cyan='#06b6d4';
 
   function drawRing(cx){
-    ctx.strokeStyle=white; ctx.lineWidth=2.1;
+    ctx.strokeStyle=white; ctx.lineWidth=2.4;
     ctx.beginPath();
     for(let j=0;j<6;j++){
       const a=-Math.PI/2+j*Math.PI/3;
@@ -687,14 +687,14 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
     ctx.beginPath(); ctx.arc(cx, rcy, rr*0.58, 0, Math.PI*2); ctx.stroke();
   }
   function drawSub(cx, label){
-    ctx.strokeStyle=white; ctx.lineWidth=2.1;
+    ctx.strokeStyle=white; ctx.lineWidth=2.4;
     ctx.beginPath();
-    ctx.moveTo(cx, rcy+rr); ctx.lineTo(cx, rcy+rr+7);
+    ctx.moveTo(cx, rcy+rr); ctx.lineTo(cx, rcy+rr+8);
     ctx.stroke();
-    ctx.font='bold 10.5px Arial';
+    ctx.font='bold 12px Arial';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle=blue;
-    ctx.fillText(label, cx, rcy+rr+15);
+    ctx.fillText(label, cx, rcy+rr+17);
   }
 
   drawRing(rcxs[0]);                              // benzene

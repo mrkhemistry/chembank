@@ -416,12 +416,12 @@ function drawLoop(ts){
     if(state===1){
       if(prog<1){
         prog=Math.min(1,prog+0.005*sf);
-        brArrowProg=Math.min(1,brArrowProg+0.005*sf);
+        brArrowProg=Math.min(1,brArrowProg+0.011*sf);
         holdSince=0;
       } else {
         // Ionisation done — hold until the step-1 narration finishes (14s safety
         // cap) so the voiceover is not cut off mid-sentence.
-        brArrowProg=Math.min(1,brArrowProg+0.005*sf);
+        brArrowProg=Math.min(1,brArrowProg+0.011*sf);
         if(!holdSince) holdSince=ts;
         if(!narrationBusy()||(ts-holdSince)>14000){
           holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
@@ -460,11 +460,13 @@ function drawLoop(ts){
   if(state===1) planT=prog;
   else if(state>=2) planT=1;
 
-  // Br departure
+  // Br departure — accelerates out of the frame during step 1
   let brX=BL;
-  if(state===1) brX=BL+BL*0.8*prog;
-  else if(state>=2) brX=BL+BL*0.8;
-  const showBr=state<2||(state===1);
+  if(state===1) brX=BL+BL*4*prog*prog;
+  else if(state>=2) brX=BL+BL*4;
+  // Leaving group fades out over the last part of its exit so it drifts off
+  // frame smoothly instead of vanishing abruptly.
+  const brAlpha=state===1?Math.max(0,Math.min(1,(1-prog)/0.25)):1;
 
   // centre of scene
   const cx=W/2, cy=H/2;
@@ -485,16 +487,16 @@ function drawLoop(ts){
     // bonds — C-Br fades as brArrowProg increases
     subs.forEach(s=>drawBond(pC,s.p,false,'rgba(255,255,255,0.22)'));
     if(state===0) drawBond(pC,pBr,false,'rgba(168,85,247,0.6)');
-    if(state===1&&brArrowProg<1) drawBond(pC,pBr,false,'rgba(168,85,247,0.6)');
+    if(state===1&&brArrowProg<1) drawBond(pC,pBr,false,'rgba(168,85,247,'+(0.6*(1-brArrowProg))+')');
 
     // atoms depth sorted
     const ats=[
       {p:pC,r:22,col:COLS.C,lbl:'C',show:true},
-      {p:pBr,r:24,col:COLS.Br,lbl:'Br',show:state===0||(state===1&&brArrowProg<1)},
+      {p:pBr,r:24,col:COLS.Br,lbl:'Br',show:state===0||state===1,alpha:brAlpha},
       ...subs.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true}))
     ].filter(a=>a.show);
     ats.sort((a,b)=>b.p.z-a.p.z);
-    ats.forEach(a=>drawAtom(a.p,a.r,a.col,a.lbl));
+    ats.forEach(a=>{ if(a.alpha!==undefined&&a.alpha<1){ctx.globalAlpha=a.alpha;drawAtom(a.p,a.r,a.col,a.lbl);ctx.globalAlpha=1;}else drawAtom(a.p,a.r,a.col,a.lbl); });
 
     // carbocation label and p orbital
     if(state===2&&paused) drawCarbocationLabel(pC);

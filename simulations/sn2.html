@@ -498,14 +498,14 @@ function drawLoop(ts){
     }
     else if(state===3){
       if(prog<1){
-        prog=Math.min(1,prog+0.009*sf);
-        brFadeProg=Math.min(1,brFadeProg+0.009*sf);
-        ohSolidProg=Math.min(1,ohSolidProg+0.009*sf);
+        prog=Math.min(1,prog+0.006*sf);
+        brFadeProg=Math.min(1,brFadeProg+0.006*sf);
+        ohSolidProg=Math.min(1,ohSolidProg+0.006*sf);
         holdSince=0;
       } else {
         // Keep completing the product visuals while the step-2 narration finishes.
-        brFadeProg=Math.min(1,brFadeProg+0.009*sf);
-        ohSolidProg=Math.min(1,ohSolidProg+0.009*sf);
+        brFadeProg=Math.min(1,brFadeProg+0.006*sf);
+        ohSolidProg=Math.min(1,ohSolidProg+0.006*sf);
         if(!holdSince) holdSince=ts;
         if(!narrationBusy()||(ts-holdSince)>14000){
           holdSince=0;state=4;prog=1;setStep(4);
@@ -532,9 +532,12 @@ function drawLoop(ts){
 
   let brX;
   if(state<3) brX=BL;
-  else if(state===3) brX=BL+280*prog;
-  else brX=BL+280;
+  else if(state===3) brX=BL+240*prog;
+  else brX=BL+240;
 
+  // Leaving group fades out completely as it drifts away in step 2, so it never
+  // just sits to the side and then vanishes.
+  const brAlpha = state===3 ? Math.max(0,Math.min(1,(1-prog)/0.7)) : 1;
   const showBr=state<4;
   const isTS=(state===2&&paused);
   const ohDashed=(state===2&&paused);
@@ -571,11 +574,11 @@ function drawLoop(ts){
   const ats=[
     {p:pC, r:22,col:COLS.C, lbl:'C',   show:true},
     {p:pOH,r:20,col:COLS.OH,lbl:'OH\u207B',show:true},
-    {p:pBr,r:24,col:COLS.Br,lbl:'Br',  show:showBr},
+    {p:pBr,r:24,col:COLS.Br,lbl:'Br',  show:showBr,alpha:brAlpha},
     ...subPs.map(s=>({p:s.p,r:15,col:s.col,lbl:s.lbl,show:true}))
   ].filter(a=>a.show);
   ats.sort((a,b)=>b.p.z-a.p.z);
-  ats.forEach(a=>drawAtom(a.p,a.r,a.col,a.lbl));
+  ats.forEach(a=>{ if(a.alpha!==undefined&&a.alpha<1){ctx.globalAlpha=a.alpha;drawAtom(a.p,a.r,a.col,a.lbl);ctx.globalAlpha=1;}else drawAtom(a.p,a.r,a.col,a.lbl); });
 
   // === CURLY ARROW & LONE PAIR (drawn after atoms so visible on top) ===
   if(state===0||state===1){

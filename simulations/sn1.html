@@ -279,12 +279,44 @@ function drawAtom(p,r,col,lbl){
   ctx.fillText(lbl,x,y+1);
 }
 
+// Parse an rgb/rgba colour into shaded variants (keeps the original alpha),
+// used to render bonds as 3D-looking cylinders.
+function bondShades(col){
+  const m=(col||'').match(/rgba?\(([^)]+)\)/);
+  let r=255,g=255,b=255,a=1;
+  if(m){const p=m[1].split(',');r=+p[0];g=+p[1];b=+p[2];a=p[3]!==undefined?+p[3]:1;}
+  const cl=(rr,gg,bb)=>`rgba(${Math.round(rr)},${Math.round(gg)},${Math.round(bb)},${a})`;
+  return {
+    dark : cl(r*0.45,g*0.45,b*0.45),
+    base : cl(r,g,b),
+    light: cl(r+(255-r)*0.75,g+(255-g)*0.75,b+(255-b)*0.75)
+  };
+}
+// Draw a single bond as a solid full-width rod plus a highlight stripe for a 3D
+// cylinder sheen. The full-width base keeps the bond looking thick on the dark bg.
+function drawCyl(x1,y1,x2,y2,col,fw){
+  const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+  let ux=-dy/len,uy=dx/len; if(uy>0){ux=-ux;uy=-uy;} // perpendicular pointing "up"
+  const c=bondShades(col);
+  ctx.setLineDash([]);ctx.lineCap='round';
+  ctx.strokeStyle=c.base;ctx.lineWidth=fw;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const so=fw*0.28;
+  ctx.strokeStyle=c.dark;ctx.lineWidth=fw*0.3;
+  ctx.beginPath();ctx.moveTo(x1-ux*so,y1-uy*so);ctx.lineTo(x2-ux*so,y2-uy*so);ctx.stroke();
+  ctx.strokeStyle=c.light;ctx.lineWidth=fw*0.34;
+  ctx.beginPath();ctx.moveTo(x1+ux*so,y1+uy*so);ctx.lineTo(x2+ux*so,y2+uy*so);ctx.stroke();
+}
 function drawBond(p1,p2,dashed,col){
-  ctx.beginPath();ctx.setLineDash(dashed?[5,5]:[]);
-  ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);
-  ctx.lineWidth=Math.max(1.5,2.5*Math.min(p1.s,p2.s));
-  ctx.strokeStyle=col||'rgba(255,255,255,0.22)';
-  ctx.stroke();ctx.setLineDash([]);
+  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+  if(len<2)return;
+  const fw=Math.max(4.5,5*Math.min(p1.s,p2.s));
+  if(dashed){
+    ctx.setLineDash([5,5]);ctx.lineWidth=fw;ctx.strokeStyle=col||'rgba(255,255,255,0.22)';
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();ctx.setLineDash([]);
+    return;
+  }
+  drawCyl(p1.x,p1.y,p2.x,p2.y,col,fw);
 }
 
 function drawLonePair(px,py,col){

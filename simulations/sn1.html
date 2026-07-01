@@ -158,7 +158,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,speed=1,paused=false;
+let W,H,state=0,prog=0,speed=1,paused=false,lastT=0,holdSince=0;
 let brArrowProg=0,ohArrowProg=0,ohStraightProg=0;
 let aX=0.2,aY=0.5,dragging=false,lx,ly;
 const BL=92;
@@ -334,7 +334,10 @@ const NARR=[
   "In the fast step, hydroxide attacks the flat carbocation from both faces with equal likelihood.",
   "Equal amounts of the two mirror-image products form, giving a racemic mixture with no overall optical activity. This is the S N 1 mechanism."
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+// True while the current step's narration is still being spoken — used to hold the
+// animation at the end of a stage so the voiceover is never cut off mid-sentence.
+function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }
 const voiceBtn=document.getElementById('voiceBtn');
 function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
 if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
@@ -368,18 +371,44 @@ function drawCarbocationLabel(pC){
 
 }
 
-function drawLoop(){
+function drawLoop(ts){
   if(!document.getElementById('chemCanvas')) return;
+  // Frame-rate independent timing: normalise increments to a 60fps baseline so the
+  // animation runs at the same real-world speed on 60/120/144Hz displays.
+  if(ts===undefined) ts=lastT;
+  let f=(lastT&&ts>lastT)?(ts-lastT)/(1000/60):1;
+  lastT=ts;
+  if(f>4)f=4;  // cap after a tab-switch/stall so progress can't leap forward
+  const sf=speed*f;
   if(!paused){
     if(state===1){
-      prog+=0.005*speed;
-      brArrowProg=Math.min(1,brArrowProg+0.005*speed);
-      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
+      if(prog<1){
+        prog=Math.min(1,prog+0.005*sf);
+        brArrowProg=Math.min(1,brArrowProg+0.005*sf);
+        holdSince=0;
+      } else {
+        // Ionisation done — hold until the step-1 narration finishes (14s safety
+        // cap) so the voiceover is not cut off mid-sentence.
+        brArrowProg=Math.min(1,brArrowProg+0.005*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
+        }
+      }
     } else if(state===3){
-      prog+=0.008*speed;
-      ohArrowProg=Math.min(1,ohArrowProg+0.009*speed);
-      if(ohArrowProg>=1) ohStraightProg=Math.min(1,ohStraightProg+0.009*speed);
-      if(prog>=1){state=4;prog=1;setStep(4);}
+      if(prog<1){
+        prog=Math.min(1,prog+0.008*sf);
+        ohArrowProg=Math.min(1,ohArrowProg+0.009*sf);
+        if(ohArrowProg>=1) ohStraightProg=Math.min(1,ohStraightProg+0.009*sf);
+        holdSince=0;
+      } else {
+        // Keep forming the C-OH bond while the step-2 narration finishes.
+        if(ohArrowProg>=1) ohStraightProg=Math.min(1,ohStraightProg+0.009*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;state=4;prog=1;setStep(4);
+        }
+      }
     }
   }
 

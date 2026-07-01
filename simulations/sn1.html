@@ -579,7 +579,9 @@ function drawLoop(ts){
         const dirX=pOH.x-pC.x, dirY=pOH.y-pC.y;
         const dirLen=Math.sqrt(dirX*dirX+dirY*dirY)||1;
         const normX=dirX/dirLen, normY=dirY/dirLen;
-        const lpX=pOH.x+normX*28, lpY=pOH.y+normY*28;
+        // Lone pair on the side of OH facing the carbocation, so the attack arrow
+        // goes straight to C instead of drawing back over the OH atom.
+        const lpX=pOH.x-normX*28, lpY=pOH.y-normY*28;
         ctx.globalAlpha=Math.max(0,1-ohArrowProg);
         drawLonePair(lpX,lpY,'#f43f5e');
         ctx.globalAlpha=1;

@@ -489,7 +489,9 @@ function drawLoop(ts){
         // safety cap) so the voiceover is not cut off mid-sentence.
         if(arrowProg>=1) straightProg=Math.min(1,straightProg+0.009*sf);
         if(!holdSince) holdSince=ts;
-        if(!narrationBusy()||(ts-holdSince)>14000){
+        // Wait for the arrows to fully straighten (so the partial bonds are showing)
+        // and the narration to finish before revealing the TS.
+        if((!narrationBusy()&&straightProg>=1)||(ts-holdSince)>14000){
           holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
         }
       }
@@ -548,15 +550,18 @@ function drawLoop(ts){
     return{p:proj(pos.x,pos.y,pos.z),lbl:s.lbl,col:s.col};
   });
 
-  // C-OH bond: not shown in state 1 (curly arrow handles it), dashed at TS, solid after
-  const ohBondAlpha = state===2&&paused ? 0.6 : state===3||state===4 ? Math.min(1,ohSolidProg+0.3) : 0;
-  const ohDashedBond = state===2&&paused;
-  if(ohBondAlpha>0) drawBond(pC,pOH,ohDashedBond,'rgba(244,63,94,'+ohBondAlpha+')');
+  // Once the step-1 curly arrows have finished tracing (straightProg>=1) the dashed
+  // partial bonds appear immediately, so there's no gap before the TS is reached.
+  const partialBonds = (state===1&&straightProg>=1)||(state===2&&paused);
 
-  // C-Br bond: solid before TS, dashed at TS, fades as Br departs
+  // C-OH bond: the curly arrow stands in for it while tracing, then the dashed
+  // partial bond appears, dashed at TS, solid after.
+  const ohBondAlpha = partialBonds ? 0.6 : state===3||state===4 ? Math.min(1,ohSolidProg+0.3) : 0;
+  if(ohBondAlpha>0) drawBond(pC,pOH,partialBonds,'rgba(244,63,94,'+ohBondAlpha+')');
+
+  // C-Br bond: solid before the arrows finish, dashed partial once they do / at the TS, fades as Br departs
   const brBondAlpha = state<2 ? 0.6 : state===2&&paused ? 0.6 : state===3 ? Math.max(0,0.6*(1-brFadeProg)) : 0;
-  const brDashedBond = state===2&&paused;
-  if(brBondAlpha>0&&showBr) drawBond(pC,pBr,brDashedBond,'rgba(168,85,247,'+brBondAlpha+')');
+  if(brBondAlpha>0&&showBr) drawBond(pC,pBr,partialBonds,'rgba(168,85,247,'+brBondAlpha+')');
 
   // Substituent bonds always solid
   subPs.forEach(s=>drawBond(pC,s.p,false,'rgba(255,255,255,0.22)'));

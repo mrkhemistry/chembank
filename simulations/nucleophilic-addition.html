@@ -624,11 +624,11 @@ function drawLoop(ts){
     const dirX=pCN.x-pC.x, dirY=pCN.y-pC.y;
     const dirLen=Math.sqrt(dirX*dirX+dirY*dirY)||1;
     const normX=dirX/dirLen, normY=dirY/dirLen;
-    // Place lone pair 28px beyond CN atom surface in screen space (fixed px, not scaled)
-    const lpX=pCN.x+normX*28, lpY=pCN.y+normY*28;
+    // Place lone pair below the CN atom (fixed px) so it doesn't overlap the atom/arrow
+    const lpX=pCN.x, lpY=pCN.y+30;
     // Lone pair fades out as arrow draws (electrons leaving CN-)
     ctx.globalAlpha=state===1?Math.max(0,1-arrowProg):1;
-    drawLonePair({x:lpX,y:lpY},0,0,'#22d3ee');
+    drawLonePair({x:lpX,y:lpY},0,0,'#fde047');
     ctx.globalAlpha=1;
     if(state===1){
       const perpX=-normY*60, perpY=normX*60;
@@ -664,7 +664,7 @@ function drawLoop(ts){
       const oLpX2=pO.x+(oDirX2/oDirLen2)*28;
       const oLpY2=pO.y+(oDirY2/oDirLen2)*28;
       ctx.globalAlpha=eraseProg;
-      drawLonePair({x:oLpX2,y:oLpY2},0,0,'#f87171');
+      drawLonePair({x:oLpX2,y:oLpY2},0,0,'#fde047');
       // O- charge label
       ctx.font='bold 20px Arial';ctx.textAlign='center';
       ctx.fillStyle='#f87171';
@@ -679,7 +679,7 @@ function drawLoop(ts){
     const oDirLen2=Math.sqrt(oDirX2*oDirX2+oDirY2*oDirY2)||1;
     const oLpX2=pO.x+(oDirX2/oDirLen2)*28;
     const oLpY2=pO.y+(oDirY2/oDirLen2)*28;
-    drawLonePair({x:oLpX2,y:oLpY2},0,0,'#f87171');
+    drawLonePair({x:oLpX2,y:oLpY2},0,0,'#fde047');
   }
 
   // STATE 3: curly arrows
@@ -695,7 +695,7 @@ function drawLoop(ts){
 
     // Lone pair fades as arrow traces
     ctx.globalAlpha=Math.max(0,1-arrow3Prog);
-    ctx.fillStyle='#f87171';
+    ctx.fillStyle='#fde047';
     ctx.beginPath();ctx.arc(oLpX-5,oLpY,4,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.arc(oLpX+5,oLpY,4,0,Math.PI*2);ctx.fill();
     ctx.globalAlpha=1;
@@ -733,7 +733,7 @@ function drawLoop(ts){
       const cnLpY=pHCN_N_pos.y;
       ctx.globalAlpha=cnLpProg;
       // Draw two dots stacked vertically
-      ctx.fillStyle='#ffffff';
+      ctx.fillStyle='#fde047';
       ctx.beginPath();ctx.arc(cnLpX,cnLpY-6,3,0,Math.PI*2);ctx.fill();
       ctx.beginPath();ctx.arc(cnLpX,cnLpY+6,3,0,Math.PI*2);ctx.fill();
       ctx.globalAlpha=1;
@@ -745,7 +745,7 @@ function drawLoop(ts){
     const pHCN_N_f=proj(hcnBodyPos.x+50,hcnBodyPos.y,hcnBodyPos.z);
     const pHCN_H_f=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
     // CN lone pair — vertically aligned on left side of CN sphere
-    ctx.fillStyle='#ffffff';
+    ctx.fillStyle='#fde047';
     ctx.beginPath();ctx.arc(pHCN_N_f.x-28,pHCN_N_f.y-6,3,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.arc(pHCN_N_f.x-28,pHCN_N_f.y+6,3,0,Math.PI*2);ctx.fill();
     // Label CN- as nucleophile

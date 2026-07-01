@@ -155,7 +155,7 @@ const ec=document.getElementById('eCanvas');
 const eCtx=ec.getContext('2d');
 const wrap=document.getElementById('cWrap');
 
-let W,H,state=0,prog=0,arrowProg=0,straightProg=0,eraseProg=0,arrow3Prog=0,straight3Prog=0,erase3Prog=0,cnLpProg=0,speed=1.6,paused=false;
+let W,H,state=0,prog=0,arrowProg=0,straightProg=0,eraseProg=0,arrow3Prog=0,straight3Prog=0,erase3Prog=0,cnLpProg=0,speed=1.6,paused=false,lastT=0,holdSince=0;
 let aX=0.25,aY=0.5,dragging=false,lx,ly;
 const BL=135;
 
@@ -390,7 +390,10 @@ const NARR=[
   "In the fast step, the negatively charged oxygen takes a proton from a hydrogen cyanide molecule, which regenerates the cyanide ion.",
   "The product is a hydroxynitrile, also called a cyanohydrin. The central carbon is tetrahedral."
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+// True while the current step's narration is still being spoken — used to hold the
+// animation at the end of a stage so the voiceover is never cut off mid-sentence.
+function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }
 const voiceBtn=document.getElementById('voiceBtn');
 function updVoiceBtn(){ if(!voiceBtn)return; if(!canSpeak){voiceBtn.textContent='Voice N/A';voiceBtn.disabled=true;return;} voiceBtn.textContent=voiceOn?'Voice: On':'Voice: Off'; voiceBtn.classList.toggle('von',voiceOn); }
 if(voiceBtn) voiceBtn.addEventListener('click',()=>{ voiceOn=!voiceOn; try{localStorage.setItem('simVoice',voiceOn?'1':'0');}catch(e){} if(!voiceOn&&canSpeak)speechSynthesis.cancel(); updVoiceBtn(); });
@@ -410,32 +413,63 @@ function drawIntermediateLabel(pO){
   ctx.fillText('\u207B',pO.x+Math.round(22*pO.s),pO.y-Math.round(22*pO.s));
 }
 
-function drawLoop(){
+function drawLoop(ts){
+  // Frame-rate independent timing: normalise increments to a 60fps baseline so the
+  // animation runs at the same real-world speed on 60/120/144Hz displays.
+  if(ts===undefined) ts=lastT;
+  let f=(lastT&&ts>lastT)?(ts-lastT)/(1000/60):1;
+  lastT=ts;
+  if(f>4)f=4;  // cap after a tab-switch/stall so progress can't leap forward
+  const sf=speed*f;
   if(!paused){
     if(state===1){
-      prog+=0.003*speed;
-      arrowProg=Math.min(1,arrowProg+0.008*speed);
-      if(arrowProg>=1){
-        straightProg=Math.min(1,straightProg+0.009*speed);
-        eraseProg=Math.min(1,eraseProg+0.009*speed);
+      if(prog<1){
+        prog=Math.min(1,prog+0.003*sf);
+        arrowProg=Math.min(1,arrowProg+0.008*sf);
+        if(arrowProg>=1){
+          straightProg=Math.min(1,straightProg+0.009*sf);
+          eraseProg=Math.min(1,eraseProg+0.009*sf);
+        }
+        holdSince=0;
+      } else {
+        // Attack animation done — hold until the step-1 narration finishes
+        // (14s safety cap) so the voiceover is not cut off mid-sentence.
+        straightProg=Math.min(1,straightProg+0.009*sf);
+        eraseProg=Math.min(1,eraseProg+0.009*sf);
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';
+        }
       }
-      if(prog>=1){prog=0;state=2;paused=true;setStep(2);document.getElementById('resumeBtn').style.display='inline-block';}
     }
     else if(state===3){
-      prog+=0.004*speed;
-      arrow3Prog=Math.min(1,arrow3Prog+0.009*speed);
-      if(arrow3Prog>=1){
-        straight3Prog=Math.min(1,straight3Prog+0.009*speed);
+      if(prog<1){
+        prog=Math.min(1,prog+0.004*sf);
+        arrow3Prog=Math.min(1,arrow3Prog+0.009*sf);
+        if(arrow3Prog>=1){
+          straight3Prog=Math.min(1,straight3Prog+0.009*sf);
+        }
+        if(straight3Prog>=1){
+          erase3Prog=Math.min(1,erase3Prog+0.009*sf);
+          if(erase3Prog>=1) cnLpProg=Math.min(1,cnLpProg+0.011*sf);
+        }
+        holdSince=0;
+      } else {
+        // Keep completing the addition visuals while the step-2 narration finishes.
+        if(arrow3Prog>=1) straight3Prog=Math.min(1,straight3Prog+0.009*sf);
+        if(straight3Prog>=1){
+          erase3Prog=Math.min(1,erase3Prog+0.009*sf);
+          if(erase3Prog>=1) cnLpProg=Math.min(1,cnLpProg+0.011*sf);
+        }
+        if(!holdSince) holdSince=ts;
+        if(!narrationBusy()||(ts-holdSince)>14000){
+          holdSince=0;state=4;prog=1;setStep(4);
+        }
       }
-      if(straight3Prog>=1){
-        erase3Prog=Math.min(1,erase3Prog+0.009*speed);
-        if(erase3Prog>=1) cnLpProg=Math.min(1,cnLpProg+0.011*speed);
-      }
-      if(prog>=1){state=4;prog=1;setStep(4);}
     }
     else if(state===4){
       // Keep incrementing cnLpProg so CN- finishes moving after state transition
-      cnLpProg=Math.min(1,cnLpProg+0.011*speed);
+      cnLpProg=Math.min(1,cnLpProg+0.011*sf);
     }
   }
 

@@ -562,8 +562,9 @@ function drawLoop(ts){
     // H still on HCN before transfer
     if(showHonHCN){
       const pHCN_H=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
-      // White bond H-CN
-      drawBond(pHCN_H,pHCN_N,false,'rgba(255,255,255,0.7)');
+      // White bond H-CN — breaks as the H-CN→CN curly arrow traces (electrons leave to CN)
+      const hcnBondAlpha=0.7*Math.max(0,1-arrow3Prog);
+      if(hcnBondAlpha>0) drawBond(pHCN_H,pHCN_N,false,'rgba(255,255,255,'+hcnBondAlpha+')');
       drawAtom(pHCN_H,13,COLS.H,'H');
     }
     drawAtom(pHCN_N,18,COLS.CN,'CN');

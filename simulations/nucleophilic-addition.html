@@ -495,7 +495,9 @@ function drawLoop(ts){
           if(erase3Prog>=1) cnLpProg=Math.min(1,cnLpProg+0.011*sf);
         }
         if(!holdSince) holdSince=ts;
-        if(!narrationBusy()||(ts-holdSince)>14000){
+        // Hold until the narration finishes AND the arrow has fully absorbed into
+        // CN (erase3Prog complete) so the H-CN bond break plays out smoothly.
+        if((!narrationBusy()&&erase3Prog>=1)||(ts-holdSince)>14000){
           holdSince=0;state=4;prog=1;setStep(4);
         }
       }
@@ -595,10 +597,10 @@ function drawLoop(ts){
     // H still on HCN before transfer
     if(showHonHCN){
       const pHCN_H=proj(hcnBodyPos.x-50,hcnBodyPos.y,hcnBodyPos.z);
-      // White bond H-CN — stays fully solid while the H-CN→CN curly arrow travels,
-      // then breaks over the final stretch (arrow3Prog 0.7→1) as the arrowhead
-      // reaches the CN atom, so it never looks gone before the arrow gets there.
-      const hcnBondAlpha=0.7*Math.max(0,Math.min(1,(1-arrow3Prog)/0.3));
+      // White bond H-CN — stays fully solid while the H-CN→CN curly arrow traces,
+      // then breaks in step with erase3Prog, i.e. as the arrow is absorbed
+      // (disappears) into the CN atom.
+      const hcnBondAlpha=0.7*Math.max(0,1-erase3Prog);
       if(hcnBondAlpha>0) drawBond(pHCN_H,pHCN_N,false,'rgba(255,255,255,'+hcnBondAlpha+')');
       drawAtom(pHCN_H,13,COLS.H,'H');
     }

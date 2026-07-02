@@ -26,20 +26,20 @@
   #chemCanvas { display:block; width:100%; height:100%; cursor:move; }
   #sidePanel { width:240px; background:#0a1628; border-left:1px solid #1e293b; display:flex; flex-direction:column; }
   #eBox { padding:14px; border-bottom:1px solid #1e293b; }
-  #eBox p { font-size:9px; color:#475569; margin:0 0 6px; }
+  #eBox p { font-size:9px; color:#e8eef6; margin:0 0 6px; }
   #stepPanel { flex:1; padding:10px; display:flex; flex-direction:column; gap:6px; overflow:hidden; }
   .si { border-radius:8px; padding:9px 11px; border:1px solid #1e293b; transition:all 0.3s; }
   .si.active { border-color:#3b82f6; background:#0c1f3a; }
-  .sn { font-size:9px; color:#475569; margin-bottom:2px; }
+  .sn { font-size:9px; color:#e8eef6; margin-bottom:2px; }
   .si.active .sn { color:#93c5fd; }
-  .st { font-size:12px; font-weight:600; color:#64748b; }
+  .st { font-size:12px; font-weight:600; color:#e8eef6; }
   .si.active .st { color:#e2e8f0; }
-  .sd { font-size:10px; color:#475569; margin-top:4px; line-height:1.5; display:none; }
+  .sd { font-size:10px; color:#e8eef6; margin-top:4px; line-height:1.5; display:none; }
   .si.active .sd { display:block; color:#7dd3fc; }
   #botBar { background:#060e1c; border-top:1px solid #1e293b; padding:10px 16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .bp { background:#2563eb; color:#fff; border:none; border-radius:6px; padding:6px 16px; font-size:12px; cursor:pointer; font-family:sans-serif; }
   .bp:hover { background:#3b82f6; }
-  .bs { background:#1e293b; color:#94a3b8; border:none; border-radius:6px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:sans-serif; }
+  .bs { background:#1e293b; color:#e8eef6; border:none; border-radius:6px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:sans-serif; }
   .bs:hover { background:#334155; }
   .bs.av { background:#334155; color:#fff; }
   #resumeBtn { display:none; background:#f59e0b; color:#000; border:none; border-radius:6px; padding:6px 14px; font-size:12px; cursor:pointer; font-weight:600; font-family:sans-serif; }
@@ -113,14 +113,14 @@
       <button id="resumeBtn">Resume</button>
       <button class="bs" id="step2Btn">Skip to Step 2</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
-      <span style="font-size:11px;color:#64748b;">View:</span>
+      <span style="font-size:11px;color:#e8eef6;">View:</span>
       <button class="bs av" id="v0" onclick="setView(0)">Side</button>
       <button class="bs" id="v1" onclick="setView(1)">Top</button>
       <button class="bs" id="v2" onclick="setView(2)">Free</button>
       <div style="width:1px;height:20px;background:#1e293b;"></div>
-      <span style="font-size:11px;color:#64748b;">Speed:</span>
+      <span style="font-size:11px;color:#e8eef6;">Speed:</span>
       <input type="range" id="spd" min="0.2" max="3" step="0.1" value="1" style="width:70px;accent-color:#3b82f6;cursor:pointer;">
-      <span id="spdOut" style="font-size:11px;color:#94a3b8;min-width:28px;">1.0&#215;</span>
+      <span id="spdOut" style="font-size:11px;color:#e8eef6;min-width:28px;">1.0&#215;</span>
       <span id="statusBadge">Ready</span>
     </div>
   </div>

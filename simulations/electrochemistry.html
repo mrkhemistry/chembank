@@ -104,7 +104,7 @@
     display: block; width: 100%;
     padding: 9px 11px; background: #0f172a;
     border: 1px solid #1e293b; border-radius: 8px;
-    color: #94a3b8; font-size: 13px; font-family: inherit;
+    color: #e8eef6; font-size: 13px; font-family: inherit;
     cursor: pointer; transition: all 0.2s; text-align: left;
   }
   .mode-btn:hover { border-color: #334155; color: #e2e8f0; }
@@ -134,14 +134,14 @@
   }
   .cell-card.gal .cell-name { color: var(--gal); }
   .cell-card.elc .cell-name { color: var(--elc); }
-  .cell-emf { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #94a3b8; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  .cell-emf { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #e8eef6; font-weight: 500; letter-spacing: 0; text-transform: none; }
   .heq { font-size: 13px; color: #cbd5e1; line-height: 1.55; font-family: 'Consolas','Menlo',monospace; }
   .heq .lbl { color: #cbd5e1; font-size: 10px; margin-right: 6px; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'DM Sans',sans-serif; }
   .heq .ox { color: #fca5a5; }
   .heq .red { color: #93c5fd; }
 
   /* contrast list */
-  .contrast { font-size: 12px; color: #94a3b8; line-height: 1.7; }
+  .contrast { font-size: 12px; color: #e8eef6; line-height: 1.7; }
   .contrast .row { display: flex; gap: 8px; padding: 2px 0; }
   .contrast .row .col1 { flex: 1; color: var(--gal); }
   .contrast .row .col2 { flex: 1; color: var(--elc); text-align: right; }
@@ -156,12 +156,12 @@
   .bp:hover { background: #3b82f6; }
   .bp.pause { background: #1e293b; color: #cbd5e1; }
   .bp.pause:hover { background: #334155; }
-  .bs { background: #1e293b; color: #94a3b8; border: none; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .bs { background: #1e293b; color: #e8eef6; border: none; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; font-family: inherit; }
   .bs:hover { background: #334155; color: #e2e8f0; }
   .divider { width: 1px; height: 22px; background: #1e293b; }
   .ctrl-label { font-size: 12px; color: #cbd5e1; }
   #spd { width: 90px; accent-color: #3b82f6; cursor: pointer; }
-  #spdOut { font-size: 12px; color: #94a3b8; min-width: 30px; }
+  #spdOut { font-size: 12px; color: #e8eef6; min-width: 30px; }
   #statusBadge { margin-left: auto; font-size: 11px; font-family: 'Consolas',monospace; color: #7dd3fc; background: #0c2340; border: 1px solid #1e4070; border-radius: 4px; padding: 4px 10px; }
 
   /* legend chips floating on canvas */
@@ -169,7 +169,7 @@
     position: absolute; bottom: 12px; right: 12px;
     background: rgba(15,23,42,0.85); padding: 6px 10px;
     border-radius: 8px; border: 1px solid #1e293b;
-    font-size: 11px; color: #94a3b8;
+    font-size: 11px; color: #e8eef6;
     backdrop-filter: blur(6px);
     display: flex; gap: 12px; align-items: center;
   }
@@ -1530,7 +1530,7 @@ function updateInfoPanel(){
   } else {
     heqElc.innerHTML =
       '<div><span class="lbl">Cathode (−)</span><span class="red">2H₂O + 2e⁻ → H₂(g) + 2OH⁻</span></div>'+
-      '<div><span class="lbl">Anode (+)</span><span class="ox">2Cl⁻ → Cl₂(g) + 2e⁻</span><span style="font-size:9px;color:#64748b;"> (conc.)</span></div>'+
+      '<div><span class="lbl">Anode (+)</span><span class="ox">2Cl⁻ → Cl₂(g) + 2e⁻</span><span style="font-size:9px;color:#e8eef6;"> (conc.)</span></div>'+
       '<div><span class="lbl">Net</span>chlor-alkali process → NaOH + H₂ + Cl₂</div>';
     emfElc.textContent = 'requires ≥ 2.2 V';
   }

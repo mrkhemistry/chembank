@@ -3415,55 +3415,32 @@ Option D" required></textarea>
                     errorDiv.style.display = 'none';
                     
                     try {
-                        // Validate join code
-                        const { data: codeData, error: codeError } = await supabaseClient
-                            .from('join_codes')
-                            .select('*')
-                            .eq('code', joinCode)
-                            .eq('is_active', true)
-                            .single();
-                        
-                        if (codeError || !codeData) {
+                        // Validate join code server-side (codes are not exposed to the client)
+                        const { data: codeInfo, error: codeError } = await supabaseClient
+                            .rpc('validate_join_code', { p_code: joinCode });
+
+                        if (codeError) {
+                            throw new Error('Could not validate join code. Please try again.');
+                        }
+                        if (!codeInfo || !codeInfo.exists) {
                             throw new Error('Invalid or expired join code');
                         }
-                        
-                        // Check max uses
-                        if (codeData.max_uses && codeData.times_used >= codeData.max_uses) {
+                        if (codeInfo.reached_max) {
                             throw new Error('This join code has reached its maximum uses');
                         }
-                        
-                        // Create auth account
-                        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+
+                        // Create auth account — the handle_new_user DB trigger reads the join
+                        // code from metadata to assign the role and course enrolment server-side.
+                        const { error: authError } = await supabaseClient.auth.signUp({
                             email: email,
                             password: password,
                             options: {
-                                data: { full_name: name }
+                                data: { full_name: name, join_code: joinCode }
                             }
                         });
-                        
+
                         if (authError) throw authError;
-                        
-                        // Create user profile — use role assigned by join code
-                        const assignedRole = codeData.assigned_role || 'student';
-                        const { error: profileError } = await supabaseClient
-                            .from('user_profiles')
-                            .insert([{
-                                id: authData.user.id,
-                                email: email,
-                                full_name: name,
-                                role: assignedRole
-                            }]);
-                        
-                        if (profileError) {
-                            throw new Error('Account created but profile setup failed. Please contact support.');
-                        }
-                        
-                        // Increment join code usage
-                        await supabaseClient
-                            .from('join_codes')
-                            .update({ times_used: codeData.times_used + 1 })
-                            .eq('id', codeData.id);
-                        
+
                         // Auto-login (session is already created by signUp)
                         alert('Account created successfully! Welcome to KhemBank!');
                         await checkAuthState();

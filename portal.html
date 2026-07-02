@@ -477,11 +477,12 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Creating account...';
       try {
-        // Validate join code
-        var codeResult = await sb.from('join_codes').select('*').eq('code', joinCode).eq('is_active', true).single();
-        if (codeResult.error || !codeResult.data) throw new Error('Invalid or expired join code.');
-        var codeData = codeResult.data;
-        if (codeData.max_uses && codeData.times_used >= codeData.max_uses) throw new Error('This join code has reached its maximum uses.');
+        // Validate join code server-side (codes are not exposed to the client)
+        var codeCheck = await sb.rpc('validate_join_code', { p_code: joinCode });
+        if (codeCheck.error) throw new Error('Could not validate join code. Please try again.');
+        var codeInfo = codeCheck.data || {};
+        if (!codeInfo.exists) throw new Error('Invalid or expired join code.');
+        if (codeInfo.reached_max) throw new Error('This join code has reached its maximum uses.');
         // Create auth account — DB trigger reads join_code from metadata to set role/enrollment
         var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode } } });
         if (signupResult.error) throw signupResult.error;

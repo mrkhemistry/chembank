@@ -77,7 +77,6 @@
     overlay.innerHTML = `
       <div class="_sim-modal-bg"></div>
       <div class="_sim-modal-card">
-        <div class="_sim-lock-icon">&#128274;</div>
         <h2>Premium simulation</h2>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
         <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. Sign in with a recording-package account to unlock the rest.</p>
@@ -95,28 +94,27 @@
         font-family: 'DM Sans', sans-serif;
       }
       #_simUpgradeModal ._sim-modal-bg {
-        position: absolute; inset: 0; background: rgba(11,15,26,0.85); backdrop-filter: blur(8px);
+        position: absolute; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
       }
       #_simUpgradeModal ._sim-modal-card {
         position: relative; z-index: 1;
-        background: #111827; border: 1px solid rgba(79,156,249,0.3);
+        background: #141414; border: 1px solid #2a2a2a;
         border-radius: 16px; padding: 36px 32px; max-width: 440px; width: 90%;
-        text-align: center; color: #f0f4ff;
+        text-align: center; color: #e8eef6;
         box-shadow: 0 20px 80px rgba(0,0,0,0.6);
       }
-      #_simUpgradeModal ._sim-lock-icon { font-size: 44px; margin-bottom: 14px; }
-      #_simUpgradeModal h2 { font-family: 'DM Serif Display', serif; font-size: 26px; margin: 0 0 14px; color: #f0f4ff; }
-      #_simUpgradeModal p { font-size: 15px; color: #b8c4dc; line-height: 1.6; margin: 0 0 12px; }
-      #_simUpgradeModal ._sim-modal-sub { font-size: 13px; color: #7a8aaa; }
+      #_simUpgradeModal h2 { font-family: 'DM Serif Display', serif; font-size: 26px; margin: 0 0 14px; color: #ffffff; }
+      #_simUpgradeModal p { font-size: 15px; color: #e8eef6; line-height: 1.6; margin: 0 0 12px; }
+      #_simUpgradeModal ._sim-modal-sub { font-size: 13px; color: #cbd5e1; }
       #_simUpgradeModal ._sim-modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
       #_simUpgradeModal ._sim-btn-primary, #_simUpgradeModal ._sim-btn-secondary {
         padding: 10px 22px; border-radius: 100px; font-size: 14px; font-weight: 600;
         text-decoration: none; cursor: pointer; border: 1px solid transparent; font-family: inherit;
       }
-      #_simUpgradeModal ._sim-btn-primary { background: #4f9cf9; color: #fff; }
-      #_simUpgradeModal ._sim-btn-primary:hover { background: #3a87e6; }
-      #_simUpgradeModal ._sim-btn-secondary { background: transparent; color: #b8c4dc; border-color: rgba(255,255,255,0.15); }
-      #_simUpgradeModal ._sim-btn-secondary:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+      #_simUpgradeModal ._sim-btn-primary { background: transparent; color: #00e5ff; border-color: #00e5ff; }
+      #_simUpgradeModal ._sim-btn-primary:hover { background: #00e5ff; color: #0a0a0a; }
+      #_simUpgradeModal ._sim-btn-secondary { background: transparent; color: #e8eef6; border-color: #2a2a2a; }
+      #_simUpgradeModal ._sim-btn-secondary:hover { border-color: #00e5ff; color: #ffffff; }
     `;
     document.head.appendChild(style);
     document.body.appendChild(overlay);
@@ -134,13 +132,13 @@
     style.textContent = `
       .sim-card._locked { opacity: 0.55; cursor: pointer; }
       .sim-card._locked:hover { transform: none; box-shadow: none; }
-      .sim-card._locked .card-launch { color: #7a8aaa !important; }
+      .sim-card._locked .card-launch { color: #9aa4b2 !important; }
       .sim-card._locked::after {
-        content: '🔒 PREMIUM';
+        content: 'PREMIUM';
         position: absolute; top: 14px; left: 14px;
         font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
-        background: rgba(79,156,249,0.15); border: 1px solid rgba(79,156,249,0.4);
-        color: #93c5fd;
+        background: rgba(0,229,255,0.12); border: 1px solid rgba(0,229,255,0.4);
+        color: #00e5ff;
         padding: 4px 10px; border-radius: 100px;
         z-index: 5;
       }
@@ -191,21 +189,19 @@
     whenBodyReady(() => {
       document.body.innerHTML = `
       <style>
-        body { background: #0b0f1a; color: #f0f4ff; font-family: 'DM Sans', sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        ._lock-card { max-width: 460px; text-align: center; padding: 40px 32px; background: #111827; border: 1px solid rgba(79,156,249,0.3); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-        ._lock-card h1 { font-family: 'DM Serif Display', serif; font-size: 28px; margin: 0 0 16px; }
-        ._lock-card p { font-size: 15px; color: #b8c4dc; line-height: 1.6; margin: 0 0 14px; }
-        ._lock-card ._sub { font-size: 13px; color: #7a8aaa; }
-        ._lock-icon { font-size: 50px; margin-bottom: 14px; }
+        body { background: #0a0a0a; color: #e8eef6; font-family: 'DM Sans', sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        ._lock-card { max-width: 460px; text-align: center; padding: 40px 32px; background: #141414; border: 1px solid #2a2a2a; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        ._lock-card h1 { font-family: 'DM Serif Display', serif; font-size: 28px; margin: 0 0 16px; color: #ffffff; }
+        ._lock-card p { font-size: 15px; color: #e8eef6; line-height: 1.6; margin: 0 0 14px; }
+        ._lock-card ._sub { font-size: 13px; color: #cbd5e1; }
         ._btns { display: flex; gap: 10px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
-        ._btns a { padding: 10px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; text-decoration: none; }
-        ._btn-primary { background: #4f9cf9; color: #fff; }
-        ._btn-primary:hover { background: #3a87e6; }
-        ._btn-secondary { background: transparent; color: #b8c4dc; border: 1px solid rgba(255,255,255,0.15); }
-        ._btn-secondary:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+        ._btns a { padding: 10px 22px; border-radius: 100px; font-size: 14px; font-weight: 600; text-decoration: none; border: 1px solid transparent; }
+        ._btn-primary { background: transparent; color: #00e5ff; border-color: #00e5ff; }
+        ._btn-primary:hover { background: #00e5ff; color: #0a0a0a; }
+        ._btn-secondary { background: transparent; color: #e8eef6; border-color: #2a2a2a; }
+        ._btn-secondary:hover { border-color: #00e5ff; color: #ffffff; }
       </style>
       <div class="_lock-card">
-        <div class="_lock-icon">&#128274;</div>
         <h1>Premium simulation</h1>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
         <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. Sign in with a recording-package account to unlock the rest.</p>

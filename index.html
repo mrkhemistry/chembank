@@ -2365,20 +2365,6 @@ Option D" required></textarea>
                 <span style="margin-left:auto; cursor:pointer; color:var(--text-dim)" onclick="cc_clearFile()">✕</span>
               </div>
             </div>
-<!-- Step 2: Confirm extracted text -->
-              <div id="imgStep2" style="display:none">
-                <div style="font-size:0.8rem; color:var(--text-dim); margin-bottom:8px;">
-                  ✅ We read your answer below. Please check and correct any mistakes before submitting.
-                </div>
-                <div class="field">
-                  <textarea id="extractedAnswer" rows="8" placeholder="Extracted text will appear here..."></textarea>
-                </div>
-                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:4px;">
-                  Not right? <span style="color:var(--accent); cursor:pointer;" onclick="resetImageMode()">Re-upload your photo</span>
-                </div>
-              </div>
-
-            </div>
 
             <div class="form-actions">
               <button class="btn btn-primary" id="cc_checkBtn" onclick="cc_checkAnswer()">Check My Answer</button>
@@ -7605,15 +7591,14 @@ Option D" required></textarea>
 
 async function cc_fetchQuestions() {
   // Students read the public view (model answers stay server-side);
-  // admins read the base table so the edit form can load model/tip/answer images.
-  const source = (typeof userRole !== 'undefined' && userRole === 'admin')
-    ? 'chemcheck_questions'
-    : 'chemcheck_questions_public';
-  const { data, error } = await supabaseClient
-    .from(source)
-    .select('*')
-    .eq('is_visible', true)
-    .order('created_at', { ascending: false });
+  // admins read the base table so the edit form can load model/tip/answer
+  // images, and see hidden questions too so they stay manageable.
+  const isAdmin = typeof userRole !== 'undefined' && userRole === 'admin';
+  let query = supabaseClient
+    .from(isAdmin ? 'chemcheck_questions' : 'chemcheck_questions_public')
+    .select('*');
+  if (!isAdmin) query = query.eq('is_visible', true);
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) { console.error('Fetch error:', error); return; }
   // Normalise field names to match existing code (text, model, tip)
   cc_questions = (data || []).map(q => ({
@@ -7712,23 +7697,12 @@ function cc_openQuestion(id) {
     <span class="tag tag-marks">${cc_selectedQuestion.marks} mark${cc_selectedQuestion.marks != 1 ? 's' : ''}</span>
   `;
 
-  // Reset — guarded against missing image-mode elements
-  const _setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  const _setHTML = (id, v) => { const el = document.getElementById(id); if (el) el.innerHTML = v; };
-  const _setDisp = (id, v) => { const el = document.getElementById(id); if (el) el.style.display = v; };
-  const _rmCls = (id, c) => { const el = document.getElementById(id); if (el) el.classList.remove(c); };
-  _setVal('cc_studentAnswer', '');
-  _rmCls('cc_feedbackContainer', 'visible');
-  _rmCls('cc_loadingSpinner', 'visible');
+  // Reset
+  document.getElementById('cc_studentAnswer').value = '';
+  document.getElementById('cc_feedbackContainer').classList.remove('visible');
+  document.getElementById('cc_loadingSpinner').classList.remove('visible');
   cc_clearFile();
-  cc_uploadedImages = [];
-  _setHTML('cc_studentImgPreviews', '');
-  _setDisp('cc_studentImgZone', 'block');
-  _setDisp('cc_extractBtnWrap', 'none');
-  _setDisp('cc_imgStep1', 'block');
-  _setDisp('cc_imgStep2', 'none');
-  _setVal('cc_extractedAnswer', '');
-  try { cc_switchMode('type'); } catch (e) {}
+  cc_switchMode('type');
 
   // MathJax render — wait for startup, clear, then typeset the inner text element
   if (window.MathJax) {
@@ -7759,111 +7733,8 @@ function cc_switchMode(mode) {
   cc_currentAnswerMode = mode;
   document.getElementById('cc_typeMode').style.display   = mode === 'type'   ? 'block' : 'none';
   document.getElementById('cc_uploadMode').style.display = mode === 'upload' ? 'block' : 'none';
-  document.getElementById('imageMode').style.display  = mode === 'image'  ? 'block' : 'none';
   document.getElementById('cc_modeType').classList.toggle('active',   mode === 'type');
   document.getElementById('cc_modeUpload').classList.toggle('active', mode === 'upload');
-  document.getElementById('modeImage').classList.toggle('active',  mode === 'image');
-}
-
-// ═══════════════════════════════════════════════════
-//  IMAGE UPLOAD (student answer photos)
-// ═══════════════════════════════════════════════════
-let cc_uploadedImages = []; // array of { base64, mimeType, name }
-
-function handleImageUpload(files) {
-  const remaining = 3 - cc_uploadedImages.length;
-  const toLoad = Array.from(files).slice(0, remaining);
-  toLoad.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const base64 = e.target.result.split(',')[1];
-      cc_uploadedImages.push({ base64, mimeType: file.type, name: file.name });
-      renderStudentImgPreviews();
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function handleStudentImgDrop(e) {
-  e.preventDefault();
-  document.getElementById('cc_studentImgZone').classList.remove('dragover');
-  handleImageUpload(e.dataTransfer.files);
-}
-
-function renderStudentImgPreviews() {
-  const container = document.getElementById('cc_studentImgPreviews');
-  container.innerHTML = '';
-  cc_uploadedImages.forEach((img, i) => {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:relative; display:inline-block;';
-    const el = document.createElement('img');
-    el.src = `data:${img.mimeType};base64,${img.base64}`;
-    el.style.cssText = 'width:100px; height:80px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,0.1);';
-    const removeBtn = document.createElement('span');
-    removeBtn.textContent = '✕';
-    removeBtn.style.cssText = 'position:absolute; top:2px; right:4px; cursor:pointer; color:white; background:rgba(0,0,0,0.6); border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.65rem;';
-    removeBtn.onclick = () => { cc_uploadedImages.splice(i, 1); renderStudentImgPreviews(); };
-    wrap.appendChild(el);
-    wrap.appendChild(removeBtn);
-    container.appendChild(wrap);
-  });
-  document.getElementById('cc_studentImgZone').style.display = cc_uploadedImages.length >= 3 ? 'none' : 'block';
-  document.getElementById('cc_extractBtnWrap').style.display = cc_uploadedImages.length > 0 ? 'block' : 'none';
-}
-
-async function extractText() {
-  if (cc_uploadedImages.length === 0) return;
-
-  const btn = document.querySelector('#cc_extractBtnWrap button');
-  btn.disabled = true;
-  btn.textContent = '⏳ Reading your answer...';
-
-  try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      alert('Your session has expired. Please log in again.');
-      btn.disabled = false;
-      btn.textContent = 'Read my answer';
-      return;
-    }
-
-    const response = await fetch('https://fvjqsohhitpnkvfirosc.supabase.co/functions/v1/chemcheck-extract', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-        'apikey': SUPABASE_ANON_KEY
-      },
-      body: JSON.stringify({
-        images: cc_uploadedImages.map(img => ({ media_type: img.mimeType, data: img.base64 }))
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Extraction failed');
-    const extracted = data.text || '';
-
-    document.getElementById('cc_extractedAnswer').value = extracted;
-    document.getElementById('cc_imgStep1').style.display = 'none';
-    document.getElementById('cc_imgStep2').style.display = 'block';
-
-  } catch (err) {
-    alert('Could not read the image. Please try again or type your answer instead.');
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Read my answer';
-}
-
-function resetImageMode() {
-  cc_uploadedImages = [];
-  document.getElementById('cc_studentImgPreviews').innerHTML = '';
-  document.getElementById('cc_studentImgZone').style.display = 'block';
-  document.getElementById('cc_extractBtnWrap').style.display = 'none';
-  document.getElementById('cc_imgStep1').style.display = 'block';
-  document.getElementById('cc_imgStep2').style.display = 'none';
-  document.getElementById('cc_extractedAnswer').value = '';
-  document.getElementById('cc_studentImgUpload').value = '';
 }
 
 // ═══════════════════════════════════════════════════
@@ -7887,7 +7758,7 @@ function cc_handleDrop(e) {
   e.preventDefault();
   document.getElementById('cc_uploadZone').classList.remove('dragover');
   const file = e.dataTransfer.files[0];
-  if (file && file.name.endsWith('.docx')) handleFileUpload(file);
+  if (file && file.name.endsWith('.docx')) cc_handleFileUpload(file);
 }
 
 
@@ -7899,19 +7770,12 @@ function cc_clearFile() {
 }
 
 async function cc_checkAnswer() {
-  const isImageMode = cc_currentAnswerMode === 'image';
-  const answer = isImageMode
-    ? document.getElementById('cc_extractedAnswer').value.trim()
-    : cc_currentAnswerMode === 'type'
-      ? document.getElementById('cc_studentAnswer').value.trim()
-      : cc_uploadedText;
+  const answer = cc_currentAnswerMode === 'type'
+    ? document.getElementById('cc_studentAnswer').value.trim()
+    : cc_uploadedText;
 
   if (!answer) {
-    if (isImageMode) {
-      alert('Please upload a photo and confirm the extracted text first.');
-    } else {
-      alert('Please write or upload your answer first.');
-    }
+    alert('Please write or upload your answer first.');
     return;
   }
   if (!cc_selectedQuestion) return;
@@ -8060,17 +7924,19 @@ function cc_downloadAnalysis() {
   const tips     = document.getElementById('cc_fbTips').style.display     !== 'none' ? document.getElementById('cc_fbTipsText').textContent      : null;
   const model    = document.getElementById('cc_fbModelText').textContent;
 
+  // Escape everything interpolated into the exported file — feedback and
+  // answers are untrusted text, not markup
   const section = (colour, emoji, label, text) => text ? `
     <div style="border-left:3px solid ${colour}; background:${colour}18; padding:14px 18px; border-radius:8px; margin-bottom:14px;">
       <div style="font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; color:${colour}; font-weight:600; margin-bottom:8px;">${emoji} ${label}</div>
-      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${text}</div>
+      <div style="font-size:0.9rem; line-height:1.7; white-space:pre-wrap;">${escapeHtml(text)}</div>
     </div>` : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ChemCheck Analysis — ${q.topic}</title>
+<title>ChemCheck Analysis — ${escapeHtml(q.topic)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -8101,18 +7967,18 @@ function cc_downloadAnalysis() {
 </div>
 
 <div class="tags">
-  <span class="tag tag-topic">${q.topic}</span>
+  <span class="tag tag-topic">${escapeHtml(q.topic)}</span>
   <span class="tag tag-marks">${q.marks} mark${q.marks != 1 ? 's' : ''}</span>
 </div>
 
 <div class="section-title">Question</div>
-<div class="box">${q.text}</div>
+<div class="box">${escapeHtml(q.text)}</div>
 
 <div class="section-title">Your Answer</div>
-<div class="box">${studentAns || '(No typed answer — Word doc submitted)'}</div>
+<div class="box">${escapeHtml(studentAns) || '(No typed answer — Word doc submitted)'}</div>
 
 <div class="section-title">Feedback</div>
-<div class="score">✅ ${score}</div>
+<div class="score">✅ ${escapeHtml(score)}</div>
 
 ${section('#e8a020', '', 'Missing Key Points', missing)}
 ${section('#e05050', '❌', 'Incorrect Phrasing / Misconceptions', incorrect)}

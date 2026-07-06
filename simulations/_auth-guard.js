@@ -79,9 +79,10 @@
       <div class="_sim-modal-card">
         <h2>Premium simulation</h2>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. Sign in with a recording-package account to unlock the rest.</p>
+        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
         <div class="_sim-modal-btns">
-          <a href="${PORTAL_URL}" class="_sim-btn-primary">Sign in</a>
+          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_sim-btn-primary">Get the recording package</a>
+          <a href="${PORTAL_URL}" class="_sim-btn-secondary">Sign in</a>
           <button class="_sim-btn-secondary" onclick="document.getElementById('_simUpgradeModal').style.display='none'">Maybe later</button>
         </div>
       </div>
@@ -204,9 +205,10 @@
       <div class="_lock-card">
         <h1>Premium simulation</h1>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. Sign in with a recording-package account to unlock the rest.</p>
+        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong> and <strong>Nucleophilic Addition</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
         <div class="_btns">
-          <a href="${PORTAL_URL}" class="_btn-primary">Sign in</a>
+          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_btn-primary">Get the recording package</a>
+          <a href="${PORTAL_URL}" class="_btn-secondary">Sign in</a>
           <a href="${SIMS_HUB_URL}" class="_btn-secondary">Back to simulations</a>
         </div>
       </div>

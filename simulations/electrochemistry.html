@@ -654,7 +654,7 @@ function drawElectrode(cx, topY, botY, col, label, polarity){
   ctx.textAlign = outward < 0 ? 'right' : 'left';
   if(polarity){
     // role word at top
-    ctx.fillStyle='#94a3b8';
+    ctx.fillStyle='#e8eef6';
     ctx.font='11px DM Sans,Arial';
     ctx.textBaseline='middle';
     ctx.fillText(polarity.label, sx, topY-30);
@@ -945,12 +945,12 @@ function drawSaltBridgeArch(x1, x2, liqY, h){
 
   // label centred above the horizontal section
   const midX = (x1 + x2) / 2;
-  ctx.fillStyle = '#cbd5e1';
+  ctx.fillStyle = '#e8eef6';
   ctx.font = 'bold 11px DM Sans,Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillText('salt bridge', midX, topY - tubeW/2 - 6);
-  ctx.fillStyle = '#94a3b8';
+  ctx.fillStyle = '#e8eef6';
   ctx.font = '11px DM Sans,Arial';
   ctx.fillText('KNO₃', midX, topY - tubeW/2 - 18);
 
@@ -1219,13 +1219,13 @@ function drawTitleBar(){
   ctx.font = 'bold 13px DM Sans,Arial';
   ctx.textAlign='left'; ctx.textBaseline='top';
   ctx.fillText('GALVANIC CELL · spontaneous', scene.L.gal.x0, 18);
-  ctx.fillStyle='#64748b'; ctx.font='11px DM Sans,Arial';
+  ctx.fillStyle='#e8eef6'; ctx.font='11px DM Sans,Arial';
   ctx.fillText('Galvanic cell  Zn | Zn²⁺ ‖ Cu²⁺ | Cu', scene.L.gal.x0, 36);
 
   ctx.fillStyle = COL.elc;
   ctx.font = 'bold 13px DM Sans,Arial';
   ctx.fillText('ELECTROLYTIC CELL · driven', scene.L.elc.x0, 18);
-  ctx.fillStyle='#64748b'; ctx.font='11px DM Sans,Arial';
+  ctx.fillStyle='#e8eef6'; ctx.font='11px DM Sans,Arial';
   let sub='';
   if(mode==='daniell') sub='Purification of copper — Cu electrodes in CuSO₄(aq)';
   else if(mode==='molten') sub='Inert (Pt) electrodes in molten NaCl';
@@ -1333,7 +1333,7 @@ function drawGalvanic(){
   const arrowStartX = scene.bulbCx - 100;
   drawCurrentArrow(arrowStartX, arrowY, arrowEndX, arrowY, '#fbbf24', 'I');
   // Label sits ABOVE the arrow, right-aligned to the arrow end so it never reaches the bulb
-  ctx.fillStyle='#94a3b8'; ctx.font='10px DM Sans,Arial';
+  ctx.fillStyle='#e8eef6'; ctx.font='10px DM Sans,Arial';
   ctx.textAlign='right'; ctx.textBaseline='bottom';
   ctx.fillText('conventional current', arrowEndX, arrowY-4);
 }

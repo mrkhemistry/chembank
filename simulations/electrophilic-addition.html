@@ -471,14 +471,14 @@ function drawLoop(ts){
   // State 0: polarisation labels
   if(state===0){
     ctx.font='11px Arial';ctx.textAlign='center';
-    ctx.fillStyle='#94a3b8';ctx.fillText('sp\u00b2',C1x,C1y+34);
-    ctx.fillStyle='#94a3b8';ctx.fillText('sp\u00b2',C2x,C2y+34);
+    ctx.fillStyle='#e8eef6';ctx.fillText('sp\u00b2',C1x,C1y+34);
+    ctx.fillStyle='#e8eef6';ctx.fillText('sp\u00b2',C2x,C2y+34);
     ctx.fillStyle='#fbbf24';
     ctx.font='bold 13px Arial';
     ctx.fillText('\u03b4+',br1x,br1y-32);
     ctx.fillStyle='#a78bfa';
     ctx.fillText('\u03b4\u2212',br2x,br2y-32);
-    ctx.font='10px Arial';ctx.fillStyle='#94a3b8';ctx.fillText('Br\u2082  electrophile',br1x+(br2x-br1x)/2,br2y-50);
+    ctx.font='10px Arial';ctx.fillStyle='#e8eef6';ctx.fillText('Br\u2082  electrophile',br1x+(br2x-br1x)/2,br2y-50);
   }
 
   // State 1: δ charges on Br while approaching
@@ -492,7 +492,7 @@ function drawLoop(ts){
   if(state>=2&&state<4||(state===3&&straight2Prog<1)){
     ctx.font='bold 18px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';
     ctx.fillText('+',C1x+26,C1y-24);
-    ctx.font='10px Arial';ctx.fillStyle='#94a3b8';
+    ctx.font='10px Arial';ctx.fillStyle='#e8eef6';
     ctx.fillText('sp\u00b3',C1x,C1y+34);
   }
 
@@ -518,7 +518,7 @@ function drawLoop(ts){
   if(state===4){
     ctx.font='11px Arial';ctx.fillStyle='#4ade80';ctx.textAlign='center';
     ctx.fillText('1,2-dibromoethane',cx,cy+BL*1.1);
-    ctx.font='10px Arial';ctx.fillStyle='#94a3b8';
+    ctx.font='10px Arial';ctx.fillStyle='#e8eef6';
     ctx.fillText('sp\u00b3',C1x,C1y+34);
     ctx.fillText('sp\u00b3',C2x,C2y+34);
   }

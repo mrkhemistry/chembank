@@ -318,7 +318,7 @@ const drawChart = () => {
   cx.stroke();
 
   // Axis labels
-  cx.fillStyle = '#94a3b8';
+  cx.fillStyle = '#e8eef6';
   cx.font = '12px Inter, sans-serif';
   cx.textAlign = 'center';
   cx.fillText('Molecular Speed / Kinetic Energy →', ML + gw / 2, CH - 8);
@@ -444,7 +444,7 @@ const drawChart = () => {
   }
 
   // Origin label
-  cx.fillStyle = '#64748b';
+  cx.fillStyle = '#e8eef6';
   cx.font = '10px Inter, sans-serif';
   cx.textAlign = 'center';
   cx.fillText('0', ML - 8, MT + gh + 14);
@@ -588,7 +588,7 @@ const drawParticles = () => {
   grad.addColorStop(1, '#ef4444');
   px.fillStyle = grad;
   px.fillRect(20, barY, PW - 40, barH);
-  px.fillStyle = '#475569';
+  px.fillStyle = '#e8eef6';
   px.font = '8px Inter, sans-serif';
   px.textAlign = 'left';
   px.fillText('Slow', 20, barY - 2);

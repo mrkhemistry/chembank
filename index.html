@@ -1630,6 +1630,11 @@
                         <h2>Print Worksheets</h2>
                         <p>Generate printable student worksheets or tutor answer keys. Filter by topic, difficulty, and number of questions.</p>
                     </div>
+
+                    <div class="portal-card" id="structuredCard" style="display:none;" onclick="showView('structured')">
+                        <h2>Structured Questions</h2>
+                        <p>Review the Paper 2 &amp; 3 structured and free-response bank by year, paper, topic and difficulty, and upload figure images. Admin/teacher only.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2616,6 +2621,52 @@ Option D" required></textarea>
             </div>
         </div>
 
+        <!-- Structured Questions (P2/P3) admin review + figure upload -->
+        <style>
+            #structuredView .sq-controls select, #structuredView .sq-controls input[type=text]{background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.4rem 0.5rem;font-size:0.85rem;}
+            #structuredView .sq-controls label.fld{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-bottom:2px;}
+            .sq-card{border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;background:var(--surface);}
+            .sq-qhead{font-weight:600;color:var(--primary);margin-bottom:0.5rem;font-size:0.95rem;}
+            .sq-stem{background:var(--surface2);border-radius:6px;padding:0.6rem 0.8rem;margin-bottom:0.6rem;font-size:0.9rem;line-height:1.5;}
+            .sq-part{border-top:1px solid var(--border);padding:0.55rem 0;}
+            .sq-part.sq-match{border-left:3px solid var(--primary);padding-left:0.6rem;background:var(--cyan-dim);}
+            .sq-part-head{display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;font-size:0.85rem;margin-bottom:0.3rem;}
+            .sq-part-text{font-size:0.9rem;margin-bottom:0.3rem;line-height:1.5;}
+            .sq-ms{font-size:0.85rem;background:rgba(6,255,165,0.06);border-radius:6px;padding:0.4rem 0.6rem;line-height:1.5;}
+            .sq-badge{font-size:0.7rem;padding:0.1rem 0.45rem;border-radius:10px;border:1px solid var(--border2);white-space:nowrap;}
+            .sq-easy{color:#06FFA5;border-color:#06FFA5;} .sq-medium{color:#ffd166;border-color:#ffd166;} .sq-hard{color:#ff5555;border-color:#ff5555;}
+            .sq-novel{color:#c792ea;border-color:#c792ea;} .sq-ctx{color:#00e5ff;border-color:#00e5ff;}
+            .sq-tag{margin-left:auto;font-size:0.75rem;opacity:0.75;}
+            .sq-figs{display:flex;flex-wrap:wrap;gap:0.75rem;margin:0.4rem 0 0.6rem;}
+            .sq-fig{font-size:0.8rem;max-width:240px;}
+            .sq-figph{width:170px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed var(--border2);border-radius:6px;color:var(--text-secondary);font-size:0.78rem;text-align:center;gap:6px;}
+        </style>
+        <div id="structuredView" class="view">
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Structured Questions — Paper 2 &amp; 3 Review</span>
+                    <button class="btn btn-secondary" style="padding:0.5rem 1rem;" onclick="showView('welcome')">← Portal</button>
+                </div>
+                <div class="sq-controls" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:0.75rem;">
+                    <div><label class="fld">Year</label><select id="sqFilterYear" onchange="renderStructured()"><option value="">All</option></select></div>
+                    <div><label class="fld">Paper</label><select id="sqFilterPaper" onchange="renderStructured()"><option value="">All</option><option>P2</option><option>P3</option></select></div>
+                    <div><label class="fld">Topic</label><select id="sqFilterTopic" onchange="onStructuredTopicChange()"><option value="">All</option></select></div>
+                    <div><label class="fld">Concept</label><select id="sqFilterConcept" onchange="renderStructured()"><option value="">All</option></select></div>
+                    <div><label class="fld">Difficulty</label><select id="sqFilterDiff" onchange="renderStructured()"><option value="">All</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                    <div><label class="fld">Flag</label><select id="sqFilterFlag" onchange="renderStructured()"><option value="">All</option><option value="novel">Novel context</option><option value="notself">Needs earlier part</option></select></div>
+                    <div style="flex:1;min-width:150px;"><label class="fld">Search</label><input id="sqFilterSearch" type="text" placeholder="stem / part / mark scheme…" oninput="renderStructured()" style="width:100%;"></div>
+                    <button class="btn btn-secondary" style="padding:0.5rem 0.9rem;" onclick="resetStructuredFilters()">Reset</button>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:0.75rem;">
+                    <label class="btn btn-secondary" style="cursor:pointer;padding:0.4rem 0.9rem;">⬆ Bulk-upload figures (pick a Year + Paper first)
+                        <input type="file" accept="image/*" multiple style="display:none" onchange="sqBulkUpload(this.files); this.value='';">
+                    </label>
+                    <span id="structuredStats" style="font-size:0.85rem;opacity:0.8;"></span>
+                </div>
+                <div id="structuredList">Loading…</div>
+            </div>
+        </div>
+
     <!-- PDF Worksheet Generator Modal -->
     <div id="pdfModal" class="pdf-modal">
         <div class="pdf-modal-inner">
@@ -3263,6 +3314,8 @@ Option D" required></textarea>
                 if (pdfCard) pdfCard.style.display = 'block';
                 const teacherCard = document.getElementById('teacherCard');
                 if (teacherCard) teacherCard.style.display = 'block';
+                const structuredCard = document.getElementById('structuredCard');
+                if (structuredCard) structuredCard.style.display = 'block';
                 const restoreView = savedView || 'welcome';
                 const savedTab = (restoreView === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
                 showView(restoreView);
@@ -3273,8 +3326,10 @@ Option D" required></textarea>
                 if (teacherCard) teacherCard.style.display = 'block';
                 const pdfCard = document.getElementById('pdfCard');
                 if (pdfCard) pdfCard.style.display = 'block';
-                // Teachers can access welcome, admin, student — validate before restoring
-                const allowedViews = ['welcome', 'admin', 'student'];
+                const structuredCard = document.getElementById('structuredCard');
+                if (structuredCard) structuredCard.style.display = 'block';
+                // Teachers can access welcome, admin, student, structured — validate before restoring
+                const allowedViews = ['welcome', 'admin', 'student', 'structured'];
                 const restoreView2 = savedView && allowedViews.includes(savedView) ? savedView : 'welcome';
                 const savedTab2 = (restoreView2 === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
                 showView(restoreView2);
@@ -4493,6 +4548,12 @@ Option D" required></textarea>
                     alert('Access denied. Only admins can view analytics.');
                     return;
                 }
+
+                // Only admin/teacher can access structured questions
+                if (viewName === 'structured' && userRole !== 'admin' && userRole !== 'teacher') {
+                    alert('Access denied. Structured questions are for admin/teacher only.');
+                    return;
+                }
                 
                 // Only admin can access everything (no restrictions)
             }
@@ -4518,6 +4579,11 @@ Option D" required></textarea>
             // Load analytics data when navigating to analytics view
             if (viewName === 'analytics') {
                 loadAnalytics();
+            }
+
+            // Load structured questions when navigating to that view
+            if (viewName === 'structured') {
+                loadStructuredInit();
             }
 
             // Close worksheet preview modal on navigation
@@ -4571,6 +4637,11 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'analyticsView') {
+                buttons = `
+                    <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+                `;
+            } else if (viewId === 'structuredView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
@@ -8389,6 +8460,205 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 }
             }, 500);
         })();
+
+        /* ===== Structured Questions (P2/P3) admin review + figure upload ===== */
+        let sqData = null, sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '';
+        function sqEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        function sqAttr(s){ return sqEsc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+        function sqVal(id){ const el=document.getElementById(id); return el?el.value:''; }
+
+        async function loadStructuredInit(){
+            if (userRole!=='admin' && userRole!=='teacher') return;
+            const listEl=document.getElementById('structuredList');
+            if (sqData){ renderStructured(); return; }
+            if (listEl) listEl.innerHTML='Loading...';
+            try{
+                const [topRes, conRes] = await Promise.all([
+                    supabaseClient.from('topics').select('id,name'),
+                    supabaseClient.from('concepts').select('id,name,topic_id')
+                ]);
+                if (topRes.error) throw topRes.error;
+                if (conRes.error) throw conRes.error;
+                const topicMap={}; (topRes.data||[]).forEach(t=>{ topicMap[t.id]=t.name; });
+                sqAllConcepts=(conRes.data||[]).map(c=>({id:c.id,name:c.name,topic:topicMap[c.topic_id]||''}));
+                sqConcepts={}; sqAllConcepts.forEach(c=>{ sqConcepts[c.id]={name:c.name,topic:c.topic}; });
+                const [qRes,pRes,fRes]=await Promise.all([
+                    supabaseClient.from('structured_questions').select('*').order('year').order('paper').order('question_number'),
+                    supabaseClient.from('structured_parts').select('*').order('question_id').order('order_index'),
+                    supabaseClient.from('structured_figures').select('*')
+                ]);
+                if (qRes.error) throw qRes.error;
+                if (pRes.error) throw pRes.error;
+                if (fRes.error) throw fRes.error;
+                const byQ={}; (qRes.data||[]).forEach(q=>{ q.parts=[]; q.figures=[]; byQ[q.id]=q; });
+                (pRes.data||[]).forEach(p=>{ if(byQ[p.question_id]) byQ[p.question_id].parts.push(p); });
+                (fRes.data||[]).forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
+                sqData=(qRes.data||[]);
+                buildStructuredFilterOptions();
+                await sqRefreshUploaded();
+                renderStructured();
+            }catch(e){
+                if (listEl) listEl.innerHTML='<div style="color:var(--danger)">Could not load structured questions: '+sqEsc(e.message||e)+'<br><span style="opacity:0.7">(You must be signed in as an admin or teacher.)</span></div>';
+            }
+        }
+
+        function buildStructuredFilterOptions(){
+            const years=[...new Set(sqData.map(q=>q.year))].sort();
+            const yEl=document.getElementById('sqFilterYear');
+            if (yEl) yEl.innerHTML='<option value="">All</option>'+years.map(y=>'<option>'+y+'</option>').join('');
+            const used=new Set(); sqData.forEach(q=>q.parts.forEach(p=>{ if(p.concept_id) used.add(p.concept_id); }));
+            const topics=[...new Set([...used].map(id=>sqConcepts[id]&&sqConcepts[id].topic).filter(Boolean))].sort();
+            const tEl=document.getElementById('sqFilterTopic');
+            if (tEl) tEl.innerHTML='<option value="">All</option>'+topics.map(t=>'<option>'+sqEsc(t)+'</option>').join('');
+            buildStructuredConceptOptions();
+        }
+
+        function buildStructuredConceptOptions(){
+            const topic=sqVal('sqFilterTopic');
+            const used=new Set(); sqData.forEach(q=>q.parts.forEach(p=>{ if(p.concept_id) used.add(p.concept_id); }));
+            let concepts=[...used].map(id=>sqConcepts[id]).filter(Boolean);
+            if (topic) concepts=concepts.filter(c=>c.topic===topic);
+            const names=[...new Set(concepts.map(c=>c.name))].sort();
+            const cEl=document.getElementById('sqFilterConcept');
+            if (cEl) cEl.innerHTML='<option value="">All</option>'+names.map(n=>'<option>'+sqEsc(n)+'</option>').join('');
+        }
+
+        function onStructuredTopicChange(){
+            const cEl=document.getElementById('sqFilterConcept'); if (cEl) cEl.value='';
+            buildStructuredConceptOptions();
+            renderStructured();
+        }
+
+        function resetStructuredFilters(){
+            ['sqFilterYear','sqFilterPaper','sqFilterTopic','sqFilterConcept','sqFilterDiff','sqFilterFlag','sqFilterSearch'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+            buildStructuredConceptOptions();
+            renderStructured();
+        }
+
+        async function sqRefreshUploaded(){
+            sqUploaded={}; sqLoadWarning='';
+            const papers=[...new Set(sqData.map(q=>q.year+'/'+q.paper))];
+            for (const pf of papers){
+                try{
+                    const listRes=await supabaseClient.storage.from('structured-figures').list(pf,{limit:1000});
+                    if (listRes.error) throw listRes.error;
+                    const files=listRes.data||[];
+                    if (!files.length) continue;
+                    const paths=files.filter(f=>f.name && f.name.indexOf('.')>-1).map(f=>pf+'/'+f.name);
+                    if (!paths.length) continue;
+                    const signRes=await supabaseClient.storage.from('structured-figures').createSignedUrls(paths,28800);
+                    if (signRes.error) throw signRes.error;
+                    (signRes.data||[]).forEach((s,i)=>{ if(s&&s.signedUrl) sqUploaded[paths[i]]=s.signedUrl; });
+                }catch(e){ sqLoadWarning='Some figure images could not be loaded ('+(e.message||e)+').'; }
+            }
+        }
+
+        function renderStructured(){
+            if (!sqData) return;
+            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
+            const partFilter=!!(ft||fc||fd||ff||fs);
+            let shownQ=0, shownP=0;
+            const html=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)).map(q=>{
+                const matches=new Set();
+                q.parts.forEach(p=>{
+                    const c=sqConcepts[p.concept_id]||{};
+                    if (ft && c.topic!==ft) return;
+                    if (fc && c.name!==fc) return;
+                    if (fd && p.difficulty!==fd) return;
+                    if (ff==='novel' && !p.is_novel_context) return;
+                    if (ff==='notself' && p.self_contained!==false) return;
+                    if (fs){ const hay=((p.part_text||'')+' '+(p.mark_scheme||'')+' '+(q.stem||'')).toLowerCase(); if(hay.indexOf(fs)===-1) return; }
+                    matches.add(p.id);
+                });
+                if (partFilter && matches.size===0) return '';
+                shownQ++; shownP += (partFilter?matches.size:q.parts.length);
+                return renderStructuredCard(q, matches, partFilter);
+            }).join('');
+            const st=document.getElementById('structuredStats');
+            if (st){ st.textContent=shownQ+' question(s), '+shownP+' part(s) shown'; if(sqLoadWarning) st.textContent+='  •  '+sqLoadWarning; }
+            const listEl=document.getElementById('structuredList');
+            if (listEl){
+                if (window.MathJax && MathJax.typesetClear){ try{ MathJax.typesetClear([listEl]); }catch(e){} }
+                listEl.innerHTML=html||'<div style="opacity:0.7">No matching questions.</div>';
+                if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([listEl]).catch(()=>{});
+            }
+        }
+
+        function renderStructuredCard(q, matches, partFilter){
+            const figs=q.figures.map(f=>renderStructuredFig(f)).join('');
+            const parts=q.parts.filter(p=>!partFilter || matches.has(p.id)).map(p=>{
+                const c=sqConcepts[p.concept_id]||{};
+                const isMatch=partFilter && matches.has(p.id);
+                const diffClass=({easy:'sq-easy',medium:'sq-medium',hard:'sq-hard'})[(p.difficulty||'').toLowerCase()]||'';
+                const badges='<span class="sq-badge '+diffClass+'">'+sqEsc(p.difficulty||'')+'</span>'
+                    +(p.is_novel_context?'<span class="sq-badge sq-novel">novel</span>':'')
+                    +(p.self_contained===false?'<span class="sq-badge sq-ctx">needs '+sqEsc((p.context_parts||[]).join(', '))+'</span>':'');
+                return '<div class="sq-part'+(isMatch?' sq-match':'')+'">'
+                    +'<div class="sq-part-head"><b>'+sqEsc(p.part_label||'')+'</b><span style="opacity:0.6">['+(p.marks==null?'':p.marks)+']</span>'+badges
+                    +'<span class="sq-tag">'+sqEsc(c.topic||'?')+' &rsaquo; '+sqEsc(c.name||'?')+'</span></div>'
+                    +'<div class="sq-part-text">'+sqEsc(p.part_text||'')+'</div>'
+                    +'<div class="sq-ms"><b>Mark scheme:</b> '+sqEsc(p.mark_scheme||'')+'</div></div>';
+            }).join('');
+            return '<div class="sq-card">'
+                +'<div class="sq-qhead">'+q.year+' '+sqEsc(q.paper)+' &middot; Q'+q.question_number+(q.section?(' &middot; Section '+sqEsc(q.section)):'')+' &middot; '+(q.total_marks==null?'':q.total_marks)+' marks <span style="opacity:0.5;font-weight:400">('+sqEsc(q.answer_source||'')+')</span></div>'
+                +(q.stem?'<div class="sq-stem">'+sqEsc(q.stem)+'</div>':'')
+                +(figs?'<div class="sq-figs">'+figs+'</div>':'')
+                +parts+'</div>';
+        }
+
+        function renderStructuredFig(f){
+            const url=sqUploaded[f.storage_path];
+            const cap='<div style="font-size:0.75rem;opacity:0.7;margin-bottom:3px">'+sqEsc(f.label||f.figure_key)+(f.caption?(' &mdash; '+sqEsc(f.caption)):'')+'</div>';
+            const body=url
+                ? '<img src="'+sqAttr(url)+'" onerror="this.style.opacity=0.25" style="max-width:230px;max-height:180px;border:1px solid var(--border);border-radius:6px;display:block;">'
+                : '<div class="sq-figph">no image<label class="btn btn-secondary btn-sm" style="cursor:pointer;padding:0.25rem 0.6rem;font-size:0.75rem;">Upload<input type="file" accept="image/*" style="display:none" onchange="sqUploadFigure('+f.id+', this.files[0]); this.value=String.fromCharCode();"></label></div>';
+            return '<div class="sq-fig">'+cap+body+'</div>';
+        }
+
+        function sqFindFig(id){
+            for (const q of (sqData||[])){ for (const f of q.figures){ if(f.id===id) return f; } }
+            return null;
+        }
+
+        async function sqUploadFigure(figId, file){
+            if (!file) return;
+            if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
+            const fig=sqFindFig(figId);
+            if (!fig || !fig.storage_path){ alert('No storage path recorded for this figure.'); return; }
+            try{
+                const up=await supabaseClient.storage.from('structured-figures').upload(fig.storage_path, file, { upsert:true, contentType:file.type||'image/png' });
+                if (up.error) throw up.error;
+                const sig=await supabaseClient.storage.from('structured-figures').createSignedUrl(fig.storage_path, 28800);
+                if (sig.error) throw sig.error;
+                if (sig.data && sig.data.signedUrl) sqUploaded[fig.storage_path]=sig.data.signedUrl;
+                renderStructured();
+            }catch(e){ alert('Upload failed: '+(e.message||e)); }
+        }
+
+        async function sqBulkUpload(fileList){
+            if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
+            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper');
+            if (!fy || !fp){ alert('Select a Year and a Paper in the filters first, then bulk-upload the figure PNGs for that paper.'); return; }
+            const figByKey={};
+            sqData.filter(q=>String(q.year)===fy && q.paper===fp).forEach(q=>q.figures.forEach(f=>{ figByKey[f.figure_key]=f; }));
+            const files=Array.from(fileList||[]);
+            if (!files.length) return;
+            let ok=0; const problems=[];
+            for (const file of files){
+                const key=file.name.replace(/\.[^.]+$/,'');
+                const fig=figByKey[key];
+                if (!fig || !fig.storage_path){ problems.push(file.name+' (no matching figure_key)'); continue; }
+                try{
+                    const up=await supabaseClient.storage.from('structured-figures').upload(fig.storage_path, file, { upsert:true, contentType:file.type||'image/png' });
+                    if (up.error) throw up.error;
+                    ok++;
+                }catch(e){ problems.push(file.name+' ('+(e.message||e)+')'); }
+            }
+            await sqRefreshUploaded();
+            renderStructured();
+            alert('Uploaded '+ok+' of '+files.length+' figure(s) for '+fy+' '+fp+'.'+(problems.length?('\n\nNot uploaded:\n'+problems.join('\n')):''));
+        }
+        /* ===== end Structured Questions ===== */
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

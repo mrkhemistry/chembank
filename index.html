@@ -2640,6 +2640,20 @@ Option D" required></textarea>
             .sq-figs{display:flex;flex-wrap:wrap;gap:0.75rem;margin:0.4rem 0 0.6rem;}
             .sq-fig{font-size:0.8rem;max-width:240px;}
             .sq-figph{width:170px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed var(--border2);border-radius:6px;color:var(--text-secondary);font-size:0.78rem;text-align:center;gap:6px;}
+            .sq-editbtn{background:transparent;border:1px solid var(--border2);color:var(--primary);border-radius:5px;font-size:0.72rem;padding:1px 8px;cursor:pointer;margin-left:8px;white-space:nowrap;}
+            .sq-editbtn:hover{border-color:var(--primary);background:var(--cyan-dim);}
+            .sq-modal{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:3vh 1rem;}
+            .sq-modal-box{background:var(--surface);border:1px solid var(--cyan-border);border-radius:12px;max-width:780px;width:100%;padding:1.2rem;box-shadow:var(--shadow-lg);}
+            .sq-modal-head{display:flex;justify-content:space-between;align-items:center;font-weight:600;color:var(--primary);margin-bottom:0.8rem;}
+            .sq-modal-foot{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1rem;}
+            .sq-ef{margin-bottom:0.7rem;}
+            .sq-ef label{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.03em;opacity:0.6;margin-bottom:3px;}
+            .sq-ef input,.sq-ef select,.sq-ef textarea{width:100%;background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.55rem;font-size:0.9rem;font-family:inherit;}
+            .sq-ef textarea{min-height:70px;resize:vertical;line-height:1.5;}
+            .sq-ef-row{display:flex;gap:0.75rem;flex-wrap:wrap;}
+            .sq-ef-row>div{flex:1;min-width:120px;}
+            .sq-ef-check{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:0.3rem 0 0.7rem;font-size:0.9rem;}
+            .sq-ef-check input[type=text]{width:130px;background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.3rem 0.45rem;}
         </style>
         <div id="structuredView" class="view">
             <div class="panel">
@@ -2664,6 +2678,15 @@ Option D" required></textarea>
                     <span id="structuredStats" style="font-size:0.85rem;opacity:0.8;"></span>
                 </div>
                 <div id="structuredList">Loading…</div>
+            </div>
+        </div>
+
+        <!-- Structured Questions edit modal -->
+        <div id="sqEditModal" class="sq-modal">
+            <div class="sq-modal-box">
+                <div class="sq-modal-head"><span id="sqEditTitle">Edit</span><button class="btn btn-secondary" style="padding:0.3rem 0.7rem;" onclick="sqCloseEdit()">✕</button></div>
+                <div id="sqEditBody"></div>
+                <div class="sq-modal-foot"><button class="btn btn-secondary" onclick="sqCloseEdit()">Cancel</button><button class="btn" id="sqEditSaveBtn" onclick="sqSaveEdit()" style="background:var(--primary);color:#000;font-weight:600;">Save</button></div>
             </div>
         </div>
 
@@ -8556,6 +8579,15 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         function renderStructured(){
             if (!sqData) return;
             const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
+            const anyFilter=!!(fy||fp||ft||fc||fd||ff||fs);
+            if (!anyFilter){
+                const nPapers=[...new Set(sqData.map(q=>q.year+' '+q.paper))].length;
+                const stEl=document.getElementById('structuredStats');
+                const lstEl=document.getElementById('structuredList');
+                if (stEl) stEl.textContent=sqData.length+' questions across '+nPapers+' papers in the bank'+(sqLoadWarning?('  •  '+sqLoadWarning):'');
+                if (lstEl) lstEl.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Pick a Year and/or Paper above (or any filter) to show questions.</div>';
+                return;
+            }
             const partFilter=!!(ft||fc||fd||ff||fs);
             let shownQ=0, shownP=0;
             const html=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)).map(q=>{
@@ -8595,12 +8627,12 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     +(p.self_contained===false?'<span class="sq-badge sq-ctx">needs '+sqEsc((p.context_parts||[]).join(', '))+'</span>':'');
                 return '<div class="sq-part'+(isMatch?' sq-match':'')+'">'
                     +'<div class="sq-part-head"><b>'+sqEsc(p.part_label||'')+'</b><span style="opacity:0.6">['+(p.marks==null?'':p.marks)+']</span>'+badges
-                    +'<span class="sq-tag">'+sqEsc(c.topic||'?')+' &rsaquo; '+sqEsc(c.name||'?')+'</span></div>'
+                    +'<span class="sq-tag">'+sqEsc(c.topic||'?')+' &rsaquo; '+sqEsc(c.name||'?')+'</span>'+'<button class="sq-editbtn" onclick="sqOpenEditPart('+p.id+')">edit</button></div>'
                     +'<div class="sq-part-text">'+sqEsc(p.part_text||'')+'</div>'
                     +'<div class="sq-ms"><b>Mark scheme:</b> '+sqEsc(p.mark_scheme||'')+'</div></div>';
             }).join('');
             return '<div class="sq-card">'
-                +'<div class="sq-qhead">'+q.year+' '+sqEsc(q.paper)+' &middot; Q'+q.question_number+(q.section?(' &middot; Section '+sqEsc(q.section)):'')+' &middot; '+(q.total_marks==null?'':q.total_marks)+' marks <span style="opacity:0.5;font-weight:400">('+sqEsc(q.answer_source||'')+')</span></div>'
+                +'<div class="sq-qhead">'+q.year+' '+sqEsc(q.paper)+' &middot; Q'+q.question_number+(q.section?(' &middot; Section '+sqEsc(q.section)):'')+' &middot; '+(q.total_marks==null?'':q.total_marks)+' marks <span style="opacity:0.5;font-weight:400">('+sqEsc(q.answer_source||'')+')</span> <button class="sq-editbtn" onclick="sqOpenEditQuestion('+q.id+')">edit stem</button></div>'
                 +(q.stem?'<div class="sq-stem">'+sqEsc(q.stem)+'</div>':'')
                 +(figs?'<div class="sq-figs">'+figs+'</div>':'')
                 +parts+'</div>';
@@ -8657,6 +8689,98 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             await sqRefreshUploaded();
             renderStructured();
             alert('Uploaded '+ok+' of '+files.length+' figure(s) for '+fy+' '+fp+'.'+(problems.length?('\n\nNot uploaded:\n'+problems.join('\n')):''));
+        }
+        /* --- inline editing (admin/teacher) --- */
+        let sqEditing = null;
+        function sqEditVal(id){ const el=document.getElementById(id); return el?el.value:''; }
+        function sqEditChk(id){ const el=document.getElementById(id); return el?el.checked:false; }
+        function sqTopics(){ return [...new Set(sqAllConcepts.map(c=>c.topic).filter(Boolean))].sort(); }
+        function sqOptions(list, sel){ return list.map(v=>'<option'+(v===sel?' selected':'')+'>'+sqEsc(v)+'</option>').join(''); }
+
+        function sqOpenEditPart(pid){
+            let part=null, ques=null;
+            for (const q of (sqData||[])){ const f=q.parts.find(p=>p.id===pid); if(f){ part=f; ques=q; break; } }
+            if (!part) return;
+            sqEditing={type:'part', id:pid};
+            const c=sqConcepts[part.concept_id]||{};
+            document.getElementById('sqEditTitle').textContent='Edit '+ques.year+' '+ques.paper+' Q'+ques.question_number+' '+(part.part_label||'');
+            document.getElementById('sqEditBody').innerHTML=
+                '<div class="sq-ef-row"><div class="sq-ef"><label>Part label</label><input type="text" id="sqe_label" value="'+sqAttr(part.part_label||'')+'"></div>'
+                +'<div class="sq-ef"><label>Marks</label><input type="number" id="sqe_marks" value="'+(part.marks==null?'':part.marks)+'"></div>'
+                +'<div class="sq-ef"><label>Difficulty</label><select id="sqe_diff">'+sqOptions(['Easy','Medium','Hard'], part.difficulty)+'</select></div>'
+                +'<div class="sq-ef"><label>Answer type</label><select id="sqe_atype">'+sqOptions(['written','calculation','drawing','mechanism','equation','table'], part.answer_type)+'</select></div></div>'
+                +'<div class="sq-ef-row"><div class="sq-ef"><label>Topic</label><select id="sqe_topic" onchange="sqEditTopicChange()">'+sqOptions(sqTopics(), c.topic)+'</select></div>'
+                +'<div class="sq-ef"><label>Concept</label><select id="sqe_concept"></select></div></div>'
+                +'<div class="sq-ef-check"><label style="text-transform:none;letter-spacing:0;"><input type="checkbox" id="sqe_novel"'+(part.is_novel_context?' checked':'')+'> Novel context</label>'
+                +'<label style="text-transform:none;letter-spacing:0;"><input type="checkbox" id="sqe_self"'+(part.self_contained===false?'':' checked')+'> Self-contained</label>'
+                +'<span style="opacity:0.6;">Needs parts:</span><input type="text" id="sqe_ctx" value="'+sqAttr((part.context_parts||[]).join(', '))+'" placeholder="(b)(i), (c)"></div>'
+                +'<div class="sq-ef"><label>Part text (LaTeX)</label><textarea id="sqe_ptext">'+sqEsc(part.part_text||'')+'</textarea></div>'
+                +'<div class="sq-ef"><label>Mark scheme (LaTeX)</label><textarea id="sqe_ms">'+sqEsc(part.mark_scheme||'')+'</textarea></div>';
+            sqEditFillConcepts(c.topic, c.name);
+            document.getElementById('sqEditModal').style.display='flex';
+        }
+        function sqEditTopicChange(){ sqEditFillConcepts(sqEditVal('sqe_topic'), null); }
+        function sqEditFillConcepts(topic, selName){
+            const cs=sqAllConcepts.filter(c=>c.topic===topic).slice().sort((a,b)=>a.name.localeCompare(b.name));
+            const el=document.getElementById('sqe_concept');
+            if (el) el.innerHTML=cs.map(c=>'<option value="'+c.id+'"'+((selName!=null&&c.name===selName)?' selected':'')+'>'+sqEsc(c.name)+'</option>').join('');
+        }
+        function sqOpenEditQuestion(qid){
+            const q=(sqData||[]).find(x=>x.id===qid); if(!q) return;
+            sqEditing={type:'question', id:qid};
+            document.getElementById('sqEditTitle').textContent='Edit stem — '+q.year+' '+q.paper+' Q'+q.question_number;
+            document.getElementById('sqEditBody').innerHTML=
+                '<div class="sq-ef-row"><div class="sq-ef"><label>Section</label><select id="sqe_section"><option value=""'+(!q.section?' selected':'')+'>(none)</option><option'+(q.section==='A'?' selected':'')+'>A</option><option'+(q.section==='B'?' selected':'')+'>B</option></select></div>'
+                +'<div class="sq-ef"><label>Choice group</label><input type="text" id="sqe_choice" value="'+sqAttr(q.choice_group||'')+'"></div>'
+                +'<div class="sq-ef"><label>Total marks</label><input type="number" id="sqe_total" value="'+(q.total_marks==null?'':q.total_marks)+'"></div>'
+                +'<div class="sq-ef"><label>Answer source</label><input type="text" id="sqe_asrc" value="'+sqAttr(q.answer_source||'')+'"></div></div>'
+                +'<div class="sq-ef"><label>Question stem (LaTeX)</label><textarea id="sqe_stem" style="min-height:130px;">'+sqEsc(q.stem||'')+'</textarea></div>';
+            document.getElementById('sqEditModal').style.display='flex';
+        }
+        function sqCloseEdit(){ sqEditing=null; const m=document.getElementById('sqEditModal'); if(m) m.style.display='none'; }
+        async function sqSaveEdit(){
+            if (!sqEditing) return;
+            if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
+            const btn=document.getElementById('sqEditSaveBtn'); if(btn){ btn.disabled=true; btn.textContent='Saving...'; }
+            try{
+                if (sqEditing.type==='part'){
+                    const cid=parseInt(sqEditVal('sqe_concept'),10);
+                    if (isNaN(cid)) throw new Error('Choose a valid concept.');
+                    const marksN=parseInt(sqEditVal('sqe_marks'),10);
+                    const upd={
+                        part_label: sqEditVal('sqe_label')||null,
+                        marks: isNaN(marksN)?null:marksN,
+                        difficulty: sqEditVal('sqe_diff'),
+                        answer_type: sqEditVal('sqe_atype'),
+                        concept_id: cid,
+                        is_novel_context: sqEditChk('sqe_novel'),
+                        self_contained: sqEditChk('sqe_self'),
+                        context_parts: sqEditVal('sqe_ctx').split(',').map(s=>s.trim()).filter(Boolean),
+                        part_text: sqEditVal('sqe_ptext'),
+                        mark_scheme: sqEditVal('sqe_ms')
+                    };
+                    const res=await supabaseClient.from('structured_parts').update(upd).eq('id', sqEditing.id).select('id');
+                    if (res.error) throw res.error;
+                    if (!res.data || !res.data.length) throw new Error('No row was updated (check permissions).');
+                    for (const q of sqData){ const p=q.parts.find(x=>x.id===sqEditing.id); if(p){ Object.assign(p, upd); break; } }
+                } else {
+                    const totalN=parseInt(sqEditVal('sqe_total'),10);
+                    const upd={
+                        section: sqEditVal('sqe_section')||null,
+                        choice_group: sqEditVal('sqe_choice')||null,
+                        total_marks: isNaN(totalN)?null:totalN,
+                        answer_source: sqEditVal('sqe_asrc')||null,
+                        stem: sqEditVal('sqe_stem')
+                    };
+                    const res=await supabaseClient.from('structured_questions').update(upd).eq('id', sqEditing.id).select('id');
+                    if (res.error) throw res.error;
+                    if (!res.data || !res.data.length) throw new Error('No row was updated (check permissions).');
+                    const q=sqData.find(x=>x.id===sqEditing.id); if(q) Object.assign(q, upd);
+                }
+                sqCloseEdit();
+                renderStructured();
+            }catch(e){ alert('Save failed: '+(e.message||e)); }
+            finally{ if(btn){ btn.disabled=false; btn.textContent='Save'; } }
         }
         /* ===== end Structured Questions ===== */
 

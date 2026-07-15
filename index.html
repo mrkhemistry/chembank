@@ -8560,7 +8560,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
         async function sqRefreshUploaded(){
             sqUploaded={}; sqLoadWarning='';
-            const papers=[...new Set(sqData.map(q=>q.year+'/'+q.paper))];
+            const papers=[...new Set(sqData.map(q=>(q.figures||[]).map(f=>{ const p=f.storage_path||''; const i=p.lastIndexOf('/'); return i>-1?p.slice(0,i):''; })).reduce((a,b)=>a.concat(b),[]).filter(Boolean))];
             for (const pf of papers){
                 try{
                     const listRes=await supabaseClient.storage.from('structured-figures').list(pf,{limit:1000});

@@ -2664,6 +2664,8 @@ Option D" required></textarea>
                 <div class="sq-controls" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:0.75rem;">
                     <div><label class="fld">Year</label><select id="sqFilterYear" onchange="renderStructured()"><option value="">All</option></select></div>
                     <div><label class="fld">Paper</label><select id="sqFilterPaper" onchange="renderStructured()"><option value="">All</option><option>P2</option><option>P3</option></select></div>
+                    <div><label class="fld">Source</label><select id="sqFilterSource" onchange="renderStructured()"><option value="">All</option></select></div>
+                    <div><label class="fld">School</label><select id="sqFilterSchool" onchange="renderStructured()"><option value="">All</option></select></div>
                     <div><label class="fld">Topic</label><select id="sqFilterTopic" onchange="onStructuredTopicChange()"><option value="">All</option></select></div>
                     <div><label class="fld">Concept</label><select id="sqFilterConcept" onchange="renderStructured()"><option value="">All</option></select></div>
                     <div><label class="fld">Difficulty</label><select id="sqFilterDiff" onchange="renderStructured()"><option value="">All</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
@@ -8529,6 +8531,12 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const years=[...new Set(sqData.map(q=>q.year))].sort();
             const yEl=document.getElementById('sqFilterYear');
             if (yEl) yEl.innerHTML='<option value="">All</option>'+years.map(y=>'<option>'+y+'</option>').join('');
+            const sources=[...new Set(sqData.map(q=>q.source).filter(Boolean))].sort();
+            const srcEl=document.getElementById('sqFilterSource');
+            if (srcEl) srcEl.innerHTML='<option value="">All</option>'+sources.map(s=>'<option>'+sqEsc(s)+'</option>').join('');
+            const schools=[...new Set(sqData.map(q=>q.school).filter(Boolean))].sort();
+            const schEl=document.getElementById('sqFilterSchool');
+            if (schEl) schEl.innerHTML='<option value="">All</option>'+schools.map(s=>'<option>'+sqEsc(s)+'</option>').join('');
             const used=new Set(); sqData.forEach(q=>q.parts.forEach(p=>{ if(p.concept_id) used.add(p.concept_id); }));
             const topics=[...new Set([...used].map(id=>sqConcepts[id]&&sqConcepts[id].topic).filter(Boolean))].sort();
             const tEl=document.getElementById('sqFilterTopic');
@@ -8553,7 +8561,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         }
 
         function resetStructuredFilters(){
-            ['sqFilterYear','sqFilterPaper','sqFilterTopic','sqFilterConcept','sqFilterDiff','sqFilterFlag','sqFilterSearch'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+            ['sqFilterYear','sqFilterPaper','sqFilterSource','sqFilterSchool','sqFilterTopic','sqFilterConcept','sqFilterDiff','sqFilterFlag','sqFilterSearch'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
             buildStructuredConceptOptions();
             renderStructured();
         }
@@ -8578,8 +8586,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
         function renderStructured(){
             if (!sqData) return;
-            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
-            const anyFilter=!!(fy||fp||ft||fc||fd||ff||fs);
+            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), fsrc=sqVal('sqFilterSource'), fsch=sqVal('sqFilterSchool'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
+            const anyFilter=!!(fy||fp||fsrc||fsch||ft||fc||fd||ff||fs);
             if (!anyFilter){
                 const nPapers=[...new Set(sqData.map(q=>q.year+' '+q.paper))].length;
                 const stEl=document.getElementById('structuredStats');
@@ -8590,7 +8598,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             }
             const partFilter=!!(ft||fc||fd||ff||fs);
             let shownQ=0, shownP=0;
-            const html=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)).map(q=>{
+            const html=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)&&(!fsrc||q.source===fsrc)&&(!fsch||q.school===fsch)).map(q=>{
                 const matches=new Set();
                 q.parts.forEach(p=>{
                     const c=sqConcepts[p.concept_id]||{};
@@ -8669,12 +8677,18 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
         async function sqBulkUpload(fileList){
             if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
-            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper');
+            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), fsrc=sqVal('sqFilterSource'), fsch=sqVal('sqFilterSchool');
             if (!fy || !fp){ alert('Select a Year and a Paper in the filters first, then bulk-upload the figure PNGs for that paper.'); return; }
-            const figByKey={};
-            sqData.filter(q=>String(q.year)===fy && q.paper===fp).forEach(q=>q.figures.forEach(f=>{ figByKey[f.figure_key]=f; }));
             const files=Array.from(fileList||[]);
             if (!files.length) return;
+            const selectedKeys=files.map(f=>f.name.replace(/\.[^.]+$/,''));
+            const figByKey={}; const sqAmbiguousKeys=new Set();
+            sqData.filter(q=>String(q.year)===fy && q.paper===fp && (!fsrc||q.source===fsrc) && (!fsch||q.school===fsch)).forEach(q=>q.figures.forEach(f=>{
+                if (figByKey[f.figure_key] && figByKey[f.figure_key].storage_path!==f.storage_path) sqAmbiguousKeys.add(f.figure_key);
+                figByKey[f.figure_key]=f;
+            }));
+            const clashing=[...new Set(selectedKeys)].filter(k=>sqAmbiguousKeys.has(k));
+            if (clashing.length){ alert('These figure names match more than one paper under the current filters: '+clashing.join(', ')+'.\n\nNarrow it down with the Source and School filters, then try again.'); return; }
             let ok=0; const problems=[];
             for (const file of files){
                 const key=file.name.replace(/\.[^.]+$/,'');

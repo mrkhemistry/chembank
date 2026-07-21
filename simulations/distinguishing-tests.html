@@ -350,6 +350,14 @@ const MOL = {
     ],
     bonds:[[0,1,1],[1,2,2],[1,3,1],[3,4,1],[4,5,1]]
   },
+  'methyl-propanoate': {
+    name:'Methyl propanoate', formula:'CH₃CH₂CO₂CH₃',
+    atoms:[
+      {x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'C'},
+      {x:1.732,y:1,lab:'O'},{x:2.6,y:0.5,lab:'O'},{x:3.46,y:0,lab:'C'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,2],[2,4,1],[4,5,1]]
+  },
   'chloroethane': {
     name:'Chloroethane', formula:'CH₃CH₂Cl',
     atoms:[{x:0,y:0,lab:'C'},{x:0.866,y:0.5,lab:'C'},{x:1.732,y:0,lab:'Cl'}],
@@ -546,7 +554,10 @@ const OBS = {
   },
   'iodoform': {
     'ethanol':'yellow-ppt','propan-2-ol':'yellow-ppt',
-    'ethanal':'yellow-ppt','propanone':'yellow-ppt'
+    'ethanal':'yellow-ppt','propanone':'yellow-ppt',
+    // Esters that hydrolyse under alkaline iodoform conditions to give an
+    // iodoform-positive alcohol/ketone give a yellow ppt too.
+    'ethyl-ethanoate':'yellow-ppt'
   },
   'fecl3': {
     'phenol':'violet'
@@ -632,6 +643,8 @@ const QUESTIONS = [
    desc:'Both are aldehydes and both give an orange ppt with 2,4-DNPH and a silver mirror with Tollens\'. Find the test that reacts with only one of them.'},
   {mode:'pair', a:'propene', b:'phenol', title:'Alkene vs phenol',
    desc:'Both react with Br₂(aq), but the observation is different — one adds, the other substitutes. Find a test that distinguishes them.'},
+  {mode:'pair', a:'ethyl-ethanoate', b:'methyl-propanoate', title:'Two isomeric esters',
+   desc:'Both are esters with the same molecular formula (C₄H₈O₂). Only one gives a yellow ppt with the iodoform test — because it hydrolyses under the alkaline conditions to an iodoform-positive alcohol.'},
 
   // ----- set questions -----
   {mode:'set', compounds:['chloroethane','bromoethane','iodoethane'], numTests:1,

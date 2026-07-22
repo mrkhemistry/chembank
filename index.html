@@ -2655,7 +2655,61 @@ Option D" required></textarea>
             .sq-ef-check{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin:0.3rem 0 0.7rem;font-size:0.9rem;}
             .sq-ef-check input[type=text]{width:130px;background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.3rem 0.45rem;}
         </style>
+        <style>
+            #coveragePanel .panel-header{user-select:none;}
+            .cov-kpis{display:flex;flex-wrap:wrap;gap:0.6rem;margin:0.6rem 0;}
+            .cov-kpi{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:0.55rem 0.8rem;min-width:118px;flex:1;}
+            .cov-n{font-size:1.35rem;font-weight:700;color:var(--primary);line-height:1.1;}
+            .cov-l{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-top:2px;}
+            .cov-x{font-size:0.7rem;opacity:0.5;margin-top:2px;}
+            .cov-goal{font-size:0.85rem;background:var(--cyan-dim);border:1px solid var(--cyan-border);border-radius:8px;padding:0.5rem 0.7rem;margin:0.5rem 0;}
+            .cov-bar{height:9px;border-radius:5px;background:var(--surface2);overflow:hidden;margin:5px 0;max-width:320px;}
+            .cov-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#06d6a0);}
+            .cov-goalx{font-size:0.75rem;opacity:0.55;}
+            .cov-controls{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin:0.6rem 0;}
+            .cov-lbl{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.5;}
+            .cov-seg{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
+            .cov-seg button{background:var(--surface2);color:var(--text-secondary);border:0;padding:0.32rem 0.7rem;cursor:pointer;font-size:0.8rem;font-family:inherit;}
+            .cov-seg button.on{background:var(--primary);color:#00181c;font-weight:700;}
+            .cov-table{border-collapse:collapse;width:100%;font-size:0.85rem;}
+            .cov-table th{text-align:left;padding:0.4rem 0.55rem;color:var(--text-secondary);font-size:0.68rem;text-transform:uppercase;border-bottom:1px solid var(--border2);white-space:nowrap;}
+            .cov-table td{padding:0.38rem 0.55rem;border-bottom:1px solid var(--border);}
+            .cov-table .num{text-align:right;font-variant-numeric:tabular-nums;}
+            .cov-grp td{background:var(--surface2);color:var(--primary);font-weight:700;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;}
+            .cov-trow{cursor:pointer;}
+            .cov-trow:hover{background:var(--cyan-dim);}
+            .cov-tn{font-weight:600;}
+            .cov-tw{display:inline-block;width:0.7em;font-size:0.7em;opacity:0.5;transition:transform .12s;}
+            .cov-trow.open .cov-tw,.cov-tw.o{transform:rotate(90deg);color:var(--primary);opacity:1;}
+            .cov-heat{display:inline-block;min-width:2.1em;text-align:center;border-radius:6px;padding:1px 6px;font-weight:600;}
+            .cov-h0{background:rgba(255,107,107,0.16);color:#ff9d9d;} .cov-h1{background:rgba(255,209,102,0.14);color:#ffe08a;}
+            .cov-h2{background:rgba(0,229,255,0.14);color:#7fe3f5;} .cov-h3{background:rgba(6,214,160,0.16);color:#7bf0cf;}
+            .cov-cov{font-size:0.8rem;white-space:nowrap;opacity:0.85;}
+            .cov-cbar{display:inline-block;width:54px;height:6px;border-radius:3px;background:var(--border2);vertical-align:middle;margin-left:5px;overflow:hidden;}
+            .cov-cbar>i{display:block;height:100%;background:#06d6a0;}
+            .cov-dbar{display:inline-flex;height:8px;width:110px;border-radius:4px;overflow:hidden;border:1px solid var(--border);vertical-align:middle;}
+            .cov-dbar>span{display:block;height:100%;}
+            .cov-drow>td{background:var(--surface2);padding:0.3rem 0.5rem 0.6rem 1.4rem;}
+            .cov-concept{border-left:2px solid var(--border2);margin:0.25rem 0;}
+            .cov-chead{display:flex;gap:0.5rem;align-items:center;cursor:pointer;padding:0.28rem 0.5rem;border-radius:6px;}
+            .cov-chead:hover{background:var(--cyan-dim);}
+            .cov-cn{flex:1;}
+            .cov-pill{font-size:0.7rem;border:1px solid var(--border2);border-radius:10px;padding:0 7px;opacity:0.75;white-space:nowrap;}
+            .cov-qt{width:100%;margin:0.2rem 0 0.4rem;font-size:0.78rem;}
+            .cov-qt th{opacity:0.5;font-weight:500;padding:0.15rem 0.4rem;border-bottom:1px solid var(--border);text-transform:none;}
+            .cov-qt td{padding:0.15rem 0.4rem;border-bottom:1px solid var(--border);white-space:nowrap;}
+            .cov-src{font-weight:600;color:#7fe3f5;}
+            .cov-mnote{font-size:0.78rem;opacity:0.6;padding:0.3rem 0.5rem;font-style:italic;}
+            .cov-live{font-size:0.78rem;opacity:0.5;padding:0.25rem 0.5rem;}
+        </style>
         <div id="structuredView" class="view">
+            <div class="panel" id="coveragePanel" style="margin-bottom:1rem;">
+                <div class="panel-header" style="cursor:pointer;" onclick="covTogglePanel()">
+                    <span>&#128202; Coverage overview <span style="font-size:0.78rem;font-weight:400;opacity:0.55;">structured P2 &amp; P3 + MCQ bank &middot; admin/teacher</span></span>
+                    <span id="covChevron" style="opacity:0.6;">&#9662;</span>
+                </div>
+                <div id="coverageBody"><div style="opacity:0.6;padding:0.6rem 0;">Loading coverage&hellip;</div></div>
+            </div>
             <div class="panel">
                 <div class="panel-header">
                     <span>Structured Questions — Paper 2 &amp; 3 Review</span>
@@ -8522,6 +8576,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 buildStructuredFilterOptions();
                 await sqRefreshUploaded();
                 renderStructured();
+                covInit();
             }catch(e){
                 if (listEl) listEl.innerHTML='<div style="color:var(--danger)">Could not load structured questions: '+sqEsc(e.message||e)+'<br><span style="opacity:0.7">(You must be signed in as an admin or teacher.)</span></div>';
             }
@@ -8793,10 +8848,181 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 }
                 sqCloseEdit();
                 renderStructured();
+                if(covReady) covRender();
             }catch(e){ alert('Save failed: '+(e.message||e)); }
             finally{ if(btn){ btn.disabled=false; btn.textContent='Save'; } }
         }
         /* ===== end Structured Questions ===== */
+
+        /* ===== Coverage dashboard (admin/teacher) — reuses loaded structured data + one MCQ load ===== */
+        let covReady=false, covMcq=null, covGroup={}, covOpenT={}, covOpenC={}, covPaper='all', covStore='both';
+        const COV_KSP='solubility product'; // structured concept whose name contains this shows under a synthetic "Solubility" row
+        const COV_ORDER=['Physical Chemistry','Organic Chemistry','Practical & Structured-only'];
+
+        async function covInit(){
+            if (userRole!=='admin' && userRole!=='teacher') return;
+            const body=document.getElementById('coverageBody');
+            if (!body) return;
+            if (covReady){ covRender(); return; }
+            body.innerHTML='<div style="opacity:0.7;padding:0.6rem 0">Loading coverage&hellip;</div>';
+            try{
+                const [topRes, mcq]=await Promise.all([
+                    supabaseClient.from('topics').select('name,chem_group').eq('syllabus','H2'),
+                    fetchAllPaginated(()=>supabaseClient.from('questions')
+                        .select('id,topic,topics,difficulty,is_novel_context').eq('syllabus','h2_chem').order('id'))
+                ]);
+                if (topRes.error) throw topRes.error;
+                covGroup={}; (topRes.data||[]).forEach(t=>{ covGroup[t.name]=t.chem_group||'Physical Chemistry'; });
+                covMcq=mcq||[];
+                covReady=true;
+                covRender();
+            }catch(e){
+                body.innerHTML='<div style="color:var(--danger)">Coverage could not load: '+sqEsc(e.message||e)+'</div>';
+            }
+        }
+
+        function covTopicAgg(){
+            const T={};
+            const mk=()=>({p2:0,p3:0, ct:0, ccP2:{},ccP3:{}, e2:0,m2:0,h2:0, e3:0,m3:0,h3:0, nov2:0,nov3:0, mcq:0});
+            const ensure=(name,group)=> T[name]||(T[name]=Object.assign({name:name, group:group||covGroup[name]||'Physical Chemistry'}, mk()));
+            Object.keys(covGroup).forEach(n=>ensure(n));
+            ensure('Solubility','Physical Chemistry'); // MCQ-parity synthetic topic (structured Ksp folded here)
+            (sqAllConcepts||[]).forEach(c=>{
+                const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
+                ensure(tgt).ct++;
+            });
+            (sqData||[]).forEach(q=>{
+                (q.parts||[]).forEach(p=>{
+                    const c=sqConcepts[p.concept_id]; if(!c) return;
+                    const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
+                    const t=ensure(tgt);
+                    const d=(p.difficulty||'').toLowerCase();
+                    if(q.paper==='P2'){ t.p2++; t.ccP2[p.concept_id]=1; if(d==='easy')t.e2++; else if(d==='hard')t.h2++; else t.m2++; if(p.is_novel_context)t.nov2++; }
+                    else if(q.paper==='P3'){ t.p3++; t.ccP3[p.concept_id]=1; if(d==='easy')t.e3++; else if(d==='hard')t.h3++; else t.m3++; if(p.is_novel_context)t.nov3++; }
+                });
+            });
+            (covMcq||[]).forEach(q=>{
+                let ts=(Array.isArray(q.topics)&&q.topics.length)?q.topics:(q.topic?[q.topic]:[]);
+                const seen={};
+                ts.forEach(tn=>{ if(T[tn]&&!seen[tn]){ seen[tn]=1; T[tn].mcq++; } });
+            });
+            return T;
+        }
+
+        function covPartsOf(t){ return covPaper==='P2'?t.p2 : covPaper==='P3'?t.p3 : (t.p2+t.p3); }
+        function covCCN(t){ if(covPaper==='P2')return Object.keys(t.ccP2).length; if(covPaper==='P3')return Object.keys(t.ccP3).length; const u={}; Object.keys(t.ccP2).forEach(k=>u[k]=1); Object.keys(t.ccP3).forEach(k=>u[k]=1); return Object.keys(u).length; }
+        function covDiff(t){ if(covPaper==='P2')return[t.e2,t.m2,t.h2]; if(covPaper==='P3')return[t.e3,t.m3,t.h3]; return[t.e2+t.e3,t.m2+t.m3,t.h2+t.h3]; }
+        function covHeat(v,mx){ if(!v)return'cov-h0'; const r=v/mx; return r<0.15?'cov-h1':r<0.45?'cov-h2':'cov-h3'; }
+        function covKpi(n,l,x){ return '<div class="cov-kpi"><div class="cov-n">'+n+'</div><div class="cov-l">'+sqEsc(l)+'</div>'+(x?'<div class="cov-x">'+sqEsc(x)+'</div>':'')+'</div>'; }
+        function covSeg(id,opts,cur){ return '<span class="cov-seg">'+opts.map(o=>'<button onclick="covSet(\''+id+'\',\''+o[0]+'\')" class="'+(o[0]===cur?'on':'')+'">'+sqEsc(o[1])+'</button>').join('')+'</span>'; }
+        function covSet(id,v){ if(id==='covPaper')covPaper=v; else if(id==='covStore')covStore=v; covRender(); }
+        function covDbar(e,m,h){ const tt=e+m+h||1; return '<span class="cov-dbar"><span style="width:'+(e/tt*100)+'%;background:#06d6a0"></span><span style="width:'+(m/tt*100)+'%;background:#ffd166"></span><span style="width:'+(h/tt*100)+'%;background:#ff6b6b"></span></span> <span style="opacity:0.5;font-size:0.72rem">'+e+'/'+m+'/'+h+'</span>'; }
+
+        function covRender(){
+            const body=document.getElementById('coverageBody'); if(!body) return;
+            const T=covTopicAgg();
+            const rows=Object.values(T);
+            let sp2=0,sp3=0,e=0,m=0,h=0,nov=0,covT=0,totT=0;
+            rows.forEach(r=>{ sp2+=r.p2; sp3+=r.p3; e+=r.e2+r.e3; m+=r.m2+r.m3; h+=r.h2+r.h3; nov+=r.nov2+r.nov3; if(r.p2+r.p3>0)covT++; if(r.ct>0||r.p2+r.p3>0)totT++; });
+            const nQ=(sqData||[]).length;
+            const nPapers=[...new Set((sqData||[]).map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
+            const mcqN=(covMcq||[]).length, mcqNovel=(covMcq||[]).filter(q=>q.is_novel_context).length;
+            const py={}; (sqData||[]).forEach(q=>{ if(q.source==='Prelim' && q.school){ (py[q.year]=py[q.year]||{}); const s=(py[q.year][q.school]=py[q.year][q.school]||{}); if(q.paper==='P2')s.p2=1; if(q.paper==='P3')s.p3=1; } });
+            let qualYears=0; const yearInfo=[]; Object.keys(py).sort().forEach(y=>{ const both=Object.values(py[y]).filter(s=>s.p2&&s.p3).length; if(both>10)qualYears++; yearInfo.push(y+': '+both+' JC'+(both===1?'':'s')+' w/ both'); });
+
+            let html='<div class="cov-kpis">'
+                +covKpi(nQ,'structured Qs',nPapers+' papers')
+                +covKpi(sp2+sp3,'tagged parts',sp2+' P2 &middot; '+sp3+' P3')
+                +covKpi(mcqN,'MCQ (H2)',mcqNovel+' novel')
+                +covKpi(covT+' / '+totT,'topics covered','')
+                +covKpi(e+'E &middot; '+m+'M &middot; '+h+'H','difficulty (parts)','')
+                +covKpi(nov,'novel parts','beyond-syllabus')
+                +'</div>';
+            html+='<div class="cov-goal"><b>Student-access gate:</b> 5 prelim years, each with more than 10 JCs on both P2 &amp; P3. Qualifying so far: <b>'+qualYears+' / 5</b>.'
+                +'<div class="cov-bar"><i style="width:'+Math.min(100,qualYears/5*100)+'%"></i></div>'
+                +'<div class="cov-goalx">'+sqEsc(yearInfo.join('   ·   '))+'</div></div>';
+            html+='<div class="cov-controls"><span class="cov-lbl">Paper</span>'
+                +covSeg('covPaper',[['all','All'],['P2','P2'],['P3','P3']],covPaper)
+                +'<span class="cov-lbl">Show</span>'
+                +covSeg('covStore',[['both','Structured + MCQ'],['struct','Structured'],['mcq','MCQ']],covStore)
+                +'<button class="btn btn-secondary" style="padding:0.35rem 0.8rem" onclick="covToggleAll()">Expand / collapse all</button></div>';
+
+            const maxP=Math.max(1,...rows.map(covPartsOf));
+            const span=1+(covStore!=='mcq'?5:0)+(covStore!=='struct'?1:0);
+            html+='<div style="overflow-x:auto"><table class="cov-table"><thead><tr><th>Topic</th>'
+                +(covStore!=='mcq'?'<th class="num">P2</th><th class="num">P3</th><th class="num">Struct</th><th>Concepts</th><th>Difficulty</th>':'')
+                +(covStore!=='struct'?'<th class="num">MCQ</th>':'')+'</tr></thead><tbody>';
+            COV_ORDER.forEach(g=>{
+                const gr=rows.filter(r=>r.group===g).sort((a,b)=>covPartsOf(b)-covPartsOf(a));
+                if(!gr.length) return;
+                html+='<tr class="cov-grp"><td colspan="'+span+'">'+sqEsc(g)+'</td></tr>';
+                gr.forEach(t=>{ html+=covRow(t,maxP); if(covOpenT[t.name]) html+=covDrill(t,span); });
+            });
+            html+='</tbody></table></div>';
+            body.innerHTML=html;
+        }
+
+        function covRow(t,maxP){
+            const parts=covPartsOf(t);
+            let c='<tr class="cov-trow'+(covOpenT[t.name]?' open':'')+'" onclick="covToggleTopic('+sqAttr(JSON.stringify(t.name))+')">';
+            c+='<td class="cov-tn"><span class="cov-tw">&#9654;</span> '+sqEsc(t.name)+'</td>';
+            if(covStore!=='mcq'){
+                const ccN=covCCN(t), df=covDiff(t);
+                c+='<td class="num">'+t.p2+'</td><td class="num">'+t.p3+'</td>'
+                    +'<td class="num"><span class="cov-heat '+covHeat(parts,maxP)+'">'+parts+'</span></td>'
+                    +'<td class="cov-cov"><b>'+ccN+'</b>/'+t.ct+'<span class="cov-cbar"><i style="width:'+(t.ct?Math.round(ccN/t.ct*100):0)+'%'+(ccN<t.ct?';background:#ffd166':'')+'"></i></span></td>'
+                    +'<td>'+covDbar(df[0],df[1],df[2])+'</td>';
+            }
+            if(covStore!=='struct') c+='<td class="num"><span class="cov-heat '+(t.mcq?'cov-h2':'cov-h0')+'">'+t.mcq+'</span></td>';
+            c+='</tr>';
+            return c;
+        }
+
+        function covDrill(t,span){
+            const agg={};
+            (sqAllConcepts||[]).forEach(c=>{
+                const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
+                if(tgt===t.name) agg[c.id]={id:c.id,name:c.name,p2:0,p3:0,rows:[]};
+            });
+            (sqData||[]).forEach(q=>{
+                (q.parts||[]).forEach(p=>{
+                    const a=agg[p.concept_id]; if(!a) return;
+                    if(q.paper==='P2') a.p2++; else if(q.paper==='P3') a.p3++;
+                    a.rows.push({src:q.source,school:q.school,year:q.year,paper:q.paper,qno:q.question_number,part:p.part_label,marks:p.marks,diff:p.difficulty,nov:p.is_novel_context});
+                });
+            });
+            let inner='<div class="cov-drill">';
+            if(covStore!=='mcq'){
+                const clist=Object.values(agg).sort((a,b)=>(b.p2+b.p3)-(a.p2+a.p3));
+                if(!clist.length) inner+='<div class="cov-live">No concepts tagged yet.</div>';
+                clist.forEach(c=>{
+                    inner+='<div class="cov-concept"><div class="cov-chead" onclick="covToggleConcept('+c.id+')">'
+                        +'<span class="cov-tw'+(covOpenC[c.id]?' o':'')+'">&#9654;</span><span class="cov-cn">'+sqEsc(c.name)+'</span>'
+                        +'<span class="cov-pill">P2 '+c.p2+'</span><span class="cov-pill">P3 '+c.p3+'</span></div>';
+                    if(covOpenC[c.id]) inner+=covQuestions(c.rows);
+                    inner+='</div>';
+                });
+            }
+            if(covStore!=='struct') inner+='<div class="cov-mnote">MCQ bank: <b>'+t.mcq+'</b> question(s) tagged to this topic (browse them in the quiz / Question Bank views).</div>';
+            inner+='</div>';
+            return '<tr class="cov-drow"><td colspan="'+span+'">'+inner+'</td></tr>';
+        }
+
+        function covQuestions(rows){
+            let f=rows.slice();
+            if(covPaper!=='all') f=f.filter(r=>r.paper===covPaper);
+            if(!f.length) return '<div class="cov-live">No parts for this paper filter.</div>';
+            f.sort((a,b)=>(a.year-b.year)||(a.paper<b.paper?-1:a.paper>b.paper?1:0)||((a.qno||0)-(b.qno||0)));
+            let t='<table class="cov-qt"><thead><tr><th>Source</th><th>School</th><th>Year</th><th>Paper</th><th>Q</th><th>Part</th><th>Marks</th><th>Diff</th></tr></thead><tbody>';
+            f.forEach(r=>{ t+='<tr><td class="cov-src">'+sqEsc(r.src||'')+'</td><td>'+sqEsc(r.school||'&mdash;')+'</td><td>'+sqEsc(r.year)+'</td><td>'+sqEsc(r.paper)+'</td><td>Q'+sqEsc(r.qno)+'</td><td>'+sqEsc(r.part||'')+'</td><td class="num">'+(r.marks==null?'':r.marks)+'</td><td>'+sqEsc(r.diff||'')+(r.nov?' <span style="color:#c792ea">novel</span>':'')+'</td></tr>'; });
+            t+='</tbody></table>';
+            return t;
+        }
+
+        function covToggleTopic(n){ covOpenT[n]=!covOpenT[n]; covRender(); }
+        function covToggleConcept(id){ covOpenC[id]=!covOpenC[id]; covRender(); }
+        function covToggleAll(){ const T=covTopicAgg(); const anyOpen=Object.values(covOpenT).some(Boolean); if(anyOpen){ covOpenT={}; covOpenC={}; } else { Object.keys(T).forEach(n=>{ if(covPartsOf(T[n])>0) covOpenT[n]=1; }); } covRender(); }
+        function covTogglePanel(){ const b=document.getElementById('coverageBody'), ch=document.getElementById('covChevron'); if(!b) return; const hidden=b.style.display==='none'; b.style.display=hidden?'':'none'; if(ch) ch.innerHTML=hidden?'&#9662;':'&#9656;'; }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

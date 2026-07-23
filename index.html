@@ -8571,7 +8571,6 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 (fData||[]).forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
                 sqData=(qData||[]);
                 buildStructuredFilterOptions();
-                await sqRefreshUploaded();
                 renderStructured();
                 let _covOpen=false; try{ _covOpen=localStorage.getItem('covPanelOpen')==='1'; }catch(e){}
                 covSetPanel(_covOpen);
@@ -8619,22 +8618,39 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             renderStructured();
         }
 
-        async function sqRefreshUploaded(){
-            sqUploaded={}; sqLoadWarning='';
-            const papers=[...new Set(sqData.map(q=>(q.figures||[]).map(f=>{ const p=f.storage_path||''; const i=p.lastIndexOf('/'); return i>-1?p.slice(0,i):''; })).reduce((a,b)=>a.concat(b),[]).filter(Boolean))];
-            for (const pf of papers){
+        let sqLoadedFolders=new Set(), sqEnsuring=false;
+        function sqFigFolder(sp){ const i=(sp||'').lastIndexOf('/'); return i>-1?sp.slice(0,i):''; }
+        // Load signed figure URLs for specific paper folders only (skips already-loaded unless force).
+        async function sqLoadFigFolders(folders, force){
+            const toLoad=[...new Set(folders)].filter(f=>f && (force || !sqLoadedFolders.has(f)));
+            if (!toLoad.length) return false;
+            let any=false;
+            for (const pf of toLoad){
                 try{
                     const listRes=await supabaseClient.storage.from('structured-figures').list(pf,{limit:1000});
                     if (listRes.error) throw listRes.error;
                     const files=listRes.data||[];
-                    if (!files.length) continue;
                     const paths=files.filter(f=>f.name && f.name.indexOf('.')>-1).map(f=>pf+'/'+f.name);
-                    if (!paths.length) continue;
-                    const signRes=await supabaseClient.storage.from('structured-figures').createSignedUrls(paths,28800);
-                    if (signRes.error) throw signRes.error;
-                    (signRes.data||[]).forEach((s,i)=>{ if(s&&s.signedUrl) sqUploaded[paths[i]]=s.signedUrl; });
+                    if (paths.length){
+                        const signRes=await supabaseClient.storage.from('structured-figures').createSignedUrls(paths,28800);
+                        if (signRes.error) throw signRes.error;
+                        (signRes.data||[]).forEach((s,i)=>{ if(s&&s.signedUrl) sqUploaded[paths[i]]=s.signedUrl; });
+                    }
+                    sqLoadedFolders.add(pf); any=true;
                 }catch(e){ sqLoadWarning='Some figure images could not be loaded ('+(e.message||e)+').'; }
             }
+            return any;
+        }
+        // Lazy: load figure URLs only for the folders of the currently-shown papers, then re-render.
+        async function sqEnsureFigFolders(questions){
+            if (sqEnsuring) return;
+            const need=new Set();
+            (questions||[]).forEach(q=>(q.figures||[]).forEach(f=>{ const fo=sqFigFolder(f.storage_path); if(fo && !sqLoadedFolders.has(fo)) need.add(fo); }));
+            if (!need.size) return;
+            sqEnsuring=true;
+            const loaded=await sqLoadFigFolders([...need]);
+            sqEnsuring=false;
+            if (loaded) renderStructured();
         }
 
         function renderStructured(){
@@ -8651,7 +8667,9 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             }
             const partFilter=!!(ft||fc||fd||ff||fs);
             let shownQ=0, shownP=0;
-            const html=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)&&(!fsrc||q.source===fsrc)&&(!fsch||q.school===fsch)).map(q=>{
+            const filtered=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)&&(!fsrc||q.source===fsrc)&&(!fsch||q.school===fsch));
+            sqEnsureFigFolders(filtered);
+            const html=filtered.map(q=>{
                 const matches=new Set();
                 q.parts.forEach(p=>{
                     const c=sqConcepts[p.concept_id]||{};
@@ -8753,7 +8771,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     ok++;
                 }catch(e){ problems.push(file.name+' ('+(e.message||e)+')'); }
             }
-            await sqRefreshUploaded();
+            await sqLoadFigFolders([...new Set(Object.values(figByKey).map(f=>sqFigFolder(f.storage_path)).filter(Boolean))], true);
             renderStructured();
             alert('Uploaded '+ok+' of '+files.length+' figure(s) for '+fy+' '+fp+'.'+(problems.length?('\n\nNot uploaded:\n'+problems.join('\n')):''));
         }

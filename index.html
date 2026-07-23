@@ -8561,18 +8561,15 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const topicMap={}; (topRes.data||[]).forEach(t=>{ topicMap[t.id]=t.name; });
                 sqAllConcepts=(conRes.data||[]).map(c=>({id:c.id,name:c.name,topic:topicMap[c.topic_id]||''}));
                 sqConcepts={}; sqAllConcepts.forEach(c=>{ sqConcepts[c.id]={name:c.name,topic:c.topic}; });
-                const [qRes,pRes,fRes]=await Promise.all([
-                    supabaseClient.from('structured_questions').select('*').order('year').order('paper').order('question_number'),
-                    supabaseClient.from('structured_parts').select('*').order('question_id').order('order_index'),
-                    supabaseClient.from('structured_figures').select('*')
+                const [qData,pData,fData]=await Promise.all([
+                    fetchAllPaginated(()=>supabaseClient.from('structured_questions').select('*').order('year').order('paper').order('question_number').order('id')),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_parts').select('*').order('question_id').order('order_index').order('id')),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_figures').select('*').order('id'))
                 ]);
-                if (qRes.error) throw qRes.error;
-                if (pRes.error) throw pRes.error;
-                if (fRes.error) throw fRes.error;
-                const byQ={}; (qRes.data||[]).forEach(q=>{ q.parts=[]; q.figures=[]; byQ[q.id]=q; });
-                (pRes.data||[]).forEach(p=>{ if(byQ[p.question_id]) byQ[p.question_id].parts.push(p); });
-                (fRes.data||[]).forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
-                sqData=(qRes.data||[]);
+                const byQ={}; (qData||[]).forEach(q=>{ q.parts=[]; q.figures=[]; byQ[q.id]=q; });
+                (pData||[]).forEach(p=>{ if(byQ[p.question_id]) byQ[p.question_id].parts.push(p); });
+                (fData||[]).forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
+                sqData=(qData||[]);
                 buildStructuredFilterOptions();
                 await sqRefreshUploaded();
                 renderStructured();

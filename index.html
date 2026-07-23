@@ -2706,9 +2706,9 @@ Option D" required></textarea>
             <div class="panel" id="coveragePanel" style="margin-bottom:1rem;">
                 <div class="panel-header" style="cursor:pointer;" onclick="covTogglePanel()">
                     <span>&#128202; Coverage overview <span style="font-size:0.78rem;font-weight:400;opacity:0.55;">structured P2 &amp; P3 + MCQ bank &middot; admin/teacher</span></span>
-                    <span id="covChevron" style="opacity:0.6;">&#9662;</span>
+                    <span style="display:flex;align-items:center;gap:0.5rem;"><span id="covHint" style="font-size:0.72rem;font-weight:400;opacity:0.55;">click to load</span><span id="covChevron" style="opacity:0.6;">&#9656;</span></span>
                 </div>
-                <div id="coverageBody"><div style="opacity:0.6;padding:0.6rem 0;">Loading coverage&hellip;</div></div>
+                <div id="coverageBody" style="display:none;"></div>
             </div>
             <div class="panel">
                 <div class="panel-header">
@@ -8573,7 +8573,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 buildStructuredFilterOptions();
                 await sqRefreshUploaded();
                 renderStructured();
-                covInit();
+                let _covOpen=false; try{ _covOpen=localStorage.getItem('covPanelOpen')==='1'; }catch(e){}
+                covSetPanel(_covOpen);
             }catch(e){
                 if (listEl) listEl.innerHTML='<div style="color:var(--danger)">Could not load structured questions: '+sqEsc(e.message||e)+'<br><span style="opacity:0.7">(You must be signed in as an admin or teacher.)</span></div>';
             }
@@ -9019,7 +9020,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         function covToggleTopic(n){ covOpenT[n]=!covOpenT[n]; covRender(); }
         function covToggleConcept(id){ covOpenC[id]=!covOpenC[id]; covRender(); }
         function covToggleAll(){ const T=covTopicAgg(); const anyOpen=Object.values(covOpenT).some(Boolean); if(anyOpen){ covOpenT={}; covOpenC={}; } else { Object.keys(T).forEach(n=>{ if(covPartsOf(T[n])>0) covOpenT[n]=1; }); } covRender(); }
-        function covTogglePanel(){ const b=document.getElementById('coverageBody'), ch=document.getElementById('covChevron'); if(!b) return; const hidden=b.style.display==='none'; b.style.display=hidden?'':'none'; if(ch) ch.innerHTML=hidden?'&#9662;':'&#9656;'; }
+        function covSetPanel(open){ const b=document.getElementById('coverageBody'), ch=document.getElementById('covChevron'), hn=document.getElementById('covHint'); if(!b) return; b.style.display=open?'':'none'; if(ch) ch.innerHTML=open?'&#9662;':'&#9656;'; if(hn) hn.textContent=open?'':(covReady?'click to show':'click to load'); if(open) covInit(); }
+        function covTogglePanel(){ const b=document.getElementById('coverageBody'); if(!b) return; const open=b.style.display==='none'; try{ localStorage.setItem('covPanelOpen', open?'1':'0'); }catch(e){} covSetPanel(open); }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

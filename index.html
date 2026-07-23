@@ -8932,10 +8932,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
             let html='<div class="cov-kpis">'
                 +covKpi(nQ,'structured Qs',nPapers+' papers')
-                +covKpi(sp2+sp3,'tagged parts',sp2+' P2 &middot; '+sp3+' P3')
+                +covKpi(sp2+sp3,'tagged parts',sp2+' P2 · '+sp3+' P3')
                 +covKpi(mcqN,'MCQ (H2)',mcqNovel+' novel')
                 +covKpi(covT+' / '+totT,'topics covered','')
-                +covKpi(e+'E &middot; '+m+'M &middot; '+h+'H','difficulty (parts)','')
+                +covKpi(e+'E · '+m+'M · '+h+'H','difficulty (parts)','')
                 +covKpi(nov,'novel parts','beyond-syllabus')
                 +'</div>';
             html+='<div class="cov-goal"><b>Student-access gate:</b> 5 prelim years, each with more than 10 JCs on both P2 &amp; P3. Qualifying so far: <b>'+qualYears+' / 5</b>.'
@@ -9014,7 +9014,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             if(!f.length) return '<div class="cov-live">No parts for this paper filter.</div>';
             f.sort((a,b)=>(a.year-b.year)||(a.paper<b.paper?-1:a.paper>b.paper?1:0)||((a.qno||0)-(b.qno||0)));
             let t='<table class="cov-qt"><thead><tr><th>Source</th><th>School</th><th>Year</th><th>Paper</th><th>Q</th><th>Part</th><th>Marks</th><th>Diff</th></tr></thead><tbody>';
-            f.forEach(r=>{ t+='<tr><td class="cov-src">'+sqEsc(r.src||'')+'</td><td>'+sqEsc(r.school||'&mdash;')+'</td><td>'+sqEsc(r.year)+'</td><td>'+sqEsc(r.paper)+'</td><td>Q'+sqEsc(r.qno)+'</td><td>'+sqEsc(r.part||'')+'</td><td class="num">'+(r.marks==null?'':r.marks)+'</td><td>'+sqEsc(r.diff||'')+(r.nov?' <span style="color:#c792ea">novel</span>':'')+'</td></tr>'; });
+            f.forEach(r=>{ t+='<tr><td class="cov-src">'+sqEsc(r.src||'')+'</td><td>'+sqEsc(r.school||'—')+'</td><td>'+sqEsc(r.year)+'</td><td>'+sqEsc(r.paper)+'</td><td>Q'+sqEsc(r.qno)+'</td><td>'+sqEsc(r.part||'')+'</td><td class="num">'+(r.marks==null?'':r.marks)+'</td><td>'+sqEsc(r.diff||'')+(r.nov?' <span style="color:#c792ea">novel</span>':'')+'</td></tr>'; });
             t+='</tbody></table>';
             return t;
         }

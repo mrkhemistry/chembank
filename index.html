@@ -8658,7 +8658,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), fsrc=sqVal('sqFilterSource'), fsch=sqVal('sqFilterSchool'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
             const anyFilter=!!(fy||fp||fsrc||fsch||ft||fc||fd||ff||fs);
             if (!anyFilter){
-                const nPapers=[...new Set(sqData.map(q=>q.year+' '+q.paper))].length;
+                const nPapers=[...new Set(sqData.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
                 const stEl=document.getElementById('structuredStats');
                 const lstEl=document.getElementById('structuredList');
                 if (stEl) stEl.textContent=sqData.length+' questions across '+nPapers+' papers in the bank'+(sqLoadWarning?('  •  '+sqLoadWarning):'');

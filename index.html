@@ -8873,7 +8873,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         /* ===== Coverage dashboard (admin/teacher) — reuses loaded structured data + one MCQ load ===== */
         let covReady=false, covMcq=null, covGroup={}, covOpenT={}, covOpenC={}, covPaper='all', covStore='both';
         const COV_KSP='solubility product'; // structured concept whose name contains this shows under a synthetic "Solubility" row
-        const COV_ORDER=['Physical Chemistry','Organic Chemistry','Practical & Structured-only'];
+        const COV_ORDER=['Physical Chemistry','Inorganic Chemistry','Organic Chemistry','Practical & Structured-only'];
+        const COV_INORGANIC=new Set(['Periodic table','Group 2','Group 17','Transition elements']);
 
         async function covInit(){
             if (userRole!=='admin' && userRole!=='teacher') return;
@@ -8888,7 +8889,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                         .select('id,topic,topics,difficulty,is_novel_context').eq('syllabus','h2_chem').order('id'))
                 ]);
                 if (topRes.error) throw topRes.error;
-                covGroup={}; (topRes.data||[]).forEach(t=>{ covGroup[t.name]=t.chem_group||'Physical Chemistry'; });
+                covGroup={}; (topRes.data||[]).forEach(t=>{ covGroup[t.name]=COV_INORGANIC.has(t.name)?'Inorganic Chemistry':(t.chem_group||'Physical Chemistry'); });
                 covMcq=mcq||[];
                 covReady=true;
                 covRender();

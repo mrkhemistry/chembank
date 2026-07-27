@@ -2716,17 +2716,19 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" style="padding:0.5rem 1rem;" onclick="showView('welcome')">← Portal</button>
                 </div>
                 <div class="sq-controls" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;margin-bottom:0.75rem;">
-                    <div><label class="fld">Year</label><select id="sqFilterYear" onchange="renderStructured()"><option value="">All</option></select></div>
-                    <div><label class="fld">Paper</label><select id="sqFilterPaper" onchange="renderStructured()"><option value="">All</option><option>P2</option><option>P3</option></select></div>
-                    <div><label class="fld">Source</label><select id="sqFilterSource" onchange="renderStructured()"><option value="">All</option></select></div>
-                    <div><label class="fld">School</label><select id="sqFilterSchool" onchange="renderStructured()"><option value="">All</option></select></div>
+                    <div><label class="fld">Year</label><select id="sqFilterYear" onchange="sqMarkDirty()"><option value="">All</option></select></div>
+                    <div><label class="fld">Paper</label><select id="sqFilterPaper" onchange="sqMarkDirty()"><option value="">All</option><option>P2</option><option>P3</option></select></div>
+                    <div><label class="fld">Source</label><select id="sqFilterSource" onchange="sqMarkDirty()"><option value="">All</option></select></div>
+                    <div><label class="fld">School</label><select id="sqFilterSchool" onchange="sqMarkDirty()"><option value="">All</option></select></div>
                     <div><label class="fld">Topic</label><select id="sqFilterTopic" onchange="onStructuredTopicChange()"><option value="">All</option></select></div>
-                    <div><label class="fld">Concept</label><select id="sqFilterConcept" onchange="renderStructured()"><option value="">All</option></select></div>
-                    <div><label class="fld">Difficulty</label><select id="sqFilterDiff" onchange="renderStructured()"><option value="">All</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
-                    <div><label class="fld">Flag</label><select id="sqFilterFlag" onchange="renderStructured()"><option value="">All</option><option value="novel">Novel context</option><option value="notself">Needs earlier part</option></select></div>
-                    <div style="flex:1;min-width:150px;"><label class="fld">Search</label><input id="sqFilterSearch" type="text" placeholder="stem / part / mark scheme…" oninput="renderStructured()" style="width:100%;"></div>
+                    <div><label class="fld">Concept</label><select id="sqFilterConcept" onchange="sqMarkDirty()"><option value="">All</option></select></div>
+                    <div><label class="fld">Difficulty</label><select id="sqFilterDiff" onchange="sqMarkDirty()"><option value="">All</option><option>Easy</option><option>Medium</option><option>Hard</option></select></div>
+                    <div><label class="fld">Flag</label><select id="sqFilterFlag" onchange="sqMarkDirty()"><option value="">All</option><option value="novel">Novel context</option><option value="notself">Needs earlier part</option></select></div>
+                    <div style="flex:1;min-width:150px;"><label class="fld">Search</label><input id="sqFilterSearch" type="text" placeholder="stem / part / mark scheme…" oninput="sqMarkDirty()" onkeydown="if(event.key==='Enter'){event.preventDefault();sqApplyFilters();}" style="width:100%;"></div>
+                    <button class="btn" id="sqApplyBtn" style="padding:0.5rem 1.1rem;background:var(--primary);color:#00181c;font-weight:700;" onclick="sqApplyFilters()">Show questions</button>
                     <button class="btn btn-secondary" style="padding:0.5rem 0.9rem;" onclick="resetStructuredFilters()">Reset</button>
                 </div>
+                <div id="sqFilterHint" style="font-size:0.78rem;opacity:0.6;margin:-0.35rem 0 0.75rem;">Set the filters you want, then click <b>Show questions</b>. Nothing is fetched until you do.</div>
                 <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;margin-bottom:0.75rem;">
                     <label class="btn btn-secondary" style="cursor:pointer;padding:0.4rem 0.9rem;">⬆ Bulk-upload figures (pick a Year + Paper first)
                         <input type="file" accept="image/*" multiple style="display:none" onchange="sqBulkUpload(this.files); this.value='';">
@@ -8541,7 +8543,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         })();
 
         /* ===== Structured Questions (P2/P3) admin review + figure upload ===== */
-        let sqData = null, sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '';
+        // sqIndex = slim {id,year,paper,source,school} row per question, loaded once to fill the filter
+        // dropdowns. sqData = only the questions (with parts + figures) fetched for the current
+        // selection, loaded when "Show questions" is clicked. The full bank is never pulled here.
+        let sqData = null, sqIndex = null, sqLoadedKey = '', sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '';
         function sqEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function sqAttr(s){ return sqEsc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         function sqVal(id){ const el=document.getElementById(id); return el?el.value:''; }
@@ -8549,27 +8554,23 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         async function loadStructuredInit(){
             if (userRole!=='admin' && userRole!=='teacher') return;
             const listEl=document.getElementById('structuredList');
-            if (sqData){ renderStructured(); return; }
-            if (listEl) listEl.innerHTML='Loading...';
+            if (sqIndex){ renderStructured(); return; }
+            if (listEl) listEl.innerHTML='Loading filters…';
             try{
-                const [topRes, conRes] = await Promise.all([
+                // Startup fetch is deliberately light: taxonomy + one slim row per question.
+                // No stems, parts, mark schemes or figure rows until a selection is applied.
+                const [topRes, conRes, idxData] = await Promise.all([
                     supabaseClient.from('topics').select('id,name'),
-                    supabaseClient.from('concepts').select('id,name,topic_id')
+                    supabaseClient.from('concepts').select('id,name,topic_id'),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_questions').select('id,year,paper,source,school').order('id'))
                 ]);
                 if (topRes.error) throw topRes.error;
                 if (conRes.error) throw conRes.error;
                 const topicMap={}; (topRes.data||[]).forEach(t=>{ topicMap[t.id]=t.name; });
                 sqAllConcepts=(conRes.data||[]).map(c=>({id:c.id,name:c.name,topic:topicMap[c.topic_id]||''}));
                 sqConcepts={}; sqAllConcepts.forEach(c=>{ sqConcepts[c.id]={name:c.name,topic:c.topic}; });
-                const [qData,pData,fData]=await Promise.all([
-                    fetchAllPaginated(()=>supabaseClient.from('structured_questions').select('*').order('year').order('paper').order('question_number').order('id')),
-                    fetchAllPaginated(()=>supabaseClient.from('structured_parts').select('*').order('question_id').order('order_index').order('id')),
-                    fetchAllPaginated(()=>supabaseClient.from('structured_figures').select('*').order('id'))
-                ]);
-                const byQ={}; (qData||[]).forEach(q=>{ q.parts=[]; q.figures=[]; byQ[q.id]=q; });
-                (pData||[]).forEach(p=>{ if(byQ[p.question_id]) byQ[p.question_id].parts.push(p); });
-                (fData||[]).forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
-                sqData=(qData||[]);
+                sqIndex=idxData||[];
+                sqData=null; sqLoadedKey='';
                 buildStructuredFilterOptions();
                 renderStructured();
                 let _covOpen=false; try{ _covOpen=localStorage.getItem('covPanelOpen')==='1'; }catch(e){}
@@ -8580,17 +8581,18 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         }
 
         function buildStructuredFilterOptions(){
-            const years=[...new Set(sqData.map(q=>q.year))].sort();
+            const idx=sqIndex||[];
+            const years=[...new Set(idx.map(q=>q.year))].sort();
             const yEl=document.getElementById('sqFilterYear');
             if (yEl) yEl.innerHTML='<option value="">All</option>'+years.map(y=>'<option>'+y+'</option>').join('');
-            const sources=[...new Set(sqData.map(q=>q.source).filter(Boolean))].sort();
+            const sources=[...new Set(idx.map(q=>q.source).filter(Boolean))].sort();
             const srcEl=document.getElementById('sqFilterSource');
             if (srcEl) srcEl.innerHTML='<option value="">All</option>'+sources.map(s=>'<option>'+sqEsc(s)+'</option>').join('');
-            const schools=[...new Set(sqData.map(q=>q.school).filter(Boolean))].sort();
+            const schools=[...new Set(idx.map(q=>q.school).filter(Boolean))].sort();
             const schEl=document.getElementById('sqFilterSchool');
             if (schEl) schEl.innerHTML='<option value="">All</option>'+schools.map(s=>'<option>'+sqEsc(s)+'</option>').join('');
-            const used=new Set(); sqData.forEach(q=>q.parts.forEach(p=>{ if(p.concept_id) used.add(p.concept_id); }));
-            const topics=[...new Set([...used].map(id=>sqConcepts[id]&&sqConcepts[id].topic).filter(Boolean))].sort();
+            // Topics and concepts come from the taxonomy tables, so no part rows are needed here.
+            const topics=[...new Set((sqAllConcepts||[]).map(c=>c.topic).filter(Boolean))].sort();
             const tEl=document.getElementById('sqFilterTopic');
             if (tEl) tEl.innerHTML='<option value="">All</option>'+topics.map(t=>'<option>'+sqEsc(t)+'</option>').join('');
             buildStructuredConceptOptions();
@@ -8598,8 +8600,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
         function buildStructuredConceptOptions(){
             const topic=sqVal('sqFilterTopic');
-            const used=new Set(); sqData.forEach(q=>q.parts.forEach(p=>{ if(p.concept_id) used.add(p.concept_id); }));
-            let concepts=[...used].map(id=>sqConcepts[id]).filter(Boolean);
+            let concepts=(sqAllConcepts||[]).slice();
             if (topic) concepts=concepts.filter(c=>c.topic===topic);
             const names=[...new Set(concepts.map(c=>c.name))].sort();
             const cEl=document.getElementById('sqFilterConcept');
@@ -8609,12 +8610,150 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         function onStructuredTopicChange(){
             const cEl=document.getElementById('sqFilterConcept'); if (cEl) cEl.value='';
             buildStructuredConceptOptions();
+            sqMarkDirty();
+        }
+
+        // Filters no longer render on change: they only flag that the view is out of date.
+        // The list is (re)built when "Show questions" is clicked, so picking several filters costs nothing.
+        function sqMarkDirty(){ sqSetHint(true); }
+        function sqSetHint(dirty){
+            const h=document.getElementById('sqFilterHint'), b=document.getElementById('sqApplyBtn');
+            if (h){
+                h.innerHTML = dirty
+                    ? 'Filters changed &mdash; click <b>Show questions</b> to load them.'
+                    : 'Set the filters you want, then click <b>Show questions</b>. Nothing is fetched until you do.';
+                h.style.color = dirty ? 'var(--primary)' : '';
+                h.style.opacity = dirty ? '0.9' : '0.6';
+            }
+            if (b) b.style.boxShadow = dirty ? '0 0 0 2px var(--cyan-border)' : '';
+        }
+        // Which slice of the bank the current filters need. Question-level filters (year, paper,
+        // source, school) can be resolved against the in-memory index, so they define the fetch on
+        // their own; the part-level filters are applied client-side afterwards by renderStructured().
+        function sqScope(){
+            const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), fsrc=sqVal('sqFilterSource'), fsch=sqVal('sqFilterSchool');
+            const ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').trim();
+            const hasQ=!!(fy||fp||fsrc||fsch), hasP=!!(ft||fc||fd||ff||fs);
+            return { fy:fy, fp:fp, fsrc:fsrc, fsch:fsch, ft:ft, fc:fc, fd:fd, ff:ff, fs:fs, hasQ:hasQ, hasP:hasP,
+                key: hasQ ? ('Q|'+[fy,fp,fsrc,fsch].join('|')) : ('P|'+[ft,fc,fd,ff,fs].join('|')) };
+        }
+
+        // Rows for a set of question ids, in id chunks so the request URL stays short.
+        async function sqFetchByIds(ids){
+            const qs=[], ps=[], fs=[];
+            for (let i=0;i<ids.length;i+=150){
+                const chunk=ids.slice(i,i+150);
+                const [qr,pr,fr]=await Promise.all([
+                    fetchAllPaginated(()=>supabaseClient.from('structured_questions').select('*').in('id',chunk).order('id')),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_parts').select('*').in('question_id',chunk).order('question_id').order('order_index').order('id')),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_figures').select('*').in('question_id',chunk).order('id'))
+                ]);
+                qs.push(...qr); ps.push(...pr); fs.push(...fr);
+            }
+            const byQ={}; qs.forEach(q=>{ q.parts=[]; q.figures=[]; byQ[q.id]=q; });
+            ps.forEach(p=>{ if(byQ[p.question_id]) byQ[p.question_id].parts.push(p); });
+            fs.forEach(f=>{ if(byQ[f.question_id]) byQ[f.question_id].figures.push(f); });
+            qs.sort((a,b)=> (a.year-b.year) || String(a.paper||'').localeCompare(String(b.paper||''))
+                || String(a.source||'').localeCompare(String(b.source||'')) || String(a.school||'').localeCompare(String(b.school||''))
+                || (a.question_number-b.question_number) || (a.id-b.id));
+            return qs;
+        }
+
+        // Question ids for part-level-only selections (no year/paper/source/school picked).
+        async function sqIdsFromParts(sc){
+            const ids=new Set();
+            let conceptIds=null;
+            if (sc.fc || sc.ft){
+                conceptIds=(sqAllConcepts||[]).filter(c=>(!sc.fc||c.name===sc.fc)&&(!sc.ft||c.topic===sc.ft)).map(c=>c.id);
+                if (!conceptIds.length) return [];
+            }
+            const partQuery=()=>{
+                let q=supabaseClient.from('structured_parts').select('question_id');
+                if (conceptIds) q=q.in('concept_id', conceptIds);
+                if (sc.fd) q=q.eq('difficulty', sc.fd);
+                if (sc.ff==='novel') q=q.eq('is_novel_context', true);
+                if (sc.ff==='notself') q=q.eq('self_contained', false);
+                if (sc.fs){ const t=sqLike(sc.fs); q=q.or('part_text.ilike."%'+t+'%",mark_scheme.ilike."%'+t+'%"'); }
+                // question_id alone has ties, so range pagination could skip or repeat rows at a
+                // page boundary; id makes the order unique.
+                return q.order('question_id').order('id');
+            };
+            (await fetchAllPaginated(partQuery)).forEach(r=>ids.add(r.question_id));
+            if (sc.fs){
+                // A text search also matches question stems; renderStructured() narrows these
+                // against the other filters once the rows are in.
+                const stems=await fetchAllPaginated(()=>supabaseClient.from('structured_questions').select('id').ilike('stem','%'+sqLike(sc.fs)+'%').order('id'));
+                stems.forEach(r=>ids.add(r.id));
+            }
+            return [...ids];
+        }
+        // Only " and \ break the quoted or(...) filter syntax; they become % so the pattern still
+        // matches a superset of the term. % and _ are left alone for the same reason: as LIKE
+        // wildcards they can only widen the candidate set, and renderStructured() then does the
+        // exact substring match. Widening is safe here, narrowing would silently lose questions.
+        function sqLike(s){ return String(s).replace(/["\\]/g,'%'); }
+
+        // Every fetch takes a ticket. A slow earlier fetch must not overwrite the results of a later
+        // one, or the list would show one selection's rows filtered by another's filters.
+        let sqReqSeq=0, sqBusy=0;
+        // Counted, so whichever fetch finishes last always restores the button, including the
+        // superseded ones that return early.
+        function sqSetBusy(on){
+            sqBusy=Math.max(0, sqBusy+(on?1:-1));
+            const b=document.getElementById('sqApplyBtn');
+            if (b){ b.disabled=sqBusy>0; b.textContent=sqBusy>0?'Fetching…':'Show questions'; }
+        }
+        async function sqApplyFilters(){
+            const listEl=document.getElementById('structuredList');
+            const sc=sqScope();
+            if (!sc.hasQ && !sc.hasP){ sqSetHint(false); sqData=null; sqLoadedKey=''; renderStructured(); return; }
+            if (listEl) listEl.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Fetching questions…</div>';
+            sqSetHint(false);
+            const token=++sqReqSeq;
+            let rows=null, err=null;
+            sqSetBusy(true);
+            try{ rows=await sqFetchScope(sc, false, token); }
+            catch(e){ err=e; }
+            finally{ sqSetBusy(false); }
+            if (token!==sqReqSeq) return;               // a newer fetch already owns the view
+            if (err){
+                if (listEl) listEl.innerHTML='<div style="color:var(--danger)">Could not fetch questions: '+sqEsc(err.message||err)+'</div>';
+                return;
+            }
+            if (rows===null) return;
+            // Filters can be changed while the fetch is running. Rendering the old slice against the
+            // new filters would show a misleading "No matching questions", so ask for another click.
+            if (sqScope().key!==sc.key){
+                sqSetHint(true);
+                if (listEl) listEl.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Filters changed while loading &mdash; click <b>Show questions</b> again.</div>';
+                return;
+            }
             renderStructured();
+        }
+
+        // Fetch only what the current selection needs; a repeat click on the same scope reuses it.
+        // Returns null if a newer fetch superseded this one before it finished.
+        async function sqFetchScope(sc, force, token){
+            sc=sc||sqScope();
+            if (!force && sqData && sqLoadedKey===sc.key) return sqData;
+            let ids;
+            if (sc.hasQ){
+                ids=(sqIndex||[]).filter(q=>(!sc.fy||String(q.year)===sc.fy)&&(!sc.fp||q.paper===sc.fp)
+                    &&(!sc.fsrc||q.source===sc.fsrc)&&(!sc.fsch||q.school===sc.fsch)).map(q=>q.id);
+            } else {
+                ids=await sqIdsFromParts(sc);
+            }
+            const rows=ids.length?await sqFetchByIds(ids):[];
+            if (token!=null && token!==sqReqSeq) return null;
+            sqData=rows; sqLoadedKey=sc.key;
+            return rows;
         }
 
         function resetStructuredFilters(){
             ['sqFilterYear','sqFilterPaper','sqFilterSource','sqFilterSchool','sqFilterTopic','sqFilterConcept','sqFilterDiff','sqFilterFlag','sqFilterSearch'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
             buildStructuredConceptOptions();
+            sqSetHint(false);
+            sqData=null; sqLoadedKey='';
             renderStructured();
         }
 
@@ -8654,15 +8793,19 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         }
 
         function renderStructured(){
-            if (!sqData) return;
+            if (!sqIndex) return;
             const fy=sqVal('sqFilterYear'), fp=sqVal('sqFilterPaper'), fsrc=sqVal('sqFilterSource'), fsch=sqVal('sqFilterSchool'), ft=sqVal('sqFilterTopic'), fc=sqVal('sqFilterConcept'), fd=sqVal('sqFilterDiff'), ff=sqVal('sqFilterFlag'), fs=(sqVal('sqFilterSearch')||'').toLowerCase();
             const anyFilter=!!(fy||fp||fsrc||fsch||ft||fc||fd||ff||fs);
+            const stEl0=document.getElementById('structuredStats');
+            const lstEl0=document.getElementById('structuredList');
             if (!anyFilter){
-                const nPapers=[...new Set(sqData.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
-                const stEl=document.getElementById('structuredStats');
-                const lstEl=document.getElementById('structuredList');
-                if (stEl) stEl.textContent=sqData.length+' questions across '+nPapers+' papers in the bank'+(sqLoadWarning?('  •  '+sqLoadWarning):'');
-                if (lstEl) lstEl.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Pick a Year and/or Paper above (or any filter) to show questions.</div>';
+                const nPapers=[...new Set(sqIndex.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
+                if (stEl0) stEl0.textContent=sqIndex.length+' questions across '+nPapers+' papers in the bank'+(sqLoadWarning?('  •  '+sqLoadWarning):'');
+                if (lstEl0) lstEl0.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Pick a Year and/or Paper above (or any filter), then click <b>Show questions</b>.</div>';
+                return;
+            }
+            if (!sqData){
+                if (lstEl0) lstEl0.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Click <b>Show questions</b> to fetch this selection.</div>';
                 return;
             }
             const partFilter=!!(ft||fc||fd||ff||fs);
@@ -8752,9 +8895,24 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             if (!fy || !fp){ alert('Select a Year and a Paper in the filters first, then bulk-upload the figure PNGs for that paper.'); return; }
             const files=Array.from(fileList||[]);
             if (!files.length) return;
+            // The paper's figure rows may not be in memory yet (nothing is fetched until asked for).
+            // Upload against this fetch's own rows, never the global slice: if anything superseded
+            // us mid-flight, sqData could belong to a different paper and upsert would overwrite
+            // the wrong images.
+            const bulkScope=sqScope(), bulkToken=++sqReqSeq;
+            let bulkRows=null, bulkErr=null;
+            sqSetBusy(true);
+            try{ bulkRows=await sqFetchScope(bulkScope, false, bulkToken); }
+            catch(e){ bulkErr=e; }
+            finally{ sqSetBusy(false); }
+            if (bulkErr){ alert('Could not load that paper: '+(bulkErr.message||bulkErr)); return; }
+            if (bulkRows===null || bulkToken!==sqReqSeq || sqScope().key!==bulkScope.key){
+                alert('The filters changed while that paper was loading, so nothing was uploaded.\n\nSet the Year and Paper again, then pick the files once more.');
+                return;
+            }
             const selectedKeys=files.map(f=>f.name.replace(/\.[^.]+$/,''));
             const figByKey={}; const sqAmbiguousKeys=new Set();
-            sqData.filter(q=>String(q.year)===fy && q.paper===fp && (!fsrc||q.source===fsrc) && (!fsch||q.school===fsch)).forEach(q=>q.figures.forEach(f=>{
+            bulkRows.filter(q=>String(q.year)===fy && q.paper===fp && (!fsrc||q.source===fsrc) && (!fsch||q.school===fsch)).forEach(q=>q.figures.forEach(f=>{
                 if (figByKey[f.figure_key] && figByKey[f.figure_key].storage_path!==f.storage_path) sqAmbiguousKeys.add(f.figure_key);
                 figByKey[f.figure_key]=f;
             }));
@@ -8847,7 +9005,9 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     const res=await supabaseClient.from('structured_parts').update(upd).eq('id', sqEditing.id).select('id');
                     if (res.error) throw res.error;
                     if (!res.data || !res.data.length) throw new Error('No row was updated (check permissions).');
-                    for (const q of sqData){ const p=q.parts.find(x=>x.id===sqEditing.id); if(p){ Object.assign(p, upd); break; } }
+                    for (const q of (sqData||[])){ const p=q.parts.find(x=>x.id===sqEditing.id); if(p){ Object.assign(p, upd); break; } }
+                    // Coverage keeps its own snapshot now, so keep its copy of the part in step.
+                    for (const q of (covSq||[])){ const p=(q.parts||[]).find(x=>x.id===sqEditing.id); if(p){ Object.assign(p, upd); break; } }
                 } else {
                     const totalN=parseInt(sqEditVal('sqe_total'),10);
                     const upd={
@@ -8860,7 +9020,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     const res=await supabaseClient.from('structured_questions').update(upd).eq('id', sqEditing.id).select('id');
                     if (res.error) throw res.error;
                     if (!res.data || !res.data.length) throw new Error('No row was updated (check permissions).');
-                    const q=sqData.find(x=>x.id===sqEditing.id); if(q) Object.assign(q, upd);
+                    const q=(sqData||[]).find(x=>x.id===sqEditing.id); if(q) Object.assign(q, upd);
                 }
                 sqCloseEdit();
                 renderStructured();
@@ -8871,7 +9031,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         /* ===== end Structured Questions ===== */
 
         /* ===== Coverage dashboard (admin/teacher) — reuses loaded structured data + one MCQ load ===== */
-        let covReady=false, covMcq=null, covGroup={}, covOpenT={}, covOpenC={}, covPaper='all', covStore='both', covSource='all';
+        // covSq is the coverage panel's own whole-bank snapshot (slim columns, loaded when the panel
+        // is first opened). The review list above no longer holds the full bank, so coverage cannot
+        // borrow it any more.
+        let covReady=false, covMcq=null, covSq=null, covGroup={}, covOpenT={}, covOpenC={}, covPaper='all', covStore='both', covSource='all';
         const COV_KSP='solubility product'; // structured concept whose name contains this shows under a synthetic "Solubility" row
         const COV_ORDER=['Physical Chemistry','Inorganic Chemistry','Organic Chemistry','Practical & Structured-only'];
         const COV_INORGANIC=new Set(['Periodic table','Group 2','Group 17','Transition elements']);
@@ -8883,14 +9046,22 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             if (covReady){ covRender(); return; }
             body.innerHTML='<div style="opacity:0.7;padding:0.6rem 0">Loading coverage&hellip;</div>';
             try{
-                const [topRes, mcq]=await Promise.all([
+                const [topRes, mcq, sqQ, sqP]=await Promise.all([
                     supabaseClient.from('topics').select('name,chem_group').eq('syllabus','H2'),
                     fetchAllPaginated(()=>supabaseClient.from('questions')
-                        .select('id,topic,topics,difficulty,is_novel_context,source').eq('syllabus','h2_chem').order('id'))
+                        .select('id,topic,topics,difficulty,is_novel_context,source').eq('syllabus','h2_chem').order('id')),
+                    // Coverage only needs the tagging columns, not stems / part text / mark schemes.
+                    fetchAllPaginated(()=>supabaseClient.from('structured_questions')
+                        .select('id,source,school,year,paper,question_number').order('id')),
+                    fetchAllPaginated(()=>supabaseClient.from('structured_parts')
+                        .select('id,question_id,part_label,marks,difficulty,concept_id,is_novel_context').order('question_id').order('order_index').order('id'))
                 ]);
                 if (topRes.error) throw topRes.error;
                 covGroup={}; (topRes.data||[]).forEach(t=>{ covGroup[t.name]=COV_INORGANIC.has(t.name)?'Inorganic Chemistry':(t.chem_group||'Physical Chemistry'); });
                 covMcq=mcq||[];
+                const covByQ={}; (sqQ||[]).forEach(q=>{ q.parts=[]; covByQ[q.id]=q; });
+                (sqP||[]).forEach(p=>{ if(covByQ[p.question_id]) covByQ[p.question_id].parts.push(p); });
+                covSq=sqQ||[];
                 covReady=true;
                 covRender();
             }catch(e){
@@ -8908,7 +9079,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
                 ensure(tgt).ct++;
             });
-            (sqData||[]).forEach(q=>{
+            (covSq||[]).forEach(q=>{
                 if(covSource!=='all' && q.source!==covSource) return;
                 (q.parts||[]).forEach(p=>{
                     const c=sqConcepts[p.concept_id]; if(!c) return;
@@ -8943,12 +9114,12 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const rows=Object.values(T);
             let sp2=0,sp3=0,e=0,m=0,h=0,nov=0,covT=0,totT=0;
             rows.forEach(r=>{ sp2+=r.p2; sp3+=r.p3; e+=r.e2+r.e3; m+=r.m2+r.m3; h+=r.h2+r.h3; nov+=r.nov2+r.nov3; if(r.p2+r.p3>0)covT++; if(r.ct>0||r.p2+r.p3>0)totT++; });
-            const sqF=(sqData||[]).filter(q=>covSource==='all'||q.source===covSource);
+            const sqF=(covSq||[]).filter(q=>covSource==='all'||q.source===covSource);
             const mcqF=(covMcq||[]).filter(q=>covSource==='all'||q.source===covSource);
             const nQ=sqF.length;
             const nPapers=[...new Set(sqF.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
             const mcqN=mcqF.length, mcqNovel=mcqF.filter(q=>q.is_novel_context).length;
-            const py={}; (sqData||[]).forEach(q=>{ if(q.source==='Prelim' && q.school){ (py[q.year]=py[q.year]||{}); const s=(py[q.year][q.school]=py[q.year][q.school]||{}); if(q.paper==='P2')s.p2=1; if(q.paper==='P3')s.p3=1; } });
+            const py={}; (covSq||[]).forEach(q=>{ if(q.source==='Prelim' && q.school){ (py[q.year]=py[q.year]||{}); const s=(py[q.year][q.school]=py[q.year][q.school]||{}); if(q.paper==='P2')s.p2=1; if(q.paper==='P3')s.p3=1; } });
             let qualYears=0; const yearInfo=[]; Object.keys(py).sort().forEach(y=>{ const both=Object.values(py[y]).filter(s=>s.p2&&s.p3).length; if(both>10)qualYears++; yearInfo.push(y+': '+both+' JC'+(both===1?'':'s')+' w/ both'); });
 
             let html='<div class="cov-kpis">'
@@ -9007,7 +9178,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
                 if(tgt===t.name) agg[c.id]={id:c.id,name:c.name,p2:0,p3:0,rows:[]};
             });
-            (sqData||[]).forEach(q=>{
+            (covSq||[]).forEach(q=>{
                 if(covSource!=='all' && q.source!==covSource) return;
                 (q.parts||[]).forEach(p=>{
                     const a=agg[p.concept_id]; if(!a) return;

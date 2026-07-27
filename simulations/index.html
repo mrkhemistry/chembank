@@ -71,6 +71,7 @@
   .thumb-sn1 { background: linear-gradient(135deg, #1a1a0a, #2a200a); }
   .thumb-na  { background: linear-gradient(135deg, #0a1f0f, #0f2820); }
   .thumb-ea  { background: linear-gradient(135deg, #1f100a, #2a1a08); }
+  .thumb-eam { background: linear-gradient(135deg, #0a1f14, #0d2a1a); }
   .thumb-es  { background: linear-gradient(135deg, #100a1f, #1a0a2a); }
   .thumb-vsepr { background: linear-gradient(135deg, #0a1628, #0d1f35); }
   .thumb-gas   { background: linear-gradient(135deg, #0a1f1a, #0f2820); }
@@ -233,6 +234,28 @@
       </div>
       <div class="card-title">Electrophilic Addition</div>
       <div class="card-desc">Addition of Br&#8322; to ethene — &#960; bond attack, carbocation intermediate, and 1,2-dibromoethane product.</div>
+      <div class="card-footer">
+        <span class="card-meta">Alkene · 3D</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Electrophilic Addition — Markovnikov's Rule — LIVE -->
+  <a href="./electrophilic-addition-markovnikov.html" class="sim-card" data-tags="addition" data-published="2026-07-27">
+    <div class="card-thumb thumb-eam">
+      <canvas id="th-eam" width="200" height="150" style="position:relative;z-index:1;"></canvas>
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Alkenes</span>
+        <span class="tag tag-mech">Electrophilic</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Markovnikov's Rule</div>
+      <div class="card-desc">Addition of HBr to propene &#8212; why the H adds to the CH&#8322; carbon, and how the more stable 2&#176; carbocation decides the major product.</div>
       <div class="card-footer">
         <span class="card-meta">Alkene · 3D</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
@@ -604,6 +627,44 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   atom(ctx,brX,y,brR,'#a855f7','');
   atom(ctx,c2X,y,cR,'#4ade80','');
   atom(ctx,c1X,y,cR,'#ff6b00','');
+})();
+
+// ── EAM (Markovnikov) ───────────────────────────────────────────
+(function(){
+  const c=document.getElementById('th-eam');if(!c)return;
+  const ctx=c.getContext('2d');const W=200,H=150;bg(ctx,W,H);
+  // propene skeleton: terminal CH2 = C1, middle CH = C2, methyl = C3
+  const c1X=52,c1Y=80,cR=17;
+  const c2X=114,c2Y=80;
+  const c3X=160,c3Y=48,c3R=13;
+  // HBr coming up from the lower left
+  const hX=54,hY=124,hR=9;
+  const brX=20,brY=138,brR=13;
+  // link draws a rod trimmed back to both atom surfaces
+  const link=(x1,y1,r1,x2,y2,r2)=>{
+    const dx=x2-x1,dy=y2-y1,l=Math.sqrt(dx*dx+dy*dy)||1;
+    rod(ctx,x1+dx/l*r1,y1+dy/l*r1,x2-dx/l*r2,y2-dy/l*r2);
+  };
+  dbl(ctx,c1X+cR,c1Y,c2X-cR,c2Y);            // C=C
+  link(c2X,c2Y,cR,c3X,c3Y,c3R);              // C2-CH3
+  link(brX,brY,brR,hX,hY,hR);                // H-Br
+  // pi electrons attacking the delta+ H — bowed out to the right so the curve does not
+  // run across the terminal carbon
+  const piX=(c1X+c2X)/2, piY=c1Y-5;
+  arrow(ctx,piX,piY,hX+6,hY-hR-3,piX+10,piY+36);
+  atom(ctx,brX,brY,brR,'#a855f7','');        // Br, purple as on the sibling EA card
+  atom(ctx,hX,hY,hR,'#e2e8f0','');
+  atom(ctx,c3X,c3Y,c3R,'#22c55e','');
+  atom(ctx,c2X,c2Y,cR,'#4ade80','');
+  atom(ctx,c1X,c1Y,cR,'#ff6b00','');
+  // the + that ends up on the middle carbon — placed straight above it, clear of the
+  // C2-CH3 bond running up to the right
+  ctx.beginPath();ctx.arc(c2X-6,c2Y-31,9,0,Math.PI*2);
+  ctx.fillStyle='#0a1628';ctx.fill();
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='#fbbf24';ctx.font='bold 13px Arial';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('+',c2X-6,c2Y-30);
 })();
 
 // ── ES ──────────────────────────────────────────────────────────

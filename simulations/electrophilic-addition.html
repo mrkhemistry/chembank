@@ -488,12 +488,14 @@ function drawLoop(ts){
     ctx.fillStyle='#a78bfa';ctx.fillText('\u03b4\u2212',br2x,br2y-32);
   }
 
-  // Carbocation + charge on C2 in state 2+
+  // Carbocation + charge on C1 in state 2+ (Br bonds to C2, so C1 carries the charge).
+  // The carbocation carbon is sp2 trigonal planar, not sp3 \u2014 it has only three sigma
+  // bonds and an empty p orbital, which is why Br- can attack either face.
   if(state>=2&&state<4||(state===3&&straight2Prog<1)){
     ctx.font='bold 18px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';
     ctx.fillText('+',C1x+26,C1y-24);
     ctx.font='10px Arial';ctx.fillStyle='#e8eef6';
-    ctx.fillText('sp\u00b3',C1x,C1y+34);
+    ctx.fillText('sp\u00b2',C1x,C1y+34);
   }
 
   // Br- label and lone pair in state 2,3

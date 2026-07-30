@@ -566,10 +566,8 @@ function drawLoop(ts){
   const showPi=state===0||(state===1&&arrowProg<1);
 
   // === DEPTH-SORTED SCENE ===
-  // Everything (bonds, atoms, orbital lobes) goes into one list and is painted
-  // back-to-front, so an atom that rotates in front of a carbon actually covers it.
-  const showP = state===2||(state===3&&straight2Prog<1);
-  const pAlpha = showP ? (state===3?Math.max(0,1-straight2Prog)*0.42:0.42) : 0;
+  // Everything (bonds and atoms) goes into one list and is painted back-to-front, so
+  // an atom that rotates in front of a carbon actually covers it.
   // Base atom radii, shared by the atoms and by the bond trimming
   const R={C:22, Cme:20, H:13, Hme:12, Hin:14, Br:22};
   const scene=[];
@@ -611,15 +609,6 @@ function drawLoop(ts){
   addAtom(pH,R.Hin,COLS.H,'H');
   addAtom(pBr,R.Br,COLS.Br,'Br');
 
-  // Empty p orbital on the carbocation carbon: perpendicular to the sp2 plane, so
-  // the two lobes separate and swap depth as the student rotates the molecule.
-  if(showP){
-    [1,-1].forEach(sgn=>{
-      const pl=proj(gC2.x,gC2.y,gC2.z+sgn*44);
-      scene.push({t:'p',z:pl.z,p:pl});
-    });
-  }
-
   scene.sort((a,b)=>b.z-a.z);
   scene.forEach(it=>{
     if(it.t==='a'){ drawAtom(it.p,it.r,it.col,it.lbl); }
@@ -630,16 +619,6 @@ function drawLoop(ts){
       const off=7;
       drawBond({x:it.p1.x,y:it.p1.y-off,s:it.p1.s},{x:it.p2.x,y:it.p2.y-off,s:it.p2.s},
                COLS.pi,2,false,R.C*1.3,R.C*1.3);
-    }
-    else if(it.t==='p'){
-      const rr=25*it.p.s;
-      const g=ctx.createRadialGradient(it.p.x,it.p.y,2,it.p.x,it.p.y,rr);
-      g.addColorStop(0,'rgba(251,191,36,'+(pAlpha*0.85)+')');
-      g.addColorStop(0.55,'rgba(251,191,36,'+(pAlpha*0.35)+')');
-      g.addColorStop(1,'rgba(251,191,36,0)');
-      ctx.beginPath();ctx.arc(it.p.x,it.p.y,rr,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-      ctx.beginPath();ctx.arc(it.p.x,it.p.y,rr,0,Math.PI*2);
-      ctx.strokeStyle='rgba(251,191,36,'+(pAlpha*0.8)+')';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
     }
   });
 
@@ -686,8 +665,8 @@ function drawLoop(ts){
     ctx.font='10px Arial';ctx.fillStyle='#fbbf24';ctx.textAlign='center';
     ctx.fillText('+I',(C1x+C2x)/2,(C1y+C2y)/2+18);
     ctx.fillText('+I',(C3x+C2x)/2+20,(C3y+C2y)/2+22);
-    // Positive charge, on a dark disc so it stays legible over the orbital glow. It is
-    // parked in the widest angular gap between C2's three substituents, so it keeps
+    // Positive charge, on a dark disc so it stays legible against whatever is behind it.
+    // It is parked in the widest angular gap between C2's three substituents, so it keeps
     // clear of the bonds and the inductive arrows however the molecule is rotated.
     const angs=[[C1x,C1y],[C3x,C3y],[pH2.x,pH2.y]]
       .map(q=>Math.atan2(q[1]-C2y,q[0]-C2x)).sort((a,b)=>a-b);
@@ -704,9 +683,6 @@ function drawLoop(ts){
     ctx.fillText('+',pcx,pcy+1);
     ctx.font='10px Arial';ctx.fillStyle='#e8eef6';
     ctx.fillText('sp² planar',C2x-16,C2y+38);
-    // Note kept clear of the molecule, at the foot of the canvas
-    ctx.fillStyle='#94a3b8';ctx.font='10px Arial';
-    ctx.fillText('the empty p orbital points ⊥ to the sp² plane, so drag the molecule to rotate and see it',cx,cy+BL*1.75);
   }
 
   // Br- label and lone pair while it waits / attacks

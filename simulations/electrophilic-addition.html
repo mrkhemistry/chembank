@@ -357,13 +357,18 @@ function drawLoop(ts){
     H2b:{x: BL*0.5+sub2[2].x*BL, y:sub2[2].y*BL, z:sub2[2].z*BL}
   };
 
-  // Lerp between sp2 and sp3 after Br bonds
-  const hybT=state===0?0:state===1?straightProg:1;
+  // Lerp between sp2 and sp3. The two carbons rehybridise at DIFFERENT times, so they
+  // get separate factors: C2 gains Br in step 1 and goes sp3 then, while C1 is the
+  // carbocation and must stay sp2 trigonal planar until Br- bonds to it in step 2.
+  // (Morphing both together made the carbocation look pyramidal, contradicting its
+  // sp2 label and hiding why Br- can attack either face of it.)
+  const hyb2=state===0?0:state===1?straightProg:1;              // C2, bonds to Br in step 1
+  const hyb1=state<3?0:(state===3?straight2Prog:1);             // C1, stays planar until step 2
   function lp3(a,b,t){return{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t};}
   const geo={
-    C1: lp3(sp2.C1,sp3.C1,hybT), C2: lp3(sp2.C2,sp3.C2,hybT),
-    H1a:lp3(sp2.H1a,sp3.H1a,hybT), H1b:lp3(sp2.H1b,sp3.H1b,hybT),
-    H2a:lp3(sp2.H2a,sp3.H2a,hybT), H2b:lp3(sp2.H2b,sp3.H2b,hybT)
+    C1: sp2.C1, C2: sp2.C2,                                      // carbon positions never move
+    H1a:lp3(sp2.H1a,sp3.H1a,hyb1), H1b:lp3(sp2.H1b,sp3.H1b,hyb1),
+    H2a:lp3(sp2.H2a,sp3.H2a,hyb2), H2b:lp3(sp2.H2b,sp3.H2b,hyb2)
   };
 
   // Br1: approaches from +X side, bonds to C2 at tetrahedral angle (sub2[0])

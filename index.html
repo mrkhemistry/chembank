@@ -2735,6 +2735,14 @@ Option D" required></textarea>
                     </label>
                     <span id="structuredStats" style="font-size:0.85rem;opacity:0.8;"></span>
                 </div>
+                <div id="sqWsBar" style="display:flex;flex-wrap:wrap;gap:0.7rem;align-items:center;margin:0 0 0.85rem;padding:0.6rem 0.8rem;border:1px solid var(--cyan-border);border-radius:8px;background:var(--surface2);">
+                    <span style="font-size:0.82rem;font-weight:600;opacity:0.85;">Print worksheet from the questions shown</span>
+                    <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;"><input type="checkbox" id="sqWsStudent" checked> Student</label>
+                    <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;"><input type="checkbox" id="sqWsTutor"> Tutor (mark scheme)</label>
+                    <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;">Max Qs <input id="sqWsMax" type="number" min="1" max="60" placeholder="all" style="width:64px;"></label>
+                    <input id="sqWsTitle" type="text" placeholder="Worksheet title (optional)" style="flex:1;min-width:150px;">
+                    <button class="btn" id="sqWsBtn" style="padding:0.45rem 1.05rem;background:var(--primary);color:#00181c;font-weight:700;" onclick="sqGenerateWorksheet()">Print worksheet</button>
+                </div>
                 <div id="structuredList">Loading…</div>
             </div>
         </div>
@@ -8546,7 +8554,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         // sqIndex = slim {id,year,paper,source,school} row per question, loaded once to fill the filter
         // dropdowns. sqData = only the questions (with parts + figures) fetched for the current
         // selection, loaded when "Show questions" is clicked. The full bank is never pulled here.
-        let sqData = null, sqIndex = null, sqLoadedKey = '', sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '';
+        let sqData = null, sqIndex = null, sqLoadedKey = '', sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '', sqRenderedQuestions = null;
         function sqEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function sqAttr(s){ return sqEsc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         function sqVal(id){ const el=document.getElementById(id); return el?el.value:''; }
@@ -8799,17 +8807,20 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const stEl0=document.getElementById('structuredStats');
             const lstEl0=document.getElementById('structuredList');
             if (!anyFilter){
+                sqRenderedQuestions=null;
                 const nPapers=[...new Set(sqIndex.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
                 if (stEl0) stEl0.textContent=sqIndex.length+' questions across '+nPapers+' papers in the bank'+(sqLoadWarning?('  •  '+sqLoadWarning):'');
                 if (lstEl0) lstEl0.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Pick a Year and/or Paper above (or any filter), then click <b>Show questions</b>.</div>';
                 return;
             }
             if (!sqData){
+                sqRenderedQuestions=null;
                 if (lstEl0) lstEl0.innerHTML='<div style="opacity:0.7;padding:1.2rem 0">Click <b>Show questions</b> to fetch this selection.</div>';
                 return;
             }
             const partFilter=!!(ft||fc||fd||ff||fs);
             let shownQ=0, shownP=0;
+            const shown=[];
             const filtered=sqData.filter(q=>(!fy||String(q.year)===fy)&&(!fp||q.paper===fp)&&(!fsrc||q.source===fsrc)&&(!fsch||q.school===fsch));
             sqEnsureFigFolders(filtered);
             const html=filtered.map(q=>{
@@ -8826,8 +8837,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 });
                 if (partFilter && matches.size===0) return '';
                 shownQ++; shownP += (partFilter?matches.size:q.parts.length);
+                shown.push({ q, matchIds: matches, partFilter });
                 return renderStructuredCard(q, matches, partFilter);
             }).join('');
+            sqRenderedQuestions=shown;
             const st=document.getElementById('structuredStats');
             if (st){ st.textContent=shownQ+' question(s), '+shownP+' part(s) shown'; if(sqLoadWarning) st.textContent+='  •  '+sqLoadWarning; }
             const listEl=document.getElementById('structuredList');
@@ -8867,6 +8880,184 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 ? '<img src="'+sqAttr(url)+'" onerror="this.style.opacity=0.25" style="max-width:230px;max-height:180px;border:1px solid var(--border);border-radius:6px;display:block;">'
                 : '<div class="sq-figph">no image<label class="btn btn-secondary btn-sm" style="cursor:pointer;padding:0.25rem 0.6rem;font-size:0.75rem;">Upload<input type="file" accept="image/*" style="display:none" onchange="sqUploadFigure('+f.id+', this.files[0]); this.value=String.fromCharCode();"></label></div>';
             return '<div class="sq-fig">'+cap+body+'</div>';
+        }
+
+        /* ===== P2 & P3 worksheet generation (print / Save as PDF; teacher only) ===== */
+        // Answer figures (drawn from mark schemes) end in _ans or _ans_<n>. NEVER put these on a student sheet.
+        function sqIsAnswerFig(key){ return /_ans(_?\d+)?$/i.test(String(key||'')); }
+
+        function sqWorksheetAnswerLines(marks){
+            const n=Math.min(Math.max((parseInt(marks,10)||1),2)+1,12);
+            let s=''; for (let i=0;i<n;i++) s+='<div class="sq-ans-line"></div>'; return s;
+        }
+
+        function sqWorksheetFigImg(f){
+            const url=sqUploaded[f.storage_path];
+            if (!url) return '<div class="sq-fig-missing">[diagram not loaded &mdash; open this paper in the Structured view first, then reprint]</div>';
+            return '<img class="sq-fig-img" src="'+sqAttr(url)+'" alt="'+sqAttr(f.label||f.figure_key||'figure')+'">';
+        }
+
+        // Which parts of a question to print. With no part-level filter, print the whole question.
+        // With a part filter, print the matched parts PLUS the earlier parts they are tagged as needing
+        // (self_contained=false + context_parts), resolved transitively, so no printed part is orphaned.
+        function sqWorksheetPartsFor(item){
+            const parts=(item.q&&item.q.parts)||[];
+            if (!item.partFilter) return parts;
+            const seed=(item.matchIds instanceof Set)?item.matchIds:new Set(item.matchIds||[]);
+            const byLabel={}; parts.forEach(p=>{ byLabel[p.part_label]=p; });
+            const ord={}; parts.forEach((p,i)=>{ ord[p.id]=(p.order_index!=null?p.order_index:i); });
+            const keep=new Set(), queue=[];
+            parts.forEach(p=>{ if (seed.has(p.id)){ keep.add(p.id); queue.push(p); } });
+            while (queue.length){
+                const p=queue.shift();
+                if (p.self_contained===false){
+                    const deps=(p.context_parts&&p.context_parts.length)?p.context_parts:null;
+                    if (deps){
+                        deps.forEach(lbl=>{ const d=byLabel[lbl]; if (d && !keep.has(d.id)){ keep.add(d.id); queue.push(d); } });
+                    } else {
+                        // Dependent but no list recorded (only 2 parts in the whole store): include earlier parts to be safe.
+                        parts.forEach(ep=>{ if (!keep.has(ep.id) && ord[ep.id]<ord[p.id]){ keep.add(ep.id); queue.push(ep); } });
+                    }
+                }
+            }
+            return parts.filter(p=>keep.has(p.id));
+        }
+
+        function sqBuildWorksheetBody(items, type){
+            const isTutor=type==='tutor';
+            let html='';
+            items.forEach((item, idx)=>{
+                const q=item.q;
+                const parts=sqWorksheetPartsFor(item);
+                const marks=parts.reduce((a,p)=>a+(Number(p.marks)||0),0);
+                const figs=q.figures||[];
+                const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key));
+                const ansFigs=figs.filter(f=>sqIsAnswerFig(f.figure_key));
+                const srcBits=[];
+                if (q.year!=null) srcBits.push(q.year);
+                if (q.paper) srcBits.push(q.paper);
+                const sch=q.school||q.source||''; if (sch) srcBits.push(sch);
+                if (q.question_number!=null) srcBits.push('Q'+q.question_number);
+                if (q.section) srcBits.push('Section '+q.section);
+                html+='<div class="q-block">';
+                html+='<div class="q-head"><span class="q-num">Question '+(idx+1)+'</span>'
+                    +'<span class="q-src">'+sqEsc(srcBits.join('  ·  '))+'<br>['+marks+' mark'+(marks===1?'':'s')+']</span></div>';
+                if (q.stem) html+='<div class="q-stem">'+sanitizeQuestionText(q.stem)+'</div>';
+                if (qFigs.length) html+='<div class="q-figs">'+qFigs.map(sqWorksheetFigImg).join('')+'</div>';
+                parts.forEach(p=>{
+                    html+='<div class="p-block">';
+                    html+='<div class="p-head"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null?(' <span class="p-marks">['+p.marks+']</span>'):'')+'</div>';
+                    if (p.part_text) html+='<div class="p-text">'+sanitizeQuestionText(p.part_text)+'</div>';
+                    if (isTutor){
+                        if (p.mark_scheme) html+='<div class="p-ms"><span class="p-ms-lbl">Mark scheme</span>'+sanitizeQuestionText(p.mark_scheme)+'</div>';
+                    } else {
+                        html+='<div class="p-ans">'+sqWorksheetAnswerLines(p.marks)+'</div>';
+                    }
+                    html+='</div>';
+                });
+                if (isTutor && ansFigs.length){
+                    html+='<div class="q-ansfigs"><div class="q-ansfigs-lbl">Suggested answer diagrams</div>'+ansFigs.map(sqWorksheetFigImg).join('')+'</div>';
+                }
+                html+='</div>';
+            });
+            return html;
+        }
+
+        function sqBuildWorksheetDoc(items, type, title){
+            const isTutor=type==='tutor';
+            const dateStr=new Date().toLocaleDateString('en-SG',{day:'numeric',month:'long',year:'numeric'});
+            const versionLabel=isTutor?'TUTOR ANSWER KEY':'STUDENT WORKSHEET';
+            const wsTitle=title||('Paper 2 & 3 '+(isTutor?'Answer Key':'Practice Worksheet'));
+            const nQ=items.length;
+            const totalMarks=items.reduce((s,item)=> s+sqWorksheetPartsFor(item).reduce((a,p)=>a+(Number(p.marks)||0),0), 0);
+            const nameLine=isTutor?'':'<div class="name-line">Name: <span class="fill"></span> &nbsp; Class: <span class="fill" style="width:120px"></span> &nbsp; Date: <span class="fill" style="width:120px"></span></div>';
+            const body=sqBuildWorksheetBody(items, type);
+            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+sqEsc(wsTitle)+' — '+versionLabel+'</title>'
+              +'<style>'
+              +'@page{margin:16mm;}'
+              +'@media print{.no-print{display:none!important;}body{padding:0;}}'
+              +'*{box-sizing:border-box;}'
+              +'body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;background:#fff;margin:0;padding:14mm 16mm;}'
+              +'.toolbar{margin-bottom:14px;font-size:10pt;color:#555;}'
+              +'.toolbar button{font-size:11pt;padding:6px 15px;cursor:pointer;margin-right:10px;}'
+              +'.ws-header{border-bottom:2.5px solid #000;padding-bottom:8px;margin-bottom:16px;}'
+              +'.ws-title{font-size:16pt;font-weight:bold;}'
+              +'.ws-version{display:inline-block;font-size:8.5pt;font-weight:bold;letter-spacing:1px;margin-left:10px;vertical-align:middle;'+(isTutor?'color:#fff;background:#000;':'border:1px solid #000;')+'padding:2px 8px;border-radius:3px;}'
+              +'.ws-meta{font-size:9pt;color:#444;margin-top:5px;}'
+              +'.name-line{margin:14px 0 18px;font-size:10pt;}'
+              +'.name-line .fill{display:inline-block;border-bottom:1px solid #000;width:200px;margin:0 6px;}'
+              +'.q-block{margin-bottom:20px;page-break-inside:avoid;}'
+              +'.q-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:6px;}'
+              +'.q-num{font-weight:bold;font-size:11pt;white-space:nowrap;}'
+              +'.q-src{font-size:8.5pt;color:#555;text-align:right;}'
+              +'.q-stem{font-size:10.5pt;line-height:1.5;margin-bottom:8px;}'
+              +'.q-figs{margin:8px 0;}'
+              +'.sq-fig-img{display:block;max-width:100%;max-height:240px;border:1px solid #ccc;margin:6px auto;}'
+              +'.sq-fig-missing{font-size:8.5pt;color:#a00;font-style:italic;margin:6px 0;}'
+              +'.p-block{margin:8px 0 10px;}'
+              +'.p-head{font-size:10.5pt;}'
+              +'.p-marks{color:#555;font-weight:normal;}'
+              +'.p-text{font-size:10.5pt;line-height:1.5;margin:2px 0 6px;}'
+              +'.p-ans{margin:4px 0 2px;}'
+              +'.p-ans .sq-ans-line{border-bottom:1px solid #999;height:20px;margin-bottom:6px;}'
+              +'.p-ms{font-size:10pt;line-height:1.5;background:#f7f7f7;border:1px solid #bbb;border-left:3px solid #000;border-radius:3px;padding:6px 9px;margin-top:3px;}'
+              +'.p-ms-lbl{display:block;font-size:8pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;color:#333;margin-bottom:2px;}'
+              +'.q-ansfigs{margin-top:8px;}'
+              +'.q-ansfigs-lbl{font-size:8.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;color:#333;margin-bottom:4px;}'
+              +'.ws-footer{margin-top:22px;padding-top:8px;border-top:1px solid #ccc;font-size:8pt;color:#777;display:flex;justify-content:space-between;}'
+              +'</style>'
+              +'<script>'
+              +'(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}'
+              +'function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();'
+              +'<\/script>'
+              +'<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
+              +'</head><body>'
+              +'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>'
+              +'<div class="ws-header"><div><span class="ws-title">'+sqEsc(wsTitle)+'</span><span class="ws-version">'+versionLabel+'</span></div>'
+              +'<div class="ws-meta">Source: Paper 2 &amp; 3 structured bank &nbsp;|&nbsp; Questions: '+nQ+' &nbsp;|&nbsp; Total marks: '+totalMarks+' &nbsp;|&nbsp; '+sqEsc(dateStr)+'</div></div>'
+              +nameLine
+              +body
+              +'<div class="ws-footer"><span>KhemBank &mdash; Mr Khemistry</span><span>'+(isTutor?'CONFIDENTIAL &mdash; TUTOR USE ONLY':'A-Level H2 Chemistry')+'</span></div>'
+              +'</body></html>';
+        }
+
+        async function sqGenerateWorksheet(){
+            if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
+            const wantStudent=document.getElementById('sqWsStudent').checked;
+            const wantTutor=document.getElementById('sqWsTutor').checked;
+            if (!wantStudent && !wantTutor){ alert('Tick Student and/or Tutor first.'); return; }
+            const shown=sqRenderedQuestions;   // the exact set renderStructured() last displayed (never recomputed from live filters)
+            if (!shown || !shown.length){ alert('No questions are shown. Set your filters and click "Show questions" first, then print. (If you changed a filter after showing, click "Show questions" again so the list matches.)'); return; }
+            const maxRaw=parseInt(document.getElementById('sqWsMax').value,10);
+            const chosen=(maxRaw>0)?shown.slice(0,maxRaw):shown;
+            if (chosen.length>40 && !confirm('This will build a worksheet of '+chosen.length+' questions. Continue?')) return;
+            const title=(document.getElementById('sqWsTitle').value||'').trim();
+
+            // Open the print window(s) synchronously (inside the click) so the browser does not block the pop-up.
+            const winStudent=wantStudent?window.open('','_blank'):null;
+            const winTutor=wantTutor?window.open('','_blank'):null;
+            if ((wantStudent && !winStudent) || (wantTutor && !winTutor)){
+                if (winStudent) winStudent.close();
+                if (winTutor) winTutor.close();
+                alert('Your browser blocked the worksheet pop-up. Please allow pop-ups for this site, then try again.');
+                return;
+            }
+            [winStudent, winTutor].forEach(w=>{ if(w){ try{ w.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){} } });
+
+            const btn=document.getElementById('sqWsBtn');
+            if (btn){ btn.disabled=true; btn.textContent='Preparing…'; }
+            try{
+                // Ensure signed image URLs for every chosen question's figures are loaded before we render.
+                const folders=new Set();
+                chosen.forEach(it=>(it.q.figures||[]).forEach(f=>{ const fo=sqFigFolder(f.storage_path); if(fo) folders.add(fo); }));
+                await sqLoadFigFolders([...folders], false);
+                if (winStudent){ const d=sqBuildWorksheetDoc(chosen,'student',title); winStudent.document.open(); winStudent.document.write(d); winStudent.document.close(); try{winStudent.focus();}catch(e){} }
+                if (winTutor){ const d=sqBuildWorksheetDoc(chosen,'tutor',title); winTutor.document.open(); winTutor.document.write(d); winTutor.document.close(); try{winTutor.focus();}catch(e){} }
+            }catch(e){
+                alert('Could not prepare the worksheet: '+(e.message||e));
+            }finally{
+                if (btn){ btn.disabled=false; btn.textContent='Print worksheet'; }
+            }
         }
 
         function sqFindFig(id){

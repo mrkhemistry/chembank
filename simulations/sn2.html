@@ -428,14 +428,18 @@ function drawTSBracket(pC,pOH,pBr,subPs){
 const canSpeak='speechSynthesis' in window;
 let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
 let narrate=false, lastSpokenStep=-1;
+// Only the two mechanistic steps are spoken. The Ready, Intermediate and Product
+// stages are silent: they are already named on the canvas, in the side panel and
+// in the status badge. speak() returns early on an empty string.
+// Order: [Ready, Step 1 slow, Intermediate, Step 2 fast, Product]
 const NARR=[
-  "We start with 2-bromobutane. Hydroxide is lined up directly opposite the bromine, ready for backside attack.",
-  "Hydroxide attacks the carbon from the side directly opposite the bromine, donating its lone pair as the carbon to bromine bond begins to weaken.",
-  "At the transition state, the carbon is partially bonded to both the incoming hydroxide and the leaving bromine. The simulation pauses here. Click resume to continue.",
-  "Bromide leaves with the bonding electrons, and the other three groups sweep through to the opposite side, inverting the geometry.",
-  "The configuration at the carbon has been turned inside out. This is the Walden inversion, characteristic of the S N 2 mechanism."
+  "",
+  "Hydroxide attacks from the opposite side as the carbon to bromine bond weakens.",
+  "",
+  "Bromide leaves, and the other three groups sweep through to the far side.",
+  ""
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.0;speechSynthesis.speak(u);}catch(e){} }
 // True while the current step's narration is still being spoken — used to hold the
 // animation at the end of a stage so the voiceover is never cut off mid-sentence.
 function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }

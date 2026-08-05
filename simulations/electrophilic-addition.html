@@ -88,7 +88,7 @@
         <div id="stepPanel">
           <div class="si active" id="s0"><div class="sn">Ready</div><div class="st">Br&#8322; approaches</div><div class="sd">Br&#8322; is polarised by the electron-rich C=C &#960; bond. The nearer Br becomes &#948;&#8314; and the farther Br becomes &#948;&#8315;.</div></div>
           <div class="si" id="s1"><div class="sn">Step 1 — slow</div><div class="st">&#960; bond attacks &#948;&#8314;Br</div><div class="sd">The &#960; electrons attack &#948;&#8314;Br. The Br&#8211;Br bond breaks heterolytically. A carbocation and Br&#8315; ion form.</div></div>
-          <div class="si" id="s2"><div class="sn">Intermediate</div><div class="st">Carbocation</div><div class="sd">One carbon is sp&#179; with a positive charge. Br&#8315; ion is nearby. Simulation paused.</div></div>
+          <div class="si" id="s2"><div class="sn">Intermediate</div><div class="st">Carbocation</div><div class="sd">One carbon is sp&#178; with a positive charge, trigonal planar with an empty p orbital. Br&#8315; ion is nearby. Simulation paused.</div></div>
           <div class="si" id="s3"><div class="sn">Step 2 — fast</div><div class="st">Br&#8315; attacks carbocation</div><div class="sd">Br&#8315; uses its lone pair to attack the carbocation. A new C&#8211;Br bond forms.</div></div>
           <div class="si" id="s4"><div class="sn">Product</div><div class="st">1,2-dibromoethane</div><div class="sd">Both carbons are now sp&#179; with Br attached. Addition is complete.</div></div>
         </div>
@@ -110,7 +110,7 @@
 
   <div class="notes-grid">
     <div class="note-card"><h3>Polarisation of Br&#8322;</h3><p>As Br&#8322; approaches the electron-rich C=C, the &#960; cloud <strong>induces a dipole</strong> in the Br&#8211;Br bond. The nearer Br becomes &#948;&#8314; (electrophile) and the farther Br becomes &#948;&#8315;.</p></div>
-    <div class="note-card"><h3>Step 1 — heterolytic fission</h3><p>&#960; electrons attack &#948;&#8314;Br. The Br&#8211;Br bond breaks <strong>heterolytically</strong> — both electrons go to the &#948;&#8315;Br, forming Br&#8315;. A <strong>carbocation intermediate</strong> forms (sp&#179; carbon, empty p orbital).</p></div>
+    <div class="note-card"><h3>Step 1 — heterolytic fission</h3><p>&#960; electrons attack &#948;&#8314;Br. The Br&#8211;Br bond breaks <strong>heterolytically</strong> — both electrons go to the &#948;&#8315;Br, forming Br&#8315;. A <strong>carbocation intermediate</strong> forms (sp&#178; carbon, trigonal planar, with an empty p orbital).</p></div>
     <div class="note-card"><h3>Step 2 — nucleophilic attack</h3><p>Br&#8315; acts as a nucleophile. It uses a <strong>lone pair</strong> to attack the carbocation carbon, forming a new C&#8211;Br bond and giving the product <strong>1,2-dibromoethane</strong>.</p></div>
     <div class="note-card"><h3>Why addition, not substitution?</h3><p>Unlike arenes, alkenes have no aromatic stabilisation to preserve. The C=C &#960; bond is weaker than a C&#8211;C &#963; bond, so <strong>addition is energetically favoured</strong>.</p></div>
   </div>
@@ -247,14 +247,18 @@ function drawBond(x1,y1,x2,y2,col,w,dashed){
 const canSpeak='speechSynthesis' in window;
 let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
 let narrate=false, lastSpokenStep=-1;
+// Only the two mechanistic steps are spoken. The Ready, Intermediate and Product
+// stages are silent: they are already named on the canvas, in the side panel and
+// in the status badge. speak() returns early on an empty string.
+// Order: [Ready, Step 1 slow, Intermediate, Step 2 fast, Product]
 const NARR=[
-  "Bromine approaches the electron-rich carbon to carbon double bond and becomes polarised. The nearer bromine atom becomes slightly positive.",
-  "In the slow step, the pi electrons of the double bond attack the slightly positive bromine. The bromine to bromine bond breaks heterolytically, forming a carbocation and a bromide ion.",
-  "One carbon now carries a positive charge, with the bromide ion nearby. The simulation pauses here. Click resume to continue to step 2.",
-  "In the fast step, the bromide ion uses a lone pair to attack the carbocation, forming a new carbon to bromine bond.",
-  "The product is 1,2-dibromoethane. The electrophilic addition is complete."
+  "",
+  "The pi electrons attack the slightly positive bromine, breaking the bromine to bromine bond.",
+  "",
+  "Bromide uses a lone pair to attack the carbocation.",
+  ""
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.0;speechSynthesis.speak(u);}catch(e){} }
 // True while the current step's narration is still being spoken — used to hold the
 // animation at the end of a stage so the voiceover is never cut off mid-sentence.
 function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }

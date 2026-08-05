@@ -274,14 +274,18 @@ function drawPiTorusArc(cx,cy,midR,tube,a0,a1,alpha){
 const canSpeak='speechSynthesis' in window;
 let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
 let narrate=false, lastSpokenStep=-1;
+// Only the two mechanistic steps are spoken. The Ready, Intermediate and Product
+// stages are silent: they are already named on the canvas, in the side panel and
+// in the status badge. speak() returns early on an empty string.
+// Order: [Ready, Step 1 slow, Intermediate, Step 2 fast, Product]
 const NARR=[
-  "The electrophile is generated from chlorine and iron three chloride. This chloronium ion approaches the electron-rich benzene ring.",
-  "In the slow step, pi electrons from the ring attack the chloronium ion. One carbon becomes saturated and the ring temporarily loses its aromaticity, forming an arenium ion.",
-  "The positive charge is delocalised over the five remaining carbons, and aromaticity is broken. The simulation pauses here. Click resume to continue to step 2.",
-  "In the fast step, the tetrachloroferrate ion removes a hydrogen ion from that carbon. The bonding electrons return to the ring, restoring aromaticity.",
-  "The product is chlorobenzene, with aromaticity fully restored and the iron three chloride catalyst regenerated."
+  "",
+  "Pi electrons attack the electrophile, and the ring loses its aromaticity.",
+  "",
+  "Tetrachloroferrate removes a hydrogen ion, restoring aromaticity.",
+  ""
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.0;speechSynthesis.speak(u);}catch(e){} }
 // True while the current step's narration is still being spoken — used to hold the
 // animation at the end of a stage so the voiceover is never cut off mid-sentence.
 function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }

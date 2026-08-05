@@ -416,14 +416,18 @@ function drawCurlyArrow(x1,y1,x2,y2,cpx,cpy,col,t){
 const canSpeak='speechSynthesis' in window;
 let voiceOn=true; try{const sv=localStorage.getItem('simVoice'); if(sv!==null)voiceOn=sv==='1';}catch(e){}
 let narrate=false, lastSpokenStep=-1;
+// Only the two mechanistic steps are spoken. The Ready, Intermediate and Product
+// stages are silent: they are already named on the canvas, in the side panel and
+// in the status badge. speak() returns early on an empty string.
+// Order: [Ready, Step 1 slow, Intermediate, Step 2 fast, Product]
 const NARR=[
-  "We start with ethanal. The carbonyl carbon is electron poor because of the electronegative oxygen, and the cyanide ion is ready to attack.",
-  "In the slow step, the cyanide ion donates a lone pair to the positive carbonyl carbon. The carbon to oxygen pi bond breaks, and both electrons move onto the oxygen.",
-  "This forms a tetrahedral intermediate in which the oxygen carries a negative charge. The simulation pauses here. Click resume to continue to step 2.",
-  "In the fast step, the negatively charged oxygen takes a proton from a hydrogen cyanide molecule, which regenerates the cyanide ion.",
-  "The product is a hydroxynitrile, also called a cyanohydrin. The central carbon is tetrahedral."
+  "",
+  "Cyanide donates a lone pair, and the pi electrons shift onto the oxygen.",
+  "",
+  "The oxygen takes a proton from hydrogen cyanide, regenerating cyanide.",
+  ""
 ];
-function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.4;speechSynthesis.speak(u);}catch(e){} }
+function speak(t){ if(!voiceOn||!canSpeak||!t)return; try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=1.0;speechSynthesis.speak(u);}catch(e){} }
 // True while the current step's narration is still being spoken — used to hold the
 // animation at the end of a stage so the voiceover is never cut off mid-sentence.
 function narrationBusy(){ try{return narrate&&voiceOn&&canSpeak&&(speechSynthesis.speaking||speechSynthesis.pending);}catch(e){return false;} }

@@ -2624,6 +2624,8 @@ Option D" required></textarea>
         <!-- Structured Questions (P2/P3) admin review + figure upload -->
         <style>
             #structuredView .sq-controls select, #structuredView .sq-controls input[type=text]{background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.4rem 0.5rem;font-size:0.85rem;}
+            #sqWsBar input[type=number], #sqWsBar input[type=text]{background:var(--surface);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.35rem 0.5rem;font-size:0.82rem;}
+            #sqWsBar input::placeholder{color:var(--white);opacity:0.45;}
             #structuredView .sq-controls label.fld{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-bottom:2px;}
             .sq-card{border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;background:var(--surface);}
             .sq-qhead{font-weight:600;color:var(--primary);margin-bottom:0.5rem;font-size:0.95rem;}
@@ -2739,8 +2741,8 @@ Option D" required></textarea>
                     <span style="font-size:0.82rem;font-weight:600;opacity:0.85;">Print worksheet from the questions shown</span>
                     <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;"><input type="checkbox" id="sqWsStudent" checked> Student</label>
                     <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;"><input type="checkbox" id="sqWsTutor"> Tutor (mark scheme)</label>
-                    <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;">Max Qs <input id="sqWsMax" type="number" min="1" max="60" placeholder="all" style="width:64px;"></label>
-                    <input id="sqWsTitle" type="text" placeholder="Worksheet title (optional)" style="flex:1;min-width:150px;">
+                    <label style="font-size:0.82rem;display:inline-flex;align-items:center;gap:0.3rem;">No. of questions <input id="sqWsMax" type="number" min="1" max="60" placeholder="all" style="width:56px;"></label>
+                    <input id="sqWsTitle" type="text" placeholder="Title (optional)" style="width:200px;">
                     <button class="btn" id="sqWsBtn" style="padding:0.45rem 1.05rem;background:var(--primary);color:#00181c;font-weight:700;" onclick="sqGenerateWorksheet()">Print worksheet</button>
                 </div>
                 <div id="structuredList">Loading…</div>
@@ -8963,7 +8965,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             return html;
         }
 
-        function sqBuildWorksheetDoc(items, type, title){
+        // One printed version (Student or Tutor): header, name line (student only), body, footer.
+        function sqBuildWorksheetSection(items, type, title){
             const isTutor=type==='tutor';
             const dateStr=new Date().toLocaleDateString('en-SG',{day:'numeric',month:'long',year:'numeric'});
             const versionLabel=isTutor?'TUTOR ANSWER KEY':'STUDENT WORKSHEET';
@@ -8971,8 +8974,22 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const nQ=items.length;
             const totalMarks=items.reduce((s,item)=> s+sqWorksheetPartsFor(item).reduce((a,p)=>a+(Number(p.marks)||0),0), 0);
             const nameLine=isTutor?'':'<div class="name-line">Name: <span class="fill"></span> &nbsp; Class: <span class="fill" style="width:120px"></span> &nbsp; Date: <span class="fill" style="width:120px"></span></div>';
-            const body=sqBuildWorksheetBody(items, type);
-            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+sqEsc(wsTitle)+' — '+versionLabel+'</title>'
+            return '<section class="ws-section">'
+              +'<div class="ws-header"><div><span class="ws-title">'+sqEsc(wsTitle)+'</span><span class="ws-version'+(isTutor?' tutor':'')+'">'+versionLabel+'</span></div>'
+              +'<div class="ws-meta">Source: Paper 2 &amp; 3 structured bank &nbsp;|&nbsp; Questions: '+nQ+' &nbsp;|&nbsp; Total marks: '+totalMarks+' &nbsp;|&nbsp; '+sqEsc(dateStr)+'</div></div>'
+              +nameLine
+              +sqBuildWorksheetBody(items, type)
+              +'<div class="ws-footer"><span>KhemBank &mdash; Mr Khemistry</span><span>'+(isTutor?'CONFIDENTIAL &mdash; TUTOR USE ONLY':'A-Level H2 Chemistry')+'</span></div>'
+              +'</section>';
+        }
+
+        // types is an array: ['student'], ['tutor'], or ['student','tutor'] (both in ONE document, each
+        // version starting on a new page). A single document means a single pop-up, which the browser allows.
+        function sqBuildWorksheetDoc(items, types, title){
+            const wsTitle=title||'Paper 2 & 3 Worksheet';
+            const tabLabel=(types.length>1)?'STUDENT + TUTOR':(types[0]==='tutor'?'TUTOR ANSWER KEY':'STUDENT WORKSHEET');
+            const sections=types.map(function(t){ return sqBuildWorksheetSection(items, t, title); }).join('');
+            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+sqEsc(wsTitle)+' — '+tabLabel+'</title>'
               +'<style>'
               +'@page{margin:16mm;}'
               +'@media print{.no-print{display:none!important;}body{padding:0;}}'
@@ -8980,9 +8997,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;background:#fff;margin:0;padding:14mm 16mm;}'
               +'.toolbar{margin-bottom:14px;font-size:10pt;color:#555;}'
               +'.toolbar button{font-size:11pt;padding:6px 15px;cursor:pointer;margin-right:10px;}'
+              +'.ws-section + .ws-section{page-break-before:always;}'
               +'.ws-header{border-bottom:2.5px solid #000;padding-bottom:8px;margin-bottom:16px;}'
               +'.ws-title{font-size:16pt;font-weight:bold;}'
-              +'.ws-version{display:inline-block;font-size:8.5pt;font-weight:bold;letter-spacing:1px;margin-left:10px;vertical-align:middle;'+(isTutor?'color:#fff;background:#000;':'border:1px solid #000;')+'padding:2px 8px;border-radius:3px;}'
+              +'.ws-version{display:inline-block;font-size:8.5pt;font-weight:bold;letter-spacing:1px;margin-left:10px;vertical-align:middle;border:1px solid #000;padding:2px 8px;border-radius:3px;}'
+              +'.ws-version.tutor{color:#fff;background:#000;}'
               +'.ws-meta{font-size:9pt;color:#444;margin-top:5px;}'
               +'.name-line{margin:14px 0 18px;font-size:10pt;}'
               +'.name-line .fill{display:inline-block;border-bottom:1px solid #000;width:200px;margin:0 6px;}'
@@ -9013,19 +9032,16 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
               +'</head><body>'
               +'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>'
-              +'<div class="ws-header"><div><span class="ws-title">'+sqEsc(wsTitle)+'</span><span class="ws-version">'+versionLabel+'</span></div>'
-              +'<div class="ws-meta">Source: Paper 2 &amp; 3 structured bank &nbsp;|&nbsp; Questions: '+nQ+' &nbsp;|&nbsp; Total marks: '+totalMarks+' &nbsp;|&nbsp; '+sqEsc(dateStr)+'</div></div>'
-              +nameLine
-              +body
-              +'<div class="ws-footer"><span>KhemBank &mdash; Mr Khemistry</span><span>'+(isTutor?'CONFIDENTIAL &mdash; TUTOR USE ONLY':'A-Level H2 Chemistry')+'</span></div>'
+              +sections
               +'</body></html>';
         }
 
         async function sqGenerateWorksheet(){
             if (userRole!=='admin' && userRole!=='teacher'){ alert('Admin/teacher only.'); return; }
-            const wantStudent=document.getElementById('sqWsStudent').checked;
-            const wantTutor=document.getElementById('sqWsTutor').checked;
-            if (!wantStudent && !wantTutor){ alert('Tick Student and/or Tutor first.'); return; }
+            const types=[];
+            if (document.getElementById('sqWsStudent').checked) types.push('student');
+            if (document.getElementById('sqWsTutor').checked) types.push('tutor');
+            if (!types.length){ alert('Tick Student and/or Tutor first.'); return; }
             const shown=sqRenderedQuestions;   // the exact set renderStructured() last displayed (never recomputed from live filters)
             if (!shown || !shown.length){ alert('No questions are shown. Set your filters and click "Show questions" first, then print. (If you changed a filter after showing, click "Show questions" again so the list matches.)'); return; }
             const maxRaw=parseInt(document.getElementById('sqWsMax').value,10);
@@ -9033,16 +9049,12 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             if (chosen.length>40 && !confirm('This will build a worksheet of '+chosen.length+' questions. Continue?')) return;
             const title=(document.getElementById('sqWsTitle').value||'').trim();
 
-            // Open the print window(s) synchronously (inside the click) so the browser does not block the pop-up.
-            const winStudent=wantStudent?window.open('','_blank'):null;
-            const winTutor=wantTutor?window.open('','_blank'):null;
-            if ((wantStudent && !winStudent) || (wantTutor && !winTutor)){
-                if (winStudent) winStudent.close();
-                if (winTutor) winTutor.close();
-                alert('Your browser blocked the worksheet pop-up. Please allow pop-ups for this site, then try again.');
-                return;
-            }
-            [winStudent, winTutor].forEach(w=>{ if(w){ try{ w.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){} } });
+            // ONE window only. A single pop-up opened inside the click is reliably allowed; opening one
+            // per version was tripping the browser's pop-up blocker. Student + Tutor share one document
+            // (each starting on a new page).
+            const win=window.open('','_blank');
+            if (!win){ alert('Your browser blocked the worksheet pop-up.\n\nAllow pop-ups for this site (there is usually a small blocked-popup icon at the right of the address bar), then click Print worksheet again.'); return; }
+            try{ win.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){}
 
             const btn=document.getElementById('sqWsBtn');
             if (btn){ btn.disabled=true; btn.textContent='Preparing…'; }
@@ -9051,10 +9063,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const folders=new Set();
                 chosen.forEach(it=>(it.q.figures||[]).forEach(f=>{ const fo=sqFigFolder(f.storage_path); if(fo) folders.add(fo); }));
                 await sqLoadFigFolders([...folders], false);
-                if (winStudent){ const d=sqBuildWorksheetDoc(chosen,'student',title); winStudent.document.open(); winStudent.document.write(d); winStudent.document.close(); try{winStudent.focus();}catch(e){} }
-                if (winTutor){ const d=sqBuildWorksheetDoc(chosen,'tutor',title); winTutor.document.open(); winTutor.document.write(d); winTutor.document.close(); try{winTutor.focus();}catch(e){} }
+                const doc=sqBuildWorksheetDoc(chosen, types, title);
+                win.document.open(); win.document.write(doc); win.document.close(); try{win.focus();}catch(e){}
             }catch(e){
                 alert('Could not prepare the worksheet: '+(e.message||e));
+                try{ win.close(); }catch(_){}
             }finally{
                 if (btn){ btn.disabled=false; btn.textContent='Print worksheet'; }
             }

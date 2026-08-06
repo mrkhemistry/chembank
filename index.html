@@ -8925,6 +8925,34 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             return parts.filter(p=>keep.has(p.id));
         }
 
+        // Tie a figure to the part it belongs to, from the part path encoded in its key
+        // (struct_5_c_i_F_ans -> ['c','i']; table_6_1 / fig_5_safranal -> [] = question-level).
+        // Case-sensitive so a compound label like "_A" is not misread as part (a).
+        function sqFigPartPath(key){
+            const toks=String(key||'').split('_');
+            let i=0;
+            while (i<toks.length && !/^\d+$/.test(toks[i])) i++;   // skip type prefix up to the question number
+            i++;                                                   // step past the number
+            const path=[];
+            for (; i<toks.length; i++){
+                if (/^[a-h]$/.test(toks[i]) || /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/.test(toks[i])) path.push(toks[i]);
+                else break;
+            }
+            return path;
+        }
+        // Part label '(a)(i)' -> ['a','i']; '(ii)' -> ['ii']; '(c)' -> ['c'].
+        function sqPartLabelPath(label){
+            return (String(label||'').toLowerCase().match(/\(([^)]+)\)/g)||[]).map(s=>s.replace(/[()]/g,''));
+        }
+        // Show a figure if it is question-level (no part path) OR its part is being printed (its path is a
+        // prefix of some printed part, so a (c) figure shows when (c)(i) prints). Never hides a figure a
+        // printed part needs; only hides figures that provably belong to parts we are not printing.
+        function sqFigForPrinted(key, printedPaths){
+            const fp=sqFigPartPath(key);
+            if (!fp.length) return true;
+            return printedPaths.some(pp=> fp.length<=pp.length && fp.every((t,i)=>t===pp[i]));
+        }
+
         function sqBuildWorksheetBody(items, type){
             const isTutor=type==='tutor';
             let html='';
@@ -8932,7 +8960,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const q=item.q;
                 const parts=sqWorksheetPartsFor(item);
                 const marks=parts.reduce((a,p)=>a+(Number(p.marks)||0),0);
-                const figs=q.figures||[];
+                let figs=q.figures||[];
+                // When only some parts are printed, drop figures that belong to the parts we are NOT
+                // printing (e.g. organic answer structures on a colour-only sheet). Question-level
+                // figures (tables, numbered figures) are always kept.
+                if (item.partFilter){ const printedPaths=parts.map(p=>sqPartLabelPath(p.part_label)); figs=figs.filter(f=>sqFigForPrinted(f.figure_key, printedPaths)); }
                 const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key));
                 const ansFigs=figs.filter(f=>sqIsAnswerFig(f.figure_key));
                 const srcBits=[];

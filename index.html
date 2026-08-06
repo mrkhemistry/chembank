@@ -8952,6 +8952,40 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             if (!fp.length) return true;
             return printedPaths.some(pp=> fp.length<=pp.length && fp.every((t,i)=>t===pp[i]));
         }
+        // A generic numbered figure key -> {ref:'5.1', words:...} matched to the figure TYPE (a table_ key
+        // is cited only as "Table 5.1", a fig_/diagram_ key as "Fig/Figure/Diagram/Scheme 5.1"), else null.
+        function sqFigNumRef(key){
+            const m=String(key||'').match(/^([a-z]+)_(\d+)_(\d+)(?:_|$)/);
+            if (!m) return null;
+            return { ref:m[2]+'.'+m[3], words:(m[1]==='table'?'table':'fig|figure|diagram|scheme') };
+        }
+        // Does `text` cite the figure, e.g. "Fig. 5.1" for a fig_ key or "Table 5.1" for a table_ key?
+        function sqTextCitesFig(text, r){
+            if (!text) return false;
+            return new RegExp('('+r.words+')\\.?\\s*'+r.ref.replace(/\./g,'\\.')+'(\\D|$)','i').test(text);
+        }
+        // Whether to print figure f, given the parts being printed, all the question's parts, and the stem.
+        //  - key encodes a part (struct_5_c_i) -> show iff that part is among those printed (prefix match).
+        //  - generic numbered figure (fig_5_1) -> resolve by citation: show if the stem or a printed part
+        //    cites "Fig/Table 5.1"; hide if only parts we are NOT printing cite it; show if no citation is
+        //    found anywhere (never hide a figure a printed part might need).
+        //  - generic descriptive figure (fig_5_safranal) -> keep (handled by explicit tagging, not here).
+        function sqShowFigForPrinted(f, printedParts, allParts, stem){
+            const fp=sqFigPartPath(f.figure_key);
+            if (fp.length){
+                const printedPaths=printedParts.map(p=>sqPartLabelPath(p.part_label));
+                return printedPaths.some(pp=> fp.length<=pp.length && fp.every((t,i)=>t===pp[i]));
+            }
+            const r=sqFigNumRef(f.figure_key);
+            if (r){
+                if (sqTextCitesFig(stem, r)) return true;
+                if (printedParts.some(p=>sqTextCitesFig(p.part_text, r))) return true;
+                const printedIds=new Set(printedParts.map(p=>p.id));
+                if (allParts.some(p=>!printedIds.has(p.id) && sqTextCitesFig(p.part_text, r))) return false;
+                return true;
+            }
+            return true;
+        }
 
         function sqBuildWorksheetBody(items, type){
             const isTutor=type==='tutor';
@@ -8962,9 +8996,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const marks=parts.reduce((a,p)=>a+(Number(p.marks)||0),0);
                 let figs=q.figures||[];
                 // When only some parts are printed, drop figures that belong to the parts we are NOT
-                // printing (e.g. organic answer structures on a colour-only sheet). Question-level
-                // figures (tables, numbered figures) are always kept.
-                if (item.partFilter){ const printedPaths=parts.map(p=>sqPartLabelPath(p.part_label)); figs=figs.filter(f=>sqFigForPrinted(f.figure_key, printedPaths)); }
+                // printing (e.g. organic reaction schemes on a colour-only sheet). A figure is kept if its
+                // key names a printed part, or (for generic numbered figures) the stem or a printed part
+                // cites its "Fig/Table N.M". Only figures cited solely by non-printed parts are dropped.
+                if (item.partFilter){ const allParts=(q.parts||[]); figs=figs.filter(f=>sqShowFigForPrinted(f, parts, allParts, q.stem)); }
                 const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key));
                 const ansFigs=figs.filter(f=>sqIsAnswerFig(f.figure_key));
                 const srcBits=[];

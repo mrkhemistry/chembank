@@ -8896,7 +8896,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         function sqWorksheetFigImg(f){
             const url=sqUploaded[f.storage_path];
             if (!url) return '<div class="sq-fig-missing">[diagram not loaded &mdash; open this paper in the Structured view first, then reprint]</div>';
-            return '<img class="sq-fig-img" src="'+sqAttr(url)+'" alt="'+sqAttr(f.label||f.figure_key||'figure')+'">';
+            // Caption from the figure's own label only (e.g. "Fig. 5.1", "Structure F"); never the raw
+            // key, since ~half the store has a blank label and a key like struct_3_b_x reads as noise.
+            const hasLbl=(f.label!=null && String(f.label).trim()!=='');
+            const cap=hasLbl?'<figcaption class="sq-fig-cap">'+sqEsc(String(f.label).trim())+'</figcaption>':'';
+            return '<figure class="sq-fig-fig"><img class="sq-fig-img" src="'+sqAttr(url)+'" alt="'+sqAttr(f.label||f.figure_key||'figure')+'">'+cap+'</figure>';
         }
 
         // Which parts of a question to print. With no part-level filter, print the whole question.
@@ -8987,6 +8991,27 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             return true;
         }
 
+        // Where a printed figure sits: the id of the printed part it belongs under, or null for
+        // question-level (printed with the stem). Same routing as sqShowFigForPrinted — part path from
+        // the key, else a numbered figure resolves to the printed part that cites "Fig/Table N.M".
+        function sqFigAnchorPart(f, printedParts, stem){
+            const fp=sqFigPartPath(f.figure_key);
+            if (fp.length){
+                for (let i=0;i<printedParts.length;i++){
+                    const pp=sqPartLabelPath(printedParts[i].part_label);
+                    if (fp.length<=pp.length && fp.every((t,k)=>t===pp[k])) return printedParts[i].id;
+                }
+                return null;
+            }
+            const r=sqFigNumRef(f.figure_key);
+            if (r){
+                if (sqTextCitesFig(stem, r)) return null;
+                for (let i=0;i<printedParts.length;i++){ if (sqTextCitesFig(printedParts[i].part_text, r)) return printedParts[i].id; }
+                return null;
+            }
+            return null;
+        }
+
         function sqBuildWorksheetBody(items, type){
             const isTutor=type==='tutor';
             let html='';
@@ -9008,24 +9033,33 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const sch=q.school||q.source||''; if (sch) srcBits.push(sch);
                 if (q.question_number!=null) srcBits.push('Q'+q.question_number);
                 if (q.section) srcBits.push('Section '+q.section);
+                // Anchor each figure to the part it belongs to so it prints where it is referenced,
+                // not batched after the stem. Question-level figures (no part, or stem-cited) stay on top;
+                // an answer figure whose part is not printed falls back to a grouped block at the end.
+                const stemFigs=[], qFigByPart={};
+                qFigs.forEach(f=>{ const aid=sqFigAnchorPart(f, parts, q.stem); if (aid==null) stemFigs.push(f); else (qFigByPart[aid]=qFigByPart[aid]||[]).push(f); });
+                const ansFigByPart={}, ansFigLoose=[];
+                ansFigs.forEach(f=>{ const aid=sqFigAnchorPart(f, parts, q.stem); if (aid==null) ansFigLoose.push(f); else (ansFigByPart[aid]=ansFigByPart[aid]||[]).push(f); });
                 html+='<div class="q-block">';
                 html+='<div class="q-head"><span class="q-num">Question '+(idx+1)+'</span>'
                     +'<span class="q-src">'+sqEsc(srcBits.join('  ·  '))+'<br>['+marks+' mark'+(marks===1?'':'s')+']</span></div>';
                 if (q.stem) html+='<div class="q-stem">'+sanitizeQuestionText(q.stem)+'</div>';
-                if (qFigs.length) html+='<div class="q-figs">'+qFigs.map(sqWorksheetFigImg).join('')+'</div>';
+                if (stemFigs.length) html+='<div class="q-figs">'+stemFigs.map(sqWorksheetFigImg).join('')+'</div>';
                 parts.forEach(p=>{
                     html+='<div class="p-block">';
                     html+='<div class="p-head"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null?(' <span class="p-marks">['+p.marks+']</span>'):'')+'</div>';
                     if (p.part_text) html+='<div class="p-text">'+sanitizeQuestionText(p.part_text)+'</div>';
+                    if (qFigByPart[p.id]) html+='<div class="q-figs">'+qFigByPart[p.id].map(sqWorksheetFigImg).join('')+'</div>';
                     if (isTutor){
                         if (p.mark_scheme) html+='<div class="p-ms"><span class="p-ms-lbl">Mark scheme</span>'+sanitizeQuestionText(p.mark_scheme)+'</div>';
+                        if (ansFigByPart[p.id]) html+='<div class="q-ansfigs">'+ansFigByPart[p.id].map(sqWorksheetFigImg).join('')+'</div>';
                     } else {
                         html+='<div class="p-ans">'+sqWorksheetAnswerLines(p.marks)+'</div>';
                     }
                     html+='</div>';
                 });
-                if (isTutor && ansFigs.length){
-                    html+='<div class="q-ansfigs"><div class="q-ansfigs-lbl">Suggested answer diagrams</div>'+ansFigs.map(sqWorksheetFigImg).join('')+'</div>';
+                if (isTutor && ansFigLoose.length){
+                    html+='<div class="q-ansfigs"><div class="q-ansfigs-lbl">Suggested answer diagrams</div>'+ansFigLoose.map(sqWorksheetFigImg).join('')+'</div>';
                 }
                 html+='</div>';
             });
@@ -9078,7 +9112,9 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'.q-src{font-size:8.5pt;color:#555;text-align:right;}'
               +'.q-stem{font-size:10.5pt;line-height:1.5;margin-bottom:8px;}'
               +'.q-figs{margin:8px 0;page-break-inside:avoid;break-inside:avoid;}'
+              +'.sq-fig-fig{margin:6px 0;padding:0;text-align:center;page-break-inside:avoid;break-inside:avoid;}'
               +'.sq-fig-img{display:block;max-width:100%;max-height:240px;border:1px solid #ccc;margin:6px auto;}'
+              +'.sq-fig-cap{font-size:8.5pt;color:#333;margin-top:2px;text-align:center;font-style:italic;}'
               +'.sq-fig-missing{font-size:8.5pt;color:#a00;font-style:italic;margin:6px 0;}'
               +'.p-block{margin:8px 0 10px;page-break-inside:avoid;break-inside:avoid;}'
               +'.p-head{font-size:10.5pt;}'

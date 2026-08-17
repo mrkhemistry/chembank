@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybridisation of Carbon — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg:#0b0f1a; --surface:#111827; --border:rgba(255,255,255,0.07); --text:#f0f4ff; --muted:#e8eef6; --accent:#4f9cf9; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(79,156,249,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,156,249,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+  nav { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:16px 32px; border-bottom:1px solid var(--border); background:rgba(11,15,26,0.9); backdrop-filter:blur(12px); flex-shrink:0; }
+  .nav-left { display:flex; align-items:center; gap:16px; }
+  .nav-back { display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+  .nav-back:hover { color:var(--accent); }
+  .nav-title { font-family:'DM Serif Display',serif; font-size:18px; font-weight:400; color:var(--text); }
+  .nav-tags { display:flex; gap:6px; }
+  .ntag { font-size:10px; font-weight:600; padding:3px 9px; border-radius:100px; letter-spacing:0.05em; text-transform:uppercase; }
+  .ntag-h2 { background:rgba(79,156,249,0.12); color:#93c5fd; border:1px solid rgba(79,156,249,0.2); }
+  .ntag-bond { background:rgba(34,211,238,0.12); color:#67e8f9; border:1px solid rgba(34,211,238,0.2); }
+  .ntag-org { background:rgba(52,211,153,0.12); color:#6ee7b7; border:1px solid rgba(52,211,153,0.2); }
+  .main { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; padding:24px 32px; gap:20px; max-width:1200px; width:100%; margin:0 auto; }
+  #simw { width:100%; background:#0f172a; border-radius:16px; overflow:hidden; border:1px solid var(--border); font-family:sans-serif; display:flex; flex-direction:column; }
+  #topRow { display:flex; height:544px; }
+  #cWrap { flex:1; position:relative; }
+  #glCanvas, #ovCanvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
+  #ovCanvas { cursor:grab; touch-action:none; }
+  #ovCanvas:active { cursor:grabbing; }
+  #hint { position:absolute; left:14px; bottom:12px; font-size:10px; color:#e8eef6; pointer-events:none; letter-spacing:0.03em; }
+  #sidePanel { width:250px; background:#0a1628; border-left:1px solid #1e293b; display:flex; flex-direction:column; }
+  #eBox { padding:12px 14px; border-bottom:1px solid #1e293b; }
+  #eBox p { font-size:10px; color:#ffffff; margin:0 0 8px; letter-spacing:0.03em; }
+  #eCanvas { display:block; width:100%; height:auto; }
+  #stepPanel { flex:1; padding:10px; display:flex; flex-direction:column; gap:6px; overflow:hidden; }
+  .si { border-radius:8px; padding:9px 11px; border:1px solid #1e293b; transition:all 0.3s; }
+  .si.active { border-color:#2dd4bf; background:#0b2b2a; }
+  .sn { font-size:9px; color:#ffffff; margin-bottom:2px; letter-spacing:0.04em; text-transform:uppercase; }
+  .si.active .sn { color:#5eead4; }
+  .st { font-size:12.5px; font-weight:600; color:#ffffff; }
+  .sd { font-size:10.5px; color:#ffffff; margin-top:4px; line-height:1.5; display:none; }
+  .si.active .sd { display:block; color:#7dd3fc; }
+  #botBar { background:#060e1c; border-top:1px solid #1e293b; padding:10px 14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .seg { display:flex; align-items:center; gap:2px; background:#0d1526; border:1px solid #1e293b; border-radius:8px; padding:3px; }
+  .seg button { background:transparent; color:#ffffff; border:none; border-radius:6px; padding:6px 12px; font-size:13px; cursor:pointer; font-family:sans-serif; font-weight:600; }
+  .seg button sub, .seg button sup { font-size:9px; }
+  .seg button.on { background:#0e7490; color:#fff; }
+  .segdiv { width:1px; align-self:stretch; margin:3px 4px; background:#24354d; }
+  .bp { background:#0d9488; color:#fff; border:none; border-radius:6px; padding:7px 16px; font-size:12px; cursor:pointer; font-family:sans-serif; font-weight:600; }
+  .bp:hover { background:#14b8a6; }
+  .bs { background:#1e293b; color:#e8eef6; border:none; border-radius:6px; padding:6px 11px; font-size:12px; cursor:pointer; font-family:sans-serif; }
+  .bs:hover { background:#334155; }
+  .bs.on { background:#1b6b78; color:#fff; }
+  #statusBadge { margin-left:auto; font-size:10px; font-family:monospace; color:#7dd3fc; background:#0c2340; border:1px solid #1e4070; border-radius:4px; padding:3px 8px; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; padding:9px 16px; background:#081222; border-top:1px solid #12203a; font-size:10.5px; color:#ffffff; }
+  .legend span { display:flex; align-items:center; gap:6px; }
+  .dotk { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .notes-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  .note-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+  .note-card h3 { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .note-card h3::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .note-card p { font-size:12.5px; color:var(--muted); line-height:1.7; }
+  .note-card strong { color:var(--text); font-weight:600; }
+  .note-card .k { color:#5eead4; font-weight:600; }
+  footer { position:relative; z-index:1; text-align:center; padding:24px 32px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
+  footer a { color:var(--accent); text-decoration:none; }
+  @media(max-width:700px){
+    nav,.main{padding-left:16px;padding-right:16px;}
+    nav{padding-top:12px;padding-bottom:12px;}
+    #topRow{flex-direction:column;height:auto;}
+    #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;}
+    #cWrap{flex:none;height:360px;}
+    #stepPanel{flex-direction:row;overflow-x:auto;}
+    .si{min-width:160px;}
+    #botBar{gap:6px;}
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./_auth-guard.js"></script>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="./index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg> Simulations</a>
+    <div style="width:1px;height:20px;background:var(--border);"></div>
+    <span class="nav-title">Hybridisation of Carbon</span>
+  </div>
+  <div class="nav-tags">
+    <span class="ntag ntag-h2">H2</span>
+    <span class="ntag ntag-bond">Bonding</span>
+    <span class="ntag ntag-org">Carbon</span>
+  </div>
+</nav>
+
+<div class="main">
+  <div id="simw">
+    <div id="topRow">
+      <div id="cWrap">
+        <canvas id="glCanvas"></canvas>
+        <canvas id="ovCanvas"></canvas>
+        <div id="hint">Drag to rotate</div>
+      </div>
+      <div id="sidePanel">
+        <div id="eBox">
+          <p id="eTitle">Orbital energy diagram</p>
+          <canvas id="eCanvas" width="222" height="150"></canvas>
+        </div>
+        <div id="stepPanel"></div>
+      </div>
+    </div>
+    <div id="botBar">
+      <div class="seg" id="typeSeg">
+        <button data-t="sp3" class="on">sp<sup>3</sup></button>
+        <button data-t="sp2">sp<sup>2</sup></button>
+        <button data-t="sp">sp</button>
+        <span class="segdiv"></span>
+        <button data-t="ethene">C=C</button>
+        <button data-t="ethyne">C&equiv;C</button>
+      </div>
+      <button class="bp" id="playBtn">Hybridise</button>
+      <button class="bs" id="sepBtn" style="display:none">Individual</button>
+      <button class="bs" id="sigBtn" style="display:none">&sigma; bond</button>
+      <button class="bs" id="piBtn" style="display:none">&pi; bond</button>
+      <button class="bs" id="resetBtn">Reset</button>
+      <button class="bs on" id="pBtn">Unhybridised p: On</button>
+      <span id="statusBadge">READY</span>
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <h3>What is hybridisation?</h3>
+      <p><strong>Mixing of atomic orbitals</strong> in an atom to generate a new set of equal-energy <strong>hybrid orbitals</strong>. Carbon first promotes a 2s electron to the empty 2p (the <strong>excited state</strong>), giving four unpaired electrons.</p>
+    </div>
+    <div class="note-card">
+      <h3>Count the atoms on carbon</h3>
+      <p>If the C atom is directly bonded to:<br>
+      &bull; <span class="k">4 atoms &rarr; sp&#179;</span> (109.5&deg;, tetrahedral)<br>
+      &bull; <span class="k">3 atoms &rarr; sp&#178;</span> (120&deg;, trigonal planar)<br>
+      &bull; <span class="k">2 atoms &rarr; sp</span> (180&deg;, linear)</p>
+    </div>
+    <div class="note-card">
+      <h3>&sigma; and &pi; bonds</h3>
+      <p>The <strong>first</strong> bond between two atoms is always a <strong>&sigma; bond</strong> (head-on overlap of hybrid orbitals). Any <strong>extra</strong> bonds are <strong>&pi; bonds</strong>, from side-on overlap of the leftover unhybridised p orbitals. See the <strong>C=C</strong> and <strong>C&equiv;C</strong> tabs.</p>
+    </div>
+    <div class="note-card">
+      <h3>Single, double, triple</h3>
+      <p><strong>sp&#179;</strong>: only &sigma; bonds &rarr; single bonds.<br>
+      <strong>sp&#178;</strong> (ethene): 1 leftover p &rarr; C=C is <strong>1 &sigma; + 1 &pi;</strong>.<br>
+      <strong>sp</strong> (ethyne): 2 leftover p &rarr; C&equiv;C is <strong>1 &sigma; + 2 &pi;</strong>.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Interactive simulation by <a href="https://mrkhemistry.com">Mr Khemistry</a> &mdash; A-level H2 Chemistry
+</footer>
+
+<script>
+/* ===== HYBRIDISATION OF CARBON — WebGL orbitals + 2D overlay, time-based ===== */
+const glc = document.getElementById('glCanvas');
+function glFail(){
+  const w=document.getElementById('cWrap');
+  if(w) w.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:#ffffff;font-family:sans-serif;font-size:14px;line-height:1.7;">This 3D simulation needs WebGL, which your browser has disabled or does not support.<br>Please update your browser or turn on hardware acceleration, then reload this page.</div>';
+}
+const gl = glc.getContext('webgl', {antialias:true, alpha:true, premultipliedAlpha:false});
+if(!gl){ glFail(); throw new Error('WebGL unavailable'); }
+const ov = document.getElementById('ovCanvas');
+const octx = ov.getContext('2d');
+const eCanvas = document.getElementById('eCanvas');
+const ectx = eCanvas.getContext('2d');
+const stepPanel = document.getElementById('stepPanel');
+
+let W=600, H=544, SC=1;
+const FOV=1300;
+let aX=0, aY=0, roll=0;         // interactive view (bond tabs); atom tabs keep this at identity
+let uAX=0, uAY=0;               // atom tabs: drag rotation applied about the atom's own centre (pinned)
+let showP=true;
+let bondHi='none';              // bond tabs: 'none' | 'sigma' | 'pi' highlight
+let dragging=false, lastX=0, lastY=0;
+
+/* ---------- small vec helpers ---------- */
+const V=(x,y,z)=>({x,y,z});
+const add=(a,b)=>V(a.x+b.x,a.y+b.y,a.z+b.z);
+const mul=(a,k)=>V(a.x*k,a.y*k,a.z*k);
+const cross=(a,b)=>V(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);
+const vlen=a=>Math.hypot(a.x,a.y,a.z);
+const norm=a=>{const l=vlen(a)||1; return V(a.x/l,a.y/l,a.z/l);};
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const ease=t=>t*t*(3-2*t);
+
+/* ---------- view rotation (roll about x, then yaw, then pitch) + projection ---------- */
+function rotP(p){
+  const rc=Math.cos(roll), rs=Math.sin(roll);
+  const y0=p.y*rc-p.z*rs, z0=p.y*rs+p.z*rc;
+  const cy=Math.cos(aY), sy=Math.sin(aY);
+  const x1=p.x*cy+z0*sy, z1=z0*cy-p.x*sy;
+  const cx=Math.cos(aX), sx=Math.sin(aX);
+  const y2=y0*cx-z1*sx, z2=z1*cx+y0*sx;
+  return V(x1,y2,z2);
+}
+function proj(p){
+  const v=rotP(p);
+  const s=FOV/(FOV+v.z);
+  return {x:W/2+v.x*s*SC, y:H/2-v.y*s*SC, z:v.z, s:s*SC};
+}
+
+/* ---------- colours ---------- */
+const HEX={s:'#38bdf8', p:'#a78bfa', h:'#2dd4bf', n:'#f97316', hyd:'#e2e8f0'};
+const COL={
+  s:[0.220,0.741,0.973], p:[0.655,0.545,0.980], h:[0.176,0.831,0.749],
+  n:[0.976,0.451,0.086], hyd:[0.886,0.910,0.941]
+};
+/* one colour per p orbital, so the three dumbbells read as three separate orbitals */
+const PHEX={x:'#a78bfa', y:'#e879f9', z:'#6366f1'};
+const PGL={x:[0.655,0.545,0.980], y:[0.910,0.475,0.976], z:[0.388,0.400,0.945]};
+/* ethyne's second π system */
+const HEX_P2='#fb923c';
+const COL_P2=[0.984,0.573,0.235];
+
+/* ---------- geometry configs ---------- */
+const t3=1/Math.sqrt(3);
+const TET=[V(t3,t3,t3), V(t3,-t3,-t3), V(-t3,t3,-t3), V(-t3,-t3,t3)];
+const c120=Math.cos(2*Math.PI/3), s120=Math.sin(2*Math.PI/3);
+const TRI=[V(1,0,0), V(c120,0,s120), V(c120,0,-s120)];
+const LIN=[V(1,0,0), V(-1,0,0)];   // horizontal, matching ethyne — and so horizontal drag visibly rotates it
+const PAX={x:[V(1,0,0),V(-1,0,0)], y:[V(0,1,0),V(0,-1,0)], z:[V(0,0,1),V(0,0,-1)]};
+
+const ATOM={
+  sp3:{hyb:TET, fadeP:['x','y','z'], keepP:[], angle:'109.5°', shape:'tetrahedral',
+       mixT:'Mix 1 s + 3 p', mixD:'All four atomic orbitals merge into four identical sp³ hybrids.',
+       resT:'4 sp³ — 109.5°', resD:'Tetrahedral. Each hybrid forms a σ bond (e.g. CH₄).'},
+  sp2:{hyb:TRI, fadeP:['x','z'], keepP:['y'], angle:'120°', shape:'trigonal planar',
+       mixT:'Mix 1 s + 2 p', mixD:'Three orbitals merge into three sp² hybrids; one p is left unhybridised.',
+       resT:'3 sp² + 1 p — 120°', resD:'Trigonal planar. 3 σ + 1 π bond (e.g. C=C in ethene).'},
+  sp:{hyb:LIN, fadeP:['x'], keepP:['y','z'], angle:'180°', shape:'linear',
+      mixT:'Mix 1 s + 1 p', mixD:'Two orbitals merge into two sp hybrids; two p are left unhybridised.',
+      resT:'2 sp + 2 p — 180°', resD:'Linear. 2 σ + 2 π bonds (e.g. C≡C in ethyne).'}
+};
+const SCENES={
+  sp3:{mode:'atom'}, sp2:{mode:'atom'}, sp:{mode:'atom'},
+  ethene:{mode:'bond', type:'sp2', pi:1, bondName:'double bond'},
+  ethyne:{mode:'bond', type:'sp',  pi:2, bondName:'triple bond'}
+};
+
+let scene='sp3';
+let playing=false;
+let t=0;
+let sep=0, sepT=0;           // Individual/Combine: 0 = combined at the atom, 1 = lined up in the top row
+
+/* ---- two-level layout: orbital shelf on top, the atom below ---- */
+const ROW_Y=150, ATOM_Y=-120;
+const ATOMC=V(0,ATOM_Y,0);
+const RPL=62, RPR=24, RS=30;   // row sizes: p dumbbell half-length/radius, 2s radius
+const RHL=86, RHR=27;          // row hybrid: big lobe (p-lobe proportions)
+const SM_L=0.46, SM_R=0.46;    // small back lobe: a scaled-down copy of the big lobe's teardrop
+const AXF=0.30, AYF=0.42;      // gentle fixed tilt baked into the atom-tab geometry
+function rowSlots(n){ const sp=130, x0=-(n-1)/2*sp; return Array.from({length:n},(_,i)=>x0+i*sp); }
+function rot0(p){   // apply the fixed tilt (yaw AYF then pitch AXF — same order as the view)
+  const cy=Math.cos(AYF), sy=Math.sin(AYF), cx=Math.cos(AXF), sx=Math.sin(AXF);
+  const x1=p.x*cy+p.z*sy, z1=p.z*cy-p.x*sy;
+  const y2=p.y*cx-z1*sx, z2=z1*cx+p.y*sx;
+  return V(x1,y2,z2);
+}
+function invView(p){   // undo the current drag view (atom tabs have roll=0), so row items stay screen-anchored
+  const cx=Math.cos(aX), sx=Math.sin(aX), cy=Math.cos(aY), sy=Math.sin(aY);
+  const y=p.y*cx+p.z*sx, z1=p.z*cx-p.y*sx;
+  const x=p.x*cy-z1*sy, z=z1*cy+p.x*sy;
+  return V(x,y,z);
+}
+const lerpV=(A,B,k)=>V(A.x+(B.x-A.x)*k, A.y+(B.y-A.y)*k, A.z+(B.z-A.z)*k);
+function uRot(p){   // the atom-tab drag rotation — applied to offsets/directions about the atom centre
+  const cy=Math.cos(uAY), sy=Math.sin(uAY), cx=Math.cos(uAX), sx=Math.sin(uAX);
+  const x1=p.x*cy+p.z*sy, z1=p.z*cy-p.x*sy;
+  const y2=p.y*cx-z1*sx, z2=z1*cx+p.y*sx;
+  return V(x1,y2,z2);
+}
+let stepCount=5;
+
+/* sizes (world units) */
+const PL=120, PR=42;         // atomic p lobe
+const HL=152, HR=56;         // hybrid lobe (single atom)
+const BD=71;                 // half C–C distance (bonded): the two inner lobes' widest parts coincide exactly at the midpoint
+const BHL=106, BHR=39;       // hybrid lobe (bonding) — same slim proportions as the atom-tab hybrids
+const BPL=96, BPR=34;        // p lobe (bonding) — same proportions as the atomic p lobes
+
+/* phase alphas */
+function atomicAlpha(){ if(t<0.30) return 1; if(t>0.60) return 0; return 1-(t-0.30)/0.30; }
+function hybGrow(){ if(t<0.34) return 0; if(t>0.70) return 1; return ease((t-0.34)/0.36); }
+function angleAlpha(){ if(t<0.82) return 0; return Math.min(1,(t-0.82)/0.16); }
+
+/* ================= WebGL engine ================= */
+const VSRC=`
+attribute vec3 aPos; attribute vec3 aNrm;
+uniform mat3 uM; uniform mat3 uN; uniform vec3 uOff;
+uniform float rc,rs,yc,ys,pc,ps;
+uniform vec2 uScale; uniform float uFov;
+varying vec3 vN;
+vec3 viewRot(vec3 p){
+  float y0=p.y*rc-p.z*rs; float z0=p.y*rs+p.z*rc;
+  float x1=p.x*yc+z0*ys;  float z1=z0*yc-p.x*ys;
+  float y2=y0*pc-z1*ps;   float z2=z1*pc+y0*ps;
+  return vec3(x1,y2,z2);
+}
+void main(){
+  vec3 w=uM*aPos+uOff;
+  vec3 v=viewRot(w);
+  vN=viewRot(uN*aNrm);
+  float ww=(uFov+v.z)/uFov;
+  gl_Position=vec4(v.x*uScale.x, v.y*uScale.y, v.z/700.0, ww);
+}`;
+const FSRC=`
+precision mediump float;
+varying vec3 vN;
+uniform vec3 uColor; uniform float uAlpha; uniform float uFres;
+void main(){
+  vec3 n=normalize(vN);
+  vec3 L=normalize(vec3(-0.45,0.55,-0.70));
+  float diff=max(dot(n,L),0.0);
+  vec3 Hv=normalize(L+vec3(0.0,0.0,-1.0));
+  float spec=pow(max(dot(n,Hv),0.0),30.0)*0.85;
+  vec3 c=uColor*(0.30+0.70*diff)+vec3(1.0)*spec;
+  float a=uAlpha;
+  if(uFres>0.5){
+    float rim=1.0-abs(n.z);
+    a*=(0.30+0.70*rim*rim);
+    c=uColor*(0.60+0.40*diff)+vec3(1.0)*spec*0.3;
+  }
+  gl_FragColor=vec4(min(c,vec3(1.0)),a);
+}`;
+function makeShader(type,src){
+  const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+let prog;
+try{
+  prog=gl.createProgram();
+  gl.attachShader(prog,makeShader(gl.VERTEX_SHADER,VSRC));
+  gl.attachShader(prog,makeShader(gl.FRAGMENT_SHADER,FSRC));
+  gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+}catch(e){ glFail(); throw e; }
+const loc={
+  aPos:gl.getAttribLocation(prog,'aPos'), aNrm:gl.getAttribLocation(prog,'aNrm'),
+  uM:gl.getUniformLocation(prog,'uM'), uN:gl.getUniformLocation(prog,'uN'), uOff:gl.getUniformLocation(prog,'uOff'),
+  rc:gl.getUniformLocation(prog,'rc'), rs:gl.getUniformLocation(prog,'rs'),
+  yc:gl.getUniformLocation(prog,'yc'), ys:gl.getUniformLocation(prog,'ys'),
+  pc:gl.getUniformLocation(prog,'pc'), ps:gl.getUniformLocation(prog,'ps'),
+  uScale:gl.getUniformLocation(prog,'uScale'), uFov:gl.getUniformLocation(prog,'uFov'),
+  uColor:gl.getUniformLocation(prog,'uColor'), uAlpha:gl.getUniformLocation(prog,'uAlpha'),
+  uFres:gl.getUniformLocation(prog,'uFres')
+};
+gl.enable(gl.DEPTH_TEST);
+gl.clearColor(0,0,0,0);
+
+function buildBuffers(pos,nrm,idx){
+  const vb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,vb); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pos),gl.STATIC_DRAW);
+  const nb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(nrm),gl.STATIC_DRAW);
+  const ib=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(idx),gl.STATIC_DRAW);
+  return {vb,nb,ib,n:idx.length};
+}
+
+/* teardrop profile (matched to the notes) */
+function profRaw(u){ return Math.pow(u,1.28)*Math.pow(1-u,0.62); }
+let PMAX=0.0001; for(let i=0;i<=400;i++){ const v=profRaw(i/400); if(v>PMAX) PMAX=v; }
+function prof(u){ return profRaw(u)/PMAX; }                 // max radius 1
+function dprof(u){ const h=0.002,a=Math.max(0,u-h),b=Math.min(1,u+h); return (prof(b)-prof(a))/(b-a); }
+
+/* unit lobe mesh: axis +Y, length 1, max radius 1 */
+function buildUnitLobe(){
+  const RINGS=80, SEGS=96, pos=[], nrm=[], idx=[];
+  for(let iu=0;iu<=RINGS;iu++){
+    const u=iu/RINGS, r=prof(u), rp=dprof(u);
+    for(let is=0;is<SEGS;is++){
+      const th=is/SEGS*Math.PI*2, c=Math.cos(th), s=Math.sin(th);
+      pos.push(r*c, u, r*s);
+      const m=Math.hypot(1,rp)||1;               // outward normal = (cosθ, −r′, sinθ)/|…|
+      nrm.push(c/m, -rp/m, s/m);
+    }
+  }
+  for(let iu=0;iu<RINGS;iu++)
+    for(let is=0;is<SEGS;is++){
+      const a=iu*SEGS+is, b=(iu+1)*SEGS+is;
+      const a2=iu*SEGS+(is+1)%SEGS, b2=(iu+1)*SEGS+(is+1)%SEGS;
+      idx.push(a,b,a2, a2,b,b2);
+    }
+  return buildBuffers(pos,nrm,idx);
+}
+function buildUnitSphere(){
+  const LA=26, LO=34, pos=[], nrm=[], idx=[];
+  for(let la=0;la<=LA;la++){
+    const ph=la/LA*Math.PI, sp=Math.sin(ph), cp=Math.cos(ph);
+    for(let lo=0;lo<LO;lo++){
+      const th=lo/LO*Math.PI*2, c=Math.cos(th), s=Math.sin(th);
+      pos.push(sp*c, cp, sp*s); nrm.push(sp*c, cp, sp*s);
+    }
+  }
+  for(let la=0;la<LA;la++)
+    for(let lo=0;lo<LO;lo++){
+      const a=la*LO+lo, b=(la+1)*LO+lo, a2=la*LO+(lo+1)%LO, b2=(la+1)*LO+(lo+1)%LO;
+      idx.push(a,b,a2, a2,b,b2);
+    }
+  return buildBuffers(pos,nrm,idx);
+}
+/* π cloud: just the connecting bridge between the two p lobes — its ends pinch off
+   INSIDE the lobes (no protrusion beyond them), slightly waisted in the middle */
+function buildPiCloud(){
+  const NX=56, NC=30, pos=[], nrm=[], idx=[];
+  const Rend=BPR*0.74, Rmid=BPR*0.60;   // ends sized to tuck under the lobe tips; middle kept generous
+  const rf=x=>{
+    const ax=Math.abs(x), lim=BD*0.94, tip=BD-3;
+    const base=Rmid+(Rend-Rmid)*Math.pow(Math.min(ax,lim)/lim,1.7);
+    if(ax<=lim) return base;
+    const q=Math.min(1,(ax-lim)/(tip-lim));
+    return Math.max(base*(1-Math.pow(q,0.8)),0.001);
+  };
+  for(let i=0;i<=NX;i++){
+    const x=-BD+2*BD*i/NX;
+    const r=Math.max(rf(x),0.001);
+    const h=0.75, rp=(rf(Math.min(BD,x+h))-rf(Math.max(-BD,x-h)))/(2*h);
+    for(let j=0;j<NC;j++){
+      const th=j/NC*Math.PI*2, c=Math.cos(th), s=Math.sin(th);
+      pos.push(x, r*c, r*s);
+      const m=Math.hypot(1,rp)||1;
+      nrm.push(-rp/m, c/m, s/m);
+    }
+  }
+  for(let i=0;i<NX;i++)
+    for(let j=0;j<NC;j++){
+      const a=i*NC+j, b=(i+1)*NC+j, a2=i*NC+(j+1)%NC, b2=(i+1)*NC+(j+1)%NC;
+      idx.push(a,b,a2, a2,b,b2);
+    }
+  return buildBuffers(pos,nrm,idx);
+}
+const MESH_LOBE=buildUnitLobe(), MESH_SPH=buildUnitSphere(), MESH_PI=buildPiCloud();
+
+/* model matrix: local x→u1*e1, local y→u2*e2, local z→u3*e3 (u's orthonormal) */
+function matFor(u1,u2,u3,e1,e2,e3){
+  return {
+    M:[u1.x*e1,u1.y*e1,u1.z*e1, u2.x*e2,u2.y*e2,u2.z*e2, u3.x*e3,u3.y*e3,u3.z*e3],
+    N:[u1.x/e1,u1.y/e1,u1.z/e1, u2.x/e2,u2.y/e2,u2.z/e2, u3.x/e3,u3.y/e3,u3.z/e3]
+  };
+}
+function basisFor(dir){
+  const d=norm(dir);
+  let b1=cross(d, Math.abs(d.y)>0.93 ? V(1,0,0) : V(0,1,0));
+  b1=norm(b1);
+  const b2=cross(d,b1);
+  return {d,b1,b2};
+}
+function lobeItem(pos,dir,L,R,col,a){
+  const {d,b1,b2}=basisFor(dir);
+  const m=matFor(b1,d,b2,R,L,R);
+  const key=rotP(add(pos,mul(d,L*0.6))).z;
+  return {mesh:MESH_LOBE, M:m.M, N:m.N, off:pos, col, a, fres:0, key};
+}
+function sphereItem(pos,r,col,a,fres){
+  const m=matFor(V(1,0,0),V(0,1,0),V(0,0,1),r,r,r);
+  return {mesh:MESH_SPH, M:m.M, N:m.N, off:pos, col, a, fres:fres||0, key:rotP(pos).z};
+}
+function ellipsoidItem(pos,u1,u2,e1,e2,col,a){
+  const u3=cross(u1,u2);
+  const m=matFor(u1,u2,u3,e1,e2,e2);
+  return {mesh:MESH_SPH, M:m.M, N:m.N, off:pos, col, a, fres:1, key:rotP(pos).z};
+}
+function drawItem(it){
+  gl.bindBuffer(gl.ARRAY_BUFFER,it.mesh.vb); gl.enableVertexAttribArray(loc.aPos); gl.vertexAttribPointer(loc.aPos,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,it.mesh.nb); gl.enableVertexAttribArray(loc.aNrm); gl.vertexAttribPointer(loc.aNrm,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,it.mesh.ib);
+  gl.uniformMatrix3fv(loc.uM,false,it.M); gl.uniformMatrix3fv(loc.uN,false,it.N);
+  gl.uniform3f(loc.uOff,it.off.x,it.off.y,it.off.z);
+  gl.uniform3fv(loc.uColor,it.col);
+  gl.uniform1f(loc.uAlpha,it.a); gl.uniform1f(loc.uFres,it.fres);
+  gl.drawElements(gl.TRIANGLES,it.mesh.n,gl.UNSIGNED_SHORT,0);
+}
+function renderGL(opaque,trans,behind){
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.uniform1f(loc.rc,Math.cos(roll)); gl.uniform1f(loc.rs,Math.sin(roll));
+  gl.uniform1f(loc.yc,Math.cos(aY));   gl.uniform1f(loc.ys,Math.sin(aY));
+  gl.uniform1f(loc.pc,Math.cos(aX));   gl.uniform1f(loc.ps,Math.sin(aX));
+  gl.uniform2f(loc.uScale,SC/(W/2),SC/(H/2));
+  gl.uniform1f(loc.uFov,FOV);
+  // "behind" translucents (e.g. the 2s shell) draw first, so solid orbitals overwrite them
+  if(behind && behind.length){
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    behind.forEach(drawItem);
+    gl.disable(gl.BLEND); gl.depthMask(true);
+  }
+  gl.disable(gl.BLEND); gl.depthMask(true);
+  opaque.forEach(drawItem);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  trans.sort((p,q)=>q.key-p.key);
+  trans.forEach(drawItem);
+  gl.depthMask(true); gl.disable(gl.BLEND);
+}
+
+/* ---------- overlay helpers ---------- */
+function perpDist(P,A,B){
+  const vx=B.x-A.x, vy=B.y-A.y, L2=vx*vx+vy*vy;
+  if(L2<1e-6) return Math.hypot(P.x-A.x,P.y-A.y);
+  const k=((P.x-A.x)*vx+(P.y-A.y)*vy)/L2;
+  return Math.hypot(P.x-(A.x+vx*k), P.y-(A.y+vy*k));
+}
+/* hide a sphere label when a nearer lobe covers the sphere centre */
+function labelVisible(P, occluders){
+  for(let i=0;i<occluders.length;i++){
+    const o=occluders[i];
+    const A=proj(o.pos), B=proj(add(o.pos,mul(norm(o.dir),o.L)));
+    const halfW=o.R*((A.s+B.s)/2);
+    if(perpDist(P,A,B)<halfW*0.92 && Math.min(A.z,B.z)<P.z-4) return false;
+  }
+  return true;
+}
+function drawAngleArcOv(centre,a,b,label,shape){
+  const rr=HL*0.46;
+  const opp=dot(a,b)<-0.985;
+  octx.save();
+  octx.strokeStyle='#fcd34d'; octx.lineWidth=2; octx.setLineDash([5,4]);
+  if(opp){
+    const A=proj(add(centre,mul(a,rr))), B=proj(add(centre,mul(b,rr)));
+    octx.beginPath(); octx.moveTo(A.x,A.y); octx.lineTo(B.x,B.y); octx.stroke();
+  } else {
+    const om=Math.acos(clamp(dot(a,b),-1,1)), so=Math.sin(om);
+    octx.beginPath();
+    for(let i=0;i<=44;i++){
+      const u=i/44, s1=Math.sin((1-u)*om)/so, s2=Math.sin(u*om)/so;
+      const P=proj(add(centre,mul(norm(V(a.x*s1+b.x*s2, a.y*s1+b.y*s2, a.z*s1+b.z*s2)),rr)));
+      if(i===0) octx.moveTo(P.x,P.y); else octx.lineTo(P.x,P.y);
+    }
+    octx.stroke();
+  }
+  octx.setLineDash([]);
+  let mid=norm(add(a,b)), rf=1.32;
+  if(opp){ let n=cross(a,V(1,0,0)); if(vlen(n)<0.05) n=cross(a,V(0,0,1)); mid=norm(n); rf=0.82; }
+  const Lp=proj(add(centre,mul(mid,rr*rf)));
+  octx.fillStyle='#fde68a'; octx.font=`bold ${Math.round(16*SC)}px 'DM Sans',Arial`;
+  octx.textAlign='center'; octx.textBaseline='middle';
+  octx.fillText(label,Lp.x,Lp.y);
+  if(shape){
+    octx.fillStyle='#fef3c7'; octx.font=`600 ${Math.round(11.5*SC)}px 'DM Sans',Arial`;
+    octx.fillText(shape,Lp.x,Lp.y+17*SC);
+  }
+  octx.restore();
+}
+function ovText(P,text,col,size,bold){
+  octx.fillStyle=col; octx.font=`${bold?'bold ':''}${Math.round(size*SC)}px 'DM Sans',Arial`;
+  octx.textAlign='center'; octx.textBaseline='middle'; octx.fillText(text,P.x,P.y);
+}
+function watermark(){
+  octx.save(); octx.globalAlpha=0.25; octx.fillStyle='#ffffff'; octx.font='11px Arial';
+  octx.textAlign='right'; octx.textBaseline='bottom'; octx.fillText('© Mr Khemistry',W-12,H-10); octx.restore();
+}
+function sphereLabel(pos,r,text,occluders){
+  const P=proj(pos);
+  if(!labelVisible(P,occluders)) return;
+  octx.fillStyle='#0f172a';
+  octx.font=`bold ${Math.max(8,Math.round(r*0.75*SC*P.s))}px Arial`;
+  octx.textAlign='center'; octx.textBaseline='middle';
+  octx.fillText(text,P.x,P.y+1);
+}
+
+/* ================= SINGLE-ATOM SCENE ================= */
+function orbLabel(P,main,sub,col){
+  const f1=Math.round(12*SC), f2=Math.round(9*SC);
+  octx.fillStyle=col; octx.textBaseline='middle';
+  octx.font=`600 ${f1}px 'DM Sans',Arial`;
+  const w1=octx.measureText(main).width;
+  octx.font=`600 ${f2}px 'DM Sans',Arial`;
+  const w2=octx.measureText(sub).width;
+  const x0=P.x-(w1+w2)/2;
+  octx.textAlign='left';
+  octx.font=`600 ${f1}px 'DM Sans',Arial`; octx.fillText(main,x0,P.y);
+  octx.font=`600 ${f2}px 'DM Sans',Arial`; octx.fillText(sub,x0+w1+1,P.y+4*SC);
+  octx.textAlign='center';
+}
+function sceneAtom(){
+  const c=ATOM[scene];
+  const aA=atomicAlpha(), hT=hybGrow(), angA=angleAlpha();
+  const sepE=ease(sep);
+  const gath=ease(1-clamp(t/0.30,0,1));   // 1 = lined up in the top row (ready), 0 = gathered at the atom
+  const opaque=[], trans=[], occl=[];
+  const pushLobe=(pos,dir,L,R,col,a)=>{
+    const it=lobeItem(pos,dir,L,R,col,a);
+    (a>=0.999?opaque:trans).push(it);
+    occl.push({pos,dir,L,R});
+  };
+  const slots=rowSlots(4);                       // [2s, 2px, 2py, 2pz] left to right
+  // sp swaps px/py seats so its two HORIZONTAL hybrids land in well-separated seats (0 and 2)
+  const seatMap=scene==='sp'?{x:2,y:1,z:3}:{x:1,y:2,z:3};
+  const axSlot={x:slots[seatMap.x], y:slots[seatMap.y], z:slots[seatMap.z]};
+  const rowPos=sx=>invView(V(sx,ROW_Y,0));       // row anchors stay put on screen while the atom is dragged
+
+  // atomic orbitals: in the row when ready, gathered onto the atom while mixing
+  const pBase=ax=>lerpV(ATOMC, rowPos(axSlot[ax]), gath);
+  const pDir=d=>{ const d0=rot0(d); return norm(lerpV(uRot(d0), d0, gath)); };   // on the atom, follow the drag; in the row, stay fixed
+  const pLL=PL+(RPL-PL)*gath, pRR=PR+(RPR-PR)*gath;
+  if(aA>0.01) c.fadeP.forEach(ax=>PAX[ax].forEach(d=>pushLobe(pBase(ax),pDir(d),pLL,pRR,PGL[ax],aA)));
+  // unhybridised p orbitals take no part: they stay in their shelf seats throughout
+  if(showP) c.keepP.forEach(ax=>PAX[ax].forEach(d=>pushLobe(rowPos(axSlot[ax]),rot0(d),RPL,RPR,PGL[ax],1)));
+  const sPos=lerpV(ATOMC, rowPos(slots[0]), gath);
+  const sR=46+(RS-46)*gath;
+
+  // hybrids: grow at the atom; Individual flies them up into the shelf seats not taken by the leftover p
+  const takenIdx=new Set(c.keepP.map(ax=>seatMap[ax]));
+  const hSlots=[0,1,2,3].filter(i=>!takenIdx.has(i)).slice(0,c.hyb.length).map(i=>slots[i]);
+  if(hT>0.01) c.hyb.forEach((d,i)=>{
+    const dv=rot0(norm(d));
+    const flat=norm(V(dv.x, dv.y, dv.z*0.45));      // on the shelf, ease the tilt toward the screen so the teardrop silhouette shows
+    const d0=norm(lerpV(uRot(dv), flat, sepE));     // combined: pivot about the pinned atom centre; shelf: fixed
+    const base=lerpV(ATOMC, rowPos(hSlots[i]), sepE);
+    const Lf=HL*(0.25+0.75*hT), Rf=HR*(0.55+0.45*hT);
+    const L=Lf+(RHL-Lf)*sepE, R=Rf+(RHR-Rf)*sepE;
+    const a=Math.min(1,hT*1.4);
+    pushLobe(base,d0,L,R,COL.h,a);
+    if(sepE>0.01) pushLobe(base,mul(d0,-1),L*SM_L,R*SM_R,COL.h,Math.min(a,sepE));   // small back lobe
+  });
+
+  opaque.push(sphereItem(ATOMC,13,COL.n,1));
+  const behind=[];
+  if(aA>0.01) behind.push(sphereItem(sPos,sR,COL.s,aA,0));   // solid lit sphere — reads clearly as the s orbital
+  renderGL(opaque,trans,behind);
+
+  // overlay
+  sphereLabel(ATOMC,13,'C',occl.filter(o=>rotP(add(o.pos,mul(norm(o.dir),o.L*0.5))).z < rotP(ATOMC).z-4));
+  if(aA>0.02){   // labels for the mixing orbitals (ride with them, fade as they mix)
+    octx.save(); octx.globalAlpha=aA;
+    c.fadeP.forEach(ax=>{
+      const P=proj(add(pBase(ax), mul(rot0(PAX[ax][0]), pLL+22)));
+      orbLabel(P,'2p',ax,PHEX[ax]);
+    });
+    const S=proj(add(sPos, V(0,-(sR+18),0)));
+    octx.fillStyle=HEX.s; octx.font=`600 ${Math.round(12*SC)}px 'DM Sans',Arial`;
+    octx.textAlign='center'; octx.textBaseline='middle'; octx.fillText('2s',S.x,S.y);
+    octx.restore();
+  }
+  if(showP) c.keepP.forEach(ax=>{   // shelf p labels stay for good
+    const base=rowPos(axSlot[ax]);
+    orbLabel(proj(add(base, mul(rot0(PAX[ax][0]), RPL+22))),'2p',ax,PHEX[ax]);
+    if(angA>0.01){
+      octx.save(); octx.globalAlpha=angA;
+      ovText(proj(add(base, V(0,-(RPL+18),0))),'unhybridised',PHEX[ax],10,false);
+      octx.restore();
+    }
+  });
+  const arcA=angA*(1-Math.min(1,sep*1.6));   // arc + labels fade away while separated
+  if(arcA>0.01){
+    octx.save(); octx.globalAlpha=arcA;
+    drawAngleArcOv(ATOMC,uRot(rot0(c.hyb[0])),uRot(rot0(c.hyb[1])),c.angle,c.shape);
+    octx.restore();
+  }
+}
+
+/* ================= BONDING SCENE (C=C, C≡C) ================= */
+function sceneBond(){
+  const cfg=SCENES[scene];
+  const type=cfg.type;
+  const app=ease(clamp(t/0.28,0,1));            // approach starts the moment Play is pressed
+  const sig=ease(clamp((t-0.30)/0.16,0,1));
+  const pi=ease(clamp((t-0.56)/0.20,0,1));
+  const sep=BD+72*(1-app);
+  const C1=V(-sep,0,0), C2=V(sep,0,0);
+
+  let inner1,inner2,outer1,outer2,pax;
+  if(type==='sp2'){
+    inner1=V(1,0,0); inner2=V(-1,0,0);
+    outer1=[V(-0.5,0,0.866),V(-0.5,0,-0.866)];
+    outer2=[V(0.5,0,0.866),V(0.5,0,-0.866)];
+    pax=[V(0,1,0)];
+  } else {
+    inner1=V(1,0,0); inner2=V(-1,0,0);
+    outer1=[V(-1,0,0)]; outer2=[V(1,0,0)];
+    pax=[V(0,1,0),V(0,0,1)];
+  }
+
+  const opaque=[], trans=[], occl=[];
+  const pushLobe=(pos,dir,L,R,col,a)=>{
+    if(a<=0.01) return;
+    const it=lobeItem(pos,dir,L,R,col,a);
+    (a>=0.999?opaque:trans).push(it);
+    occl.push({pos,dir,L,R});
+  };
+  // highlight modes remove everything not forming the chosen bond
+  const GHOST=0;
+  const aSig=bondHi==='pi'?GHOST:1;      // the C–C σ pair (inner hybrids)
+  const aOut=bondHi==='none'?1:GHOST;    // outer hybrids + H (C–H bonds)
+  const aPi =bondHi==='sigma'?GHOST:1;   // the p orbitals / π system
+  pushLobe(C1,inner1,BHL,BHR,COL.h,aSig); outer1.forEach(d=>pushLobe(C1,d,BHL,BHR,COL.h,aOut));
+  pushLobe(C2,inner2,BHL,BHR,COL.h,aSig); outer2.forEach(d=>pushLobe(C2,d,BHL,BHR,COL.h,aOut));
+  if(bondHi==='sigma'){   // σ isolate: show the complete σ-forming hybrids, small back lobes included
+    pushLobe(C1,mul(inner1,-1),BHL*SM_L,BHR*SM_R,COL.h,1);
+    pushLobe(C2,mul(inner2,-1),BHL*SM_L,BHR*SM_R,COL.h,1);
+  }
+  const pcolFor=ax=>(ax.z>0.5?COL_P2:COL.p);   // ethyne's second π system in orange
+  pax.forEach(ax=>{ [C1,C2].forEach(C=>{
+    pushLobe(C,ax,BPL,BPR,pcolFor(ax),aPi);
+    pushLobe(C,mul(ax,-1),BPL,BPR,pcolFor(ax),aPi);
+  }); });
+
+  const Hs=[];
+  outer1.forEach(d=>Hs.push(add(C1,mul(norm(d),BHL*1.06))));
+  outer2.forEach(d=>Hs.push(add(C2,mul(norm(d),BHL*1.06))));
+  opaque.push(sphereItem(C1,12,COL.n,1));
+  opaque.push(sphereItem(C2,12,COL.n,1));
+  if(aOut>0.01) Hs.forEach(h=>{ const it=sphereItem(h,16,COL.hyd,aOut); (aOut>=0.999?opaque:trans).push(it); });   // hydrogen 1s orbital
+
+  // π clouds: the connecting bridge between each pair of p lobes, held clear of the σ
+  if(pi>0.01){
+    const grow=0.45+0.55*pi;
+    const cA=Math.min(1,pi*1.2)*aPi;
+    pax.forEach(ax=>{ [1,-1].forEach(sgn=>{
+      const off=mul(ax,sgn*BPL*0.72);
+      const m=matFor(V(1,0,0),V(0,1,0),V(0,0,1),1,grow,grow);
+      if(cA<=0.01) return;
+      const it={mesh:MESH_PI, M:m.M, N:m.N, off:off, col:pcolFor(ax), a:cA, fres:0, key:rotP(off).z};
+      (cA>=0.999?opaque:trans).push(it);
+    }); });
+  }
+
+  renderGL(opaque,trans,null);
+
+  // overlay labels
+  sphereLabel(C1,12,'C',occl); sphereLabel(C2,12,'C',occl);
+  if(pi>0.01 && bondHi==='none'){
+    octx.save(); octx.globalAlpha=pi;
+    ovText({x:W/2,y:H-46*SC},cfg.pi>1?'2 π bonds':'π bond',HEX.p,12,true);
+    octx.restore();
+  }
+  if(bondHi==='sigma') ovText({x:W/2,y:H-46*SC},'σ bond only: head-on overlap of the two inner hybrids','#5eead4',12,true);
+  if(bondHi==='pi') ovText({x:W/2,y:H-46*SC},cfg.pi>1?'π bonds only: two side-on p–p overlaps at 90°':'π bond only: side-on overlap of the p orbitals',HEX.p,12,true);
+}
+
+/* ================= ENERGY / BONDING SIDE PANEL (2D, unchanged) ================= */
+function arrowsInBox(x,y,w,h,arr){
+  ectx.strokeStyle='#475569'; ectx.lineWidth=1.3; ectx.strokeRect(x,y,w,h);
+  const cx=x+w/2;
+  const up=ox=>{ ectx.beginPath(); ectx.moveTo(ox,y+h-4); ectx.lineTo(ox,y+4); ectx.moveTo(ox,y+4); ectx.lineTo(ox-3,y+9); ectx.moveTo(ox,y+4); ectx.lineTo(ox+3,y+9); ectx.stroke(); };
+  const dn=ox=>{ ectx.beginPath(); ectx.moveTo(ox,y+4); ectx.lineTo(ox,y+h-4); ectx.moveTo(ox,y+h-4); ectx.lineTo(ox-3,y+h-9); ectx.moveTo(ox,y+h-4); ectx.lineTo(ox+3,y+h-9); ectx.stroke(); };
+  ectx.strokeStyle='#e2e8f0';
+  if(arr==='ud'){ up(cx-3); dn(cx+3); } else if(arr==='u'){ up(cx); }
+}
+function boxRow(label,x,y,cells,col){
+  ectx.fillStyle=col; ectx.font='600 11px "DM Sans",Arial'; ectx.textAlign='right'; ectx.textBaseline='middle';
+  ectx.fillText(label,x-8,y+11);
+  const bw=19,bh=22,gap=4;
+  cells.forEach((a,i)=>arrowsInBox(x+i*(bw+gap),y,bw,bh,a));
+}
+function drawEnergyAtom(){
+  const type=scene;
+  let phase=(!playing && t<=0.001)?'ground':(t<0.15?'ground':t<0.52?'excited':'hybrid');
+  const lx=52;
+  if(phase==='ground'||phase==='excited'){
+    boxRow('2p',lx,26,phase==='ground'?['u','u','']:['u','u','u'],'#a78bfa');
+    boxRow('2s',lx,92,phase==='ground'?['ud']:['u'],'#38bdf8');
+    ectx.fillStyle=phase==='excited'?'#5eead4':'#ffffff'; ectx.font='italic 10px "DM Sans",Arial';
+    ectx.textAlign='left'; ectx.textBaseline='middle';
+    ectx.fillText(phase==='ground'?'ground state':'excited state (promoted)',lx-44,132);
+  } else {
+    const c=ATOM[type], nH=c.hyb.length, nP=c.keepP.length;
+    if(nP>0){ boxRow('2p',lx,26,Array(nP).fill('u'),'#a78bfa'); }
+    const hy=nP>0?74:58;
+    boxRow(type==='sp3'?'sp³':type==='sp2'?'sp²':'sp',lx,hy,Array(nH).fill('u'),'#2dd4bf');
+    ectx.fillStyle='#5eead4'; ectx.font='italic 10px "DM Sans",Arial'; ectx.textAlign='left'; ectx.textBaseline='middle';
+    ectx.fillText(nP>0?nH+' hybrids + '+nP+' unhybridised p':nH+' equal hybrid orbitals',lx-44,132);
+  }
+}
+function drawEnergyBond(cfg){
+  const type=cfg.type, nH=(type==='sp2'?3:2), nP=(type==='sp2'?1:2);
+  const lx=56;
+  boxRow('2p',lx,18,Array(nP).fill('u'),'#a78bfa');
+  boxRow(type==='sp2'?'sp²':'sp',lx,56,Array(nH).fill('u'),'#2dd4bf');
+  const sigOn=t>0.46, piOn=t>0.74, done=t>0.80;
+  ectx.textAlign='left'; ectx.textBaseline='middle'; ectx.font='600 11px "DM Sans",Arial';
+  ectx.fillStyle=sigOn?'#5eead4':'#ffffff'; ectx.fillText((sigOn?'✓ ':'•  ')+'1 σ bond',14,102);
+  ectx.fillStyle=piOn?'#a78bfa':'#ffffff'; ectx.fillText((piOn?'✓ ':'•  ')+(cfg.pi>1?'2 π bonds':'1 π bond'),14,122);
+  ectx.fillStyle=done?'#5eead4':'#ffffff'; ectx.font='italic 10px "DM Sans",Arial';
+  ectx.fillText('= '+cfg.bondName,14,141);
+}
+function drawEnergy(){
+  ectx.clearRect(0,0,222,150);
+  const cfg=SCENES[scene];
+  if(cfg.mode==='atom') drawEnergyAtom(); else drawEnergyBond(cfg);
+}
+
+/* ================= STEPS ================= */
+function stepsFor(s){
+  const cfg=SCENES[s];
+  if(cfg.mode==='atom'){
+    const c=ATOM[s];
+    return [
+      {sn:'Ready', st:'Atomic orbitals', sd:'One 2s orbital and three 2p dumbbells (p<sub>x</sub>, p<sub>y</sub>, p<sub>z</sub>). Press Hybridise — they come together and mix.'},
+      {sn:'Step 1 — Ground state', st:'C: 1s² 2s² 2p²', sd:'Carbon has only two unpaired electrons in the ground state.'},
+      {sn:'Step 2 — Excited state', st:'One 2s electron promoted', sd:'2s¹ 2p³ — now four unpaired electrons, ready to bond.'},
+      {sn:'Step 3 — Mixing', st:c.mixT, sd:c.mixD},
+      {sn:'Step 4 — Hybrid orbitals', st:c.resT, sd:c.resD+' Press Individual to see each hybrid on its own.'}
+    ];
+  }
+  if(s==='ethene'){
+    return [
+      {sn:'Ready', st:'Two sp² carbons', sd:'Each carbon is sp² hybridised: three sp² orbitals in a plane plus one unhybridised p, standing perpendicular.'},
+      {sn:'Step 1 — σ bond', st:'sp²–sp² head-on overlap', sd:'The carbons approach; a hybrid on each overlaps end-to-end to form the C–C σ bond.'},
+      {sn:'Step 2 — π bond', st:'p–p side-on overlap', sd:'The two unhybridised p orbitals overlap sideways, above and below the plane, forming one π bond.'},
+      {sn:'Step 3 — Double bond', st:'C=C = 1 σ + 1 π', sd:'A double bond is one σ plus one π. The π bond locks the molecule flat.'}
+    ];
+  }
+  return [
+    {sn:'Ready', st:'Two sp carbons', sd:'Each carbon is sp hybridised: two sp orbitals in a line plus two unhybridised p orbitals, at right angles.'},
+    {sn:'Step 1 — σ bond', st:'sp–sp head-on overlap', sd:'The carbons approach; one sp on each overlaps end-to-end to form the C–C σ bond.'},
+    {sn:'Step 2 — two π bonds', st:'2 × p–p side-on overlap', sd:'The two pairs of p orbitals overlap sideways at 90° to each other, forming two π bonds.'},
+    {sn:'Step 3 — Triple bond', st:'C≡C = 1 σ + 2 π', sd:'A triple bond is one σ plus two π bonds.'}
+  ];
+}
+function buildSteps(){
+  const steps=stepsFor(scene);
+  stepCount=steps.length;
+  stepPanel.innerHTML=steps.map((s,i)=>
+    `<div class="si${i===0?' active':''}" id="s${i}"><div class="sn">${s.sn}</div><div class="st">${s.st}</div><div class="sd">${s.sd}</div></div>`
+  ).join('');
+}
+function currentStep(){
+  const bond=SCENES[scene].mode==='bond';
+  if(!playing && t<=0.001) return 0;
+  if(bond){ if(t<0.02) return 0; if(t<0.50) return 1; if(t<0.78) return 2; return 3; }
+  if(t<0.15) return 1; if(t<0.30) return 2; if(t<0.72) return 3; return 4;
+}
+function setStepUI(){
+  const n=currentStep();
+  for(let i=0;i<stepCount;i++){ const el=document.getElementById('s'+i); if(el) el.classList.toggle('active',i===n); }
+  const atom=SCENES[scene].mode==='atom';
+  const badge=!atom
+    ? ['READY','σ BOND','π BOND','BONDED']
+    : ['READY','GROUND STATE','EXCITED STATE','MIXING','HYBRIDISED'];
+  let txt=badge[n]||'READY';
+  if(atom && t>=1 && sep>0.5) txt='INDIVIDUAL ORBITALS';
+  if(!atom && t>=0.80 && bondHi!=='none') txt=bondHi==='sigma'?'σ BOND ONLY':'π BOND ONLY';
+  document.getElementById('statusBadge').textContent=txt;
+  // Individual / Combine button appears once hybridised (atom scenes only)
+  const sb=document.getElementById('sepBtn');
+  const show=atom && t>=1;
+  sb.style.display=show?'':'none';
+  const want=sepT===0?'Individual':'Combine';
+  if(sb.textContent!==want) sb.textContent=want;
+  // σ / π highlight buttons appear once bonded (bond scenes only)
+  const bshow=!atom && t>=0.80;
+  const gB=document.getElementById('sigBtn'), pB=document.getElementById('piBtn');
+  gB.style.display=bshow?'':'none'; pB.style.display=bshow?'':'none';
+  gB.classList.toggle('on',bondHi==='sigma'); pB.classList.toggle('on',bondHi==='pi');
+}
+function setLegend(){
+  const bond=SCENES[scene].mode==='bond';
+  const items=bond
+    ? (scene==='ethyne'
+        ? [[HEX.h,'hybrid orbital'],[HEX.p,'first π'],[HEX_P2,'second π'],[HEX.n,'carbon'],[HEX.hyd,'hydrogen']]
+        : [[HEX.h,'hybrid orbital'],[HEX.p,'p orbital / π'],[HEX.n,'carbon'],[HEX.hyd,'hydrogen']])
+    : [[HEX.s,'2s'],[PHEX.x,'2p<sub>x</sub>'],[PHEX.y,'2p<sub>y</sub>'],[PHEX.z,'2p<sub>z</sub>'],[HEX.h,'hybrid orbital'],[HEX.n,'carbon nucleus']];
+  document.getElementById('legend').innerHTML=items.map(i=>
+    `<span><i class="dotk" style="background:${i[0]}"></i> ${i[1]}</span>`).join('');
+}
+
+/* ================= MAIN LOOP ================= */
+let lastW=0,lastH=0;
+function resize(){
+  const wr=document.getElementById('cWrap');
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  const cw=wr.clientWidth, ch=wr.clientHeight;
+  [glc,ov].forEach(cv=>{ cv.style.width=cw+'px'; cv.style.height=ch+'px';
+    cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr); });
+  octx.setTransform(dpr,0,0,dpr,0,0);
+  gl.viewport(0,0,glc.width,glc.height);
+  W=cw; H=ch; SC=Math.min(W,H)/560;
+  const ed=Math.min(window.devicePixelRatio||1,3);
+  eCanvas.width=Math.round(222*ed); eCanvas.height=Math.round(150*ed);
+  eCanvas.style.width='222px'; eCanvas.style.height='150px';
+  ectx.setTransform(ed,0,0,ed,0,0);
+}
+function resizeIfNeeded(){
+  const wr=document.getElementById('cWrap');
+  if(wr.clientWidth!==lastW||wr.clientHeight!==lastH){ resize(); lastW=wr.clientWidth; lastH=wr.clientHeight; }
+}
+function draw(){
+  resizeIfNeeded();
+  octx.clearRect(0,0,W,H);
+  // no auto-rotation anywhere — drag only
+  if(playing){ t=Math.min(1,t+0.0042); if(t>=1) playing=false; }
+  sep+=clamp(sepT-sep,-0.04,0.04); if(Math.abs(sepT-sep)<0.001) sep=sepT;
+  setStepUI();
+  drawEnergy();
+  if(SCENES[scene].mode==='atom') sceneAtom(); else sceneBond();
+  watermark();
+  requestAnimationFrame(draw);
+}
+
+/* ================= CONTROLS ================= */
+function selectScene(s){
+  scene=s; t=0; playing=false; sep=0; sepT=0;
+  const cfg=SCENES[s];
+  if(cfg.mode==='bond'){ aX=-0.34; aY=0; roll=0; }   // head-on, looking slightly down; the two carbons present as mirror images
+  else { aX=0; aY=0; roll=0; uAX=0; uAY=0; }
+  document.getElementById('pBtn').style.display=cfg.mode==='atom'?'':'none';
+  bondHi='none';
+  document.getElementById('playBtn').innerHTML=cfg.mode==='atom'?'Hybridise':'&#9654; Play';
+  document.getElementById('eTitle').textContent=cfg.mode==='atom'?'Orbital energy diagram':'How the bonds form';
+  buildSteps(); setStepUI(); setLegend();
+}
+document.querySelectorAll('#typeSeg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#typeSeg button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    selectScene(b.dataset.t);
+  });
+});
+document.getElementById('playBtn').addEventListener('click',()=>{ if(t>=1){ t=0; sep=0; sepT=0; bondHi='none'; } playing=true; });
+document.getElementById('sepBtn').addEventListener('click',()=>{ sepT=sepT===0?1:0; });
+document.getElementById('resetBtn').addEventListener('click',()=>{ t=0; playing=false; sep=0; sepT=0; bondHi='none'; });
+document.getElementById('pBtn').addEventListener('click',function(){
+  showP=!showP; this.classList.toggle('on',showP);
+  this.textContent='Unhybridised p: '+(showP?'On':'Off');
+});
+document.getElementById('sigBtn').addEventListener('click',()=>{ bondHi=bondHi==='sigma'?'none':'sigma'; });
+document.getElementById('piBtn').addEventListener('click',()=>{ bondHi=bondHi==='pi'?'none':'pi'; });
+
+/* drag to rotate (on the overlay, which sits on top) */
+function down(x,y){ dragging=true; lastX=x; lastY=y; }
+function move(x,y){
+  if(!dragging) return;
+  if(SCENES[scene].mode==='bond'){ roll+=(y-lastY)*0.01; aY+=(x-lastX)*0.01; }
+  else { uAY+=(x-lastX)*0.01; uAX=clamp(uAX+(y-lastY)*0.01,-1.4,1.4); }   // pinned rotation about the atom centre
+  lastX=x; lastY=y;
+}
+function up(){ dragging=false; }
+ov.addEventListener('mousedown',e=>{const r=ov.getBoundingClientRect();down(e.clientX-r.left,e.clientY-r.top);});
+window.addEventListener('mousemove',e=>{const r=ov.getBoundingClientRect();move(e.clientX-r.left,e.clientY-r.top);});
+window.addEventListener('mouseup',up);
+ov.addEventListener('touchstart',e=>{const r=ov.getBoundingClientRect();down(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);},{passive:true});
+ov.addEventListener('touchmove',e=>{const r=ov.getBoundingClientRect();move(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);e.preventDefault();},{passive:false});
+ov.addEventListener('touchend',up);
+
+/* ---- go ---- */
+selectScene('sp3');
+resize();
+requestAnimationFrame(draw);
+
+/* test hooks (used only by automated screenshots) */
+window.__setT=v=>{ t=clamp(v,0,1); playing=false; };
+window.__setAngles=(x,y,r)=>{ if(SCENES[scene].mode==='atom'){ uAX=x; uAY=y; } else { aX=x; aY=y; roll=r||0; } };
+window.__setSep=v=>{ sepT=clamp(v,0,1); sep=sepT; };
+</script>
+</body>
+</html>

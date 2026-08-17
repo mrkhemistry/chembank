@@ -83,6 +83,7 @@
   .thumb-polar { background: linear-gradient(135deg, #0a1020, #16082a); }
   .thumb-rs    { background: linear-gradient(135deg, #08222a, #062430); }
   .thumb-dt    { background: linear-gradient(135deg, #0a2030, #082030); }
+  .thumb-hyb   { background: linear-gradient(135deg, #041f1c, #10102a); }
   .card-thumb-icon { font-size: 52px; position: relative; z-index: 1; filter: drop-shadow(0 0 20px rgba(255,255,255,0.2)); }
 
   .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -490,6 +491,27 @@
       <div class="card-desc">A 3D polarimeter walkthrough: unpolarised light is filtered to a single plane, an optically active solution rotates that plane, and you turn the analyser to measure the optical rotation.</div>
       <div class="card-footer">
         <span class="card-meta">Optical activity · Interactive</span>
+        <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Hybridisation of Carbon — LIVE -->
+  <a href="./hybridisation.html" class="sim-card" data-tags="organic bonding" data-published="2026-08-17">
+    <div class="card-thumb thumb-hyb">
+      <img src="./thumb-hybridisation.png" alt="sp&sup3; hybrid orbitals" width="200" height="150" style="position:relative;z-index:1;object-fit:cover;border-radius:8px;">
+    </div>
+    <div class="card-body">
+      <div class="card-tags">
+        <span class="tag tag-h2">H2</span>
+        <span class="tag tag-org">Organic</span>
+        <span class="tag tag-topic">Intro to Organic</span>
+        <span class="tag tag-new">New</span>
+      </div>
+      <div class="card-title">Hybridisation of Carbon</div>
+      <div class="card-desc">Mix the 2s and 2p orbitals into sp&sup3;, sp&sup2; and sp hybrids, pull each hybrid apart to see its shape, then bond two carbons to build the &sigma; and &pi; bonds of C=C and C&equiv;C.</div>
+      <div class="card-footer">
+        <span class="card-meta">Bonding · 3D</span>
         <span class="card-launch">Launch <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg></span>
       </div>
     </div>
@@ -1303,6 +1325,7 @@ function bg(ctx,W,H){ctx.fillStyle='#0a1628';ctx.fillRect(0,0,W,H);}
   for(let x=96;x<=152;x+=2.5){const d=10*Math.sin(x*0.45);s2?ctx.lineTo(x,cy-d):(ctx.moveTo(x,cy-d),s2=true);}
   ctx.stroke();
 })();
+
 </script>
 </body>
 </html>

@@ -67,12 +67,15 @@
   @media(max-width:700px){
     nav,.main{padding-left:16px;padding-right:16px;}
     nav{padding-top:12px;padding-bottom:12px;}
-    #topRow{flex-direction:column;height:auto;}
-    #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;}
-    #cWrap{flex:none;height:360px;}
+    /* phone stack order: orbitals first, controls IMMEDIATELY below (both above the fold),
+       then the legend, then the energy/steps panel */
+    #topRow{display:contents;}
+    #cWrap{flex:none;height:360px;order:1;}
+    #botBar{order:2;gap:6px;}
+    .legend{order:3;}
+    #sidePanel{order:4;width:100%;border-left:none;border-top:1px solid #1e293b;}
     #stepPanel{flex-direction:row;overflow-x:auto;}
     .si{min-width:160px;}
-    #botBar{gap:6px;}
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

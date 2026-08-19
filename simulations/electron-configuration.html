@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electron Configuration | Mr Khemistry</title>
+<meta name="description" content="Interactive H2 Chemistry simulation: build any Period-4 atom or ion in the 4s and 3d orbitals, see why 4s fills before 3d yet ionises first, and nail the Cr and Cu exceptions.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./_auth-guard.js"></script>
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root{
+    --bg:#0b0f1a; --surface:#111827; --surface2:#0f172a; --border:rgba(255,255,255,0.08);
+    --text:#f0f4ff; --muted:#e8eef6; --accent:#4f9cf9; --teal:#2dd4bf; --tealsoft:#5eead4;
+    --red:#f87171; --amber:#fbbf24; --green:#34d399; --tg:#1a76b0;
+  }
+  body{ background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; line-height:1.6; }
+  body::before{ content:''; position:fixed; inset:0; background-image:linear-gradient(rgba(79,156,249,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,156,249,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+  nav{ position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 32px; border-bottom:1px solid var(--border); background:rgba(11,15,26,0.9); backdrop-filter:blur(12px); }
+  .nav-left{ display:flex; align-items:center; gap:14px; min-width:0; }
+  .nav-back{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); text-decoration:none; white-space:nowrap; transition:color .2s; }
+  .nav-back:hover{ color:var(--accent); }
+  .nav-div{ width:1px; height:20px; background:var(--border); }
+  .nav-title{ font-family:'DM Serif Display',serif; font-size:18px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .nav-tags{ display:flex; gap:6px; }
+  .ntag{ font-size:10px; font-weight:600; padding:3px 9px; border-radius:100px; letter-spacing:.05em; text-transform:uppercase; }
+  .ntag-h2{ background:rgba(79,156,249,0.14); color:#bcd6ff; border:1px solid rgba(79,156,249,0.28); }
+  .ntag-topic{ background:rgba(45,212,191,0.14); color:#a7f3e4; border:1px solid rgba(45,212,191,0.28); }
+
+  .main{ position:relative; z-index:1; flex:1; width:100%; max-width:960px; margin:0 auto; padding:26px 22px 40px; display:flex; flex-direction:column; gap:22px; }
+  .lead{ text-align:center; }
+  .lead h1{ font-family:'DM Serif Display',serif; font-size:27px; font-weight:400; margin-bottom:8px; }
+  .lead p{ font-size:14.5px; color:var(--muted); max-width:700px; margin:0 auto; }
+
+  .simcard{ background:var(--surface2); border:1px solid var(--border); border-radius:18px; overflow:hidden; }
+
+  /* ---- energy diagram ---- */
+  .diagram{ position:relative; height:400px; margin:8px 6px 0; }
+  .axis{ position:absolute; left:14px; top:20px; bottom:24px; width:2px; background:var(--muted); }
+  .axis::before{ content:''; position:absolute; top:-8px; left:-4px; border-left:5px solid transparent; border-right:5px solid transparent; border-bottom:8px solid var(--muted); }
+  .axis .hi{ position:absolute; top:-4px; left:12px; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .axis .lo{ position:absolute; bottom:-4px; left:12px; font-size:11.5px; color:var(--muted); white-space:nowrap; }
+
+  .row{ position:absolute; left:44px; right:14px; display:flex; align-items:center; gap:12px; height:44px; transform:translateY(var(--y)); }
+  .row.lvl{ transition:transform .82s cubic-bezier(.45,.05,.2,1); }
+  button.row{ -webkit-appearance:none; appearance:none; border:none; background:transparent; color:inherit; font:inherit; text-align:left; padding:0; cursor:pointer; }
+  .cell:focus-visible, .ion:focus-visible, .cbtn:focus-visible, button.row:focus-visible, .nav-back:focus-visible, .btn:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .row .rlabel{ width:30px; text-align:right; font-weight:700; font-size:16px; flex-shrink:0; color:var(--text); }
+  .row.s .rlabel{ color:#9cc4ff; } .row.d .rlabel{ color:#8ff0e0; }
+  .boxes{ display:flex; gap:8px; z-index:1; }
+  .box{ width:34px; height:38px; border-radius:6px; border:2px solid; background:rgba(255,255,255,0.02); display:flex; align-items:center; justify-content:center; gap:1px; transition:border-color .2s, box-shadow .2s; }
+  .row.s .box{ border-color:var(--accent); } .row.d .box{ border-color:var(--teal); }
+  .box.target{ animation:target 1.3s ease-in-out infinite; }
+  @keyframes target{ 0%,100%{ box-shadow:0 0 0 0 rgba(251,191,36,0); } 50%{ box-shadow:0 0 0 3px rgba(251,191,36,0.6); } }
+  .box.bad{ border-color:var(--red)!important; animation:bad 1.15s ease-in-out infinite; }
+  @keyframes bad{ 0%,100%{ box-shadow:0 0 0 0 rgba(248,113,113,0); } 50%{ box-shadow:0 0 0 3px rgba(248,113,113,0.6); } }
+  .box.just .el{ animation:pop .34s ease; }
+  @keyframes pop{ from{ opacity:0; transform:translateY(5px) scale(.8);} to{ opacity:1; transform:none;} }
+  .row.flash .box{ animation:flash 1s ease; }
+  @keyframes flash{ 0%,100%{ filter:none;} 45%{ filter:drop-shadow(0 0 8px currentColor);} }
+  .el{ width:13px; height:34px; }
+  .el line{ stroke:var(--text); stroke-width:2.3; stroke-linecap:round; }
+
+  .row.ctx .rlabel{ color:var(--muted); }
+  .row.ctx .box{ border:1.5px solid var(--muted); width:30px; height:32px; background:transparent; }
+  .row.core .rlabel{ color:var(--muted); }
+  .core-bar{ flex:1; border:1px dashed var(--muted); border-radius:8px; padding:7px 12px; font-size:12.5px; color:var(--muted); }
+  .core-bar sup{ font-size:.7em; }
+  .swap-tag{ position:absolute; right:0; top:-2px; font-size:12px; font-weight:700; color:var(--amber); opacity:0; pointer-events:none; }
+  .swap-tag.show{ animation:tag 2s ease; }
+  @keyframes tag{ 0%{opacity:0;} 20%,70%{opacity:1;} 100%{opacity:0;} }
+
+  /* ---- prompt / feedback ---- */
+  .prompt{ padding:13px 18px; border-top:1px solid var(--border); background:#0a1424; font-size:14.5px; font-weight:600; min-height:50px; display:flex; align-items:center; gap:14px; }
+  .prompt .msg{ flex:1; min-width:0; }
+  .prompt .cfg{ flex-shrink:0; font-weight:600; font-size:14px; color:var(--muted); white-space:nowrap; }
+  .prompt .cfg sup{ font-size:.68em; }
+  .prompt.ok{ color:var(--green); } .prompt.warn{ color:#fca5a5; } .prompt.ion{ color:var(--tealsoft); }
+
+  /* ---- tray + controls ---- */
+  .tray{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-top:1px solid var(--border); background:#060e1c; flex-wrap:wrap; }
+  .token{ width:44px; height:50px; border-radius:10px; border:1.5px solid #3a557f; background:#0e1c33; display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; flex-shrink:0; }
+  .token:active{ cursor:grabbing; }
+  .token.disabled{ opacity:.35; cursor:default; }
+  .token .el{ width:16px; height:38px; }
+  .tray-txt{ font-size:13px; color:var(--muted); }
+  .cbtn{ background:#16233c; color:var(--text); border:1px solid #22314d; border-radius:8px; padding:8px 15px; min-height:40px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; -webkit-appearance:none; appearance:none; }
+  .cbtn:hover{ background:#22314d; } .cbtn.outline{ background:transparent; }
+  .cbtn:disabled{ opacity:.35; cursor:default; }
+  .cbtn.ionise{ border-color:var(--teal); color:var(--tealsoft); }
+  .ctrl-right{ margin-left:auto; display:flex; gap:8px; }
+
+  /* ---- period-4 selector ---- */
+  .selector{ padding:14px 18px 18px; border-top:1px solid var(--border); }
+  .sel-label{ font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:9px; }
+  .ptable{ display:flex; flex-wrap:wrap; gap:6px; }
+  .cell{ width:46px; height:50px; border-radius:8px; border:1.5px solid #2b3d5c; background:#0e1a2e; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:border-color .15s, background .15s; -webkit-appearance:none; appearance:none; font-family:inherit; }
+  .cell .z{ font-size:9px; color:var(--muted); line-height:1; }
+  .cell .sym{ font-size:16px; font-weight:700; color:var(--text); line-height:1.15; }
+  .cell.dblock{ background:#0c2230; }
+  .cell:hover{ border-color:var(--accent); }
+  .cell.sel{ border-color:var(--amber); background:#20222e; box-shadow:0 0 0 2px rgba(251,191,36,0.35); }
+  .ionrow{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .ion{ padding:8px 14px; min-height:40px; display:inline-flex; align-items:center; border-radius:100px; border:1.5px solid #3a557f; background:#0e1c33; font-size:14px; font-weight:600; color:var(--text); cursor:pointer; -webkit-appearance:none; appearance:none; font-family:inherit; }
+  .ion sup{ font-size:.72em; }
+  .ion:hover{ border-color:var(--accent); }
+  .ion.sel{ border-color:var(--amber); box-shadow:0 0 0 2px rgba(251,191,36,0.35); }
+  .scale-note{ text-align:center; font-size:11px; color:var(--muted); opacity:.9; padding:10px 14px 12px; }
+
+  .dghost{ position:fixed; z-index:999; width:18px; height:44px; pointer-events:none; transform:translate(-50%,-50%) scale(1.15); filter:drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+  .dghost line{ stroke:#fff; stroke-width:2.4; stroke-linecap:round; }
+
+  .notes-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
+  .note-card{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:17px 19px; }
+  .note-card h3{ font-size:13px; font-weight:700; color:var(--accent); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .note-card h3::before{ content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .note-card p{ font-size:13px; color:var(--muted); }
+  .note-card strong{ color:var(--text); } .note-card .k{ color:var(--tealsoft); font-weight:600; }
+
+  .cta{ background:linear-gradient(135deg,#0e2036,#0a1424); border:1px solid var(--border); border-radius:18px; padding:26px 24px; text-align:center; }
+  .cta h2{ font-family:'DM Serif Display',serif; font-size:22px; font-weight:400; margin-bottom:6px; }
+  .cta p{ font-size:14px; color:var(--muted); max-width:520px; margin:0 auto 18px; }
+  .cta-btns{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn{ display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border-radius:11px; font-size:14.5px; font-weight:700; text-decoration:none; border:1px solid transparent; }
+  .btn-tg{ background:var(--tg); color:#fff; } .btn-tg:hover{ background:#15669a; }
+  .btn-ghost{ background:transparent; color:var(--text); border-color:#2c3f5f; } .btn-ghost:hover{ border-color:var(--accent); color:#fff; }
+  .btn svg{ width:18px; height:18px; }
+  .cta-mini{ margin-top:14px; font-size:12.5px; color:var(--muted); } .cta-mini a{ color:var(--accent); text-decoration:none; }
+
+  footer{ position:relative; z-index:1; text-align:center; padding:24px; border-top:1px solid var(--border); font-size:12px; color:var(--muted); }
+  footer a{ color:var(--accent); text-decoration:none; }
+
+  @media(max-width:640px){
+    nav{ padding:12px 16px; } .main{ padding:20px 14px 32px; } .nav-tags{ display:none; }
+    .lead h1{ font-size:22px; }
+    .box{ width:30px; height:36px; }
+    .cell{ width:44px; height:48px; } .cell .sym{ font-size:15px; }
+    .cbtn{ min-height:44px; } .ion{ min-height:44px; }
+    .tray{ gap:10px; } .ctrl-right{ margin-left:0; width:100%; }
+    .prompt{ flex-direction:column; align-items:flex-start; gap:5px; }
+  }
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="./index.html" class="nav-back"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg> Simulations</a>
+    <div class="nav-div"></div>
+    <span class="nav-title">4s vs 3d: build the configuration</span>
+  </div>
+  <div class="nav-tags">
+    <span class="ntag ntag-h2">H2</span>
+    <span class="ntag ntag-topic">Atomic Structure</span>
+  </div>
+</nav>
+
+<main class="main">
+  <div class="lead">
+    <h1>Build the electron configuration</h1>
+    <p>Pick a period-4 atom or ion below, then add electrons to 4s and 3d to build it. Watch 4s sit below 3d while empty, then rise above once 3d fills. Ions must be built as the neutral atom first, then ionised.</p>
+  </div>
+
+  <div class="simcard">
+    <div class="diagram" id="diagram">
+      <div class="axis"><span class="hi">higher energy</span><span class="lo">lower energy</span></div>
+
+      <div class="row ctx" style="--y:52px">
+        <span class="rlabel">4p</span>
+        <div class="boxes"><div class="box"></div><div class="box"></div><div class="box"></div></div>
+      </div>
+
+      <button type="button" class="row lvl d" id="row3d" data-orb="3d" aria-label="Add an electron to the 3d subshell" style="--y:112px">
+        <span class="rlabel">3d</span>
+        <div class="boxes" id="boxes3d">
+          <div class="box" data-i="0"></div><div class="box" data-i="1"></div><div class="box" data-i="2"></div><div class="box" data-i="3"></div><div class="box" data-i="4"></div>
+        </div>
+        <span class="swap-tag" id="swapTag">4s pushed up &#8593;</span>
+      </button>
+
+      <button type="button" class="row lvl s" id="row4s" data-orb="4s" aria-label="Add an electron to the 4s subshell" style="--y:232px">
+        <span class="rlabel">4s</span>
+        <div class="boxes"><div class="box" data-i="0"></div></div>
+      </button>
+
+      <div class="row core" style="--y:298px">
+        <span class="rlabel">core</span>
+        <div class="core-bar">[Ar] core = 1s<sup>2</sup> 2s<sup>2</sup> 2p<sup>6</sup> 3s<sup>2</sup> 3p<sup>6</sup></div>
+      </div>
+    </div>
+
+    <div class="prompt" id="prompt" role="status" aria-live="polite"><span class="msg">Pick an element or ion below to start.</span><span class="cfg" id="cfg"></span></div>
+
+    <div class="tray">
+      <div class="token" id="token" aria-hidden="true" title="Drag me onto a level">
+        <svg class="el" viewBox="0 0 16 40"><line x1="8" y1="37" x2="8" y2="5"/><line x1="8" y1="5" x2="3" y2="12"/></svg>
+      </div>
+      <span class="tray-txt"><b>Drag the electron onto a level, or click 4s or 3d,</b> to add it.</span>
+      <div class="ctrl-right">
+        <button type="button" class="cbtn ionise" id="ioniseBtn" disabled>Ionise (remove e&#8315;)</button>
+        <button type="button" class="cbtn outline" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="selector">
+      <div class="sel-label">Period 4, pick an atom</div>
+      <div class="ptable" id="ptable"></div>
+      <div class="sel-label" style="margin-top:14px">or an ion (build the atom, then ionise)</div>
+      <div class="ionrow" id="ionrow"></div>
+    </div>
+    <div class="scale-note">Energy gaps are schematic, drawn to show the order, not to scale. You are marked on the final ground-state configuration, not the order in which you add the electrons.</div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <h3>First In, First Out</h3>
+      <p>4s fills <strong>before</strong> 3d, yet on ionisation 4s empties <strong>before</strong> 3d. Same electrons, opposite order, because the levels swap once 3d is occupied.</p>
+    </div>
+    <div class="note-card">
+      <h3>They overlap</h3>
+      <p>Normally shell <span class="k">n = 3</span> is below <span class="k">n = 4</span>, but 4s and 3d are <strong>very close</strong> and overlap, which is why 4s can dip below 3d while empty.</p>
+    </div>
+    <div class="note-card">
+      <h3>Why 4s rises</h3>
+      <p>Once 3d is occupied, those 3d electrons sit <strong>closer to the nucleus</strong> and repel the 4s electrons outward, raising 4s above 3d. So 4s comes off first.</p>
+    </div>
+    <div class="note-card">
+      <h3>Cr and Cu exceptions</h3>
+      <p>A <span class="k">3d&#8309;</span> or <span class="k">3d&#185;&#8304;</span> set is extra stable, so <strong>Cr</strong> is 3d&#8309;4s&#185; and <strong>Cu</strong> is 3d&#185;&#8304;4s&#185;, not the "expected" 3d&#8308;4s&#178; / 3d&#8313;4s&#178;.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>Interactive simulation by <a href="https://mrkhemistry.com">Mr Khemistry</a>, A-level H2 Chemistry.</footer>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){ return document.getElementById(id); };
+  var row4s=$("row4s"), row3d=$("row3d"), boxes3d=$("boxes3d"), token=$("token");
+  var Y_HIGH="112px", Y_LOW="232px";
+  var UP='<svg class="el" viewBox="0 0 16 40"><line x1="8" y1="37" x2="8" y2="5"/><line x1="8" y1="5" x2="3" y2="12"/></svg>';
+  var DN='<svg class="el" viewBox="0 0 16 40"><line x1="8" y1="3" x2="8" y2="35"/><line x1="8" y1="35" x2="13" y2="28"/></svg>';
+
+  // atom configs (4s, 3d) for period 4; anomalies flagged
+  var ELEMENTS=[
+    {sym:"K",z:19,s:1,d:0},{sym:"Ca",z:20,s:2,d:0},
+    {sym:"Sc",z:21,s:2,d:1,db:1},{sym:"Ti",z:22,s:2,d:2,db:1},{sym:"V",z:23,s:2,d:3,db:1},
+    {sym:"Cr",z:24,s:1,d:5,db:1,anom:1},{sym:"Mn",z:25,s:2,d:5,db:1},{sym:"Fe",z:26,s:2,d:6,db:1},
+    {sym:"Co",z:27,s:2,d:7,db:1},{sym:"Ni",z:28,s:2,d:8,db:1},{sym:"Cu",z:29,s:1,d:10,db:1,anom:1},
+    {sym:"Zn",z:30,s:2,d:10,db:1}
+  ];
+  // ions: atomS/atomD = neutral atom to build first; ionS/ionD = final ion
+  var IONS=[
+    {sym:"Fe",sup:"2+",base:"Fe",atomS:2,atomD:6,ionS:0,ionD:6,charge:2},
+    {sym:"Fe",sup:"3+",base:"Fe",atomS:2,atomD:6,ionS:0,ionD:5,charge:3},
+    {sym:"Cr",sup:"3+",base:"Cr",atomS:1,atomD:5,ionS:0,ionD:3,charge:3,anom:1},
+    {sym:"Cu",sup:"2+",base:"Cu",atomS:1,atomD:10,ionS:0,ionD:9,charge:2,anom:1}
+  ];
+
+  var s=0, d=[0,0,0,0,0], wasCrossed=false;
+  var target=null, phase="idle";   // idle | build | ionise | done
+
+  function dTotal(){ return d[0]+d[1]+d[2]+d[3]+d[4]; }
+  function total(){ return s+dTotal(); }
+  function crossed(){ return dTotal()>0; }   // once 3d is occupied, 4s is above 3d
+  function atomTotal(){ return target ? target.atomS+target.atomD : 0; }
+  function label(t){ return t.base ? t.sym+"<sup>"+t.sup+"</sup>" : t.sym; }
+  function cfgStr(ss,dd){ var o="[Ar]"; if(dd>0)o+=" 3d<sup>"+dd+"</sup>"; if(ss>0)o+=" 4s<sup>"+ss+"</sup>"; return o; }
+
+  function hund3dSlot(){ var i; for(i=0;i<5;i++)if(d[i]===0)return i; for(i=0;i<5;i++)if(d[i]===1)return i; return -1; }
+  function boxEls(c){ return c>=1 ? (UP+(c>=2?DN:"")) : ""; }
+
+  function render(){
+    var cr=crossed();
+    row4s.style.setProperty("--y", cr?Y_HIGH:Y_LOW);
+    row3d.style.setProperty("--y", cr?Y_LOW:Y_HIGH);
+    row4s.querySelector(".box").innerHTML=boxEls(s);
+    var bx=boxes3d.children, i;
+    for(i=0;i<5;i++) bx[i].innerHTML=boxEls(d[i]);
+    $("cfg").innerHTML = target ? cfgStr(s,dTotal()) : "";
+    if(cr && !wasCrossed) flashSwap();
+    wasCrossed=cr;
+    // add / ionise availability
+    var canAdd = (phase==="build" && total()<atomTotal());
+    token.classList.toggle("disabled", !canAdd);
+    row4s.setAttribute("aria-disabled", canAdd?"false":"true");
+    row3d.setAttribute("aria-disabled", canAdd?"false":"true");
+    $("ioniseBtn").disabled = (phase!=="ionise");
+  }
+
+  function flashSwap(){
+    row4s.classList.add("flash"); row3d.classList.add("flash");
+    setTimeout(function(){ row4s.classList.remove("flash"); row3d.classList.remove("flash"); },1000);
+    var t=$("swapTag"); t.classList.remove("show"); void t.offsetWidth; t.classList.add("show");
+  }
+  function pop(box){ if(box){ box.classList.remove("just"); void box.offsetWidth; box.classList.add("just"); } }
+  function clearBad(){ var b=document.querySelectorAll(".box.bad"); for(var i=0;i<b.length;i++) b[i].classList.remove("bad"); }
+  function markBad(){ clearBad(); if(s>0) row4s.querySelector(".box").classList.add("bad"); var bx=boxes3d.children; for(var i=0;i<5;i++) if(d[i]>0) bx[i].classList.add("bad"); }
+
+  function setPrompt(html, kind){ var p=$("prompt"); p.className="prompt"+(kind?(" "+kind):""); p.innerHTML='<span class="msg">'+html+'</span><span class="cfg" id="cfg">'+(target?cfgStr(s,dTotal()):"")+'</span>'; }
+
+  function atomOK(){ return target && s===target.atomS && dTotal()===target.atomD; }
+  function ionOK(){ return target && target.base && s===target.ionS && dTotal()===target.ionD; }
+
+  function evaluate(){
+    if(!target) return;
+    if(phase==="build"){
+      if(atomOK()){
+        clearBad();
+        if(target.base){ phase="ionise"; render(); setPrompt("Neutral <b>"+target.base+"</b> built. Now press <b>Ionise</b> to remove "+target.charge+" electron"+(target.charge>1?"s":"")+" and form "+label(target)+".","ion"); }
+        else { phase="done"; render(); setPrompt("Correct! That is <b>"+target.sym+"</b>."+(dTotal()>0?" Notice 4s is now above 3d, so it would ionise first.":""),"ok"); }
+        return;
+      }
+      if(total()>=atomTotal()){
+        markBad();
+        if(target.anom){
+          var half = (target.base||target.sym)==="Cr" ? "half-filled 3d⁵" : "fully-filled 3d¹⁰";
+          setPrompt("Not quite. "+(target.base||target.sym)+" is an <b>exception</b>: a 4s electron shifts into 3d for a stable "+half+". Aim for "+cfgStr(target.atomS,target.atomD)+". Press Clear to retry.","warn");
+        } else {
+          setPrompt("Not quite, that is "+cfgStr(s,dTotal())+" but "+(target.base||target.sym)+" is "+cfgStr(target.atomS,target.atomD)+". Press Clear to retry.","warn");
+        }
+        return;
+      }
+      render();
+      setPrompt("Building <b>"+(target.base||target.sym)+"</b>. "+total()+" of "+atomTotal()+" electrons placed.","");
+    } else if(phase==="ionise"){
+      if(ionOK()){ phase="done"; render(); setPrompt("Correct! "+label(target)+" is formed by removing "+target.charge+" electron"+(target.charge>1?"s":"")+", <b>4s first</b> (First Out).","ok"); return; }
+      render();
+      setPrompt("Removing electrons to form "+label(target)+". 4s comes off before 3d.","ion");
+    }
+  }
+
+  // placement (build phase only; cannot exceed the target's electron count)
+  function dropOnOrb(orb){
+    if(phase!=="build") return false;
+    if(total()>=atomTotal()) return false;
+    if(orb==="4s"){ if(s<2){ s++; render(); pop(row4s.querySelector(".box")); evaluate(); return true; } return false; }
+    if(orb==="3d"){ var i=hund3dSlot(); if(i<0) return false; d[i]++; render(); pop(boxes3d.children[i]); evaluate(); return true; }
+    return false;
+  }
+
+  function ionise(){
+    if(phase!=="ionise") return;
+    if(s>0){ s--; }
+    else { var i=-1,j; for(j=0;j<5;j++){ if(d[j]===2){i=j;break;} } if(i<0){ for(j=4;j>=0;j--){ if(d[j]===1){i=j;break;} } } if(i<0) return; d[i]--; }
+    render(); evaluate();
+  }
+
+  function clearBuild(){ clearGhosts(); clearBad(); s=0; d=[0,0,0,0,0]; wasCrossed=false;
+    if(target){ phase="build"; render(); setPrompt("Build <b>"+(target.base||target.sym)+"</b>"+(target.base?" first (the neutral atom)":"")+". Add electrons to 4s and 3d.",""); }
+    else { phase="idle"; render(); setPrompt("Pick an element or ion below to start.",""); }
+  }
+
+  function selectTarget(t, elChip){
+    target=t;
+    document.querySelectorAll(".cell.sel,.ion.sel").forEach(function(x){ x.classList.remove("sel"); });
+    if(elChip) elChip.classList.add("sel");
+    clearBuild();
+  }
+
+  // build the period-4 strip + ion chips (real buttons for keyboard access)
+  (function buildSelector(){
+    var pt=$("ptable");
+    ELEMENTS.forEach(function(e){
+      var c=document.createElement("button");
+      c.type="button";
+      c.className="cell"+(e.db?" dblock":"");
+      c.setAttribute("aria-label","Build "+e.sym);
+      c.innerHTML='<span class="z">'+e.z+'</span><span class="sym">'+e.sym+'</span>';
+      c.addEventListener("click", function(){ selectTarget({sym:e.sym,atomS:e.s,atomD:e.d,anom:e.anom}, c); });
+      pt.appendChild(c);
+    });
+    var ir=$("ionrow");
+    IONS.forEach(function(io){
+      var c=document.createElement("button");
+      c.type="button";
+      c.className="ion";
+      c.setAttribute("aria-label","Build "+io.sym+io.sup+" ion");
+      c.innerHTML=io.sym+'<sup>'+io.sup+'</sup>';
+      c.addEventListener("click", function(){ selectTarget({sym:io.sym,sup:io.sup,base:io.base,atomS:io.atomS,atomD:io.atomD,ionS:io.ionS,ionD:io.ionD,charge:io.charge,anom:io.anom}, c); });
+      ir.appendChild(c);
+    });
+  })();
+
+  // pointer drag
+  var ghost=null;
+  function clearGhosts(){ var g=document.querySelectorAll(".dghost"); for(var i=0;i<g.length;i++) g[i].remove(); ghost=null; }
+  function orbAtPoint(x,y){ var el=document.elementFromPoint(x,y); while(el&&el!==document.body){ if(el.dataset&&el.dataset.orb) return el.dataset.orb; el=el.parentElement; } return null; }
+  function moveGhost(x,y){ if(ghost){ ghost.style.left=x+"px"; ghost.style.top=y+"px"; } }
+  function onMove(e){ if(e.cancelable) e.preventDefault(); moveGhost(e.clientX,e.clientY); }
+  function onUp(e){
+    window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp);
+    var x=e.clientX, y=e.clientY; clearGhosts();
+    var orb=(x!=null&&!isNaN(x))?orbAtPoint(x,y):null; if(orb) dropOnOrb(orb);
+  }
+  token.addEventListener("pointerdown", function(e){
+    if(phase!=="build" || total()>=atomTotal()) return;
+    e.preventDefault(); clearGhosts();
+    ghost=document.createElement("div"); ghost.className="dghost";
+    ghost.innerHTML='<svg viewBox="0 0 16 40" style="width:100%;height:100%"><line x1="8" y1="37" x2="8" y2="5"/><line x1="8" y1="5" x2="3" y2="12"/></svg>';
+    document.body.appendChild(ghost); moveGhost(e.clientX,e.clientY);
+    window.addEventListener("pointermove", onMove, {passive:false}); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp);
+  });
+
+  // click / keyboard: activate a level to add an electron there
+  row4s.addEventListener("click", function(){ dropOnOrb("4s"); });
+  row3d.addEventListener("click", function(){ dropOnOrb("3d"); });
+  $("ioniseBtn").addEventListener("click", function(){ if(phase==="ionise") ionise(); });
+  $("clearBtn").addEventListener("click", clearBuild);
+
+  window.miniLesson={
+    dropOnOrb:dropOnOrb, ionise:ionise, clear:clearBuild,
+    selectSym:function(sym){ var e; ELEMENTS.forEach(function(x){ if(x.sym===sym) e=x; }); if(e) selectTarget({sym:e.sym,atomS:e.s,atomD:e.d,anom:e.anom}, null); },
+    selectIon:function(sym,sup){ var io; IONS.forEach(function(x){ if(x.sym===sym&&x.sup===sup) io=x; }); if(io) selectTarget({sym:io.sym,sup:io.sup,base:io.base,atomS:io.atomS,atomD:io.atomD,ionS:io.ionS,ionD:io.ionD,charge:io.charge,anom:io.anom}, null); },
+    state:function(){ return {s:s,d:d.slice(),phase:phase,crossed:crossed(),target:target?(target.base?target.sym+target.sup:target.sym):null}; }
+  };
+
+  clearBuild();
+})();
+</script>
+</body>
+</html>

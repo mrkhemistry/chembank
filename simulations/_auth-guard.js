@@ -17,7 +17,7 @@
 (function (global) {
   const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
-  const FREE_SIMS = ['vsepr', 'nucleophilic-addition', 'hybridisation'];
+  const FREE_SIMS = ['vsepr', 'nucleophilic-addition', 'hybridisation', 'electron-configuration'];
   const PREMIUM_ROLES = ['premium_student', 'admin', 'teacher'];
   const PORTAL_URL = 'https://chembank.mrkhemistry.com/portal.html';
   const SIMS_HUB_URL = './';
@@ -79,7 +79,7 @@
       <div class="_sim-modal-card">
         <h2>Premium simulation</h2>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong> and <strong>Hybridisation of Carbon</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
+        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong> and <strong>Electron Configuration</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
         <div class="_sim-modal-btns">
           <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_sim-btn-primary">Get the recording package</a>
           <a href="${PORTAL_URL}" class="_sim-btn-secondary">Sign in</a>
@@ -205,7 +205,7 @@
       <div class="_lock-card">
         <h1>Premium simulation</h1>
         <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong> and <strong>Hybridisation of Carbon</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
+        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong> and <strong>Electron Configuration</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
         <div class="_btns">
           <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_btn-primary">Get the recording package</a>
           <a href="${PORTAL_URL}" class="_btn-secondary">Sign in</a>

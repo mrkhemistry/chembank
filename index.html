@@ -1908,11 +1908,12 @@ Option D" required></textarea>
         <!-- Student View -->
         <div id="studentView" class="view">
             <!-- Student Tab Navigation -->
-            <div style="display:flex; gap:0.75rem; margin-bottom:1.5rem; border-bottom: 2px solid rgba(0,217,255,0.2); padding-bottom:0;">
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.5rem; border-bottom: 2px solid rgba(0,217,255,0.2); padding-bottom:0;">
                 <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">Practice Quiz</button>
                 <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">Worksheets</button>
                 <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">Check My Answer</button>
                 <button class="student-tab" id="tabHistory" onclick="switchStudentTab('history')">My History</button>
+                <button class="student-tab" id="tabP2P3" onclick="switchStudentTab('p2p3')">Paper 2 &amp; 3</button>
             </div>
 
             <!-- Quiz Panel -->
@@ -2449,6 +2450,55 @@ Option D" required></textarea>
                     <div id="historyList"></div>
                 </div>
             </div><!-- end studentHistoryPanel -->
+
+            <!-- Paper 2 & 3 Practice Panel (premium students; free students see the teaser) -->
+            <div id="studentP2P3Panel" style="display:none;">
+                <style>
+                    #studentP2P3Panel select{background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.6rem;font-size:0.9rem;min-width:210px;}
+                    #studentP2P3Panel .p2p3-lbl{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-bottom:3px;}
+                    .p2p3-q{border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem;background:var(--surface2);}
+                    .p2p3-q-head{font-size:0.8rem;color:var(--primary);font-weight:600;margin-bottom:0.5rem;letter-spacing:0.02em;}
+                    .p2p3-stem{font-size:0.95rem;line-height:1.6;margin-bottom:0.6rem;}
+                    .p2p3-part{border-left:2px solid var(--cyan-border);padding:0.3rem 0 0.3rem 0.9rem;margin:0.75rem 0;}
+                    .p2p3-part-h{font-size:0.92rem;margin-bottom:0.2rem;}
+                    .p2p3-marks{opacity:0.55;font-weight:400;font-size:0.85rem;}
+                    .p2p3-part-t{font-size:0.92rem;line-height:1.6;margin-bottom:0.4rem;}
+                    .p2p3-figs{margin:0.5rem 0;}
+                    .p2p3-fig{margin:0.4rem 0;text-align:center;}
+                    .p2p3-fig img{max-width:100%;max-height:300px;border:1px solid var(--border);border-radius:6px;background:#fff;}
+                    .p2p3-cap{font-size:0.78rem;opacity:0.6;margin-top:2px;font-style:italic;}
+                    .p2p3-showans{background:transparent;color:var(--primary);border:1px solid var(--cyan-border);border-radius:6px;padding:0.32rem 0.9rem;font-size:0.83rem;cursor:pointer;margin-top:0.2rem;}
+                    .p2p3-showans:hover{background:var(--cyan-dim);}
+                    .p2p3-answer{margin-top:0.6rem;background:rgba(0,229,255,0.05);border:1px solid var(--cyan-border);border-radius:8px;padding:0.7rem 0.9rem;}
+                    .p2p3-ms{font-size:0.9rem;line-height:1.6;}
+                    .p2p3-teaser{max-width:520px;margin:2rem auto;text-align:center;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:14px;padding:2rem 1.5rem;}
+                    .p2p3-pill{display:inline-block;border:1px solid var(--cyan-border);color:var(--primary);border-radius:20px;padding:2px 14px;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.8rem;}
+                    .p2p3-teaser h3{color:var(--primary);margin:0 0 0.6rem;}
+                    .p2p3-teaser p{opacity:0.8;line-height:1.6;margin:0.5rem 0;}
+                </style>
+                <div class="panel" style="max-width:1000px;margin:0 auto;">
+                    <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
+                    <div id="p2p3Interface" style="display:none;">
+                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Pick a topic and a concept, then reveal the worked answer part by part.</p>
+                        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+                            <div><label class="p2p3-lbl">Topic (required)</label><select id="p2p3Topic" onchange="p2p3TopicChange()"><option value="">Select a topic&hellip;</option></select></div>
+                            <div><label class="p2p3-lbl">Concept (required)</label><select id="p2p3Concept"><option value="">Select a concept&hellip;</option></select></div>
+                            <button class="btn btn-primary" id="p2p3ShowBtn" onclick="p2p3Show()">Show questions</button>
+                        </div>
+                        <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, then click &ldquo;Show questions&rdquo;. Up to 20 questions are shown per set.</div>
+                        <div id="p2p3Results"></div>
+                    </div>
+                    <div id="p2p3Teaser" style="display:none;">
+                        <div class="p2p3-teaser">
+                            <span class="p2p3-pill">Premium feature</span>
+                            <h3>Paper 2 &amp; 3 Practice</h3>
+                            <p>Premium students get the full structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) question bank: real school Prelim and Ten-Year-Series questions, with worked answers revealed part by part.</p>
+                            <a class="btn btn-primary" href="https://www.mrkhemistry.com" target="_blank" rel="noopener" style="margin-top:0.5rem;">Book a free trial class</a>
+                            <p style="font-size:0.85rem;opacity:0.6;margin-top:0.9rem;">Already enrolled? Ask Mr Khemistry to upgrade your account to Premium.</p>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end studentP2P3Panel -->
 
         </div><!-- end studentView outer -->
 
@@ -6083,11 +6133,14 @@ Option D" required></textarea>
             const tabWs = document.getElementById('tabWorksheets');
             const tabCheck = document.getElementById('tabCheckAnswer');
             const tabHist = document.getElementById('tabHistory');
+            const p2p3Panel = document.getElementById('studentP2P3Panel');
+            const tabP2P3 = document.getElementById('tabP2P3');
             quizPanel.style.display = 'none';
             wsPanel.style.display = 'none';
             checkPanel.style.display = 'none';
             historyPanel.style.display = 'none';
-            [tabQuiz, tabWs, tabCheck, tabHist].forEach(t => t && t.classList.remove('active'));
+            if (p2p3Panel) p2p3Panel.style.display = 'none';
+            [tabQuiz, tabWs, tabCheck, tabHist, tabP2P3].forEach(t => t && t.classList.remove('active'));
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
@@ -6115,7 +6168,150 @@ Option D" required></textarea>
                 historyPanel.style.display = 'block';
                 tabHist.classList.add('active');
                 loadQuizHistory();
+            } else if (tab === 'p2p3') {
+                if (p2p3Panel) p2p3Panel.style.display = 'block';
+                if (tabP2P3) tabP2P3.classList.add('active');
+                p2p3Open();
             }
+        }
+
+        // ===== Student "Paper 2 & 3 Practice" (premium_student + admin only) =====
+        // Reuses the structured fetch/render helpers. Free students only ever see the teaser
+        // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
+        let p2pAllConcepts = null, p2pMatchIds = [];
+        function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
+
+        async function p2p3Open(){
+            const iface = document.getElementById('p2p3Interface');
+            const teaser = document.getElementById('p2p3Teaser');
+            if (!p2pIsPremium()){
+                if (iface) iface.style.display = 'none';
+                if (teaser) teaser.style.display = 'block';
+                return;
+            }
+            if (teaser) teaser.style.display = 'none';
+            if (iface) iface.style.display = 'block';
+            if (p2pAllConcepts === null) await p2p3LoadTaxonomy();
+        }
+
+        async function p2p3LoadTaxonomy(){
+            const hint = document.getElementById('p2p3Hint');
+            try{
+                // Paginate to bypass PostgREST's 1000-row cap (stays correct as the taxonomy grows).
+                const [topicRows, concepts] = await Promise.all([
+                    fetchAllPaginated(() => supabaseClient.from('topics').select('id,name').order('id')),
+                    fetchAllPaginated(() => supabaseClient.from('concepts').select('id,name,topic_id').order('id'))
+                ]);
+                const topicMap = {}; topicRows.forEach(t => { topicMap[t.id] = t.name; });
+                p2pAllConcepts = concepts.map(c => ({ id:c.id, name:c.name, topic: topicMap[c.topic_id]||'' }));
+                const topics = [...new Set(p2pAllConcepts.map(c => c.topic).filter(Boolean))].sort();
+                const tEl = document.getElementById('p2p3Topic');
+                if (tEl) tEl.innerHTML = '<option value="">Select a topic…</option>' + topics.map(t => '<option>'+sqEsc(t)+'</option>').join('');
+            }catch(e){
+                p2pAllConcepts = null;
+                if (hint) hint.innerHTML = '<span style="color:var(--danger)">Could not load topics: '+sqEsc(e.message||e)+'</span>';
+            }
+        }
+
+        function p2p3TopicChange(){
+            const topic = sqVal('p2p3Topic');
+            const names = [...new Set((p2pAllConcepts||[]).filter(c => !topic || c.topic === topic).map(c => c.name))].sort();
+            const cEl = document.getElementById('p2p3Concept');
+            if (cEl) cEl.innerHTML = '<option value="">Select a concept…</option>' + names.map(n => '<option>'+sqEsc(n)+'</option>').join('');
+        }
+
+        async function p2p3Show(){
+            const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
+            const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
+            res.innerHTML = '';
+            // Anti-bulk guard: both a topic AND a concept are required (no whole-topic / whole-paper pulls).
+            if (!topic || !concept){ hint.innerHTML = '<span style="color:var(--primary)">Please choose both a topic and a concept.</span>'; return; }
+            hint.textContent = 'Finding questions…';
+            try{
+                const conceptIds = (p2pAllConcepts||[]).filter(c => c.topic === topic && c.name === concept).map(c => c.id);
+                if (!conceptIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
+                const rows = await fetchAllPaginated(() => supabaseClient.from('structured_parts').select('question_id').in('concept_id', conceptIds).order('question_id').order('id'));
+                p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))];
+                if (!p2pMatchIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
+                await p2p3RenderSet();
+            }catch(e){
+                hint.innerHTML = '<span style="color:var(--danger)">Could not load questions: '+sqEsc(e.message||e)+'</span>';
+            }
+        }
+
+        async function p2p3RenderSet(){
+            const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
+            const ids = p2pMatchIds.slice();
+            for (let i = ids.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
+            const pick = ids.slice(0, 20);   // cap each set to 20 questions
+            hint.textContent = 'Loading…';
+            try{
+                const qs = await sqFetchByIds(pick);
+                await sqEnsureFigFolders(qs);
+                const more = (p2pMatchIds.length > qs.length)
+                    ? ' <button class="btn btn-secondary" style="padding:0.3rem 0.8rem;font-size:0.8rem;margin-left:0.5rem" onclick="p2p3RenderSet()">New set</button>' : '';
+                hint.innerHTML = 'Showing ' + qs.length + ' of ' + p2pMatchIds.length + ' matching question' + (p2pMatchIds.length===1?'':'s') + '.' + more;
+                res.innerHTML = qs.map(p2p3RenderQuestion).join('');
+                if (window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([res]); }catch(e){} }
+            }catch(e){
+                hint.innerHTML = '<span style="color:var(--danger)">Could not load questions: '+sqEsc(e.message||e)+'</span>';
+            }
+        }
+
+        function p2p3FigImg(f){
+            const url = sqUploaded[f.storage_path];
+            if (!url) return '';
+            const cap = (f.label && String(f.label).trim()) ? '<figcaption class="p2p3-cap">'+sqEsc(String(f.label).trim())+'</figcaption>' : '';
+            return '<figure class="p2p3-fig"><img src="'+sqAttr(url)+'" alt="'+sqAttr(f.label||'figure')+'" loading="lazy">'+cap+'</figure>';
+        }
+
+        function p2p3RenderQuestion(q){
+            const figs = q.figures || [];
+            const parts = (q.parts || []).slice().sort((a,b) => (a.order_index||0)-(b.order_index||0));
+            const qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key));
+            const ansFigs = figs.filter(f => sqIsAnswerFig(f.figure_key));
+            const stemFigs = [], qByPart = {}, ansByPart = {}, ansLoose = [];
+            qFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a==null) stemFigs.push(f); else (qByPart[a]=qByPart[a]||[]).push(f); });
+            ansFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a!=null) (ansByPart[a]=ansByPart[a]||[]).push(f); else ansLoose.push(f); });
+            const src = [q.year, q.paper, (q.school||q.source||''), 'Q'+q.question_number].filter(x => x!=null && x!=='').join(' · ');
+            let html = '<div class="p2p3-q"><div class="p2p3-q-head">'+sqEsc(src)+'</div>';
+            if (q.stem) html += '<div class="p2p3-stem">'+sanitizeQuestionText(q.stem)+'</div>';
+            if (stemFigs.length) html += '<div class="p2p3-figs">'+stemFigs.map(p2p3FigImg).join('')+'</div>';
+            parts.forEach(p => {
+                html += '<div class="p2p3-part">';
+                html += '<div class="p2p3-part-h"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null ? ' <span class="p2p3-marks">['+p.marks+']</span>' : '')+'</div>';
+                if (p.part_text) html += '<div class="p2p3-part-t">'+sanitizeQuestionText(p.part_text)+'</div>';
+                if (qByPart[p.id]) html += '<div class="p2p3-figs">'+qByPart[p.id].map(p2p3FigImg).join('')+'</div>';
+                const hasMs = p.mark_scheme && String(p.mark_scheme).trim();
+                const hasAnsFig = ansByPart[p.id] && ansByPart[p.id].length;
+                if (hasMs || hasAnsFig){
+                    const ansId = 'p2pa_'+q.id+'_'+p.id;
+                    html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
+                    html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none">';
+                    if (hasMs) html += '<div class="p2p3-ms">'+sanitizeQuestionText(p.mark_scheme)+'</div>';
+                    if (hasAnsFig) html += '<div class="p2p3-figs">'+ansByPart[p.id].map(p2p3FigImg).join('')+'</div>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            // Answer figures that don't resolve to a specific part still get shown (parity with the worksheet).
+            if (ansLoose.length){
+                const ansId = 'p2pa_'+q.id+'_x';
+                html += '<div class="p2p3-part"><div class="p2p3-part-h"><b>Answer diagrams</b></div>';
+                html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
+                html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none"><div class="p2p3-figs">'+ansLoose.map(p2p3FigImg).join('')+'</div></div></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function p2p3Toggle(id, btn){
+            const el = document.getElementById(id);
+            if (!el) return;
+            const show = el.style.display === 'none';
+            el.style.display = show ? 'block' : 'none';
+            if (btn) btn.textContent = show ? 'Hide answer' : 'Show answer';
+            if (show && window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([el]); }catch(e){} }
         }
 
         async function loadWorksheets() {

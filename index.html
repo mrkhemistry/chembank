@@ -2456,6 +2456,11 @@ Option D" required></textarea>
                 <style>
                     #studentP2P3Panel select{background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.6rem;font-size:0.9rem;min-width:210px;}
                     #studentP2P3Panel .p2p3-lbl{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-bottom:3px;}
+                    .p2p3-filters{display:flex;gap:1.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:0.6rem 0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;}
+                    .p2p3-fgroup{display:flex;gap:0.65rem;align-items:center;flex-wrap:wrap;}
+                    .p2p3-fgroup .p2p3-lbl{display:inline;margin:0 0.25rem 0 0;}
+                    .p2p3-fgroup label{font-size:0.85rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;white-space:nowrap;}
+                    .p2p3-fgroup input[type=checkbox]{accent-color:var(--primary);width:15px;height:15px;cursor:pointer;}
                     .p2p3-q{border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem;background:var(--surface2);}
                     .p2p3-q-head{font-size:0.8rem;color:var(--primary);font-weight:600;margin-bottom:0.5rem;letter-spacing:0.02em;}
                     .p2p3-stem{font-size:0.95rem;line-height:1.6;margin-bottom:0.6rem;}
@@ -2479,13 +2484,30 @@ Option D" required></textarea>
                 <div class="panel" style="max-width:1000px;margin:0 auto;">
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
-                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Pick a topic and a concept, then reveal the worked answer part by part.</p>
-                        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Pick a topic and a concept, narrow with the filters if you like, then reveal the worked answer part by part.</p>
+                        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
                             <div><label class="p2p3-lbl">Topic (required)</label><select id="p2p3Topic" onchange="p2p3TopicChange()"><option value="">Select a topic&hellip;</option></select></div>
                             <div><label class="p2p3-lbl">Concept (required)</label><select id="p2p3Concept"><option value="">Select a concept&hellip;</option></select></div>
                             <button class="btn btn-primary" id="p2p3ShowBtn" onclick="p2p3Show()">Show questions</button>
                         </div>
+                        <div class="p2p3-filters">
+                            <div class="p2p3-fgroup"><span class="p2p3-lbl">Source</span>
+                                <label><input type="checkbox" class="p2p3-src" value="TYS" checked> TYS</label>
+                                <label><input type="checkbox" class="p2p3-src" value="Prelim" checked> Prelim</label>
+                            </div>
+                            <div class="p2p3-fgroup"><span class="p2p3-lbl">Paper</span>
+                                <label><input type="checkbox" class="p2p3-paper" value="P2" checked> P2</label>
+                                <label><input type="checkbox" class="p2p3-paper" value="P3" checked> P3</label>
+                            </div>
+                            <div class="p2p3-fgroup"><span class="p2p3-lbl">Difficulty</span>
+                                <label><input type="checkbox" class="p2p3-diff" value="Easy" checked> Easy</label>
+                                <label><input type="checkbox" class="p2p3-diff" value="Medium" checked> Medium</label>
+                                <label><input type="checkbox" class="p2p3-diff" value="Hard" checked> Hard</label>
+                            </div>
+                            <div class="p2p3-fgroup" id="p2p3YearGroup"><span class="p2p3-lbl">Years</span></div>
+                        </div>
                         <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, then click &ldquo;Show questions&rdquo;. Up to 20 questions are shown per set.</div>
+                        <div id="p2p3Toolbar" style="display:none;margin-bottom:1rem;"><button class="btn btn-secondary" onclick="p2p3Print()">Print / Save as PDF (question paper + worked solutions)</button></div>
                         <div id="p2p3Results"></div>
                     </div>
                     <div id="p2p3Teaser" style="display:none;">
@@ -6178,8 +6200,9 @@ Option D" required></textarea>
         // ===== Student "Paper 2 & 3 Practice" (premium_student + admin only) =====
         // Reuses the structured fetch/render helpers. Free students only ever see the teaser
         // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
-        let p2pAllConcepts = null, p2pMatchIds = [];
+        let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [];
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
+        function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
 
         async function p2p3Open(){
             const iface = document.getElementById('p2p3Interface');
@@ -6191,25 +6214,30 @@ Option D" required></textarea>
             }
             if (teaser) teaser.style.display = 'none';
             if (iface) iface.style.display = 'block';
-            if (p2pAllConcepts === null) await p2p3LoadTaxonomy();
+            if (p2pAllConcepts === null) await p2p3Init();
         }
 
-        async function p2p3LoadTaxonomy(){
+        async function p2p3Init(){
             const hint = document.getElementById('p2p3Hint');
             try{
-                // Paginate to bypass PostgREST's 1000-row cap (stays correct as the taxonomy grows).
-                const [topicRows, concepts] = await Promise.all([
+                // Paginated (bypasses the 1000-row cap). RLS already limits rows to what this user may read.
+                const [topicRows, concepts, index] = await Promise.all([
                     fetchAllPaginated(() => supabaseClient.from('topics').select('id,name').order('id')),
-                    fetchAllPaginated(() => supabaseClient.from('concepts').select('id,name,topic_id').order('id'))
+                    fetchAllPaginated(() => supabaseClient.from('concepts').select('id,name,topic_id').order('id')),
+                    fetchAllPaginated(() => supabaseClient.from('structured_questions').select('id,year,paper,source').order('id'))
                 ]);
                 const topicMap = {}; topicRows.forEach(t => { topicMap[t.id] = t.name; });
                 p2pAllConcepts = concepts.map(c => ({ id:c.id, name:c.name, topic: topicMap[c.topic_id]||'' }));
+                p2pIndex = {}; index.forEach(q => { p2pIndex[q.id] = { year:q.year, paper:q.paper, source:q.source }; });
                 const topics = [...new Set(p2pAllConcepts.map(c => c.topic).filter(Boolean))].sort();
                 const tEl = document.getElementById('p2p3Topic');
                 if (tEl) tEl.innerHTML = '<option value="">Select a topic…</option>' + topics.map(t => '<option>'+sqEsc(t)+'</option>').join('');
+                const years = [...new Set(index.map(q => q.year).filter(y => y!=null))].sort((a,b) => b-a);
+                const yg = document.getElementById('p2p3YearGroup');
+                if (yg) yg.innerHTML = '<span class="p2p3-lbl">Years</span>' + years.map(y => '<label><input type="checkbox" class="p2p3-year" value="'+y+'" checked> '+y+'</label>').join('');
             }catch(e){
                 p2pAllConcepts = null;
-                if (hint) hint.innerHTML = '<span style="color:var(--danger)">Could not load topics: '+sqEsc(e.message||e)+'</span>';
+                if (hint) hint.innerHTML = '<span style="color:var(--danger)">Could not load filters: '+sqEsc(e.message||e)+'</span>';
             }
         }
 
@@ -6223,16 +6251,30 @@ Option D" required></textarea>
         async function p2p3Show(){
             const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
             const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
-            res.innerHTML = '';
+            const toolbar = document.getElementById('p2p3Toolbar');
+            res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none'; p2pQuestions = [];
             // Anti-bulk guard: both a topic AND a concept are required (no whole-topic / whole-paper pulls).
             if (!topic || !concept){ hint.innerHTML = '<span style="color:var(--primary)">Please choose both a topic and a concept.</span>'; return; }
+            const sources = p2pChecked('p2p3-src'), papers = p2pChecked('p2p3-paper'), diffs = p2pChecked('p2p3-diff'), years = p2pChecked('p2p3-year').map(Number);
+            if (!sources.length || !papers.length || !diffs.length || !years.length){
+                hint.innerHTML = '<span style="color:var(--primary)">Leave at least one box ticked under Source, Paper, Difficulty and Years.</span>'; return;
+            }
             hint.textContent = 'Finding questions…';
             try{
                 const conceptIds = (p2pAllConcepts||[]).filter(c => c.topic === topic && c.name === concept).map(c => c.id);
                 if (!conceptIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
-                const rows = await fetchAllPaginated(() => supabaseClient.from('structured_parts').select('question_id').in('concept_id', conceptIds).order('question_id').order('id'));
-                p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))];
-                if (!p2pMatchIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
+                const diffFilter = (diffs.length < 3) ? diffs : null;   // all three ticked = no difficulty filter
+                const rows = await fetchAllPaginated(() => {
+                    let q = supabaseClient.from('structured_parts').select('question_id').in('concept_id', conceptIds);
+                    if (diffFilter) q = q.in('difficulty', diffFilter);
+                    return q.order('question_id').order('id');
+                });
+                // question-level filters (source / paper / year) resolved against the in-memory index
+                const srcSet = new Set(sources), paperSet = new Set(papers), yearSet = new Set(years);
+                p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))].filter(id => {
+                    const m = p2pIndex[id]; return m && srcSet.has(m.source) && paperSet.has(m.paper) && yearSet.has(m.year);
+                });
+                if (!p2pMatchIds.length){ hint.textContent = 'No questions match those filters. Try widening them.'; return; }
                 await p2p3RenderSet();
             }catch(e){
                 hint.innerHTML = '<span style="color:var(--danger)">Could not load questions: '+sqEsc(e.message||e)+'</span>';
@@ -6241,6 +6283,7 @@ Option D" required></textarea>
 
         async function p2p3RenderSet(){
             const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
+            const toolbar = document.getElementById('p2p3Toolbar');
             const ids = p2pMatchIds.slice();
             for (let i = ids.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
             const pick = ids.slice(0, 20);   // cap each set to 20 questions
@@ -6248,6 +6291,8 @@ Option D" required></textarea>
             try{
                 const qs = await sqFetchByIds(pick);
                 await sqEnsureFigFolders(qs);
+                p2pQuestions = qs;
+                if (toolbar) toolbar.style.display = qs.length ? 'block' : 'none';
                 const more = (p2pMatchIds.length > qs.length)
                     ? ' <button class="btn btn-secondary" style="padding:0.3rem 0.8rem;font-size:0.8rem;margin-left:0.5rem" onclick="p2p3RenderSet()">New set</button>' : '';
                 hint.innerHTML = 'Showing ' + qs.length + ' of ' + p2pMatchIds.length + ' matching question' + (p2pMatchIds.length===1?'':'s') + '.' + more;
@@ -6312,6 +6357,82 @@ Option D" required></textarea>
             el.style.display = show ? 'block' : 'none';
             if (btn) btn.textContent = show ? 'Hide answer' : 'Show answer';
             if (show && window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([el]); }catch(e){} }
+        }
+
+        // Print / Save as PDF: Question Paper (blank answer space) + Worked Solutions (answers in blue),
+        // Arial 11, normal 1-inch margins, title "<Topic> - <Concept>". Reuses sqBuildWorksheetBody.
+        function p2p3Print(){
+            if (!p2pQuestions || !p2pQuestions.length){ alert('Show some questions first.'); return; }
+            const items = p2pQuestions.map(q => ({ q: q, partFilter: false }));
+            const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
+            const title = (topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : '');
+            const win = window.open('', '_blank');
+            if (!win){ alert('Your browser blocked the pop-up.\n\nAllow pop-ups for this site (there is usually a small blocked-popup icon near the address bar), then click Print again.'); return; }
+            try{ win.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){}
+            try{
+                const doc = p2p3PrintDoc(items, title);
+                win.document.open(); win.document.write(doc); win.document.close(); try{ win.focus(); }catch(e){}
+            }catch(e){
+                alert('Could not prepare the worksheet: '+(e.message||e)); try{ win.close(); }catch(_){}
+            }
+        }
+
+        function p2p3PrintDoc(items, titleStr){
+            const dateStr = new Date().toLocaleDateString('en-SG', {day:'numeric', month:'long', year:'numeric'});
+            const nQ = items.length;
+            const totalMarks = items.reduce((s,item) => s + sqWorksheetPartsFor(item).reduce((a,p) => a + (Number(p.marks)||0), 0), 0);
+            function section(type, label, cls){
+                const nameLine = (type==='student')
+                    ? '<div class="name-line">Name: <span class="fill"></span> &nbsp; Class: <span class="fill" style="width:120px"></span> &nbsp; Date: <span class="fill" style="width:120px"></span></div>' : '';
+                return '<section class="ws-section '+cls+'">'
+                  + '<div class="ws-header"><div><span class="ws-title">'+sqEsc(titleStr)+'</span><span class="ws-version">'+label+'</span></div>'
+                  + '<div class="ws-meta">Mr Khemistry ChemBank &nbsp;|&nbsp; '+nQ+' question'+(nQ===1?'':'s')+' &nbsp;|&nbsp; '+totalMarks+' marks &nbsp;|&nbsp; '+sqEsc(dateStr)+'</div></div>'
+                  + nameLine + sqBuildWorksheetBody(items, type) + '</section>';
+            }
+            const body = section('student','QUESTION PAPER','qp') + section('tutor','WORKED SOLUTIONS','soln');
+            return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+sqEsc(titleStr)+'</title>'
+              + '<style>'
+              + '@page{margin:2.54cm;}'
+              + '@media print{.no-print{display:none!important;}}'
+              + '*{box-sizing:border-box;}'
+              + 'body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#000;background:#fff;margin:0;padding:0;}'
+              + '.toolbar{margin:0 0 14px;font-size:10pt;color:#555;}'
+              + '.toolbar button{font-size:11pt;padding:6px 15px;cursor:pointer;margin-right:10px;}'
+              + '.ws-section + .ws-section{page-break-before:always;}'
+              + '.ws-header{border-bottom:2.5px solid #000;padding-bottom:8px;margin-bottom:16px;}'
+              + '.ws-title{font-size:15pt;font-weight:bold;}'
+              + '.ws-version{display:inline-block;font-size:8.5pt;font-weight:bold;letter-spacing:1px;margin-left:10px;vertical-align:middle;border:1px solid #000;padding:2px 8px;border-radius:3px;}'
+              + '.ws-meta{font-size:9pt;color:#444;margin-top:5px;}'
+              + '.name-line{margin:14px 0 18px;font-size:11pt;}'
+              + '.name-line .fill{display:inline-block;border-bottom:1px solid #000;width:200px;margin:0 6px;}'
+              + '.q-block{margin-bottom:20px;}'
+              + '.q-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid #ccc;padding-bottom:3px;margin-bottom:6px;page-break-after:avoid;break-after:avoid;}'
+              + '.q-num{font-weight:bold;font-size:11pt;white-space:nowrap;}'
+              + '.q-src{font-size:8.5pt;color:#555;text-align:right;}'
+              + '.q-stem{font-size:11pt;line-height:1.5;margin-bottom:8px;}'
+              + '.q-figs{margin:8px 0;page-break-inside:avoid;break-inside:avoid;}'
+              + '.sq-fig-fig{margin:6px 0;padding:0;text-align:center;page-break-inside:avoid;break-inside:avoid;}'
+              + '.sq-fig-img{display:block;max-width:100%;max-height:240px;border:1px solid #ccc;margin:6px auto;}'
+              + '.sq-fig-cap{font-size:8.5pt;color:#333;margin-top:2px;text-align:center;font-style:italic;}'
+              + '.sq-fig-missing{font-size:8.5pt;color:#a00;font-style:italic;margin:6px 0;}'
+              + '.p-block{margin:8px 0 10px;page-break-inside:avoid;break-inside:avoid;}'
+              + '.p-head{font-size:11pt;}'
+              + '.p-marks{color:#555;font-weight:normal;}'
+              + '.p-text{font-size:11pt;line-height:1.5;margin:2px 0 6px;}'
+              + '.p-ans{margin:4px 0 2px;}'
+              + '.p-ans .sq-ans-line{border-bottom:1px solid #999;height:20px;margin-bottom:6px;}'
+              + '.p-ms{font-size:11pt;line-height:1.5;padding:6px 9px;margin-top:3px;}'
+              + '.p-ms-lbl{display:block;font-size:8pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;}'
+              + '.q-ansfigs{margin-top:8px;}'
+              + '.q-ansfigs-lbl{font-size:8.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}'
+              + '.soln .p-ms{color:#1636c2;background:#eef2ff;border:1px solid #b9c6f5;border-left:3px solid #1636c2;border-radius:3px;}'
+              + '.soln .p-ms-lbl,.soln .q-ansfigs-lbl{color:#1636c2;}'
+              + '</style>'
+              + '<script>(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();<\/script>'
+              + '<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
+              + '</head><body>'
+              + '<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations, printing starts automatically.</span></div>'
+              + body + '</body></html>';
         }
 
         async function loadWorksheets() {

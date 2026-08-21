@@ -2664,10 +2664,6 @@ Option D" required></textarea>
             .cov-n{font-size:1.35rem;font-weight:700;color:var(--primary);line-height:1.1;}
             .cov-l{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-top:2px;}
             .cov-x{font-size:0.7rem;opacity:0.5;margin-top:2px;}
-            .cov-goal{font-size:0.85rem;background:var(--cyan-dim);border:1px solid var(--cyan-border);border-radius:8px;padding:0.5rem 0.7rem;margin:0.5rem 0;}
-            .cov-bar{height:9px;border-radius:5px;background:var(--surface2);overflow:hidden;margin:5px 0;max-width:320px;}
-            .cov-bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#06d6a0);}
-            .cov-goalx{font-size:0.75rem;opacity:0.55;}
             .cov-controls{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;margin:0.6rem 0;}
             .cov-lbl{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.5;}
             .cov-seg{display:inline-flex;border:1px solid var(--border2);border-radius:8px;overflow:hidden;}
@@ -9426,9 +9422,6 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const nQ=sqF.length;
             const nPapers=[...new Set(sqF.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
             const mcqN=mcqF.length, mcqNovel=mcqF.filter(q=>q.is_novel_context).length;
-            const py={}; (covSq||[]).forEach(q=>{ if(q.source==='Prelim' && q.school){ (py[q.year]=py[q.year]||{}); const s=(py[q.year][q.school]=py[q.year][q.school]||{}); if(q.paper==='P2')s.p2=1; if(q.paper==='P3')s.p3=1; } });
-            let qualYears=0; const yearInfo=[]; Object.keys(py).sort().forEach(y=>{ const both=Object.values(py[y]).filter(s=>s.p2&&s.p3).length; if(both>10)qualYears++; yearInfo.push(y+': '+both+' JC'+(both===1?'':'s')+' w/ both'); });
-
             let html='<div class="cov-kpis">'
                 +covKpi(nQ,'structured Qs',nPapers+' papers')
                 +covKpi(sp2+sp3,'tagged parts',sp2+' P2 · '+sp3+' P3')
@@ -9437,9 +9430,6 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 +covKpi(e+'E · '+m+'M · '+h+'H','difficulty (parts)','')
                 +covKpi(nov,'novel parts','beyond-syllabus')
                 +'</div>';
-            if(covSource!=='TYS') html+='<div class="cov-goal"><b>Student-access gate:</b> 5 prelim years, each with more than 10 JCs on both P2 &amp; P3. Qualifying so far: <b>'+qualYears+' / 5</b>.'
-                +'<div class="cov-bar"><i style="width:'+Math.min(100,qualYears/5*100)+'%"></i></div>'
-                +'<div class="cov-goalx">'+sqEsc(yearInfo.join('   ·   '))+'</div></div>';
             html+='<div class="cov-controls"><span class="cov-lbl">Source</span>'
                 +covSeg('covSource',[['all','All'],['TYS','TYS'],['Prelim','Prelim']],covSource)
                 +'<span class="cov-lbl">Paper</span>'

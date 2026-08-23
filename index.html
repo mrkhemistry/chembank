@@ -6325,8 +6325,8 @@ Option D" required></textarea>
             let qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key));
             let ansFigs = figs.filter(f => sqIsAnswerFig(f.figure_key));
             if (item.partFilter){
-                qFigs = qFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem));
-                ansFigs = ansFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem));
+                qFigs = qFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem, true));
+                ansFigs = ansFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem, true));
             }
             const stemFigs = [], qByPart = {}, ansByPart = {}, ansLoose = [];
             qFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a==null) stemFigs.push(f); else (qByPart[a]=qByPart[a]||[]).push(f); });
@@ -6378,7 +6378,7 @@ Option D" required></textarea>
             if (!p2pQuestions || !p2pQuestions.length){ alert('Show some questions first.'); return; }
             // Scope each question to the parts that matched the chosen concept (+ prerequisites), so the
             // worksheet prints only the relevant sub-parts, matching the on-screen preview.
-            const items = p2pQuestions.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m }; });
+            const items = p2pQuestions.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m, keepSharedFigs: true }; });
             const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
             const title = (topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : '');
             const win = window.open('', '_blank');
@@ -9302,7 +9302,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         //    cites "Fig/Table 5.1"; hide if only parts we are NOT printing cite it; show if no citation is
         //    found anywhere (never hide a figure a printed part might need).
         //  - generic descriptive figure (fig_5_safranal) -> keep (handled by explicit tagging, not here).
-        function sqShowFigForPrinted(f, printedParts, allParts, stem){
+        function sqShowFigForPrinted(f, printedParts, allParts, stem, keepNumbered){
             const fp=sqFigPartPath(f.figure_key);
             if (fp.length){
                 const printedPaths=printedParts.map(p=>sqPartLabelPath(p.part_label));
@@ -9310,6 +9310,9 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             }
             const r=sqFigNumRef(f.figure_key);
             if (r){
+                // keepNumbered: treat numbered Fig/Table N.M as the question's shared "givens" and keep them
+                // when scoping, so a shown part that refers to those compounds/data stays answerable.
+                if (keepNumbered) return true;
                 if (sqTextCitesFig(stem, r)) return true;
                 if (printedParts.some(p=>sqTextCitesFig(p.part_text, r))) return true;
                 const printedIds=new Set(printedParts.map(p=>p.id));
@@ -9352,7 +9355,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 // printing (e.g. organic reaction schemes on a colour-only sheet). A figure is kept if its
                 // key names a printed part, or (for generic numbered figures) the stem or a printed part
                 // cites its "Fig/Table N.M". Only figures cited solely by non-printed parts are dropped.
-                if (item.partFilter){ const allParts=(q.parts||[]); figs=figs.filter(f=>sqShowFigForPrinted(f, parts, allParts, q.stem)); }
+                if (item.partFilter){ const allParts=(q.parts||[]); figs=figs.filter(f=>sqShowFigForPrinted(f, parts, allParts, q.stem, item.keepSharedFigs)); }
                 const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key));
                 const ansFigs=figs.filter(f=>sqIsAnswerFig(f.figure_key));
                 const srcBits=[];

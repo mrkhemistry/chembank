@@ -6200,7 +6200,7 @@ Option D" required></textarea>
         // ===== Student "Paper 2 & 3 Practice" (premium_student + admin only) =====
         // Reuses the structured fetch/render helpers. Free students only ever see the teaser
         // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
-        let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [];
+        let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [], p2pPartMatches = {};
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
         function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
 
@@ -6265,7 +6265,7 @@ Option D" required></textarea>
                 if (!conceptIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
                 const diffFilter = (diffs.length < 3) ? diffs : null;   // all three ticked = no difficulty filter
                 const rows = await fetchAllPaginated(() => {
-                    let q = supabaseClient.from('structured_parts').select('question_id').in('concept_id', conceptIds);
+                    let q = supabaseClient.from('structured_parts').select('question_id, id').in('concept_id', conceptIds);
                     if (diffFilter) q = q.in('difficulty', diffFilter);
                     return q.order('question_id').order('id');
                 });
@@ -6274,6 +6274,10 @@ Option D" required></textarea>
                 p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))].filter(id => {
                     const m = p2pIndex[id]; return m && srcSet.has(m.source) && paperSet.has(m.paper) && yearSet.has(m.year);
                 });
+                // Record which exact parts matched the chosen concept (and difficulty), so the preview and
+                // the worksheet show only those sub-parts (plus any prerequisite parts), not the whole question.
+                p2pPartMatches = {};
+                (rows||[]).forEach(r => { (p2pPartMatches[r.question_id] = p2pPartMatches[r.question_id] || new Set()).add(r.id); });
                 if (!p2pMatchIds.length){ hint.textContent = 'No questions match those filters. Try widening them.'; return; }
                 await p2p3RenderSet();
             }catch(e){
@@ -6312,9 +6316,18 @@ Option D" required></textarea>
 
         function p2p3RenderQuestion(q){
             const figs = q.figures || [];
-            const parts = (q.parts || []).slice().sort((a,b) => (a.order_index||0)-(b.order_index||0));
-            const qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key));
-            const ansFigs = figs.filter(f => sqIsAnswerFig(f.figure_key));
+            const allParts = (q.parts || []).slice().sort((a,b) => (a.order_index||0)-(b.order_index||0));
+            // Scope to the parts that matched the chosen concept (plus any prerequisite parts they need);
+            // with no match set (defensive), fall back to the whole question.
+            const matchSet = p2pPartMatches[q.id];
+            const item = { q: q, partFilter: !!(matchSet && matchSet.size), matchIds: matchSet };
+            const parts = sqWorksheetPartsFor(item).slice().sort((a,b) => (a.order_index||0)-(b.order_index||0));
+            let qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key));
+            let ansFigs = figs.filter(f => sqIsAnswerFig(f.figure_key));
+            if (item.partFilter){
+                qFigs = qFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem));
+                ansFigs = ansFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem));
+            }
             const stemFigs = [], qByPart = {}, ansByPart = {}, ansLoose = [];
             qFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a==null) stemFigs.push(f); else (qByPart[a]=qByPart[a]||[]).push(f); });
             ansFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a!=null) (ansByPart[a]=ansByPart[a]||[]).push(f); else ansLoose.push(f); });
@@ -6363,7 +6376,9 @@ Option D" required></textarea>
         // Arial 11, normal 1-inch margins, title "<Topic> - <Concept>". Reuses sqBuildWorksheetBody.
         function p2p3Print(){
             if (!p2pQuestions || !p2pQuestions.length){ alert('Show some questions first.'); return; }
-            const items = p2pQuestions.map(q => ({ q: q, partFilter: false }));
+            // Scope each question to the parts that matched the chosen concept (+ prerequisites), so the
+            // worksheet prints only the relevant sub-parts, matching the on-screen preview.
+            const items = p2pQuestions.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m }; });
             const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
             const title = (topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : '');
             const win = window.open('', '_blank');

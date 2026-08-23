@@ -9479,7 +9479,9 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const shown=sqRenderedQuestions;   // the exact set renderStructured() last displayed (never recomputed from live filters)
             if (!shown || !shown.length){ alert('No questions are shown. Set your filters and click "Show questions" first, then print. (If you changed a filter after showing, click "Show questions" again so the list matches.)'); return; }
             const maxRaw=parseInt(document.getElementById('sqWsMax').value,10);
-            const chosen=(maxRaw>0)?shown.slice(0,maxRaw):shown;
+            // keepSharedFigs: when a concept filter scopes to sub-parts, keep the question's shared
+            // numbered Fig/Table "givens" so a scoped part that refers to those compounds stays answerable.
+            const chosen=((maxRaw>0)?shown.slice(0,maxRaw):shown).map(it => ({ ...it, keepSharedFigs: true }));
             if (chosen.length>40 && !confirm('This will build a worksheet of '+chosen.length+' questions. Continue?')) return;
             const title=(document.getElementById('sqWsTitle').value||'').trim();
 

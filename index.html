@@ -2488,6 +2488,7 @@ Option D" required></textarea>
                         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
                             <div><label class="p2p3-lbl">Topic (required)</label><select id="p2p3Topic" onchange="p2p3TopicChange()"><option value="">Select a topic&hellip;</option></select></div>
                             <div><label class="p2p3-lbl">Concept (required)</label><select id="p2p3Concept"><option value="">Select a concept&hellip;</option></select></div>
+                            <div><label class="p2p3-lbl">No. of questions</label><input type="number" id="p2p3Num" min="1" max="50" value="10" style="width:96px;background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.6rem;font-size:0.9rem;"></div>
                             <button class="btn btn-primary" id="p2p3ShowBtn" onclick="p2p3Show()">Show questions</button>
                         </div>
                         <div class="p2p3-filters">
@@ -2506,7 +2507,7 @@ Option D" required></textarea>
                             </div>
                             <div class="p2p3-fgroup" id="p2p3YearGroup"><span class="p2p3-lbl">Years</span></div>
                         </div>
-                        <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, then click &ldquo;Show questions&rdquo;. Up to 20 questions are shown per set.</div>
+                        <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, choose how many questions, then click &ldquo;Show questions&rdquo;.</div>
                         <div id="p2p3Toolbar" style="display:none;margin-bottom:1rem;"><button class="btn btn-secondary" onclick="p2p3Print()">Print / Save as PDF (question paper + worked solutions)</button></div>
                         <div id="p2p3Results"></div>
                     </div>
@@ -6138,6 +6139,23 @@ Option D" required></textarea>
             return processed;
         }
 
+        // Mark schemes are stored as one continuous blob (no line breaks). For readability, put each
+        // sentence / marking point on its own line before it goes through sanitizeQuestionText. LaTeX
+        // spans are protected so a break is never inserted inside chemistry, and common abbreviations
+        // (e.g., i.e., Fig.) are shielded so their full stop is not read as a sentence end. A single
+        // sentence is returned unchanged. Elucidation answers are the clearest beneficiary.
+        function sqMarkSchemeBreaks(text) {
+            if (!text) return text;
+            const spans = [];
+            let s = String(text)
+                .replace(/\\\([\s\S]*?\\\)/g, (m) => { spans.push(m); return 'LTXK' + (spans.length - 1) + 'LTXK'; })
+                .replace(/\\\[[\s\S]*?\\\]/g, (m) => { spans.push(m); return 'LTXK' + (spans.length - 1) + 'LTXK'; });
+            s = s.replace(/\b(e\.g|i\.e|etc|cf|vs|approx|Fig|No|Eqn|Expt|resp|wrt|Dr|Mr|Mrs|Ms)\.\s/gi, (m) => m.replace(/\.\s$/, '.ABBRK'));
+            s = s.replace(/\.\s+(?=[A-Z(0-9L])/g, '.<br>');
+            s = s.replace(/ABBRK/g, ' ').replace(/LTXK(\d+)LTXK/g, (_, i) => spans[+i]);
+            return s;
+        }
+
 
         // ============================================
         // WORKSHEET PORTAL FUNCTIONS
@@ -6290,7 +6308,9 @@ Option D" required></textarea>
             const toolbar = document.getElementById('p2p3Toolbar');
             const ids = p2pMatchIds.slice();
             for (let i = ids.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
-            const pick = ids.slice(0, 20);   // cap each set to 20 questions
+            const numEl = document.getElementById('p2p3Num');
+            const nReq = Math.max(1, Math.min(50, parseInt(numEl && numEl.value, 10) || 10));   // student-chosen count, 1..50
+            const pick = ids.slice(0, nReq);
             hint.textContent = 'Loading…';
             try{
                 const qs = await sqFetchByIds(pick);
@@ -6346,7 +6366,7 @@ Option D" required></textarea>
                     const ansId = 'p2pa_'+q.id+'_'+p.id;
                     html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
                     html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none">';
-                    if (hasMs) html += '<div class="p2p3-ms">'+sanitizeQuestionText(p.mark_scheme)+'</div>';
+                    if (hasMs) html += '<div class="p2p3-ms">'+sanitizeQuestionText(sqMarkSchemeBreaks(p.mark_scheme))+'</div>';
                     if (hasAnsFig) html += '<div class="p2p3-figs">'+ansByPart[p.id].map(p2p3FigImg).join('')+'</div>';
                     html += '</div>';
                 }
@@ -9379,7 +9399,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     if (p.part_text) html+='<div class="p-text">'+sanitizeQuestionText(p.part_text)+'</div>';
                     if (qFigByPart[p.id]) html+='<div class="q-figs">'+qFigByPart[p.id].map(sqWorksheetFigImg).join('')+'</div>';
                     if (isTutor){
-                        if (p.mark_scheme) html+='<div class="p-ms"><span class="p-ms-lbl">Mark scheme</span>'+sanitizeQuestionText(p.mark_scheme)+'</div>';
+                        if (p.mark_scheme) html+='<div class="p-ms"><span class="p-ms-lbl">Mark scheme</span>'+sanitizeQuestionText(sqMarkSchemeBreaks(p.mark_scheme))+'</div>';
                         if (ansFigByPart[p.id]) html+='<div class="q-ansfigs">'+ansFigByPart[p.id].map(sqWorksheetFigImg).join('')+'</div>';
                     } else {
                         html+='<div class="p-ans">'+sqWorksheetAnswerLines(p.marks)+'</div>';

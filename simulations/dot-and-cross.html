@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dot-and-Cross Practice — Mr Khemistry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0f1a; --surface: #111827; --surface2: #1a2236;
+    --border: rgba(255,255,255,0.08); --text: #f0f4ff;
+    --soft: #dbe4f3; --muted: #9fb0cc; --accent: #4f9cf9; --cyan: #3fe0ff;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(79,156,249,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(79,156,249,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  nav {
+    position: relative; z-index: 10; display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; border-bottom: 1px solid var(--border);
+    background: rgba(11,15,26,0.9); backdrop-filter: blur(12px); flex-shrink: 0;
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-back:hover { color: var(--accent); }
+  .nav-back svg { width: 14px; height: 14px; }
+  .nav-title { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; color: var(--text); }
+  .nav-tags { display: flex; gap: 6px; }
+  .ntag { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .ntag-h2 { background: rgba(79,156,249,0.12); color: #93c5fd; border: 1px solid rgba(79,156,249,0.2); }
+  .ntag-bond { background: rgba(167,139,250,0.12); color: #c4b5fd; border: 1px solid rgba(167,139,250,0.2); }
+
+  .main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 1160px; margin: 0 auto; padding: 26px 32px 10px; display: flex; flex-direction: column; gap: 20px; }
+
+  .intro h1 { font-family: 'DM Serif Display', serif; font-size: clamp(26px, 4vw, 38px); font-weight: 400; line-height: 1.15; margin-bottom: 8px; }
+  .intro h1 em { font-style: italic; color: var(--accent); }
+  .intro p { font-size: 15px; color: var(--soft); line-height: 1.6; max-width: 720px; }
+
+  .cats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cat { padding: 9px 18px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--soft); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+  .cat:hover { border-color: var(--accent); color: var(--text); }
+  .cat.active { background: rgba(79,156,249,0.16); border-color: var(--accent); color: #cfe4ff; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tab { padding: 8px 14px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--soft); font-family: inherit; font-size: 15px; cursor: pointer; transition: all 0.18s; }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #06111f; font-weight: 600; }
+  .tab sub, .tab sup { font-size: 0.7em; }
+
+  .stage { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: stretch; }
+  @media (max-width: 820px) { .stage { grid-template-columns: 1fr; } }
+
+  .qcard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+  .q-formula { font-size: 40px; font-weight: 700; letter-spacing: 0.01em; color: var(--text); }
+  .q-formula sub { font-size: 0.6em; } .q-formula sup { font-size: 0.6em; }
+  .q-name { font-size: 14px; color: var(--cyan); font-weight: 600; margin-top: -8px; }
+  .q-task { font-size: 14px; color: var(--soft); line-height: 1.6; }
+  .q-hint { font-size: 13px; color: var(--muted); line-height: 1.55; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .q-hint b { color: var(--soft); font-weight: 600; }
+  .q-hint sub, .q-hint sup { font-size: 0.75em; }
+  .counts { display: none; font-size: 13px; color: var(--soft); line-height: 1.7; }
+  .counts.show { display: block; }
+  .counts .dv { color: var(--cyan); font-weight: 600; }
+  .controls { display: flex; gap: 10px; margin-top: 2px; flex-wrap: wrap; }
+  .btn { padding: 11px 18px; border-radius: 100px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.18s; }
+  .btn-reveal { background: var(--accent); color: #06111f; flex: 1; min-width: 150px; }
+  .btn-reveal:hover { background: #6fb0ff; }
+  .btn-nav { background: transparent; color: var(--soft); border-color: var(--border); }
+  .btn-nav:hover { border-color: var(--accent); color: var(--text); }
+
+  .diagram-wrap { background: #0f172a; border: 1px solid var(--border); border-radius: 16px; position: relative; overflow: hidden; min-height: 360px; display: flex; align-items: center; justify-content: center; padding: 10px; }
+  #svgHolder { width: 100%; display: flex; align-items: center; justify-content: center; }
+  .diagram-wrap svg { width: 100%; height: auto; max-height: 500px; display: block; }
+  .cover { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 30px; background: #0f172a; }
+  .cover .cv-ic { width: 54px; height: 54px; border-radius: 14px; background: rgba(79,156,249,0.12); border: 1px solid rgba(79,156,249,0.3); display: flex; align-items: center; justify-content: center; }
+  .cover .cv-ic svg { width: 26px; height: 26px; stroke: var(--accent); }
+  .cover h3 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 20px; color: var(--text); }
+  .cover p { font-size: 14px; color: var(--soft); max-width: 320px; line-height: 1.6; }
+
+  .btn-play { background: transparent; color: var(--cyan); border-color: rgba(63,224,255,0.5); flex: 1; min-width: 150px; }
+  .btn-play:hover { background: rgba(63,224,255,0.12); color: #bff3ff; }
+  .btn-play svg { vertical-align: -1px; margin-right: 4px; }
+  .btn-spk { background: transparent; color: var(--soft); border-color: var(--border); padding: 11px 13px; }
+  .btn-spk.off { color: var(--muted); opacity: 0.7; }
+  .btn-spk.off svg { opacity: 0.5; }
+  .btn-spk:hover { border-color: var(--accent); }
+  #stepsRow { display: none; gap: 6px; flex-wrap: wrap; }
+  .step { flex: 1; min-width: 50px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-family: inherit; font-size: 10.5px; cursor: pointer; transition: all 0.15s; }
+  .step b { font-size: 12px; color: var(--soft); font-weight: 700; }
+  .step:hover { border-color: var(--accent); color: var(--soft); }
+  .step.active { border-color: var(--cyan); background: rgba(63,224,255,0.14); color: #d7f6ff; }
+  .step.active b { color: var(--cyan); }
+  .anim-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 20px 16px; background: linear-gradient(transparent, rgba(9,14,26,0.94) 45%); color: #eaf2ff; font-size: 14.5px; line-height: 1.5; text-align: center; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 3; }
+  .anim-caption.show { opacity: 1; }
+
+  .anim .an-atom, .anim .an-lp, .anim .an-bond, .anim .an-arrow, .anim .an-charge { opacity: 0; }
+  .anim .an-atom { transition: opacity 0.45s ease; }
+  .anim .an-lp { transition: opacity 0.45s ease; }
+  .anim .an-bond { transform: translate(var(--tx,0px), var(--ty,0px)); transition: opacity 0.45s ease, transform 0.85s ease; }
+  .anim .an-arrow { transition: opacity 0.4s ease; }
+  .anim .an-charge { transition: opacity 0.5s ease; }
+  .anim.s1 .an-atom, .anim.s2 .an-atom, .anim.s3 .an-atom, .anim.s4 .an-atom { opacity: 1; }
+  .anim.s2 .an-lp, .anim.s3 .an-lp, .anim.s4 .an-lp { opacity: 1; }
+  .anim.s2 .an-bond, .anim.s3 .an-bond, .anim.s4 .an-bond { opacity: 1; }
+  .anim.s3 .an-bond, .anim.s4 .an-bond { transform: translate(0px, 0px); }
+  .anim.s3 .an-arrow, .anim.s4 .an-arrow { opacity: 1; }
+  .anim.s4 .an-charge { opacity: 1; }
+
+  /* CO storyboard: cumulative k1..k7 reveal classes */
+  .canim .cE { opacity: 0; transition: opacity 0.45s ease, transform 0.9s ease; }
+  .canim .co-o6c { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .co-at { opacity: 1; }
+  .canim.k2 .co-p2 { opacity: 1; }
+  .canim.k3 .co-p1 { opacity: 1; }
+  .canim.k4 .co-c3, .canim.k4 .co-o3w { opacity: 1; }
+  .canim.k5 .co-rem { opacity: 1; }
+  .canim.k6 .co-warn { opacity: 1; }
+  .canim.k7 .co-warn { opacity: 0; }
+  .canim.k7 .co-o3w, .canim.k7 .co-o6w { opacity: 0; }
+  .canim.k7 .co-o3c, .canim.k7 .co-o6c, .canim.k7 .co-arrow, .canim.k7 .co-ok { opacity: 1; }
+  .canim.k7 .co-o6c { transform: translate(0px, 0px); }
+  .canim.k7 .co-c3 { transform: translate(var(--c3tx,0px), var(--c3ty,0px)); }
+
+  /* NH4+ storyboard */
+  .canim .nh4-nbond, .canim .nh4-hbond, .canim .nh4-dp, .canim .nh4-dp2 { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .nh4-at { opacity: 1; }
+  .canim.k2 .nh4-nbond, .canim.k2 .nh4-hbond, .canim.k2 .nh4-htE, .canim.k2 .nh4-lpw { opacity: 1; }
+  .canim.k3 .nh4-htE { opacity: 0; transform: translate(0px, -28px); }
+  .canim.k3 .nh4-htplus { opacity: 1; }
+  .canim.k4 .nh4-nbond, .canim.k4 .nh4-hbond { transform: translate(0px, 0px); }
+  .canim.k5 .nh4-lpw { opacity: 0; }
+  .canim.k5 .nh4-dp, .canim.k5 .nh4-dp2 { opacity: 1; transform: translate(0px, 0px); }
+  .canim.k5 .nh4-arrow { opacity: 1; }
+  .canim.k6 .nh4-charge { opacity: 1; }
+  .canim.k6 .nh4-htplus, .canim.k6 .nh4-arrow { opacity: 0; }
+
+  /* Double-to-both, then fix one as a dative (ozone, NO2) */
+  .canim .dd-sl { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .dd-at { opacity: 1; }
+  .canim.k2 .dd-oaE, .canim.k2 .dd-obE, .canim.k2 .dd-lp, .canim.k2 .dd-oblp2 { opacity: 1; }
+  .canim.k3 .dd-sl { transform: translate(0px, 0px); }
+  .canim.k4 .dd-warn { opacity: 1; }
+  .canim.k5 .dd-obE { opacity: 0; }
+  .canim.k5 .dd-warn { opacity: 0; }
+  .canim.k5 .dd-obDat, .canim.k5 .dd-ob-lp3, .canim.k5 .dd-ok { opacity: 1; }
+
+  /* Nitrate ion: double-to-dative fix (k1-k5) plus a charge beat (k6) */
+  .canim .n3-sl { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .n3-at { opacity: 1; }
+  .canim.k2 .n3-oaE, .canim.k2 .n3-single, .canim.k2 .n3-datE, .canim.k2 .n3-lp, .canim.k2 .n3-oclp2, .canim.k2 .n3-obUnp { opacity: 1; }
+  .canim.k3 .n3-sl { transform: translate(0px, 0px); }
+  .canim.k4 .n3-warn { opacity: 1; }
+  .canim.k5 .n3-datE { opacity: 0; }
+  .canim.k5 .n3-warn { opacity: 0; }
+  .canim.k5 .n3-dat, .canim.k5 .n3-oc-lp3, .canim.k5 .n3-ok { opacity: 1; }
+  .canim.k6 .n3-gained, .canim.k6 .n3-bracket { opacity: 1; }
+
+  /* KHF2: charges first, then electrons, then covalent bond, then hydrogen bond */
+  .canim .kf-sl { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .kf-at, .canim.k1 .kf-brk { opacity: 1; }
+  .canim.k2 .kf-lp, .canim.k2 .kf-cov { opacity: 1; }
+  .canim.k3 .kf-sl { transform: translate(0px, 0px); }
+  .canim.k4 .kf-hb, .canim.k4 .kf-delta { opacity: 1; }
+
+  /* CaSO4: charges first, then electrons, then single bonds, then double bonds */
+  .canim .cs-sl1, .canim .cs-sl2 { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.k1 .cs-at, .canim.k1 .cs-brk { opacity: 1; }
+  .canim.k2 .cs-lp, .canim.k2 .cs-single, .canim.k2 .cs-double { opacity: 1; }
+  .canim.k3 .cs-sl1 { transform: translate(0px, 0px); }
+  .canim.k4 .cs-sl2 { transform: translate(0px, 0px); }
+
+  /* General data-driven storyboard */
+  .canim .gE { opacity: 0; transition: opacity 0.45s ease, transform 0.9s ease; }
+  .canim .gSlide { transform: translate(var(--tx,0px), var(--ty,0px)); }
+  .canim.g1 .sh1, .canim.g2 .sh2, .canim.g3 .sh3, .canim.g4 .sh4, .canim.g5 .sh5, .canim.g6 .sh6, .canim.g7 .sh7, .canim.g8 .sh8 { opacity: 1; }
+  .canim.g2 .sl2, .canim.g3 .sl3, .canim.g4 .sl4, .canim.g5 .sl5, .canim.g6 .sl6, .canim.g7 .sl7, .canim.g8 .sl8 { transform: translate(0px, 0px); }
+  .canim.g3 .fd3, .canim.g4 .fd4, .canim.g5 .fd5, .canim.g6 .fd6, .canim.g7 .fd7, .canim.g8 .fd8 { opacity: 0; }
+
+  .species-notes { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; }
+  .species-notes.show { display: block; }
+  .species-notes h3 { font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .species-notes ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .species-notes li { font-size: 14px; color: var(--soft); line-height: 1.6; padding-left: 20px; position: relative; }
+  .species-notes li sub, .species-notes li sup { font-size: 0.75em; }
+  .species-notes li::before { content: ''; position: absolute; left: 2px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+  .leg { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--soft); }
+  .leg svg { flex-shrink: 0; }
+
+  .notes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 4px; }
+  .note-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .note-card h3 { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+  .note-card p { font-size: 13px; color: var(--soft); line-height: 1.7; }
+  .note-card p b { color: var(--text); font-weight: 600; }
+
+  footer { position: relative; z-index: 1; text-align: center; padding: 26px 32px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); margin-top: 22px; }
+  footer a { color: var(--accent); text-decoration: none; }
+  @media (max-width: 600px) { nav { padding: 14px 18px; } .main { padding: 20px 18px 6px; } .q-formula { font-size: 34px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="./index.html" class="nav-back">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+      All simulations
+    </a>
+    <span style="color:#334155">|</span>
+    <span class="nav-title">Dot-and-Cross Practice</span>
+  </div>
+  <div class="nav-tags">
+    <span class="ntag ntag-h2">H2 Chem</span>
+    <span class="ntag ntag-bond">Chemical Bonding</span>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="intro">
+    <h1 id="introH">Dative bonds &amp; <em>10-electron species</em></h1>
+    <p id="introP">Seven molecules and ions where a <b style="color:var(--cyan);font-weight:600">dative (coordinate) bond</b> is the key to the dot-and-cross diagram. Pick a species, sketch it on paper, then reveal the worked answer. The dative pair is highlighted so you can see exactly where both electrons came from.</p>
+  </div>
+
+  <div class="cats" id="cats">
+    <button class="cat active" data-c="core">Dative &amp; 10-electron</button>
+    <button class="cat" data-c="extra">Extra practice</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage">
+    <div class="qcard">
+      <div>
+        <div class="q-formula" id="qFormula"></div>
+        <div class="q-name" id="qName"></div>
+      </div>
+      <div class="q-task" id="qTask"></div>
+      <div class="q-hint" id="qHint"></div>
+      <div class="counts" id="qCounts"></div>
+      <div class="controls">
+        <button class="btn btn-reveal" id="revealBtn">Reveal dot-and-cross</button>
+      </div>
+      <div class="controls" id="playRow" style="display:none;">
+        <button class="btn btn-play" id="playBtn"><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 1l8 5-8 5z"/></svg>Play build-up</button>
+        <button class="btn btn-spk" id="spkBtn" title="Voiceover on/off" aria-label="Toggle voiceover"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14"/></svg></button>
+      </div>
+      <div id="stepsRow"></div>
+      <div class="controls">
+        <button class="btn btn-nav" id="prevBtn">‹ Prev</button>
+        <button class="btn btn-nav" id="nextBtn">Next ›</button>
+      </div>
+    </div>
+
+    <div class="diagram-wrap" id="diagramWrap">
+      <div id="svgHolder"></div>
+      <div class="anim-caption" id="animCap"></div>
+      <div class="cover" id="cover">
+        <div class="cv-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+        <h3>Your turn</h3>
+        <p id="coverText">Sketch the dot-and-cross diagram on paper, then reveal the worked answer.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="species-notes" id="speciesNotes">
+    <h3 id="snHead">Key points</h3>
+    <ul id="snList"></ul>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><svg width="26" height="18"><circle cx="7" cy="9" r="3.6" fill="#eef3fb"/><g stroke="#eef3fb" stroke-width="1.8" stroke-linecap="round"><line x1="15" y1="5" x2="22" y2="13"/><line x1="15" y1="13" x2="22" y2="5"/></g></svg> Dot &amp; cross show which atom each electron came from</div>
+    <div class="leg"><svg width="34" height="18"><circle cx="7" cy="9" r="3.6" fill="#3fe0ff"/><circle cx="18" cy="9" r="3.6" fill="#3fe0ff"/><path d="M25 5 q6 4 0 8" fill="none" stroke="#3fe0ff" stroke-width="1.6"/></svg> Dative (coordinate) bond pair</div>
+    <div class="leg"><svg width="16" height="18"><circle cx="8" cy="9" r="3.6" fill="#ffb020"/></svg> Unpaired (radical) electron</div>
+    <div class="leg"><svg width="30" height="18"><line x1="3" y1="9" x2="27" y2="9" stroke="#8aa0c4" stroke-width="1.6" stroke-dasharray="3 4"/></svg> Hydrogen bond</div>
+    <div class="leg"><svg width="18" height="18"><g stroke="#ff6fb5" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="5" x2="13" y2="13"/><line x1="5" y1="13" x2="13" y2="5"/></g></svg> Gained electron (gives the negative charge)</div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <h3>What is a dative bond?</h3>
+      <p>A <b>dative (coordinate) bond</b> is a covalent bond where <b>both</b> shared electrons come from the same atom. Once formed it is identical to any other covalent bond; the arrow only records where the pair came from.</p>
+    </div>
+    <div class="note-card">
+      <h3>How to spot one</h3>
+      <p>Count the central atom's outer electrons. If it ends up forming more bonds than it has electrons to share, such as nitrogen with four bonds, one of those bonds <b>must</b> be dative.</p>
+    </div>
+    <div class="note-card">
+      <h3>Drawing the arrow</h3>
+      <p>Point the arrow from the <b>donor</b> (the atom giving the lone pair) to the <b>acceptor</b>: N to H in NH<sub>4</sub><sup>+</sup>, O to C in CO, N to O in the nitrogen oxides. Both electrons of that pair carry the donor's symbol.</p>
+    </div>
+    <div class="note-card">
+      <h3>Ions and charges</h3>
+      <p>For an <b>ion</b>, draw the whole species in square brackets and put the <b>overall charge</b> outside, top-right. In an ionic solid such as CaSO<sub>4</sub>, each ion gets its own brackets and the metal ion has an empty outer shell.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="./index.html">← Back to simulations</a> &nbsp;·&nbsp; Mr Khemistry · H2 Chemistry Singapore
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var WHITE='#eef3fb', DATIVE='#3fe0ff', RADICAL='#ffb020', HB='#8aa0c4', CHARGE='#ff6fb5';
+  var ATOM_COL={ N:'#5b6fe0', O:'#e0564f', C:'#f2822e', H:'#c3cdda', S:'#e6c34a', P:'#ef8a3c', Cl:'#59c07a', F:'#7fd39a', K:'#b072e0', Ca:'#e0aa53' };
+  var LABEL_COL={ N:'#ffffff', O:'#ffffff', C:'#ffffff', H:'#0b1220', S:'#0b1220', P:'#ffffff', Cl:'#08210f', F:'#08210f', K:'#ffffff', Ca:'#0b1220' };
+  var RAD={ N:26, O:24, C:26, H:20, S:28, P:28, Cl:26, F:22, K:30, Ca:30 };
+
+  // ---- SPECIES DATA -------------------------------------------------
+  // atom: {id, el, x, y, sym?, lp?, unpaired?, group?}   lp = count (auto-placed) or [angles]
+  // bond: {a, b, order, dativePairs?, donor?}
+  // sp.bracket + sp.chargeLabel  OR  sp.groups=[{bracket,chargeLabel}] with atom.group indices
+  // sp.hbonds = [{a,b}]  (dashed hydrogen-bond line)
+  var CORE=[
+    {
+      key:'nh3', formula:'NH<sub>3</sub>', name:'Ammonia',
+      task:'Draw the dot-and-cross diagram of ammonia and mark the lone pair on nitrogen.',
+      hint:'<b>8</b> outer-shell electrons · 3 bond pairs + 1 lone pair · no dative bond yet',
+      counts:'Valence electrons 8 · Bond pairs 3 · Lone pairs 1 · Dative bonds 0',
+      notes:[
+        "Nitrogen has 5 outer electrons: three form N-H bonds, the fourth pair stays as a lone pair.",
+        "That lone pair is the electron donor that goes on to form the dative bond in NH<sub>4</sub><sup>+</sup> and in complexes.",
+        "Shape is trigonal pyramidal because the lone pair pushes the three N-H bonds down."
+      ],
+      atoms:[
+        {id:'N', el:'N', x:240, y:170, sym:'dot', lp:[-90]},
+        {id:'H1', el:'H', x:130, y:280, sym:'cross'},
+        {id:'H2', el:'H', x:240, y:305, sym:'cross'},
+        {id:'H3', el:'H', x:350, y:280, sym:'cross'}
+      ],
+      bonds:[ {a:'N', b:'H1', order:1}, {a:'N', b:'H2', order:1}, {a:'N', b:'H3', order:1} ]
+    },
+    {
+      key:'nh4', formula:'NH<sub>4</sub><sup>+</sup>', name:'Ammonium ion',
+      task:'Draw the dot-and-cross diagram of the ammonium ion. Show the dative bond and the overall charge.',
+      hint:'<b>8</b> bonding electrons · 4 bond pairs · 1 is dative (from N to H<sup>+</sup>)',
+      counts:'Valence electrons 8 · Bond pairs 4 · Lone pairs 0 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "The H<sup>+</sup> ion has no electrons, so nitrogen's lone pair provides BOTH electrons of the fourth N-H bond: a dative (coordinate) bond.",
+        "Once formed, all four N-H bonds are identical. The arrow only records where the shared pair came from.",
+        "The whole ion carries a +1 charge, written outside the square brackets."
+      ],
+      bracket:true, chargeLabel:'+',
+      atoms:[
+        {id:'N', el:'N', x:240, y:200, sym:'dot'},
+        {id:'Ht', el:'H', x:240, y:88, sym:'cross'},
+        {id:'Hb', el:'H', x:240, y:312, sym:'cross'},
+        {id:'Hl', el:'H', x:112, y:200, sym:'cross'},
+        {id:'Hr', el:'H', x:368, y:200, sym:'cross'}
+      ],
+      bonds:[
+        {a:'N', b:'Ht', order:1, dativePairs:1, donor:'N', noArrow:true},
+        {a:'N', b:'Hb', order:1}, {a:'N', b:'Hl', order:1}, {a:'N', b:'Hr', order:1}
+      ]
+    },
+    {
+      key:'co', formula:'CO', name:'Carbon monoxide',
+      task:'Draw the dot-and-cross diagram of carbon monoxide. Show how a dative bond completes both octets.',
+      hint:'<b>10</b> bonding electrons · C≡O triple bond (2 normal + 1 dative) · a lone pair on each atom',
+      counts:'Valence electrons 10 · Bond pairs 3 · Lone pairs 2 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "Two normal shared pairs plus one dative pair donated by oxygen give a C≡O triple bond, so both atoms reach an octet.",
+        "Oxygen donates the third pair (arrow O to C). Carbon keeps one lone pair and oxygen keeps one lone pair.",
+        "CO has 10 bonding electrons and is isoelectronic with N<sub>2</sub>, which is why the two behave so similarly."
+      ],
+      atoms:[
+        {id:'C', el:'C', x:175, y:140, sym:'cross', lp:[180]},
+        {id:'O', el:'O', x:340, y:140, sym:'dot', lp:[0]}
+      ],
+      bonds:[ {a:'C', b:'O', order:3, dativePairs:1, donor:'O'} ]
+    },
+    {
+      key:'o3', formula:'O<sub>3</sub>', name:'Ozone',
+      task:'Draw the dot-and-cross diagram of ozone. Identify the dative bond and the lone pair on the central oxygen.',
+      hint:'<b>18</b> outer electrons · one O=O double bond + one dative bond from the central O',
+      counts:'Valence electrons 18 · Bond pairs 3 · Lone pairs 6 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "The central O forms a double bond to one oxygen and donates a lone pair (a dative bond) to the other.",
+        "Both bonds still give every oxygen a full octet, and the central O provides both electrons of the dative bond.",
+        "The real molecule is a resonance hybrid, so both O-O bonds are actually equal in length."
+      ],
+      atoms:[
+        {id:'Oc', el:'O', x:250, y:130, sym:'dot', lp:[-90]},
+        {id:'Oa', el:'O', x:130, y:270, sym:'cross', lp:2},
+        {id:'Ob', el:'O', x:370, y:270, sym:'cross', lp:[30, 90, -20]}
+      ],
+      bonds:[ {a:'Oc', b:'Oa', order:2}, {a:'Oc', b:'Ob', order:1, dativePairs:1, donor:'Oc'} ]
+    },
+    {
+      key:'no2', formula:'NO<sub>2</sub>', name:'Nitrogen dioxide',
+      task:'Draw the dot-and-cross diagram of NO2. Show the unpaired electron and the dative bond.',
+      hint:'<b>17</b> outer electrons (odd) · a radical · one N=O double + one N to O dative bond',
+      counts:'Valence electrons 17 · Bond pairs 3 · Lone pairs 5 · <span class="dv">Dative bonds 1</span> · Unpaired 1',
+      notes:[
+        "NO<sub>2</sub> has an odd number of electrons (17), so nitrogen carries a single unpaired electron: it is a radical.",
+        "One N=O double bond and one N to O dative bond complete the octets on both oxygen atoms.",
+        "The unpaired electron makes NO<sub>2</sub> reactive, which is why two molecules pair up to form N<sub>2</sub>O<sub>4</sub>."
+      ],
+      atoms:[
+        {id:'N', el:'N', x:250, y:130, sym:'dot', unpaired:-90},
+        {id:'Oa', el:'O', x:130, y:270, sym:'cross', lp:2},
+        {id:'Ob', el:'O', x:370, y:270, sym:'cross', lp:[30, 90, -20]}
+      ],
+      bonds:[ {a:'N', b:'Oa', order:2}, {a:'N', b:'Ob', order:1, dativePairs:1, donor:'N'} ]
+    },
+    {
+      key:'n2o4', formula:'N<sub>2</sub>O<sub>4</sub>', name:'Dinitrogen tetroxide',
+      task:'Draw the dot-and-cross diagram of N2O4. Show the N-N bond and both dative bonds.',
+      hint:'<b>34</b> outer electrons · an N-N bond joins two NO2 units · two dative bonds',
+      counts:'Valence electrons 34 · Bond pairs 7 · Lone pairs 10 · <span class="dv">Dative bonds 2</span>',
+      notes:[
+        "Two NO<sub>2</sub> radicals join: their unpaired electrons pair up to form the N-N single bond, which is a normal (not dative) bond.",
+        "Each nitrogen still has one N=O double bond and one N to O dative bond, so there are two dative bonds in the molecule.",
+        "This dimerisation is the N<sub>2</sub>O<sub>4</sub> to 2NO<sub>2</sub> equilibrium you meet in Le Chatelier problems."
+      ],
+      atoms:[
+        {id:'N1', el:'N', x:210, y:210, sym:'dot'},
+        {id:'N2', el:'N', x:370, y:210, sym:'dot'},
+        {id:'Oa1', el:'O', x:120, y:100, sym:'cross', lp:2},
+        {id:'Ob1', el:'O', x:120, y:320, sym:'cross', lp:[120, 180, 240]},
+        {id:'Oa2', el:'O', x:460, y:100, sym:'cross', lp:2},
+        {id:'Ob2', el:'O', x:460, y:320, sym:'cross', lp:[60, 0, -60]}
+      ],
+      bonds:[
+        {a:'N1', b:'N2', order:1},
+        {a:'N1', b:'Oa1', order:2}, {a:'N1', b:'Ob1', order:1, dativePairs:1, donor:'N1'},
+        {a:'N2', b:'Oa2', order:2}, {a:'N2', b:'Ob2', order:1, dativePairs:1, donor:'N2'}
+      ]
+    },
+    {
+      key:'no3', formula:'NO<sub>3</sub><sup>-</sup>', name:'Nitrate ion',
+      task:'Draw the dot-and-cross diagram of the nitrate ion. Show the dative bond and the overall charge.',
+      hint:'<b>24</b> outer electrons · one N=O double, one normal N-O single, one N to O dative',
+      counts:'Valence electrons 24 · Bond pairs 4 · Lone pairs 8 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "Nitrogen forms one N=O double bond, one normal N-O single bond, and one N to O dative bond to the third oxygen.",
+        "Nitrogen has only 5 outer electrons, so at least one of the four bonds must be dative.",
+        "The real ion is a resonance hybrid with three equal N-O bonds; the overall charge is -1."
+      ],
+      bracket:true, chargeLabel:'-',
+      atoms:[
+        {id:'N', el:'N', x:250, y:200, sym:'dot'},
+        {id:'Oa', el:'O', x:250, y:80, sym:'cross', lp:2},
+        {id:'Ob', el:'O', x:120, y:320, sym:'cross', lp:[120, 180, 240]},
+        {id:'Oc', el:'O', x:380, y:320, sym:'cross', lp:[60, 0, -60]}
+      ],
+      bonds:[ {a:'N', b:'Oa', order:2}, {a:'N', b:'Ob', order:1}, {a:'N', b:'Oc', order:1, dativePairs:1, donor:'N'} ]
+    }
+  ];
+
+  var EXTRA=[
+    {
+      key:'h2o2', formula:'H<sub>2</sub>O<sub>2</sub>', name:'Hydrogen peroxide',
+      task:'Draw the dot-and-cross diagram of hydrogen peroxide. Note the O-O single bond.',
+      hint:'<b>14</b> outer electrons · H-O-O-H · one O-O single bond · no dative bond',
+      counts:'Valence electrons 14 · Bond pairs 3 · Lone pairs 4 · Dative bonds 0',
+      notes:[
+        "Each oxygen forms one O-H bond and one O-O bond, and keeps two lone pairs.",
+        "There is no dative bond here, so it is a good contrast to the dative species; the weak O-O single bond is what makes H<sub>2</sub>O<sub>2</sub> reactive."
+      ],
+      atoms:[
+        {id:'O1', el:'O', x:250, y:200, lp:[60, 120]},
+        {id:'O2', el:'O', x:362, y:200, lp:[-120, -60]},
+        {id:'H1', el:'H', x:168, y:132, lp:0},
+        {id:'H2', el:'H', x:444, y:268, lp:0}
+      ],
+      bonds:[ {a:'O1', b:'O2', order:1}, {a:'O1', b:'H1', order:1}, {a:'O2', b:'H2', order:1} ]
+    },
+    {
+      key:'o2_2m', formula:'O<sub>2</sub><sup>2-</sup>', name:'Peroxide ion',
+      task:'Draw the dot-and-cross diagram of the peroxide ion. Show the overall 2- charge.',
+      hint:'<b>14</b> outer electrons · one O-O single bond · three lone pairs on each O',
+      counts:'Valence electrons 14 · Bond pairs 1 · Lone pairs 6 · Dative bonds 0',
+      notes:[
+        "A single O-O bond with three lone pairs on each oxygen; the two extra electrons give the 2- charge.",
+        "Peroxide is isoelectronic with F<sub>2</sub>: the same 14 outer electrons and one single bond."
+      ],
+      bracket:true, chargeLabel:'2−',
+      atoms:[ {id:'O1', el:'O', x:250, y:205, lp:3, chargeE:1}, {id:'O2', el:'O', x:392, y:205, lp:3, chargeE:1} ],
+      bonds:[ {a:'O1', b:'O2', order:1} ]
+    },
+    {
+      key:'s2_2m', formula:'S<sub>2</sub><sup>2-</sup>', name:'Disulfide ion',
+      task:'Draw the dot-and-cross diagram of the disulfide ion.',
+      hint:'<b>14</b> outer electrons · one S-S single bond · three lone pairs on each S',
+      counts:'Valence electrons 14 · Bond pairs 1 · Lone pairs 6 · Dative bonds 0',
+      notes:[
+        "The disulfide ion has the same structure as peroxide: one single bond and three lone pairs on each atom.",
+        "This is the S-S link found in proteins (as the neutral -S-S- disulfide bridge)."
+      ],
+      bracket:true, chargeLabel:'2−',
+      atoms:[ {id:'S1', el:'S', x:250, y:205, lp:3, chargeE:1}, {id:'S2', el:'S', x:402, y:205, lp:3, chargeE:1} ],
+      bonds:[ {a:'S1', b:'S2', order:1} ]
+    },
+    {
+      key:'ho2_m', formula:'HO<sub>2</sub><sup>-</sup>', name:'Hydroperoxide ion',
+      task:'Draw the dot-and-cross diagram of the hydroperoxide ion.',
+      hint:'<b>14</b> outer electrons · H-O-O · overall 1- charge',
+      counts:'Valence electrons 14 · Bond pairs 2 · Lone pairs 5 · Dative bonds 0',
+      notes:[
+        "One oxygen carries the H and two lone pairs; the far oxygen carries three lone pairs and the negative charge.",
+        "It is hydrogen peroxide, H<sub>2</sub>O<sub>2</sub>, that has lost one H<sup>+</sup>."
+      ],
+      bracket:true, chargeLabel:'−',
+      atoms:[
+        {id:'O1', el:'O', x:258, y:205, lp:2},
+        {id:'O2', el:'O', x:390, y:205, lp:3, chargeE:1},
+        {id:'H1', el:'H', x:176, y:138, lp:0}
+      ],
+      bonds:[ {a:'H1', b:'O1', order:1}, {a:'O1', b:'O2', order:1} ]
+    },
+    {
+      key:'hno3', formula:'HNO<sub>3</sub>', name:'Nitric acid',
+      task:'Draw the dot-and-cross diagram of nitric acid. Show the dative bond.',
+      hint:'<b>24</b> outer electrons · one N=O double, one N to O dative, one N-O-H',
+      counts:'Valence electrons 24 · Bond pairs 5 · Lone pairs 7 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "Nitrogen has only 5 outer electrons, so one of its bonds to oxygen must be dative (both electrons from N).",
+        "The third oxygen carries the H, giving the -O-H group of the acid."
+      ],
+      atoms:[
+        {id:'N', el:'N', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:412, y:150, lp:2},
+        {id:'Ob', el:'O', x:150, y:150, lp:3},
+        {id:'Oc', el:'O', x:300, y:335, lp:2},
+        {id:'H', el:'H', x:388, y:388, lp:0}
+      ],
+      bonds:[
+        {a:'N', b:'Oa', order:2},
+        {a:'N', b:'Ob', order:1, dativePairs:1, donor:'N'},
+        {a:'N', b:'Oc', order:1}, {a:'Oc', b:'H', order:1}
+      ]
+    },
+    {
+      key:'hno2', formula:'HNO<sub>2</sub>', name:'Nitrous acid',
+      task:'Draw the dot-and-cross diagram of nitrous acid, H-O-N=O.',
+      hint:'<b>18</b> outer electrons · one N=O double, one N-O-H, one lone pair on N',
+      counts:'Valence electrons 18 · Bond pairs 4 · Lone pairs 5 · Dative bonds 0',
+      notes:[
+        "Nitrogen keeps one lone pair here, so no dative bond is needed.",
+        "The H sits on an oxygen (H-O-N=O), not on the nitrogen."
+      ],
+      atoms:[
+        {id:'N', el:'N', x:300, y:205, lp:1},
+        {id:'Oa', el:'O', x:428, y:162, lp:2},
+        {id:'Ob', el:'O', x:198, y:255, lp:2},
+        {id:'H', el:'H', x:120, y:205, lp:0}
+      ],
+      bonds:[ {a:'N', b:'Oa', order:2}, {a:'N', b:'Ob', order:1}, {a:'Ob', b:'H', order:1} ]
+    },
+    {
+      key:'h2co3', formula:'H<sub>2</sub>CO<sub>3</sub>', name:'Carbonic acid',
+      task:'Draw the dot-and-cross diagram of carbonic acid.',
+      hint:'<b>24</b> outer electrons · one C=O double, two C-O-H groups',
+      counts:'Valence electrons 24 · Bond pairs 6 · Lone pairs 6 · Dative bonds 0',
+      notes:[
+        "Carbon forms four bonds and needs no lone pair, so there is no dative bond.",
+        "Two of the oxygens carry an H (the two -O-H groups); the third is a C=O double bond."
+      ],
+      atoms:[
+        {id:'C', el:'C', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:285, y:92, lp:2},
+        {id:'Ob', el:'O', x:162, y:272, lp:2},
+        {id:'Hb', el:'H', x:90, y:332, lp:0},
+        {id:'Oc', el:'O', x:408, y:272, lp:2},
+        {id:'Hc', el:'H', x:480, y:332, lp:0}
+      ],
+      bonds:[
+        {a:'C', b:'Oa', order:2},
+        {a:'C', b:'Ob', order:1}, {a:'Ob', b:'Hb', order:1},
+        {a:'C', b:'Oc', order:1}, {a:'Oc', b:'Hc', order:1}
+      ]
+    },
+    {
+      key:'h2so4', formula:'H<sub>2</sub>SO<sub>4</sub>', name:'Sulfuric acid',
+      task:'Draw the dot-and-cross diagram of sulfuric acid. Note the expanded octet on sulfur.',
+      hint:'<b>32</b> outer electrons · two S=O double bonds, two S-O-H · sulfur expands its octet',
+      counts:'Valence electrons 32 · Bond pairs 8 · Lone pairs 8 · Dative bonds 0',
+      notes:[
+        "Sulfur can hold more than eight electrons, so it forms two S=O double bonds and two S-O-H bonds.",
+        "The two -O-H groups are why sulfuric acid is a strong diprotic acid."
+      ],
+      atoms:[
+        {id:'S', el:'S', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:285, y:82, lp:2},
+        {id:'Ob', el:'O', x:285, y:330, lp:2},
+        {id:'Oc', el:'O', x:150, y:205, lp:2},
+        {id:'Hc', el:'H', x:78, y:145, lp:0},
+        {id:'Od', el:'O', x:420, y:205, lp:2},
+        {id:'Hd', el:'H', x:492, y:145, lp:0}
+      ],
+      bonds:[
+        {a:'S', b:'Oa', order:2}, {a:'S', b:'Ob', order:2},
+        {a:'S', b:'Oc', order:1}, {a:'Oc', b:'Hc', order:1},
+        {a:'S', b:'Od', order:1}, {a:'Od', b:'Hd', order:1}
+      ]
+    },
+    {
+      key:'h2so3', formula:'H<sub>2</sub>SO<sub>3</sub>', name:'Sulfurous acid',
+      task:'Draw the dot-and-cross diagram of sulfurous acid.',
+      hint:'<b>26</b> outer electrons · one S=O double, two S-O-H, one lone pair on S',
+      counts:'Valence electrons 26 · Bond pairs 6 · Lone pairs 7 · Dative bonds 0',
+      notes:[
+        "Unlike sulfuric acid, sulfur here keeps one lone pair, so there is only one S=O double bond.",
+        "The lone pair on sulfur makes the molecule pyramidal about the S atom."
+      ],
+      atoms:[
+        {id:'S', el:'S', x:285, y:215, lp:1},
+        {id:'Oa', el:'O', x:285, y:92, lp:2},
+        {id:'Ob', el:'O', x:158, y:262, lp:2},
+        {id:'Hb', el:'H', x:86, y:322, lp:0},
+        {id:'Oc', el:'O', x:412, y:262, lp:2},
+        {id:'Hc', el:'H', x:484, y:322, lp:0}
+      ],
+      bonds:[
+        {a:'S', b:'Oa', order:2},
+        {a:'S', b:'Ob', order:1}, {a:'Ob', b:'Hb', order:1},
+        {a:'S', b:'Oc', order:1}, {a:'Oc', b:'Hc', order:1}
+      ]
+    },
+    {
+      key:'h3po4', formula:'H<sub>3</sub>PO<sub>4</sub>', name:'Phosphoric acid',
+      task:'Draw the dot-and-cross diagram of phosphoric acid.',
+      hint:'<b>32</b> outer electrons · one P=O double, three P-O-H groups',
+      counts:'Valence electrons 32 · Bond pairs 8 · Lone pairs 8 · Dative bonds 0',
+      notes:[
+        "Phosphorus forms one P=O double bond and three P-O-H bonds, expanding its octet.",
+        "The three -O-H groups make phosphoric acid triprotic (it can release three H<sup>+</sup>)."
+      ],
+      atoms:[
+        {id:'P', el:'P', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:285, y:82, lp:2},
+        {id:'Ob', el:'O', x:150, y:225, lp:2},
+        {id:'Hb', el:'H', x:80, y:288, lp:0},
+        {id:'Oc', el:'O', x:420, y:225, lp:2},
+        {id:'Hc', el:'H', x:490, y:288, lp:0},
+        {id:'Od', el:'O', x:285, y:340, lp:2},
+        {id:'Hd', el:'H', x:360, y:392, lp:0}
+      ],
+      bonds:[
+        {a:'P', b:'Oa', order:2},
+        {a:'P', b:'Ob', order:1}, {a:'Ob', b:'Hb', order:1},
+        {a:'P', b:'Oc', order:1}, {a:'Oc', b:'Hc', order:1},
+        {a:'P', b:'Od', order:1}, {a:'Od', b:'Hd', order:1}
+      ]
+    },
+    {
+      key:'co3_2m', formula:'CO<sub>3</sub><sup>2-</sup>', name:'Carbonate ion',
+      task:'Draw the dot-and-cross diagram of the carbonate ion. Show the overall 2- charge.',
+      hint:'<b>24</b> outer electrons · one C=O double, two C-O single · overall 2- charge',
+      counts:'Valence electrons 24 · Bond pairs 4 · Lone pairs 8 · Dative bonds 0',
+      notes:[
+        "Carbon forms one C=O double bond and two C-O single bonds; the two extra electrons give the 2- charge.",
+        "The real ion is a resonance hybrid with three equal C-O bonds."
+      ],
+      bracket:true, chargeLabel:'2−',
+      atoms:[
+        {id:'C', el:'C', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:285, y:90, lp:2},
+        {id:'Ob', el:'O', x:166, y:300, lp:3, chargeE:1},
+        {id:'Oc', el:'O', x:404, y:300, lp:3, chargeE:1}
+      ],
+      bonds:[ {a:'C', b:'Oa', order:2}, {a:'C', b:'Ob', order:1}, {a:'C', b:'Oc', order:1} ]
+    },
+    {
+      key:'hco3_m', formula:'HCO<sub>3</sub><sup>-</sup>', name:'Hydrogencarbonate ion',
+      task:'Draw the dot-and-cross diagram of the hydrogencarbonate ion.',
+      hint:'<b>24</b> outer electrons · one C=O double, one C-O-H, one C-O · overall 1- charge',
+      counts:'Valence electrons 24 · Bond pairs 5 · Lone pairs 7 · Dative bonds 0',
+      notes:[
+        "One oxygen carries the H (the -O-H group); another carries the negative charge.",
+        "It is carbonic acid, H<sub>2</sub>CO<sub>3</sub>, that has lost one H<sup>+</sup>."
+      ],
+      bracket:true, chargeLabel:'−',
+      atoms:[
+        {id:'C', el:'C', x:285, y:205, lp:0},
+        {id:'Oa', el:'O', x:285, y:90, lp:2},
+        {id:'Ob', el:'O', x:165, y:298, lp:3, chargeE:1},
+        {id:'Oc', el:'O', x:405, y:285, lp:2},
+        {id:'H', el:'H', x:478, y:340, lp:0}
+      ],
+      bonds:[ {a:'C', b:'Oa', order:2}, {a:'C', b:'Ob', order:1}, {a:'C', b:'Oc', order:1}, {a:'Oc', b:'H', order:1} ]
+    },
+    {
+      key:'nocl', formula:'NOCl', name:'Nitrosyl chloride',
+      task:'Draw the dot-and-cross diagram of nitrosyl chloride, with nitrogen as the central atom.',
+      hint:'<b>18</b> outer electrons · one N=O double, one N-Cl single, one lone pair on N',
+      counts:'Valence electrons 18 · Bond pairs 3 · Lone pairs 6 · Dative bonds 0',
+      notes:[
+        "Nitrogen is central: it forms a double bond to oxygen, a single bond to chlorine, and keeps one lone pair.",
+        "The lone pair on nitrogen makes the O-N-Cl arrangement bent."
+      ],
+      atoms:[
+        {id:'N', el:'N', x:295, y:205, lp:1},
+        {id:'O', el:'O', x:165, y:150, lp:2},
+        {id:'Cl', el:'Cl', x:425, y:250, lp:3}
+      ],
+      bonds:[ {a:'N', b:'O', order:2}, {a:'N', b:'Cl', order:1} ]
+    },
+    {
+      key:'hn3', formula:'HN<sub>3</sub>', name:'Hydrogen azide',
+      task:'Draw the dot-and-cross diagram of hydrogen azide (bond angles 104.5 and 180 degrees).',
+      hint:'<b>16</b> outer electrons · H-N-N-N · one N to N dative bond, one N to N triple bond',
+      counts:'Valence electrons 16 · Bond pairs 5 · Lone pairs 3 · <span class="dv">Dative bonds 1</span>',
+      notes:[
+        "The H-bearing nitrogen has two lone pairs, so its bond angle is about 104.5 degrees; the middle nitrogen is linear (180 degrees).",
+        "One N-to-N bond is dative: the middle nitrogen donates both electrons to the H-bearing nitrogen. This keeps every nitrogen at a full octet with no formal charges."
+      ],
+      atoms:[
+        {id:'H', el:'H', x:150, y:148, lp:0},
+        {id:'Na', el:'N', x:255, y:208, lp:2},
+        {id:'Nb', el:'N', x:375, y:208, lp:0},
+        {id:'Nc', el:'N', x:495, y:208, lp:1}
+      ],
+      bonds:[ {a:'H', b:'Na', order:1}, {a:'Na', b:'Nb', order:1, dativePairs:1, donor:'Nb'}, {a:'Nb', b:'Nc', order:3} ]
+    },
+    {
+      key:'n2o5', formula:'N<sub>2</sub>O<sub>5</sub>', name:'Dinitrogen pentoxide',
+      task:'Draw the dot-and-cross diagram of N2O5 (two NO2 groups bridged by an oxygen).',
+      hint:'<b>40</b> outer electrons · a bridging O joins two N · each N has one dative bond',
+      counts:'Valence electrons 40 · Bond pairs 8 · Lone pairs 12 · <span class="dv">Dative bonds 2</span>',
+      notes:[
+        "The fifth oxygen atom is the bridging atom here: two NO<sub>2</sub> units supply four oxygens, and the fifth sits in the middle bonded to both nitrogens.",
+        "Each nitrogen then has one N=O double bond and one N to O dative bond, so there are two dative bonds in the molecule.",
+        "It is the acid anhydride of nitric acid: N<sub>2</sub>O<sub>5</sub> + H<sub>2</sub>O gives 2 HNO<sub>3</sub>."
+      ],
+      atoms:[
+        {id:'Ob', el:'O', x:290, y:235, lp:2},
+        {id:'N1', el:'N', x:168, y:205, lp:0},
+        {id:'N2', el:'N', x:412, y:205, lp:0},
+        {id:'Oa1', el:'O', x:82, y:118, lp:2},
+        {id:'Oc1', el:'O', x:92, y:308, lp:3},
+        {id:'Oa2', el:'O', x:498, y:118, lp:2},
+        {id:'Oc2', el:'O', x:488, y:308, lp:3}
+      ],
+      bonds:[
+        {a:'N1', b:'Ob', order:1}, {a:'N2', b:'Ob', order:1},
+        {a:'N1', b:'Oa1', order:2}, {a:'N1', b:'Oc1', order:1, dativePairs:1, donor:'N1'},
+        {a:'N2', b:'Oa2', order:2}, {a:'N2', b:'Oc2', order:1, dativePairs:1, donor:'N2'}
+      ]
+    },
+    {
+      key:'khf2', formula:'KHF<sub>2</sub>', name:'Potassium hydrogen difluoride',
+      task:'Draw the dot-and-cross diagram of KHF2: a K+ ion and an [F-H-F]- ion.',
+      hint:'Ionic: [K]<sup>+</sup> and [HF<sub>2</sub>]<sup>-</sup> · one F-H covalent bond + one hydrogen bond',
+      counts:'Two ions · K<sup>+</sup> (no outer electrons shown) · [HF<sub>2</sub>]<sup>-</sup> has 16 outer electrons',
+      notes:[
+        "<b>Ionic compound with covalent bonds within:</b> K<sup>+</sup> and [HF<sub>2</sub>]<sup>-</sup> are held together by ionic bonding, but the H-F bond inside the ion is covalent.",
+        "Potassium is in Group 1, so it can only be K<sup>+</sup>; the [HF<sub>2</sub>]<sup>-</sup> part therefore carries the minus one charge.",
+        "The electron potassium gives away goes to the more electronegative fluorine, making it F<sup>-</sup> (shown in pink).",
+        "H is covalently bonded to one fluorine; a lone pair on the F<sup>-</sup> then forms a hydrogen bond (dashed) to that slightly positive hydrogen."
+      ],
+      groups:[ {bracket:true, chargeLabel:'+'}, {bracket:true, chargeLabel:'−'} ],
+      atoms:[
+        {id:'K', el:'K', x:108, y:208, lp:0, group:0},
+        {id:'F1', el:'F', x:280, y:208, sym:'cross', lp:3, group:1},
+        {id:'H', el:'H', x:366, y:208, sym:'dot', lp:0, group:1},
+        {id:'F2', el:'F', x:452, y:208, sym:'cross', lp:[-90,90,0,180], group:1, chargeE:1}
+      ],
+      bonds:[ {a:'F1', b:'H', order:1} ],
+      hbonds:[ {a:'H', b:'F2'} ]
+    },
+    {
+      key:'caso4', formula:'CaSO<sub>4</sub>', name:'Calcium sulfate',
+      task:'Draw the dot-and-cross diagram of calcium sulfate: a Ca2+ ion and a sulfate ion.',
+      hint:'Ionic: [Ca]<sup>2+</sup> and [SO<sub>4</sub>]<sup>2-</sup> · sulfate has two S=O and two S-O bonds',
+      counts:'Two ions · Ca<sup>2+</sup> (no outer electrons shown) · [SO<sub>4</sub>]<sup>2-</sup> has 32 outer electrons',
+      notes:[
+        "<b>Ionic compound with covalent bonds within:</b> Ca<sup>2+</sup> and [SO<sub>4</sub>]<sup>2-</sup> are held together by ionic bonding, but the S-O bonds inside the sulfate are covalent.",
+        "Calcium is in Group 2, so it must be Ca<sup>2+</sup>; the two electrons it gives away go onto two of the oxygens (pink), making the sulfate 2-.",
+        "Sulfur forms two S=O double bonds and two S-O single bonds, expanding its octet to twelve electrons."
+      ],
+      groups:[ {bracket:true, chargeLabel:'2+'}, {bracket:true, chargeLabel:'2−'} ],
+      atoms:[
+        {id:'Ca', el:'Ca', x:70, y:220, lp:0, group:0},
+        {id:'S', el:'S', x:395, y:220, lp:0, group:1},
+        {id:'Oa', el:'O', x:395, y:102, lp:2, group:1},
+        {id:'Ob', el:'O', x:395, y:338, lp:2, group:1},
+        {id:'Oc', el:'O', x:278, y:220, lp:3, group:1, chargeE:1},
+        {id:'Od', el:'O', x:512, y:220, lp:3, group:1, chargeE:1}
+      ],
+      bonds:[
+        {a:'S', b:'Oa', order:2}, {a:'S', b:'Ob', order:2},
+        {a:'S', b:'Oc', order:1}, {a:'S', b:'Od', order:1}
+      ]
+    }
+  ];
+
+  var CATS={ core:CORE, extra:EXTRA };
+  var INTRO={
+    core:{ h:'Dative bonds &amp; <em>10-electron species</em>',
+      p:'Seven molecules and ions where a <b style="color:var(--cyan);font-weight:600">dative (coordinate) bond</b> is the key to the dot-and-cross diagram. Pick a species, sketch it on paper, then reveal the worked answer. The dative pair is highlighted so you can see exactly where both electrons came from.' },
+    extra:{ h:'Extra <em>dot-and-cross practice</em>',
+      p:'More exam dot-and-cross diagrams from the A-level bonding syllabus: oxo-acids, oxo-anions, peroxides and other tricky species, ending with two ionic solids. Pick one, sketch it on paper, then reveal the worked answer.' }
+  };
+
+  // ---- GEOMETRY HELPERS --------------------------------------------
+  function norm360(d){ return ((d%360)+360)%360; }
+  function byId(sp,id){ for(var i=0;i<sp.atoms.length;i++){ if(sp.atoms[i].id===id) return sp.atoms[i]; } return null; }
+  function atomHasLp(a){ return (Array.isArray(a.lp)&&a.lp.length>0) || (typeof a.lp==='number'&&a.lp>0); }
+
+  function occupiedAngles(sp,a){
+    var arr=[];
+    for(var i=0;i<sp.bonds.length;i++){ var b=sp.bonds[i], other=null;
+      if(b.a===a.id) other=byId(sp,b.b); else if(b.b===a.id) other=byId(sp,b.a);
+      if(other) arr.push(Math.atan2(other.y-a.y, other.x-a.x)*180/Math.PI); }
+    (sp.hbonds||[]).forEach(function(hb){ var other=null;
+      if(hb.a===a.id) other=byId(sp,hb.b); else if(hb.b===a.id) other=byId(sp,hb.a);
+      if(other) arr.push(Math.atan2(other.y-a.y, other.x-a.x)*180/Math.PI); });
+    if(a.unpaired!==undefined) arr.push(a.unpaired);
+    return arr;
+  }
+  function largestGap(occ){
+    occ.sort(function(x,y){ return x-y; });
+    var bestGap=-1,bestMid=0;
+    for(var j=0;j<occ.length;j++){ var a1=occ[j], a2=(j+1<occ.length)?occ[j+1]:occ[0]+360, gap=a2-a1, mid=norm360(a1+gap/2);
+      if(gap>bestGap){ bestGap=gap; bestMid=mid; } }
+    return { center:bestMid, size:bestGap };
+  }
+  function spreadAngles(occupied, n){
+    var occ=occupied.map(norm360);
+    if(occ.length===0){ var e=[]; for(var i=0;i<n;i++) e.push(i*360/n); return e; }
+    if(n===2){
+      // two lone pairs sit side by side in the largest free gap, with a clear gap between them
+      var g=largestGap(occ.slice()), sep=Math.min(58, g.size*0.5);
+      return [ norm360(g.center - sep/2), norm360(g.center + sep/2) ];
+    }
+    var res=[];
+    for(var k=0;k<n;k++){ var gg=largestGap(occ); res.push(gg.center); occ.push(gg.center); }
+    return res;
+  }
+  function lpAnglesFor(sp,a){
+    if(Array.isArray(a.lp)) return a.lp;
+    if(typeof a.lp==='number') return spreadAngles(occupiedAngles(sp,a), a.lp);
+    return [];
+  }
+  function assignSym(sp){
+    var need=false, i;
+    for(i=0;i<sp.atoms.length;i++){ if(!sp.atoms[i].sym){ need=true; break; } }
+    if(!need) return;
+    var adj={};
+    sp.atoms.forEach(function(a){ adj[a.id]=[]; });
+    sp.bonds.forEach(function(b){ if(adj[b.a]&&adj[b.b]){ adj[b.a].push(b.b); adj[b.b].push(b.a); } });
+    var colour={};
+    sp.atoms.forEach(function(a){
+      if(colour[a.id]!==undefined) return;
+      colour[a.id]=0; var q=[a.id];
+      while(q.length){ var u=q.shift(); adj[u].forEach(function(v){ if(colour[v]===undefined){ colour[v]=1-colour[u]; q.push(v); } }); }
+    });
+    sp.atoms.forEach(function(a){ if(!a.sym) a.sym = (colour[a.id]===0?'dot':'cross'); });
+  }
+
+  // ---- SVG DRAWING -------------------------------------------------
+  function dot(x,y,c){ return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="3.7" fill="'+c+'"/>'; }
+  function cross(x,y,c){ var a=4.3; return '<g stroke="'+c+'" stroke-width="1.9" stroke-linecap="round">'+
+    '<line x1="'+(x-a).toFixed(1)+'" y1="'+(y-a).toFixed(1)+'" x2="'+(x+a).toFixed(1)+'" y2="'+(y+a).toFixed(1)+'"/>'+
+    '<line x1="'+(x-a).toFixed(1)+'" y1="'+(y+a).toFixed(1)+'" x2="'+(x+a).toFixed(1)+'" y2="'+(y-a).toFixed(1)+'"/></g>'; }
+  function mark(sym,x,y,c){ return sym==='dot'?dot(x,y,c):cross(x,y,c); }
+
+  function atomDisc(a){
+    var R=RAD[a.el]||24, fs=(a.el==='H')?16:(a.el.length>1?16:21);
+    var s='<circle cx="'+a.x+'" cy="'+a.y+'" r="'+R+'" fill="'+(ATOM_COL[a.el]||'#888')+'" stroke="rgba(0,0,0,0.28)" stroke-width="1"/>';
+    s+='<text x="'+a.x+'" y="'+(a.y+1)+'" text-anchor="middle" dominant-baseline="central" font-family="DM Sans,sans-serif" font-weight="700" font-size="'+fs+'" fill="'+(LABEL_COL[a.el]||'#0b1220')+'">'+a.el+'</text>';
+    return s;
+  }
+
+  function bondMarks(sp,b){
+    var A=byId(sp,b.a), B=byId(sp,b.b);
+    var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+    var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+    var ax=A.x+ux*(RA+11), ay=A.y+uy*(RA+11), bx2=B.x-ux*(RB+11), by2=B.y-uy*(RB+11);
+    var gx=(ax+bx2)/2, gy=(ay+by2)/2;
+    var order=b.order||1, dp=b.dativePairs||0;
+    var offs = order===1?[0] : order===2?[-9,9] : [-13,0,13];
+    var out='';
+    for(var i=0;i<order;i++){
+      var o=offs[i], cxp=gx+px*o, cyp=gy+py*o;
+      var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+      var isDat = i >= (order-dp);
+      if(isDat){ var dsym=byId(sp,b.donor).sym; out+=mark(dsym,m1x,m1y,DATIVE)+mark(dsym,m2x,m2y,DATIVE); }
+      else { out+=mark(A.sym,m1x,m1y,WHITE)+mark(B.sym,m2x,m2y,WHITE); }
+    }
+    if(dp>0 && !b.noArrow){ out+=dativeArrow(sp,b); }
+    return out;
+  }
+
+  function dativeArrow(sp,b){
+    var A=byId(sp,b.a), B=byId(sp,b.b);
+    var dxAB=B.x-A.x, dyAB=B.y-A.y, Lab=Math.sqrt(dxAB*dxAB+dyAB*dyAB)||1;
+    var pxAB=-dyAB/Lab, pyAB=dxAB/Lab;                       // perpendicular in the same basis as the bond electrons
+    var order=b.order||1, offs=order===1?[0]:order===2?[-9,9]:[-13,0,13];
+    var datOffset=offs[order-1];
+    var side = datOffset!==0 ? (datOffset>0?1:-1) : (b.donor===b.a?1:-1);   // keep the arrow on the same side as the dative pair
+    var don=byId(sp,b.donor), acc=byId(sp,(b.donor===b.a)?b.b:b.a);
+    var dx=acc.x-don.x, dy=acc.y-don.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L;
+    var RD=RAD[don.el]||24, RA=RAD[acc.el]||24, off=20, ox=pxAB*off*side, oy=pyAB*off*side;
+    var sx=don.x+ux*(RD+7)+ox, sy=don.y+uy*(RD+7)+oy;
+    var ex=acc.x-ux*(RA+7)+ox, ey=acc.y-uy*(RA+7)+oy;
+    var mxp=(sx+ex)/2+pxAB*13*side, myp=(sy+ey)/2+pyAB*13*side;
+    var s='<path d="M'+sx.toFixed(1)+' '+sy.toFixed(1)+' Q'+mxp.toFixed(1)+' '+myp.toFixed(1)+' '+ex.toFixed(1)+' '+ey.toFixed(1)+'" fill="none" stroke="'+DATIVE+'" stroke-width="2"/>';
+    var adx=ex-mxp, ady=ey-myp, al=Math.sqrt(adx*adx+ady*ady)||1, aux=adx/al, auy=ady/al, apx=-auy, apy=aux;
+    s+='<path d="M'+ex.toFixed(1)+' '+ey.toFixed(1)+' L'+(ex-aux*9-apx*4).toFixed(1)+' '+(ey-auy*9-apy*4).toFixed(1)+' L'+(ex-aux*9+apx*4).toFixed(1)+' '+(ey-auy*9+apy*4).toFixed(1)+' Z" fill="'+DATIVE+'"/>';
+    return s;
+  }
+
+  function hbondLine(sp,hb){
+    var A=byId(sp,hb.a), B=byId(sp,hb.b);
+    var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L;
+    var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+    var sx=A.x+ux*(RA+5), sy=A.y+uy*(RA+5), ex=B.x-ux*(RB+5), ey=B.y-uy*(RB+5);
+    return '<line x1="'+sx.toFixed(1)+'" y1="'+sy.toFixed(1)+'" x2="'+ex.toFixed(1)+'" y2="'+ey.toFixed(1)+'" stroke="'+HB+'" stroke-width="1.7" stroke-dasharray="3 4"/>';
+  }
+
+  function lonePairs(sp,a){
+    var out='', R=RAD[a.el]||24, list=lpAnglesFor(sp,a);
+    var altSym=(a.sym==='dot')?'cross':'dot', chargeLeft=a.chargeE||0;
+    for(var i=0;i<list.length;i++){
+      var ang=list[i]*Math.PI/180, cx=a.x+Math.cos(ang)*(R+13), cy=a.y+Math.sin(ang)*(R+13);
+      var px=-Math.sin(ang), py=Math.cos(ang), s=5.4;
+      // one electron per charge unit is drawn as the alternate symbol in pink: the electron gained to form the negative charge
+      if(chargeLeft>0){ out+=mark(altSym,cx-px*s,cy-py*s,CHARGE); chargeLeft--; }
+      else { out+=mark(a.sym,cx-px*s,cy-py*s,WHITE); }
+      out+=mark(a.sym,cx+px*s,cy+py*s,WHITE);
+    }
+    return out;
+  }
+
+  function radical(a){
+    if(a.unpaired===undefined) return '';
+    var ang=a.unpaired*Math.PI/180, R=RAD[a.el]||24;
+    return dot(a.x+Math.cos(ang)*(R+13), a.y+Math.sin(ang)*(R+13), RADICAL);
+  }
+
+  function contentBBox(sp){
+    var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+    for(var i=0;i<sp.atoms.length;i++){ var a=sp.atoms[i], R=RAD[a.el]||24, reach=R+24;
+      minX=Math.min(minX,a.x-reach); maxX=Math.max(maxX,a.x+reach);
+      minY=Math.min(minY,a.y-reach); maxY=Math.max(maxY,a.y+reach); }
+    return {minX:minX,maxX:maxX,minY:minY,maxY:maxY};
+  }
+
+  function bracketForAtoms(atoms, chargeLabel){
+    var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+    atoms.forEach(function(a){ var R=RAD[a.el]||24, reach=R+(atomHasLp(a)?24:18);
+      minX=Math.min(minX,a.x-reach); maxX=Math.max(maxX,a.x+reach);
+      minY=Math.min(minY,a.y-reach); maxY=Math.max(maxY,a.y+reach); });
+    var lx=minX-6, rx=maxX+6, top=minY-4, bot=maxY+4, arm=14, col='#b9c6dc';
+    function br(x,dir){ return '<path d="M'+(x+dir*arm)+' '+top+' L'+x+' '+top+' L'+x+' '+bot+' L'+(x+dir*arm)+' '+bot+'" fill="none" stroke="'+col+'" stroke-width="2"/>'; }
+    var s=br(lx,1)+br(rx,-1);
+    if(chargeLabel) s+='<text x="'+(rx+12)+'" y="'+(top+20)+'" font-family="DM Sans,sans-serif" font-weight="700" font-size="24" fill="#e8eef6">'+chargeLabel+'</text>';
+    return s;
+  }
+  function bracketsAll(sp){
+    if(sp.groups){
+      var s='';
+      sp.groups.forEach(function(grp, gi){
+        if(!grp.bracket) return;
+        var atoms=sp.atoms.filter(function(a){ return (a.group||0)===gi; });
+        if(atoms.length) s+=bracketForAtoms(atoms, grp.chargeLabel);
+      });
+      return s;
+    }
+    if(sp.bracket) return bracketForAtoms(sp.atoms, sp.chargeLabel);
+    return '';
+  }
+
+  function renderSVG(sp){
+    assignSym(sp);
+    var g='', i;
+    for(i=0;i<sp.atoms.length;i++){ g+=atomDisc(sp.atoms[i]); }
+    for(i=0;i<sp.bonds.length;i++){ g+=bondMarks(sp,sp.bonds[i]); }
+    (sp.hbonds||[]).forEach(function(hb){ g+=hbondLine(sp,hb); });
+    for(i=0;i<sp.atoms.length;i++){ g+=lonePairs(sp,sp.atoms[i])+radical(sp.atoms[i]); }
+    g+=bracketsAll(sp);
+    var bb=contentBBox(sp), hasBracket = sp.bracket || (sp.groups && sp.groups.length);
+    var vx,vy,vw,vh;
+    if(hasBracket){ vx=bb.minX-34; vy=bb.minY-30; vw=(bb.maxX-bb.minX)+92; vh=(bb.maxY-bb.minY)+56; }
+    else { vx=bb.minX-14; vy=bb.minY-14; vw=(bb.maxX-bb.minX)+28; vh=(bb.maxY-bb.minY)+28; }
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="11" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    var vb=vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1);
+    return '<svg viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dot and cross diagram of '+sp.name+'">'+g+'</svg>';
+  }
+
+  // ---- ANIMATED BUILD-UP -------------------------------------------
+  // Each bond electron starts near its own atom (its valence electron) and slides
+  // into the shared bond position; grouped by CSS stage classes.
+  function bondMarksAnim(sp,b){
+    var A=byId(sp,b.a), B=byId(sp,b.b);
+    var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+    var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+    var ax=A.x+ux*(RA+11), ay=A.y+uy*(RA+11), bx2=B.x-ux*(RB+11), by2=B.y-uy*(RB+11);
+    var gx=(ax+bx2)/2, gy=(ay+by2)/2;
+    var order=b.order||1, dp=b.dativePairs||0, offs=order===1?[0]:order===2?[-9,9]:[-13,0,13];
+    var slide=38, out='';
+    function wrap(m, sign){ var tx=ux*slide*sign, ty=uy*slide*sign;
+      return '<g class="an-bond" style="--tx:'+tx.toFixed(1)+'px;--ty:'+ty.toFixed(1)+'px">'+m+'</g>'; }
+    for(var i=0;i<order;i++){
+      var o=offs[i], cxp=gx+px*o, cyp=gy+py*o;
+      var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+      if(i >= (order-dp)){
+        var dsym=byId(sp,b.donor).sym, ds=(b.donor===b.a)?-1:1;
+        out+=wrap(mark(dsym,m1x,m1y,DATIVE),ds)+wrap(mark(dsym,m2x,m2y,DATIVE),ds);
+      } else {
+        out+=wrap(mark(A.sym,m1x,m1y,WHITE),-1)+wrap(mark(B.sym,m2x,m2y,WHITE),1);
+      }
+    }
+    return out;
+  }
+  function lonePairsAnim(sp,a){
+    var out='', R=RAD[a.el]||24, list=lpAnglesFor(sp,a);
+    var altSym=(a.sym==='dot')?'cross':'dot', chargeLeft=a.chargeE||0;
+    for(var i=0;i<list.length;i++){
+      var ang=list[i]*Math.PI/180, cx=a.x+Math.cos(ang)*(R+13), cy=a.y+Math.sin(ang)*(R+13);
+      var px=-Math.sin(ang), py=Math.cos(ang), s=5.4;
+      if(chargeLeft>0){ out+='<g class="an-charge">'+mark(altSym,cx-px*s,cy-py*s,CHARGE)+'</g>'; chargeLeft--; }
+      else { out+='<g class="an-lp">'+mark(a.sym,cx-px*s,cy-py*s,WHITE)+'</g>'; }
+      out+='<g class="an-lp">'+mark(a.sym,cx+px*s,cy+py*s,WHITE)+'</g>';
+    }
+    return out;
+  }
+  function renderAnimated(sp){
+    assignSym(sp);
+    var g='', i;
+    for(i=0;i<sp.atoms.length;i++){ g+='<g class="an-atom">'+atomDisc(sp.atoms[i])+'</g>'; }
+    for(i=0;i<sp.bonds.length;i++){ g+=bondMarksAnim(sp,sp.bonds[i]);
+      if((sp.bonds[i].dativePairs||0)>0) g+='<g class="an-arrow">'+dativeArrow(sp,sp.bonds[i])+'</g>'; }
+    (sp.hbonds||[]).forEach(function(hb){ g+='<g class="an-arrow">'+hbondLine(sp,hb)+'</g>'; });
+    for(i=0;i<sp.atoms.length;i++){ g+=lonePairsAnim(sp,sp.atoms[i]);
+      if(sp.atoms[i].unpaired!==undefined) g+='<g class="an-lp">'+radical(sp.atoms[i])+'</g>'; }
+    g+='<g class="an-charge">'+bracketsAll(sp)+'</g>';
+    var bb=contentBBox(sp), hasBracket=sp.bracket||(sp.groups&&sp.groups.length), vx,vy,vw,vh;
+    if(hasBracket){ vx=bb.minX-34; vy=bb.minY-30; vw=(bb.maxX-bb.minX)+92; vh=(bb.maxY-bb.minY)+56; }
+    else { vx=bb.minX-14; vy=bb.minY-14; vw=(bb.maxX-bb.minX)+28; vh=(bb.maxY-bb.minY)+28; }
+    var vb=vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1);
+    return '<svg class="anim s0" viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of '+sp.name+'">'+g+'</svg>';
+  }
+
+  // ---- CO discovery storyboard (hand-choreographed) ----------------
+  function coLabel(x,y,t,c){ return '<text x="'+x+'" y="'+y+'" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="14" fill="'+c+'">'+t+'</text>'; }
+  function coArrow(){
+    // reuse the exact arrow from the static diagram so the animation and final state match
+    var spCO={ atoms:[{id:'C',el:'C',x:175,y:140,sym:'cross'},{id:'O',el:'O',x:340,y:140,sym:'dot'}],
+               bonds:[{a:'C',b:'O',order:3,dativePairs:1,donor:'O'}] };
+    return dativeArrow(spCO, spCO.bonds[0]);
+  }
+  function renderCOAnim(){
+    var C={el:'C',x:175,y:140}, O={el:'O',x:340,y:140};
+    var xc=252.9, xo=264.1, yT=127, yM=140, yB=153;   // triple-bond mark positions
+    var clpY1=134.6, clpY2=145.4, clpX=136;            // C lone pair spot (left)
+    var o6sx=330, o6sy=182;                            // O spare electron start (below O)
+    var g='';
+    g+='<g class="cE co-at">'+atomDisc(C)+'</g><g class="cE co-at">'+atomDisc(O)+'</g>';
+    g+='<g class="cE co-p2">'+cross(xc,yM,WHITE)+dot(xo,yM,WHITE)+'</g>';   // single (centre)
+    g+='<g class="cE co-p1">'+cross(xc,yT,WHITE)+dot(xo,yT,WHITE)+'</g>';   // double (top)
+    // triple (bottom), normal state: C cross that later slides to a lone pair, O white dot
+    var c3tx=(clpX-xc), c3ty=(clpY1-yB);
+    g+='<g class="cE co-c3" style="--c3tx:'+c3tx.toFixed(1)+'px;--c3ty:'+c3ty.toFixed(1)+'px">'+cross(xc,yB,WHITE)+'</g>';
+    g+='<g class="cE co-o3w">'+dot(xo,yB,WHITE)+'</g>';
+    // dative state of the third bond (both from O, cyan)
+    g+='<g class="cE co-o3c">'+dot(xo,yB,DATIVE)+'</g>';
+    var o6tx=(o6sx-xc), o6ty=(o6sy-yB);
+    g+='<g class="cE co-o6c" style="--tx:'+o6tx.toFixed(1)+'px;--ty:'+o6ty.toFixed(1)+'px">'+dot(xc,yB,DATIVE)+'</g>';
+    // leftover electrons: C lone electron, O lone pair, O spare electron (white)
+    g+='<g class="cE co-rem">'+cross(clpX,clpY2,WHITE)+'</g>';
+    g+='<g class="cE co-rem">'+dot(379,clpY1,WHITE)+dot(379,clpY2,WHITE)+'</g>';
+    g+='<g class="cE co-rem co-o6w">'+dot(o6sx,o6sy,WHITE)+'</g>';
+    g+='<g class="cE co-arrow">'+coArrow()+'</g>';
+    g+='<g class="cE co-warn">'+coLabel(150,205,'7 e⁻',RADICAL)+coLabel(362,205,'9 e⁻',RADICAL)+'</g>';
+    g+='<g class="cE co-ok">'+coLabel(150,205,'8 e⁻',DATIVE)+coLabel(362,205,'8 e⁻',DATIVE)+'</g>';
+    g+='<text x="408" y="222" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="100 95 320 135" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of carbon monoxide">'+g+'</svg>';
+  }
+  var CO_STORY = {
+    render: renderCOAnim,
+    stages: [
+      { t:'Atoms', say:"Carbon and oxygen have no central atom, so we place them side by side.", show:['k1'] },
+      { t:'Bonds', say:"Build the bond up step by step: first a single bond, then a double, then a triple.", show:['k2','k3','k4'], gap:1050 },
+      { t:'Fill in', say:"Now add the leftover outer electrons. Carbon has one left, oxygen has three.", show:['k5'] },
+      { t:'Problem', say:"But look: oxygen now has nine electrons, more than an octet, while carbon has only seven, with a single unpaired electron.", show:['k6'] },
+      { t:'Fix', say:"So oxygen gives its spare electron to the third bond, making it a dative bond. Carbon's electron is freed and pairs up as a lone pair. Now both atoms have a full octet.", show:['k7'] }
+    ]
+  };
+  function renderNH4Anim(){
+    var N={el:'N',x:240,y:200}, Ht={el:'H',x:240,y:88}, Hb={el:'H',x:240,y:312}, Hl={el:'H',x:112,y:200}, Hr={el:'H',x:368,y:200};
+    var g='';
+    [N,Ht,Hb,Hl,Hr].forEach(function(a){ g+='<g class="cE nh4-at">'+atomDisc(a)+'</g>'; });
+    function slide(cls,sym,col,fx,fy,sx,sy){ return '<g class="cE '+cls+'" style="--tx:'+(sx-fx).toFixed(1)+'px;--ty:'+(sy-fy).toFixed(1)+'px">'+mark(sym,fx,fy,col)+'</g>'; }
+    // N's three bonding electrons (dots): rendered at the bond midpoint, starting at N's edge
+    g+=slide('nh4-nbond','dot',WHITE, 240,253, 240,234);
+    g+=slide('nh4-nbond','dot',WHITE, 179,200, 206,200);
+    g+=slide('nh4-nbond','dot',WHITE, 301,200, 274,200);
+    // matching H electrons (crosses): at the bond midpoint, starting at each H's edge
+    g+=slide('nh4-hbond','cross',WHITE, 240,265, 240,284);
+    g+=slide('nh4-hbond','cross',WHITE, 167,200, 140,200);
+    g+=slide('nh4-hbond','cross',WHITE, 313,200, 340,200);
+    // the top hydrogen's electron (removed at k3 to make it H+)
+    g+='<g class="cE nh4-htE">'+cross(240,116,WHITE)+'</g>';
+    g+='<g class="cE nh4-htplus"><text x="280" y="80" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="17" fill="#e8eef6">+</text></g>';
+    // N lone pair (white) at the top edge, later becomes the dative pair
+    g+='<g class="cE nh4-lpw">'+dot(232,166,WHITE)+dot(248,166,WHITE)+'</g>';
+    g+='<g class="cE nh4-dp" style="--tx:-8px;--ty:27px">'+dot(240,139,DATIVE)+'</g>';
+    g+='<g class="cE nh4-dp2" style="--tx:8px;--ty:15px">'+dot(240,151,DATIVE)+'</g>';
+    var spA={ atoms:[{id:'N',el:'N',x:240,y:200,sym:'dot'},{id:'Ht',el:'H',x:240,y:88,sym:'cross'}], bonds:[{a:'N',b:'Ht',order:1,dativePairs:1,donor:'N'}] };
+    g+='<g class="cE nh4-arrow">'+dativeArrow(spA, spA.bonds[0])+'</g>';
+    var spF={ atoms:[{id:'N',el:'N',x:240,y:200},{id:'Ht',el:'H',x:240,y:88},{id:'Hb',el:'H',x:240,y:312},{id:'Hl',el:'H',x:112,y:200},{id:'Hr',el:'H',x:368,y:200}] };
+    g+='<g class="cE nh4-charge">'+bracketForAtoms(spF.atoms,'+')+'</g>';
+    g+='<text x="458" y="373" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="34 14 436 368" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of the ammonium ion">'+g+'</svg>';
+  }
+  var NH4_STORY = {
+    render: renderNH4Anim,
+    stages: [
+      { t:'Atoms', say:"Nitrogen is the central atom, with the four hydrogens placed around it.", show:['k1'] },
+      { t:'Fill in', say:"Nitrogen has five outer electrons, and each hydrogen has one.", show:['k2'] },
+      { t:'H⁺', say:"The ion is positive, so a hydrogen loses its electron and becomes H plus. It is the least electronegative atom.", show:['k3'], delay:1200 },
+      { t:'Bonds', say:"Nitrogen shares with the three hydrogens that still have an electron, forming three bonds, and keeps a lone pair.", show:['k4'] },
+      { t:'Dative', say:"The H plus has no electron of its own, so nitrogen's lone pair forms a dative bond to it. Now nitrogen has a full octet and all four bonds are identical.", show:['k5'] },
+      { t:'Charge', say:"The whole ion carries a plus one charge, written outside the square brackets.", show:['k6'] }
+    ]
+  };
+  // ---- Discovery storyboard shared by ozone and NO2 (double bond to both, then fix one as a dative) ----
+  // centreTop: 'lp' draws a lone pair on the central atom, 'radical' draws a single unpaired electron.
+  function renderDblDativeAnim(centreEl, centreTop, warnTxt, okTxt, name){
+    var Cc={id:'Cc',el:centreEl,x:250,y:130,sym:'dot'};
+    var Oa={id:'Oa',el:'O',x:130,y:270,sym:'cross'};
+    var Ob={id:'Ob',el:'O',x:370,y:270,sym:'cross'};
+    var slide=34, g='';
+    // final-state species, reused so the animation ends exactly on the static diagram
+    var spF={ atoms:[Cc,Oa,Ob], bonds:[{a:'Cc',b:'Oa',order:2},{a:'Cc',b:'Ob',order:1,dativePairs:1,donor:'Cc'}] };
+    // atoms (k1)
+    [Cc,Oa,Ob].forEach(function(a){ g+='<g class="cE dd-at">'+atomDisc(a)+'</g>'; });
+    // double-bond electrons: appear at fill (k2) near each atom, slide into the bond at k3
+    function bondSlide(A,B,cls){
+      var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var ax=A.x+ux*(RA+11), ay=A.y+uy*(RA+11), bx=B.x-ux*(RB+11), by=B.y-uy*(RB+11);
+      var gx=(ax+bx)/2, gy=(ay+by)/2, offs=[-9,9], out='';
+      for(var i=0;i<2;i++){
+        var o=offs[i], cxp=gx+px*o, cyp=gy+py*o, pr=o*0.55;
+        var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+        var faX=A.x+(RA+14)*ux+px*pr, faY=A.y+(RA+14)*uy+py*pr;
+        var fbX=B.x-(RB+14)*ux+px*pr, fbY=B.y-(RB+14)*uy+py*pr;
+        out+='<g class="cE dd-sl '+cls+'" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>';
+        out+='<g class="cE dd-sl '+cls+'" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+      }
+      return out;
+    }
+    g+=bondSlide(Cc,Oa,'dd-oaE');    // double bond kept
+    g+=bondSlide(Cc,Ob,'dd-obE');    // double bond that later fades to a dative
+    // central-atom top electrons + terminal lone pairs, shown from the fill stage (k2)
+    function lp(atom, angles){ return lonePairs(spF, {id:atom.id,el:atom.el,x:atom.x,y:atom.y,sym:atom.sym,lp:angles}); }
+    if(centreTop==='radical'){ g+='<g class="cE dd-lp">'+radical({el:centreEl,x:250,y:130,unpaired:-90})+'</g>'; }
+    else { g+='<g class="cE dd-lp">'+lp(Cc,[-90])+'</g>'; }
+    g+='<g class="cE dd-lp">'+lonePairs(spF, {id:'Oa',el:'O',x:130,y:270,sym:'cross',lp:2})+'</g>';  // Oa two lone pairs
+    g+='<g class="cE dd-oblp2">'+lp(Ob,[30,-20])+'</g>';               // Ob two lone pairs (double state)
+    // fix state (k5): cyan dative pair + arrow, and Ob keeps the third lone pair
+    g+='<g class="cE dd-obDat">'+bondMarks(spF, spF.bonds[1])+'</g>';
+    g+='<g class="cE dd-ob-lp3">'+lp(Ob,[90])+'</g>';
+    // electron-count callouts on the central atom
+    g+='<g class="cE dd-warn">'+coLabel(250,72,warnTxt,RADICAL)+'</g>';
+    g+='<g class="cE dd-ok">'+coLabel(250,72,okTxt,DATIVE)+'</g>';
+    var bb=contentBBox(spF), vx=bb.minX-14, vy=bb.minY-46, vw=(bb.maxX-bb.minX)+28, vh=(bb.maxY-bb.minY)+46+64;
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of '+name+'">'+g+'</svg>';
+  }
+  var O3_STORY = {
+    render: function(){ return renderDblDativeAnim('O','lp','10 e⁻','8 e⁻','ozone'); },
+    stages: [
+      { t:'Atoms', say:"Oxygen is the central atom, with the other two oxygens placed on either side.", show:['k1'] },
+      { t:'Fill in', say:"Each oxygen has six outer electrons. Fill them in.", show:['k2'] },
+      { t:'Double bonds', say:"Pair the electrons to make a double bond to each of the two oxygens.", show:['k3'] },
+      { t:'Problem', say:"But oxygen is a Period 2 element and cannot exceed an octet. With two double bonds the central oxygen would have ten electrons.", show:['k4'] },
+      { t:'Dative', say:"So the second double bond becomes a dative bond instead. That oxygen keeps the pair as a lone pair, and the central oxygen donates both electrons, so every oxygen has a full octet.", show:['k5'] }
+    ]
+  };
+  var NO2_STORY = {
+    render: function(){ return renderDblDativeAnim('N','radical','9 e⁻','7 e⁻','nitrogen dioxide'); },
+    stages: [
+      { t:'Atoms', say:"Nitrogen is the central atom, with an oxygen placed on either side.", show:['k1'] },
+      { t:'Fill in', say:"Nitrogen has five outer electrons and each oxygen has six. Notice nitrogen has an odd number, so one electron stays unpaired.", show:['k2'] },
+      { t:'Double bonds', say:"Pair the electrons to make a double bond to each oxygen.", show:['k3'] },
+      { t:'Problem', say:"But nitrogen is a Period 2 element and cannot exceed an octet. With two double bonds it would have nine electrons.", show:['k4'] },
+      { t:'Dative', say:"So the second double bond becomes a dative bond instead. That oxygen keeps the pair as a lone pair. Nitrogen is left with seven electrons and one unpaired electron, so NO2 is a radical.", show:['k5'] }
+    ]
+  };
+  // ---- N2O4: two NO2 units joined by an N-N bond; same double-to-dative fix on each nitrogen ----
+  function renderN2O4Anim(){
+    var N1={id:'N1',el:'N',x:210,y:210,sym:'dot'}, N2={id:'N2',el:'N',x:370,y:210,sym:'dot'};
+    var Oa1={id:'Oa1',el:'O',x:120,y:100,sym:'cross'}, Ob1={id:'Ob1',el:'O',x:120,y:320,sym:'cross'};
+    var Oa2={id:'Oa2',el:'O',x:460,y:100,sym:'cross'}, Ob2={id:'Ob2',el:'O',x:460,y:320,sym:'cross'};
+    var slide=34, g='';
+    var spF={ atoms:[N1,N2,Oa1,Ob1,Oa2,Ob2], bonds:[
+      {a:'N1',b:'N2',order:1},
+      {a:'N1',b:'Oa1',order:2}, {a:'N1',b:'Ob1',order:1,dativePairs:1,donor:'N1'},
+      {a:'N2',b:'Oa2',order:2}, {a:'N2',b:'Ob2',order:1,dativePairs:1,donor:'N2'}
+    ]};
+    [N1,N2,Oa1,Ob1,Oa2,Ob2].forEach(function(a){ g+='<g class="cE dd-at">'+atomDisc(a)+'</g>'; });
+    function bondSlide(A,B,order,cls){
+      var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var ax=A.x+ux*(RA+11), ay=A.y+uy*(RA+11), bx=B.x-ux*(RB+11), by=B.y-uy*(RB+11);
+      var gx=(ax+bx)/2, gy=(ay+by)/2, offs=order===2?[-9,9]:[0], out='';
+      for(var i=0;i<order;i++){
+        var o=offs[i], cxp=gx+px*o, cyp=gy+py*o, pr=o*0.55;
+        var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+        var faX=A.x+(RA+14)*ux+px*pr, faY=A.y+(RA+14)*uy+py*pr;
+        var fbX=B.x-(RB+14)*ux+px*pr, fbY=B.y-(RB+14)*uy+py*pr;
+        out+='<g class="cE dd-sl '+cls+'" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>';
+        out+='<g class="cE dd-sl '+cls+'" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+      }
+      return out;
+    }
+    g+=bondSlide(N1,N2,1,'dd-oaE');     // N-N single bond (kept): the two unpaired electrons pair up
+    g+=bondSlide(N1,Oa1,2,'dd-oaE');    // N1=Oa1 double (kept)
+    g+=bondSlide(N2,Oa2,2,'dd-oaE');    // N2=Oa2 double (kept)
+    g+=bondSlide(N1,Ob1,2,'dd-obE');    // N1=Ob1 double -> fades to a dative
+    g+=bondSlide(N2,Ob2,2,'dd-obE');    // N2=Ob2 double -> fades to a dative
+    function lp(atom, angles){ return lonePairs(spF, {id:atom.id,el:atom.el,x:atom.x,y:atom.y,sym:atom.sym,lp:angles}); }
+    g+='<g class="cE dd-lp">'+lp(Oa1,2)+'</g>';
+    g+='<g class="cE dd-lp">'+lp(Oa2,2)+'</g>';
+    g+='<g class="cE dd-oblp2">'+lp(Ob1,[120,240])+'</g>';   // Ob1 two lone pairs (double state)
+    g+='<g class="cE dd-oblp2">'+lp(Ob2,[60,-60])+'</g>';    // Ob2 two lone pairs (double state)
+    g+='<g class="cE dd-obDat">'+bondMarks(spF, spF.bonds[2])+'</g>';   // N1 to Ob1 dative
+    g+='<g class="cE dd-obDat">'+bondMarks(spF, spF.bonds[4])+'</g>';   // N2 to Ob2 dative
+    g+='<g class="cE dd-ob-lp3">'+lp(Ob1,[180])+'</g>';      // Ob1 third lone pair
+    g+='<g class="cE dd-ob-lp3">'+lp(Ob2,[0])+'</g>';        // Ob2 third lone pair
+    g+='<g class="cE dd-warn">'+coLabel(210,150,'10 e⁻',RADICAL)+coLabel(370,150,'10 e⁻',RADICAL)+'</g>';
+    g+='<g class="cE dd-ok">'+coLabel(210,150,'8 e⁻',DATIVE)+coLabel(370,150,'8 e⁻',DATIVE)+'</g>';
+    var bb=contentBBox(spF), vx=bb.minX-14, vy=bb.minY-46, vw=(bb.maxX-bb.minX)+28, vh=(bb.maxY-bb.minY)+46+64;
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of dinitrogen tetroxide">'+g+'</svg>';
+  }
+  var N2O4_STORY = {
+    render: renderN2O4Anim,
+    stages: [
+      { t:'Atoms', say:"Two nitrogens sit in the middle, with an oxygen above and below each of them.", show:['k1'] },
+      { t:'Fill in', say:"Each nitrogen has five outer electrons with one unpaired, and each oxygen has six. The two unpaired electrons point at each other.", show:['k2'] },
+      { t:'Bonds', say:"Those two unpaired electrons pair up to make the N-N bond, and each nitrogen makes a double bond to both of its oxygens.", show:['k3'] },
+      { t:'Problem', say:"But each nitrogen is a Period 2 atom and cannot exceed an octet. With the N-N bond and two double bonds, each nitrogen would have ten electrons.", show:['k4'] },
+      { t:'Dative', say:"So one double bond on each nitrogen becomes a dative bond. Each of those oxygens keeps the pair as a lone pair, and every nitrogen now has a full octet.", show:['k5'] }
+    ]
+  };
+  // ---- Nitrate ion: double-to-dative fix, then gain an electron for the overall charge ----
+  function renderNO3Anim(){
+    var N={id:'N',el:'N',x:250,y:200,sym:'dot'};
+    var Oa={id:'Oa',el:'O',x:250,y:80,sym:'cross'};
+    var Ob={id:'Ob',el:'O',x:120,y:320,sym:'cross'};
+    var Oc={id:'Oc',el:'O',x:380,y:320,sym:'cross'};
+    var slide=34, g='';
+    var spF={ atoms:[N,Oa,Ob,Oc], bonds:[
+      {a:'N',b:'Oa',order:2}, {a:'N',b:'Ob',order:1}, {a:'N',b:'Oc',order:1,dativePairs:1,donor:'N'}
+    ]};
+    [N,Oa,Ob,Oc].forEach(function(a){ g+='<g class="cE n3-at">'+atomDisc(a)+'</g>'; });
+    function bondSlide(A,B,order,cls){
+      var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var ax=A.x+ux*(RA+11), ay=A.y+uy*(RA+11), bx=B.x-ux*(RB+11), by=B.y-uy*(RB+11);
+      var gx=(ax+bx)/2, gy=(ay+by)/2, offs=order===2?[-9,9]:[0], out='';
+      for(var i=0;i<order;i++){
+        var o=offs[i], cxp=gx+px*o, cyp=gy+py*o, pr=o*0.55;
+        var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+        var faX=A.x+(RA+14)*ux+px*pr, faY=A.y+(RA+14)*uy+py*pr;
+        var fbX=B.x-(RB+14)*ux+px*pr, fbY=B.y-(RB+14)*uy+py*pr;
+        out+='<g class="cE n3-sl '+cls+'" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>';
+        out+='<g class="cE n3-sl '+cls+'" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+      }
+      return out;
+    }
+    g+=bondSlide(N,Oa,2,'n3-oaE');     // N=Oa double (kept)
+    g+=bondSlide(N,Ob,1,'n3-single');  // N-Ob single (kept)
+    g+=bondSlide(N,Oc,2,'n3-datE');    // N=Oc double -> fades to a dative
+    function lp(atom, angles){ return lonePairs(spF, {id:atom.id,el:atom.el,x:atom.x,y:atom.y,sym:atom.sym,lp:angles}); }
+    g+='<g class="cE n3-lp">'+lp(Oa,2)+'</g>';           // Oa two lone pairs
+    g+='<g class="cE n3-lp">'+lp(Ob,[120,240])+'</g>';   // Ob two lone pairs
+    g+='<g class="cE n3-oclp2">'+lp(Oc,[60,-60])+'</g>'; // Oc two lone pairs (double state)
+    // Ob's third lone-pair spot: an unpaired electron now (white), completed by the gained electron (pink) at the charge stage
+    var obR=RAD.O||24, ang=Math.PI, obcx=Ob.x+Math.cos(ang)*(obR+13), obcy=Ob.y+Math.sin(ang)*(obR+13);
+    var opx=-Math.sin(ang), opy=Math.cos(ang), os=5.4;
+    g+='<g class="cE n3-obUnp">'+mark('cross',obcx-opx*os,obcy-opy*os,WHITE)+'</g>';
+    g+='<g class="cE n3-gained">'+mark('dot',obcx+opx*os,obcy+opy*os,CHARGE)+'</g>';
+    // fix state (k5): cyan dative pair + arrow to Oc, and Oc keeps a third lone pair
+    g+='<g class="cE n3-dat">'+bondMarks(spF, spF.bonds[2])+'</g>';
+    g+='<g class="cE n3-oc-lp3">'+lp(Oc,[0])+'</g>';
+    // charge (k6): bracket + minus sign
+    g+='<g class="cE n3-bracket">'+bracketForAtoms(spF.atoms,'-')+'</g>';
+    // count callouts on N
+    g+='<g class="cE n3-warn">'+coLabel(336,205,'10 e⁻',RADICAL)+'</g>';
+    g+='<g class="cE n3-ok">'+coLabel(336,205,'8 e⁻',DATIVE)+'</g>';
+    var bb=contentBBox(spF), vx=bb.minX-34, vy=bb.minY-28, vw=(bb.maxX-bb.minX)+92, vh=(bb.maxY-bb.minY)+56+64;
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of the nitrate ion">'+g+'</svg>';
+  }
+  var NO3_STORY = {
+    render: renderNO3Anim,
+    stages: [
+      { t:'Atoms', say:"Nitrogen is the central atom, with three oxygens around it.", show:['k1'] },
+      { t:'Fill in', say:"Nitrogen has five outer electrons and each oxygen has six.", show:['k2'] },
+      { t:'Bonds', say:"Nitrogen makes a double bond to two of the oxygens and a single bond to the third, which uses all five of its electrons.", show:['k3'] },
+      { t:'Problem', say:"But nitrogen is a Period 2 atom and cannot exceed an octet. With two double bonds and a single bond it would have ten electrons.", show:['k4'] },
+      { t:'Dative', say:"So one double bond becomes a dative bond. That oxygen keeps the pair as a lone pair, and nitrogen now has a full octet.", show:['k5'] },
+      { t:'Charge', say:"Finally, the single-bonded oxygen gains one electron, shown in pink, to complete its octet. That extra electron gives the whole ion a minus one charge, written outside the bracket.", show:['k6'] }
+    ]
+  };
+  // ---- KHF2: decide the ionic charges first, then electrons, covalent bond, and finally the hydrogen bond ----
+  function renderKHF2Anim(){
+    var K={id:'K',el:'K',x:108,y:208,lp:0,group:0};
+    var F1={id:'F1',el:'F',x:280,y:208,sym:'cross',lp:3,group:1};
+    var H={id:'H',el:'H',x:366,y:208,sym:'dot',lp:0,group:1};
+    var F2={id:'F2',el:'F',x:452,y:208,sym:'cross',lp:[-90,90,0,180],group:1,chargeE:1};
+    var g='';
+    var spF={ atoms:[K,F1,H,F2], bonds:[{a:'F1',b:'H',order:1}], hbonds:[{a:'H',b:'F2'}],
+              groups:[{bracket:true,chargeLabel:'+'},{bracket:true,chargeLabel:'−'}] };
+    // k1: atoms + the two brackets with their charges (decide the charges first)
+    [K,F1,H,F2].forEach(function(a){ g+='<g class="cE kf-at">'+atomDisc(a)+'</g>'; });
+    g+='<g class="cE kf-brk">'+bracketsAll(spF)+'</g>';
+    // k2: fill in outer electrons (F1 three lone pairs, F2 four with the gained electron in pink)
+    g+='<g class="cE kf-lp">'+lonePairs(spF,F1)+'</g>';
+    g+='<g class="cE kf-lp">'+lonePairs(spF,F2)+'</g>';
+    // k2->k3: the H-F covalent electrons fill just outside each atom, then slide together at k3
+    (function(){
+      var A=F1, B=H, dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var gx=(A.x+ux*(RA+11)+B.x-ux*(RB+11))/2, gy=(A.y+uy*(RA+11)+B.y-uy*(RB+11))/2;
+      var m1x=gx-ux*5.6, m1y=gy-uy*5.6, m2x=gx+ux*5.6, m2y=gy+uy*5.6;
+      var faX=A.x+(RA+14)*ux, faY=A.y+(RA+14)*uy, fbX=B.x-(RB+14)*ux, fbY=B.y-(RB+14)*uy;
+      g+='<g class="cE kf-cov kf-sl" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>';
+      g+='<g class="cE kf-cov kf-sl" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+    })();
+    // k4: the hydrogen bond (dashed) plus the bond dipole (delta- on the covalently bonded F, delta+ on the H)
+    g+='<g class="cE kf-hb">'+hbondLine(spF,spF.hbonds[0])+'</g>';
+    g+='<g class="cE kf-delta">'
+      +'<text x="'+F1.x+'" y="'+(F1.y-52)+'" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="14" fill="'+DATIVE+'">&#948;&#8722;</text>'
+      +'<text x="'+H.x+'" y="'+(H.y-52)+'" text-anchor="middle" font-family="DM Sans,sans-serif" font-weight="700" font-size="14" fill="'+DATIVE+'">&#948;+</text>'
+      +'</g>';
+    var bb=contentBBox(spF), vx=bb.minX-34, vy=bb.minY-40, vw=(bb.maxX-bb.minX)+96, vh=(bb.maxY-bb.minY)+52+64;
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of potassium hydrogen difluoride">'+g+'</svg>';
+  }
+  var KHF2_STORY = {
+    render: renderKHF2Anim,
+    stages: [
+      { t:'Charges', say:"Potassium is in Group 1, so it can only be K plus one. To balance, the HF2 part must carry the minus one charge.", show:['k1'] },
+      { t:'Fill in', say:"Fill in the outer electrons. The electron potassium gave away goes to the more electronegative fluorine, shown in pink, making it F minus.", show:['k2'] },
+      { t:'Covalent bond', say:"The hydrogen shares its electron with the other fluorine to form an H-F covalent bond.", show:['k3'] },
+      { t:'Hydrogen bond', say:"The H-F bond is polar: the fluorine is slightly negative and the hydrogen slightly positive. A lone pair on the F minus is then attracted to that positive hydrogen, forming a hydrogen bond.", show:['k4'] }
+    ]
+  };
+  // ---- CaSO4: charges first (like KHF2), then electrons, then the S-O single and double bonds ----
+  function renderCaSO4Anim(){
+    var Ca={id:'Ca',el:'Ca',x:70,y:220,lp:0,group:0};
+    var S={id:'S',el:'S',x:395,y:220,sym:'dot',lp:0,group:1};
+    var Oa={id:'Oa',el:'O',x:395,y:102,sym:'cross',lp:2,group:1};
+    var Ob={id:'Ob',el:'O',x:395,y:338,sym:'cross',lp:2,group:1};
+    var Oc={id:'Oc',el:'O',x:278,y:220,sym:'cross',lp:3,chargeE:1,group:1};
+    var Od={id:'Od',el:'O',x:512,y:220,sym:'cross',lp:3,chargeE:1,group:1};
+    var g='';
+    var spF={ atoms:[Ca,S,Oa,Ob,Oc,Od], bonds:[
+      {a:'S',b:'Oa',order:2},{a:'S',b:'Ob',order:2},{a:'S',b:'Oc',order:1},{a:'S',b:'Od',order:1}
+    ], groups:[{bracket:true,chargeLabel:'2+'},{bracket:true,chargeLabel:'2−'}] };
+    // k1: atoms + the two brackets with their charges
+    [Ca,S,Oa,Ob,Oc,Od].forEach(function(a){ g+='<g class="cE cs-at">'+atomDisc(a)+'</g>'; });
+    g+='<g class="cE cs-brk">'+bracketsAll(spF)+'</g>';
+    // k2: lone pairs, with the two gained electrons in pink on the singly-bonded oxygens
+    [S,Oa,Ob,Oc,Od].forEach(function(a){ g+='<g class="cE cs-lp">'+lonePairs(spF,a)+'</g>'; });
+    // bond electrons: singles slide at k3, doubles at k4 (each fills just outside its atom first)
+    function bondFill(A,B,order,cls){
+      var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var gx=(A.x+ux*(RA+11)+B.x-ux*(RB+11))/2, gy=(A.y+uy*(RA+11)+B.y-uy*(RB+11))/2;
+      var offs=order===2?[-9,9]:[0], out='';
+      for(var i=0;i<order;i++){
+        var o=offs[i], cxp=gx+px*o, cyp=gy+py*o, pr=o*0.55;
+        var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+        var faX=A.x+(RA+14)*ux+px*pr, faY=A.y+(RA+14)*uy+py*pr;
+        var fbX=B.x-(RB+14)*ux+px*pr, fbY=B.y-(RB+14)*uy+py*pr;
+        out+='<g class="cE '+cls+'" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>';
+        out+='<g class="cE '+cls+'" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+      }
+      return out;
+    }
+    g+=bondFill(S,Oc,1,'cs-single cs-sl1');
+    g+=bondFill(S,Od,1,'cs-single cs-sl1');
+    g+=bondFill(S,Oa,2,'cs-double cs-sl2');
+    g+=bondFill(S,Ob,2,'cs-double cs-sl2');
+    var bb=contentBBox(spF), vx=bb.minX-34, vy=bb.minY-30, vw=(bb.maxX-bb.minX)+96, vh=(bb.maxY-bb.minY)+56+64;
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building the dot and cross diagram of calcium sulfate">'+g+'</svg>';
+  }
+  var CASO4_STORY = {
+    render: renderCaSO4Anim,
+    stages: [
+      { t:'Charges', say:"Calcium is in Group 2, so it can only be Ca two plus. To balance, the sulfate part must carry the two minus charge.", show:['k1'] },
+      { t:'Fill in', say:"Fill in the outer electrons. The two electrons calcium gave away go onto two of the oxygens, shown in pink, making each of them O minus.", show:['k2'] },
+      { t:'Single bonds', say:"Each of those two O minus oxygens forms a single bond to the sulfur.", show:['k3'] },
+      { t:'Double bonds', say:"The other two oxygens form double bonds to sulfur. Sulfur can expand its octet, so it ends up holding twelve electrons.", show:['k4'] }
+    ]
+  };
+  // ---- GENERAL data-driven storyboard (all species except the hand-built ones) ----
+  function classifyBond(b){ var dp=b.dativePairs||0, o=b.order||1; if(dp>0) return 'dative'; return o===1?'single':o===2?'double':'triple'; }
+  function elName(el){ return {N:'nitrogen',O:'oxygen',C:'carbon',H:'hydrogen',S:'sulfur',P:'phosphorus',Cl:'chlorine',F:'fluorine',K:'potassium',Ca:'calcium'}[el]||el; }
+  function centralAtom(sp){
+    var counts={}; sp.atoms.forEach(function(a){ counts[a.id]=0; });
+    sp.bonds.forEach(function(b){ counts[b.a]++; counts[b.b]++; });
+    var best=null, bestn=-1;
+    sp.atoms.forEach(function(a){ if(counts[a.id]>bestn){ bestn=counts[a.id]; best=a; } });
+    return (bestn>=2)?best:null;
+  }
+  function generalPlan(sp){
+    var has={single:false,double:false,triple:false,dative:false};
+    sp.bonds.forEach(function(b){ has[classifyBond(b)]=true; });
+    var isIon = !!(sp.bracket || (sp.groups && sp.groups.length));
+    var order=['atoms','fill'];
+    if(has.single) order.push('single');
+    if(has.double || has.dative) order.push('double');   // a dative is first attempted as a double
+    if(has.triple) order.push('triple');
+    if(has.dative) order.push('dative');
+    if(isIon) order.push('charge');
+    var gnum={}; order.forEach(function(name,i){ gnum[name]=i+1; });
+    return { gnum:gnum, isIon:isIon, has:has };
+  }
+  function generateGeneralStages(sp){
+    var plan=generalPlan(sp), gnum=plan.gnum, central=centralAtom(sp), st=[];
+    function S(t,say,g){ st.push({ t:t, say:say, show:['g'+g] }); }
+    if(central) S('Atoms', elName(central.el).charAt(0).toUpperCase()+elName(central.el).slice(1)+' is the central atom, so the other atoms are placed around it.', gnum.atoms);
+    else S('Atoms', 'Place the atoms side by side.', gnum.atoms);
+    S('Fill in', 'Fill in each atom’s outer valence electrons.', gnum.fill);
+    if(plan.has.single) S('Single', 'Pair single electrons together to make the single bonds.', gnum.single);
+    if(plan.has.double || plan.has.dative) S('Double', 'Form a double bond wherever an atom still needs to complete its octet.', gnum.double);
+    if(plan.has.triple) S('Triple', 'Share a third pair to make a triple bond.', gnum.triple);
+    if(plan.has.dative){
+      var datB=sp.bonds.filter(function(b){return (b.dativePairs||0)>0;})[0];
+      var donEl=datB?byId(sp,datB.donor).el:(central&&central.el);
+      var dName=donEl?elName(donEl):'the central atom';
+      var per2 = donEl && (donEl==='N'||donEl==='O'||donEl==='C');
+      S('Dative', 'But making that a full double bond would give '+dName+' more than eight electrons'+(per2?', which a Period 2 atom cannot have':'')+'. So it stays a dative bond: the other atom keeps that pair as a lone pair, and '+dName+' donates both electrons.', gnum.dative);
+    }
+    if(plan.isIon){
+      var chg=sp.chargeLabel || (sp.groups && sp.groups[sp.groups.length-1] && sp.groups[sp.groups.length-1].chargeLabel) || '';
+      var anion=/[-−]/.test(String(chg));
+      var hasGained=sp.atoms.some(function(a){ return a.chargeE>0; });
+      S('Charge', hasGained ? 'Add the gained electrons to the most electronegative atoms, then draw the square brackets with the overall charge outside.'
+        : 'The ion carries an overall '+(anion?'negative':'positive')+' charge, written outside the square brackets.', gnum.charge);
+    }
+    return st;
+  }
+  function renderGeneralAnim(sp){
+    assignSym(sp);
+    var plan=generalPlan(sp), gnum=plan.gnum, fillG=gnum.fill, chargeG=gnum.charge, g='';
+    // each dative acceptor keeps one lone pair back until the dative stage (it came from the double attempt)
+    var deferAcc={};
+    sp.bonds.forEach(function(b){ if((b.dativePairs||0)>0){ var acc=(b.donor===b.a)?b.b:b.a; deferAcc[acc]=(deferAcc[acc]||0)+1; } });
+    sp.atoms.forEach(function(a){ g+='<g class="gE sh1">'+atomDisc(a)+'</g>'; });
+    sp.bonds.forEach(function(b){
+      var A=byId(sp,b.a), B=byId(sp,b.b);
+      var dx=B.x-A.x, dy=B.y-A.y, L=Math.sqrt(dx*dx+dy*dy)||1, ux=dx/L, uy=dy/L, px=-uy, py=ux;
+      var RA=RAD[A.el]||24, RB=RAD[B.el]||24;
+      var gx=(A.x+ux*(RA+11)+B.x-ux*(RB+11))/2, gy=(A.y+uy*(RA+11)+B.y-uy*(RB+11))/2;
+      var order=b.order||1, dp=b.dativePairs||0;
+      function fillSlide(stg, o){
+        var cxp=gx+px*o, cyp=gy+py*o, pr=o*0.55;
+        var m1x=cxp-ux*5.6, m1y=cyp-uy*5.6, m2x=cxp+ux*5.6, m2y=cyp+uy*5.6;
+        var faX=A.x+(RA+14)*ux+px*pr, faY=A.y+(RA+14)*uy+py*pr;
+        var fbX=B.x-(RB+14)*ux+px*pr, fbY=B.y-(RB+14)*uy+py*pr;
+        return '<g class="gE gSlide sh'+fillG+' sl'+stg.sl+(stg.fd?' fd'+stg.fd:'')+'" style="--tx:'+(faX-m1x).toFixed(1)+'px;--ty:'+(faY-m1y).toFixed(1)+'px">'+mark(A.sym,m1x,m1y,WHITE)+'</g>'
+             + '<g class="gE gSlide sh'+fillG+' sl'+stg.sl+(stg.fd?' fd'+stg.fd:'')+'" style="--tx:'+(fbX-m2x).toFixed(1)+'px;--ty:'+(fbY-m2y).toFixed(1)+'px">'+mark(B.sym,m2x,m2y,WHITE)+'</g>';
+      }
+      if(dp>0){
+        // dative bond: build it as a double first (double stage), then let one pair fall away as a dative (dative stage)
+        var doubleG=gnum.double, dativeG=gnum.dative, don=byId(sp,b.donor), dsym=don.sym;
+        g+=fillSlide({sl:doubleG, fd:dativeG}, -9);
+        g+=fillSlide({sl:doubleG, fd:dativeG},  9);
+        var dm1x=gx-ux*5.6, dm1y=gy-uy*5.6, dm2x=gx+ux*5.6, dm2y=gy+uy*5.6;
+        var Rd=RAD[don.el]||24, dux=(b.donor===b.a)?ux:-ux, duy=(b.donor===b.a)?uy:-uy;
+        var dcx=don.x+(Rd+14)*dux, dcy=don.y+(Rd+14)*duy;
+        g+='<g class="gE gSlide sh'+dativeG+' sl'+dativeG+'" style="--tx:'+(dcx-gx).toFixed(1)+'px;--ty:'+(dcy-gy).toFixed(1)+'px">'+mark(dsym,dm1x,dm1y,DATIVE)+mark(dsym,dm2x,dm2y,DATIVE)+'</g>';
+        g+='<g class="gE sh'+dativeG+'">'+dativeArrow(sp,b)+'</g>';
+      } else {
+        var stageG=gnum[classifyBond(b)], offs=order===1?[0]:order===2?[-9,9]:[-13,0,13];
+        for(var i=0;i<order;i++){ g+=fillSlide({sl:stageG}, offs[i]); }
+      }
+    });
+    (sp.hbonds||[]).forEach(function(hb){ g+='<g class="gE sh'+fillG+'">'+hbondLine(sp,hb)+'</g>'; });
+    sp.atoms.forEach(function(a){
+      var R=RAD[a.el]||24, list=lpAnglesFor(sp,a), altSym=(a.sym==='dot')?'cross':'dot', chargeLeft=a.chargeE||0;
+      var showAtFill=list.length-(deferAcc[a.id]||0);   // a dative acceptor's extra pair waits for the dative stage
+      for(var i=0;i<list.length;i++){
+        var ang=list[i]*Math.PI/180, cx=a.x+Math.cos(ang)*(R+13), cy=a.y+Math.sin(ang)*(R+13);
+        var ppx=-Math.sin(ang), ppy=Math.cos(ang), s=5.4;
+        var lpStg=(i>=showAtFill && gnum.dative)?gnum.dative:fillG;
+        if(chargeLeft>0 && chargeG){ g+='<g class="gE sh'+chargeG+'">'+mark(altSym,cx-ppx*s,cy-ppy*s,CHARGE)+'</g>'; chargeLeft--; }
+        else { g+='<g class="gE sh'+lpStg+'">'+mark(a.sym,cx-ppx*s,cy-ppy*s,WHITE)+'</g>'; }
+        g+='<g class="gE sh'+lpStg+'">'+mark(a.sym,cx+ppx*s,cy+ppy*s,WHITE)+'</g>';
+      }
+      if(a.unpaired!==undefined){ g+='<g class="gE sh'+fillG+'">'+radical(a)+'</g>'; }
+    });
+    if(chargeG){ g+='<g class="gE sh'+chargeG+'">'+bracketsAll(sp)+'</g>'; }
+    var bb=contentBBox(sp), hasBracket=sp.bracket||(sp.groups&&sp.groups.length), botPad=72, vx,vy,vw,vh;
+    if(hasBracket){ vx=bb.minX-34; vy=bb.minY-30; vw=(bb.maxX-bb.minX)+92; vh=(bb.maxY-bb.minY)+56+botPad; }
+    else { vx=bb.minX-14; vy=bb.minY-14; vw=(bb.maxX-bb.minX)+28; vh=(bb.maxY-bb.minY)+28+botPad; }
+    g+='<text x="'+(vx+vw-12).toFixed(1)+'" y="'+(vy+vh-9).toFixed(1)+'" text-anchor="end" font-family="DM Sans,sans-serif" font-size="10" fill="rgba(255,255,255,0.22)">© Mr Khemistry</text>';
+    return '<svg class="canim" viewBox="'+vx.toFixed(1)+' '+vy.toFixed(1)+' '+vw.toFixed(1)+' '+vh.toFixed(1)+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Building '+sp.name+'">'+g+'</svg>';
+  }
+
+  var STORY = { co: CO_STORY, nh4: NH4_STORY, o3: O3_STORY, no2: NO2_STORY, n2o4: N2O4_STORY, no3: NO3_STORY, khf2: KHF2_STORY, caso4: CASO4_STORY };
+  function getStory(sp){
+    if(STORY[sp.key]) return STORY[sp.key];
+    return { render: function(){ return renderGeneralAnim(sp); }, stages: generateGeneralStages(sp) };
+  }
+
+  // ---- UI WIRING ----------------------------------------------------
+  var category='core', idx=0, revealed=false, voiceOn=true, animating=false;
+  var tabsEl=document.getElementById('tabs');
+  var svgHolder=document.getElementById('svgHolder');
+  var cover=document.getElementById('cover');
+  function list(){ return CATS[category]; }
+
+  function buildTabs(){
+    var arr=list(), h='';
+    for(var i=0;i<arr.length;i++){ h+='<button class="tab" data-i="'+i+'">'+arr[i].formula+'</button>'; }
+    tabsEl.innerHTML=h;
+    tabsEl.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click', function(){ select(+this.getAttribute('data-i')); }); });
+  }
+
+  function load(){
+    var sp=list()[idx];
+    document.getElementById('qFormula').innerHTML=sp.formula;
+    document.getElementById('qName').textContent=sp.name;
+    document.getElementById('qTask').textContent=sp.task;
+    document.getElementById('qHint').innerHTML=sp.hint;
+    document.getElementById('qCounts').innerHTML=sp.counts;
+    var notes=''; for(var i=0;i<sp.notes.length;i++){ notes+='<li>'+sp.notes[i]+'</li>'; }
+    document.getElementById('snList').innerHTML=notes;
+    animating=false; if(window.speechSynthesis) speechSynthesis.cancel();
+    document.getElementById('animCap').classList.remove('show');
+    document.getElementById('playRow').style.display = getStory(sp) ? 'flex' : 'none';
+    buildSteps();
+    svgHolder.innerHTML=renderSVG(sp);
+    tabsEl.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('active', i===idx); });
+    setRevealed(false);
+  }
+
+  function setRevealed(v){
+    revealed=v;
+    cover.style.display = v ? 'none' : 'flex';
+    document.getElementById('speciesNotes').classList.toggle('show', v);
+    document.getElementById('qCounts').classList.toggle('show', v);
+    document.getElementById('revealBtn').textContent = v ? 'Hide answer' : 'Reveal dot-and-cross';
+  }
+
+  function select(i){ idx=i; load(); }
+
+  function speak(text, cb){
+    var done=false; function fire(){ if(done) return; done=true; cb(); }
+    if(!voiceOn || !window.speechSynthesis){ setTimeout(fire, Math.min(9000, 1400+text.length*55)); return; }
+    try{
+      speechSynthesis.cancel();
+      var u=new SpeechSynthesisUtterance(text); u.rate=1.0; u.pitch=1.0;
+      var started=false;
+      u.onstart=function(){ started=true; };
+      u.onend=fire; u.onerror=fire;
+      speechSynthesis.speak(u);
+      setTimeout(function(){ if(!started) fire(); }, 2800);   // only advance early if speech never began
+      setTimeout(fire, 24000);                                // ultimate backstop, far beyond any real line
+    } catch(e){ setTimeout(fire, 3000); }
+  }
+  function playAnim(){ var sp=list()[idx], story=getStory(sp); if(story) playStory(sp, story); }
+  function finishAnim(){
+    animating=false;
+    svgHolder.innerHTML=renderSVG(list()[idx]);
+    setRevealed(true);
+  }
+  function playStory(sp, story){
+    animating=true;
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    cover.style.display='none';
+    document.getElementById('speciesNotes').classList.remove('show');
+    document.getElementById('qCounts').classList.remove('show');
+    document.getElementById('revealBtn').textContent='Reveal dot-and-cross';
+    svgHolder.innerHTML=story.render();
+    var svg=svgHolder.querySelector('svg'), cap=document.getElementById('animCap'), stages=story.stages;
+    function runStage(i){
+      if(!animating) return;
+      if(i>=stages.length){ setTimeout(function(){ if(animating){ cap.classList.remove('show'); finishAnim(); } }, 1400); return; }
+      var st=stages[i];
+      highlightStep(i);
+      cap.textContent=st.say; cap.classList.add('show');
+      (st.show||[]).forEach(function(cls,j){ setTimeout(function(){ if(animating) svg.classList.add(cls); }, (st.delay||0)+j*(st.gap||0)); });
+      speak(st.say, function(){ if(animating) setTimeout(function(){ runStage(i+1); }, 500); });
+    }
+    setTimeout(function(){ runStage(0); }, 250);
+  }
+  function ensureStoryView(story){
+    if(!svgHolder.querySelector('svg.canim')){
+      cover.style.display='none';
+      document.getElementById('speciesNotes').classList.remove('show');
+      document.getElementById('qCounts').classList.remove('show');
+      document.getElementById('revealBtn').textContent='Reveal dot-and-cross';
+      svgHolder.innerHTML=story.render();
+    }
+    return svgHolder.querySelector('svg.canim');
+  }
+  function cumulativeClasses(story, i){
+    var cls=['canim'];
+    for(var j=0;j<=i;j++){ (story.stages[j].show||[]).forEach(function(c){ cls.push(c); }); }
+    return cls.join(' ');
+  }
+  function highlightStep(i){
+    document.getElementById('stepsRow').querySelectorAll('.step').forEach(function(b,k){ b.classList.toggle('active', k===i); });
+  }
+  function jumpToStage(i){
+    var sp=list()[idx], story=getStory(sp); if(!story) return;
+    animating=false;
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    var svg=ensureStoryView(story);
+    svg.setAttribute('class', cumulativeClasses(story, i));
+    var cap=document.getElementById('animCap'); cap.textContent=story.stages[i].say; cap.classList.add('show');
+    highlightStep(i);
+    speak(story.stages[i].say, function(){});
+  }
+  function buildSteps(){
+    var sp=list()[idx], story=getStory(sp), row=document.getElementById('stepsRow');
+    if(!story){ row.style.display='none'; row.innerHTML=''; return; }
+    var h=''; for(var i=0;i<story.stages.length;i++){ h+='<button class="step" data-i="'+i+'"><b>'+(i+1)+'</b>'+(story.stages[i].t||'')+'</button>'; }
+    row.innerHTML=h; row.style.display='flex';
+    row.querySelectorAll('.step').forEach(function(b){ b.addEventListener('click', function(){ jumpToStage(+this.getAttribute('data-i')); }); });
+  }
+
+  function setCategory(c){
+    if(category===c) return;
+    category=c; idx=0;
+    document.querySelectorAll('.cat').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-c')===c); });
+    document.getElementById('introH').innerHTML=INTRO[c].h;
+    document.getElementById('introP').innerHTML=INTRO[c].p;
+    buildTabs(); load();
+  }
+
+  document.getElementById('revealBtn').addEventListener('click', function(){ setRevealed(!revealed); });
+  document.getElementById('prevBtn').addEventListener('click', function(){ idx=(idx-1+list().length)%list().length; load(); });
+  document.getElementById('nextBtn').addEventListener('click', function(){ idx=(idx+1)%list().length; load(); });
+  document.querySelectorAll('.cat').forEach(function(b){ b.addEventListener('click', function(){ setCategory(this.getAttribute('data-c')); }); });
+  document.getElementById('playBtn').addEventListener('click', playAnim);
+  document.getElementById('spkBtn').addEventListener('click', function(){ voiceOn=!voiceOn; this.classList.toggle('off', !voiceOn); if(!voiceOn && window.speechSynthesis) speechSynthesis.cancel(); });
+
+  buildTabs();
+  load();
+})();
+</script>
+</body>
+</html>

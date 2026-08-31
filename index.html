@@ -2506,6 +2506,7 @@ Option D" required></textarea>
                                 <label><input type="checkbox" class="p2p3-diff" value="Hard" checked> Hard</label>
                             </div>
                             <div class="p2p3-fgroup" id="p2p3YearGroup"><span class="p2p3-lbl">Years</span></div>
+                            <div class="p2p3-fgroup" id="p2p3SchoolGroup"><span class="p2p3-lbl">Schools</span></div>
                         </div>
                         <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, choose how many questions, then click &ldquo;Show questions&rdquo;.</div>
                         <div id="p2p3Toolbar" style="display:none;margin-bottom:1rem;"><button class="btn btn-secondary" onclick="p2p3Print()">Print / Save as PDF (question paper + worked solutions)</button></div>
@@ -6242,17 +6243,21 @@ Option D" required></textarea>
                 const [topicRows, concepts, index] = await Promise.all([
                     fetchAllPaginated(() => supabaseClient.from('topics').select('id,name').order('id')),
                     fetchAllPaginated(() => supabaseClient.from('concepts').select('id,name,topic_id').order('id')),
-                    fetchAllPaginated(() => supabaseClient.from('structured_questions').select('id,year,paper,source').order('id'))
+                    fetchAllPaginated(() => supabaseClient.from('structured_questions').select('id,year,paper,source,school').order('id'))
                 ]);
                 const topicMap = {}; topicRows.forEach(t => { topicMap[t.id] = t.name; });
                 p2pAllConcepts = concepts.map(c => ({ id:c.id, name:c.name, topic: topicMap[c.topic_id]||'' }));
-                p2pIndex = {}; index.forEach(q => { p2pIndex[q.id] = { year:q.year, paper:q.paper, source:q.source }; });
+                p2pIndex = {}; index.forEach(q => { p2pIndex[q.id] = { year:q.year, paper:q.paper, source:q.source, school:q.school }; });
                 const topics = [...new Set(p2pAllConcepts.map(c => c.topic).filter(Boolean))].sort();
                 const tEl = document.getElementById('p2p3Topic');
                 if (tEl) tEl.innerHTML = '<option value="">Select a topic…</option>' + topics.map(t => '<option>'+sqEsc(t)+'</option>').join('');
                 const years = [...new Set(index.map(q => q.year).filter(y => y!=null))].sort((a,b) => b-a);
                 const yg = document.getElementById('p2p3YearGroup');
                 if (yg) yg.innerHTML = '<span class="p2p3-lbl">Years</span>' + years.map(y => '<label><input type="checkbox" class="p2p3-year" value="'+y+'" checked> '+y+'</label>').join('');
+                const schools = [...new Set(index.map(q => q.school).filter(Boolean))].sort();
+                const sg = document.getElementById('p2p3SchoolGroup');
+                if (sg){ sg.style.display = schools.length ? '' : 'none';
+                    if (schools.length) sg.innerHTML = '<span class="p2p3-lbl">Schools</span>' + schools.map(s => '<label><input type="checkbox" class="p2p3-school" value="'+sqAttr(s)+'" checked> '+sqEsc(s)+'</label>').join(''); }
             }catch(e){
                 p2pAllConcepts = null;
                 if (hint) hint.innerHTML = '<span style="color:var(--danger)">Could not load filters: '+sqEsc(e.message||e)+'</span>';
@@ -6273,7 +6278,7 @@ Option D" required></textarea>
             res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none'; p2pQuestions = [];
             // Anti-bulk guard: both a topic AND a concept are required (no whole-topic / whole-paper pulls).
             if (!topic || !concept){ hint.innerHTML = '<span style="color:var(--primary)">Please choose both a topic and a concept.</span>'; return; }
-            const sources = p2pChecked('p2p3-src'), papers = p2pChecked('p2p3-paper'), diffs = p2pChecked('p2p3-diff'), years = p2pChecked('p2p3-year').map(Number);
+            const sources = p2pChecked('p2p3-src'), papers = p2pChecked('p2p3-paper'), diffs = p2pChecked('p2p3-diff'), years = p2pChecked('p2p3-year').map(Number), schools = p2pChecked('p2p3-school');
             if (!sources.length || !papers.length || !diffs.length || !years.length){
                 hint.innerHTML = '<span style="color:var(--primary)">Leave at least one box ticked under Source, Paper, Difficulty and Years.</span>'; return;
             }
@@ -6287,10 +6292,11 @@ Option D" required></textarea>
                     if (diffFilter) q = q.in('difficulty', diffFilter);
                     return q.order('question_id').order('id');
                 });
-                // question-level filters (source / paper / year) resolved against the in-memory index
-                const srcSet = new Set(sources), paperSet = new Set(papers), yearSet = new Set(years);
+                // question-level filters (source / paper / year / school) resolved against the in-memory index
+                const srcSet = new Set(sources), paperSet = new Set(papers), yearSet = new Set(years), schoolSet = new Set(schools);
                 p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))].filter(id => {
-                    const m = p2pIndex[id]; return m && srcSet.has(m.source) && paperSet.has(m.paper) && yearSet.has(m.year);
+                    const m = p2pIndex[id]; return m && srcSet.has(m.source) && paperSet.has(m.paper) && yearSet.has(m.year)
+                        && (m.school == null || schoolSet.has(m.school));   // TYS has no school → always shows; prelim/TP filtered by JC
                 });
                 // Record which exact parts matched the chosen concept (and difficulty), so the preview and
                 // the worksheet show only those sub-parts (plus any prerequisite parts), not the whole question.

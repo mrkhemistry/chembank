@@ -4670,7 +4670,7 @@ Option D" required></textarea>
                             </li>
                         `).join('')}
                     </ul>
-                    ${question.explanation ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong> ${escapeHtml(question.explanation)}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
+                    ${(question.explanation || question.explanation_image_url) ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong>${question.explanation ? ` ${escapeHtml(question.explanation)}` : ''}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
                     ${question.video_url ? `<div style="margin-top: 1rem;"><a href="${escapeHtml(question.video_url)}" target="_blank" style="color: var(--primary);">Video Explanation</a></div>` : ''}
                 </div>
             `}).join('');
@@ -6021,10 +6021,10 @@ Option D" required></textarea>
                 `;
             }).join('');
             
-            // Show explanation
-            if (question.explanation) {
+            // Show explanation (also when it is figure-only, i.e. an explanation image with no text)
+            if (question.explanation || question.explanation_image_url) {
                 document.getElementById('explanationContainer').style.display = 'block';
-                let explanationHtml = sanitizeQuestionText(question.explanation);
+                let explanationHtml = question.explanation ? sanitizeQuestionText(question.explanation) : '';
                 if (question.explanation_image_url) {
                     explanationHtml += `<div style="margin-top:1rem; text-align:center;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:400px; border-radius:12px; border:2px solid var(--primary); box-shadow:var(--shadow-md);"></div>`;
                 }

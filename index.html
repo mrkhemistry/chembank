@@ -2487,6 +2487,7 @@ Option D" required></textarea>
                     .p2p3-fgroup .p2p3-lbl{display:inline;margin:0 0.25rem 0 0;}
                     .p2p3-fgroup label{font-size:0.85rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;white-space:nowrap;}
                     .p2p3-fgroup input[type=checkbox]{accent-color:var(--primary);width:15px;height:15px;cursor:pointer;}
+                    .p2p3-fgroup label.p2p3-all-lbl{color:var(--primary);font-weight:600;padding-right:0.65rem;border-right:1px solid var(--border);}
                     .p2p3-q{border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem;background:var(--surface2);}
                     .p2p3-q-head{font-size:0.8rem;color:var(--primary);font-weight:600;margin-bottom:0.5rem;letter-spacing:0.02em;}
                     .p2p3-stem{font-size:0.95rem;line-height:1.6;margin-bottom:0.6rem;}
@@ -6443,6 +6444,14 @@ Option D" required></textarea>
         let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [], p2pPartMatches = {};
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
         function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
+        // "Select all" master toggle for the Years / Schools filter rows.
+        function p2pToggleAll(masterCb, cls){ document.querySelectorAll('.'+cls).forEach(cb => { cb.checked = masterCb.checked; }); }
+        function p2pSyncAll(cls, masterCls){
+            const boxes = [...document.querySelectorAll('.'+cls)], master = document.querySelector('.'+masterCls);
+            if (!master) return;
+            const n = boxes.filter(b => b.checked).length;
+            master.checked = n === boxes.length; master.indeterminate = n > 0 && n < boxes.length;
+        }
 
         async function p2p3Open(){
             const iface = document.getElementById('p2p3Interface');
@@ -6474,11 +6483,15 @@ Option D" required></textarea>
                 if (tEl) tEl.innerHTML = '<option value="">Select a topic…</option>' + topics.map(t => '<option>'+sqEsc(t)+'</option>').join('');
                 const years = [...new Set(index.map(q => q.year).filter(y => y!=null))].sort((a,b) => b-a);
                 const yg = document.getElementById('p2p3YearGroup');
-                if (yg) yg.innerHTML = '<span class="p2p3-lbl">Years</span>' + years.map(y => '<label><input type="checkbox" class="p2p3-year" value="'+y+'" checked> '+y+'</label>').join('');
+                if (yg) yg.innerHTML = '<span class="p2p3-lbl">Years</span>'
+                    + '<label class="p2p3-all-lbl"><input type="checkbox" class="p2p3-year-all" checked onchange="p2pToggleAll(this,\'p2p3-year\')"> Select all</label>'
+                    + years.map(y => '<label><input type="checkbox" class="p2p3-year" value="'+y+'" checked onchange="p2pSyncAll(\'p2p3-year\',\'p2p3-year-all\')"> '+y+'</label>').join('');
                 const schools = [...new Set(index.map(q => q.school).filter(Boolean))].sort();
                 const sg = document.getElementById('p2p3SchoolGroup');
                 if (sg){ sg.style.display = schools.length ? '' : 'none';
-                    if (schools.length) sg.innerHTML = '<span class="p2p3-lbl">Schools</span>' + schools.map(s => '<label><input type="checkbox" class="p2p3-school" value="'+sqAttr(s)+'" checked> '+sqEsc(s)+'</label>').join(''); }
+                    if (schools.length) sg.innerHTML = '<span class="p2p3-lbl">Schools</span>'
+                        + '<label class="p2p3-all-lbl"><input type="checkbox" class="p2p3-school-all" checked onchange="p2pToggleAll(this,\'p2p3-school\')"> Select all</label>'
+                        + schools.map(s => '<label><input type="checkbox" class="p2p3-school" value="'+sqAttr(s)+'" checked onchange="p2pSyncAll(\'p2p3-school\',\'p2p3-school-all\')"> '+sqEsc(s)+'</label>').join(''); }
             }catch(e){
                 p2pAllConcepts = null;
                 if (hint) hint.innerHTML = '<span style="color:var(--danger)">Could not load filters: '+sqEsc(e.message||e)+'</span>';

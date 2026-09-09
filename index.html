@@ -6450,7 +6450,7 @@ Option D" required></textarea>
             const boxes = [...document.querySelectorAll('.'+cls)], master = document.querySelector('.'+masterCls);
             if (!master) return;
             const n = boxes.filter(b => b.checked).length;
-            master.checked = n === boxes.length; master.indeterminate = n > 0 && n < boxes.length;
+            master.checked = boxes.length > 0 && n === boxes.length; master.indeterminate = n > 0 && n < boxes.length;
         }
 
         async function p2p3Open(){
@@ -6484,7 +6484,7 @@ Option D" required></textarea>
                 const years = [...new Set(index.map(q => q.year).filter(y => y!=null))].sort((a,b) => b-a);
                 const yg = document.getElementById('p2p3YearGroup');
                 if (yg) yg.innerHTML = '<span class="p2p3-lbl">Years</span>'
-                    + '<label class="p2p3-all-lbl"><input type="checkbox" class="p2p3-year-all" checked onchange="p2pToggleAll(this,\'p2p3-year\')"> Select all</label>'
+                    + (years.length ? '<label class="p2p3-all-lbl"><input type="checkbox" class="p2p3-year-all" checked onchange="p2pToggleAll(this,\'p2p3-year\')"> Select all</label>' : '')
                     + years.map(y => '<label><input type="checkbox" class="p2p3-year" value="'+y+'" checked onchange="p2pSyncAll(\'p2p3-year\',\'p2p3-year-all\')"> '+y+'</label>').join('');
                 const schools = [...new Set(index.map(q => q.school).filter(Boolean))].sort();
                 const sg = document.getElementById('p2p3SchoolGroup');

@@ -6301,7 +6301,8 @@ Option D" required></textarea>
         }
         
         function sanitizeQuestionText(text) {
-            // Allow <br>, <u>, <strong> tags and LaTeX delimiters, escape everything else
+            // Allow <br>, <u>, <strong>, <b>, <i>, <em>, <sub>, <sup> tags, HTML entities and
+            // LaTeX delimiters, escape everything else
             const brPlaceholder = '___BR___';
             const uOpenPlaceholder = '___UOPEN___';
             const uClosePlaceholder = '___UCLOSE___';
@@ -6321,6 +6322,16 @@ Option D" required></textarea>
             processed = processed.replace(/<\/u>/gi, () => uClosePlaceholder);
             processed = processed.replace(/<strong>/gi, () => strongOpenPlaceholder);
             processed = processed.replace(/<\/strong>/gi, () => strongClosePlaceholder);
+
+            // Store other attribute-less inline formatting tags: <b>/<i>/<em> (bold/italic) and
+            // <sub>/<sup> (chemistry subscripts and superscripts, e.g. MnO<sub>4</sub><sup>-</sup>).
+            // Like <strong>/<u> these carry no attributes or scripts, so they are safe to pass through.
+            const inlineTagPlaceholders = {};
+            ['b', 'i', 'em', 'sub', 'sup'].forEach((tag) => {
+                inlineTagPlaceholders[tag] = { open: '___' + tag.toUpperCase() + 'OPEN___', close: '___' + tag.toUpperCase() + 'CLOSE___' };
+                processed = processed.replace(new RegExp('<' + tag + '>', 'gi'), inlineTagPlaceholders[tag].open);
+                processed = processed.replace(new RegExp('</' + tag + '>', 'gi'), inlineTagPlaceholders[tag].close);
+            });
 
             // Store inline LaTeX \(...\)
             const latexInlineMatches = [];
@@ -6348,6 +6359,10 @@ Option D" required></textarea>
             processed = processed.replace(new RegExp(uClosePlaceholder, 'g'), '</u>');
             processed = processed.replace(new RegExp(strongOpenPlaceholder, 'g'), '<strong>');
             processed = processed.replace(new RegExp(strongClosePlaceholder, 'g'), '</strong>');
+            Object.keys(inlineTagPlaceholders).forEach((tag) => {
+                processed = processed.replace(new RegExp(inlineTagPlaceholders[tag].open, 'g'), '<' + tag + '>');
+                processed = processed.replace(new RegExp(inlineTagPlaceholders[tag].close, 'g'), '</' + tag + '>');
+            });
             entityMatches.forEach((ent) => { processed = processed.replace(entityPlaceholder, ent); });
             latexInlineMatches.forEach((latex) => { processed = processed.replace(latexInlinePlaceholder, latex); });
             latexDisplayMatches.forEach((latex) => { processed = processed.replace(latexDisplayPlaceholder, latex); });

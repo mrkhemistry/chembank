@@ -6329,6 +6329,13 @@ Option D" required></textarea>
             const latexDisplayMatches = [];
             processed = processed.replace(/\\\[[\s\S]*?\\\]/g, (match) => { latexDisplayMatches.push(match); return latexDisplayPlaceholder; });
 
+            // Store HTML entities (named/numeric) so they render as intended instead of showing as
+            // literal text. Entities decode to plain characters/whitespace, so this cannot form live
+            // tags: a raw < is still escaped to &lt; below; only these &...; references pass through.
+            const entityPlaceholder = '___ENTITY___';
+            const entityMatches = [];
+            processed = processed.replace(/&(#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/g, (match) => { entityMatches.push(match); return entityPlaceholder; });
+
             // Escape HTML
             const div = document.createElement('div');
             div.textContent = processed;
@@ -6340,6 +6347,7 @@ Option D" required></textarea>
             processed = processed.replace(new RegExp(uClosePlaceholder, 'g'), '</u>');
             processed = processed.replace(new RegExp(strongOpenPlaceholder, 'g'), '<strong>');
             processed = processed.replace(new RegExp(strongClosePlaceholder, 'g'), '</strong>');
+            entityMatches.forEach((ent) => { processed = processed.replace(entityPlaceholder, ent); });
             latexInlineMatches.forEach((latex) => { processed = processed.replace(latexInlinePlaceholder, latex); });
             latexDisplayMatches.forEach((latex) => { processed = processed.replace(latexDisplayPlaceholder, latex); });
 

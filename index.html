@@ -1967,6 +1967,32 @@ Option D" required></textarea>
                 </a>
             </div>
 
+            <!-- Topical Revision MCQs — Mr Khemistry's curated per-topic sets (premium only) -->
+            <div class="panel" id="revPkgPanel">
+                <div class="panel-header">
+                    <span>Topical Revision MCQs</span>
+                </div>
+                <div id="revPkgInterface" style="display:none;">
+                    <p style="opacity:0.8; line-height:1.6; margin:0 0 1rem;">Mr Khemistry's hand-picked 10-question revision quiz for each topic. Answer on screen, get your score straight away, then try similar questions on anything you got wrong.</p>
+                    <div class="form-group">
+                        <label for="revPkgSelect">Choose a topic</label>
+                        <select id="revPkgSelect">
+                            <option value="">Select a topic&hellip;</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="startRevisionPackage()">Start revision quiz</button>
+                </div>
+                <div id="revPkgTeaser" style="display:none;">
+                    <div class="p2p3-teaser">
+                        <span class="p2p3-pill">Premium feature</span>
+                        <h3>Topical Revision MCQs</h3>
+                        <p>Premium students get Mr Khemistry's curated 10-question revision quiz for every topic, with instant scoring and follow-up questions matched to the ones you got wrong.</p>
+                        <a class="btn btn-primary" href="https://www.mrkhemistry.com" target="_blank" rel="noopener" style="margin-top:0.5rem;">Book a free trial class</a>
+                        <p style="font-size:0.85rem;opacity:0.6;margin-top:0.9rem;">Already enrolled? Ask Mr Khemistry to upgrade your account to Premium.</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel">
                 <div class="panel-header">
                     <span>Select Quiz Parameters</span>
@@ -2582,9 +2608,10 @@ Option D" required></textarea>
                 
                 <div style="text-align: left; margin-top: 2rem;" id="resultsBreakdown"></div>
                 
-                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
-                    <button class="btn btn-primary" onclick="clearQuizProgress(); showView('student')">Take Another Quiz</button>
+                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-secondary" onclick="reviewQuiz()">Review Answers</button>
+                    <button class="btn btn-primary" id="trySimilarBtn" style="display:none;" onclick="startSimilarQuestions()">Try similar questions</button>
+                    <button class="btn btn-primary" onclick="clearQuizProgress(); showView('student')">Take Another Quiz</button>
                 </div>
             </div>
         </div>
@@ -3773,6 +3800,177 @@ Option D" required></textarea>
         let shuffleMap = []; // stores shuffled option order per question for weak quiz mode
         let isWeakQuizMode = false;
         let quizInProgress = false;
+
+        // ── Topical Revision MCQ packages (premium) ──────────────
+        // Mr Khemistry's curated 10-question set per topic (teaching order). Question ids
+        // point at rows in the `questions` bank. Order is preserved (not shuffled) so the
+        // set plays as a deliberate revision sequence.
+        const REVISION_PACKAGES = [
+            { topic: "Atomic Structure", ids: [461, 755, 1235, 430, 636, 338, 368, 519, 786, 399] },
+            { topic: "Mole and Redox", ids: [377, 12, 490, 1213, 971, 435, 702, 943, 656, 1151] },
+            { topic: "Chemical Bonding", ids: [2081, 2113, 522, 369, 318, 788, 492, 638, 667, 584] },
+            { topic: "The Gaseous State", ids: [2107, 4732, 467, 555, 341, 370, 1209, 1118, 1332, 1683] },
+            { topic: "Energetics and Thermodynamics", ids: [793, 2115, 2087, 378, 735, 618, 345, 567, 794, 344] },
+            { topic: "Reaction Kinetics", ids: [2089, 4736, 645, 527, 347, 623, 737, 796, 571, 676] },
+            { topic: "Chemical Equilibria", ids: [1008, 442, 797, 914, 766, 530, 677, 828, 739, 500] },
+            { topic: "Introduction to Organic Chemistry", ids: [328, 416, 654, 771, 982, 951, 51, 1074, 54, 716] },
+            { topic: "Alkanes", ids: [55, 354, 326, 479, 772, 1223, 1504, 52, 478, 1637] },
+            { topic: "Alkenes", ids: [26, 327, 954, 717, 388, 508, 579, 325, 1133, 1285] },
+            { topic: "Arenes", ids: [981, 482, 1079, 862, 389, 511, 1134, 1225, 1194, 685] },
+            { topic: "The Periodic Table", ids: [40, 2092, 432, 41, 678, 1094, 1007, 819, 852, 1119] },
+        ];
+        // Precomputed "same concept" follow-up shortlists: for each revision-package question id,
+        // the most similar OTHER MCQs in its topic, ranked by question-wording (TF-IDF) similarity so
+        // the follow-up tests the SAME concept, not just the same topic. Built by scratchpad/build_similar.py.
+        const SIMILAR_BY_ID = {"461":[1087,3774,2868,3021,3263,4254,2689,1486,3292,2329,1618,4312,2417,249,37],"755":[1266,3622,995,2932,2079,1646,316,249,13,3509,4614,343,1026,665,1706],"1235":[1706,248,74,2687,1265,1646,3352,2837,3509,3685,2570,4679,2328,2661,2078],"430":[2959,4013,1708,3836,38,701,4492,1616,1707,2117,3262,2807,2358,1154,2958],"636":[488,4221,2988,4672,460,1154,1356,701,2388,1326,1055,553,3532,3592,3269],"338":[3835,4042,3145,3085,2852,3684,3715,1116,4673,816,3443,2927,3982,2507,1206],"368":[72,2183,3474,1176,11,816,3053,4403,37,1708,2747,129,4221,3836,2178],"519":[4073,3297,2151,3563,459,550,4403,3144,3053,2358,2179,3262,4464,3233,2569],"786":[2151,3112,1707,550,3262,3534,3204,875,459,1556,3053,2417,2179,308,4644],"399":[11,37,2661,2329,1677,2571,1026,72,972,3592,460,3562,3563,3534,248],"377":[2627,846,3057,4162,1155,821,3023,3116,4351,1686,1085,1436,222,3382,670],"12":[3057,1436,2717,4045,2867,222,3746,3382,2162,3892,1025,3923,4642,821,103],"490":[4409,2931,756,4353,3116,1241,1086,2215,2082,2368,4319,523,2688,4372,4433],"1213":[1355,4162,2993,1182,905,4409,42,1086,4223,523,2368,4319,4353,2327,2964],"971":[1085,2627,3450,3892,1436,2993,3057,3746,3832,1686,4162,3235,1155,1355,2546],"435":[3234,3501,3714,3894,3143,2844,3953,3653,428,885,614,3084,2369,3018,1120],"702":[4284,3058,1438,3773,3894,3143,2369,80,4192,4163,4323,699,4047,3714,4222],"943":[4012,1490,4192,4434,906,2508,2369,1002,3084,3203,4462,3117,4643,3894,3143],"656":[3596,3295,487,4613,4320,1242,1557,547,3019,1682,3058,1438,1120,3384,4100],"1151":[4373,425,1682,1744,1586,1242,4163,4496,80,3117,315,4192,1063,1002,3058],"2081":[1329,2300,4107,4586,1359,2449,465,1589,2691,491,2181,4561,3054,879,3876],"2113":[1236,4108,3146,2660,2420,1058,131,966,908,1329,191,1328,582,2301,4645],"522":[3206,2180,558,1619,1679,1487,2361,1770,3175,191,1359,1295,2691,70,2480],"369":[1558,2360,1208,400,2269,1089,1428,727,1059,4133,2929,9,251,3955,703],"318":[2871,3238,106,2900,4044,520,14,407,789,728,3597,1268,4224,824,1286],"788":[4550,1769,1150,824,4164,14,583,3361,3017,4345,4645,3414,2783,4044,520],"492":[4645,3911,131,1058,4480,4602,2180,4553,2660,938,4315,3146,4108,4675,2584],"638":[1429,3028,1738,965,4674,1620,3687,3984,3114,4376,2960,1358,4550,2334,3017],"667":[2120,2839,3625,759,2209,4259,1057,2479,966,908,3837,3925,1150,3954,3688],"584":[68,3505,310,2334,133,4704,3624,2270,521,3113,3055,4674,3687,39,4134],"2107":[3985,3928,615,3115,3240,2182,3266,4522,4436,1740,2108,4106,3176,3205,4076],"4732":[1270,4168,2335,1000,1488,1650,529,2782,468,556,3354,909,2421,134,433],"467":[402,3566,252,3928,556,3386,3205,3956,941,909,4017,4676,3240,968,700],"555":[1237,615,3928,312,402,790,554,2182,1092,2692,3154,2391,730,1181,2632],"341":[2782,4168,1270,1650,433,468,556,2335,3354,909,1000,1488,4676,2810,1561],"370":[1458,2930,2481,4196,1092,2182,3745,3655,2632,2692,3477,2391,3446,493,968],"1209":[3895,4106,4522,3775,3153,3240,3985,2511,1739,3115,968,2241,3027,3745,2182],"1118":[4379,4168,1491,1000,192,1650,1361,1270,1561,1488,2782,556,468,2810,3153],"1332":[2362,4465,2692,2391,3956,877,3083,2511,3240,2121,4106,4017,1361,2603,192],"1683":[1711,2511,4316,3718,4227,2994,3538,2335,616,1650,3087,3354,556,3240,3656],"793":[225,226,1214,3031,1334,4499,2116,1432,2242,3846,2575,617,1064,4377,3241],"2115":[3899,2395,2996,75,2933,1333,641,1156,3274,1030,974,4229,137,762,4170],"2087":[4321,495,2722,3658,3846,1184,1432,469,1096,1493,3150,1775,4471,2905,4021],"378":[4471,2905,1096,1184,495,3362,3658,883,4618,1064,469,3150,1432,4021,910],"735":[945,3570,704,2576,2906,4078,1335,4022,3929,4170,4618,1432,910,1272,3362],"618":[1624,4355,1432,4618,910,3658,1493,4711,1184,641,4170,469,495,1096,2576],"345":[1592,3121,496,4023,1185,2243,2967,3421,1244,4171,4444,3920,2186,1746,3363],"567":[4378,107,884,2396,2451,2218,167,1065,1717,643,2818,496,854,4171,408],"794":[1005,3904,620,2604,3749,1625,199,4686,3060,2451,167,2512,2126,3302,3421],"344":[2547,1184,469,3658,1432,3453,3808,1096,4021,4733,495,3150,2305,3420,4471],"2089":[3962,1275,4050,409,3305,1714,4593,2399,2485,2703,4175,1495,471,2786,4051],"4736":[1340,4175,3839,1653,2909,139,1689,3567,321,2819,1304,471,3659,166,2756],"645":[2340,528,4050,4593,2485,1158,2999,3513,4019,4384,3694,887,2908,622,16],"527":[2703,738,2548,346,3809,2371,4474,2758,2609,572,3210,675,2219,2936,4500],"347":[498,4199,913,4527,1494,3124,3330,827,1748,17,436,201,2873,411,3026],"623":[1747,3710,3633,4051,3364,2453,568,3809,3124,321,1158,4050,2671,675,346],"737":[4052,1365,1715,3962,15,4050,3840,4528,4684,707,2908,321,2453,1714,2845],"796":[765,200,3180,77,2969,4018,1098,320,4358,2399,1009,2515,321,1772,229],"571":[108,3149,229,3026,169,1029,947,2908,411,2845,4267,4384,4383,201,3633],"676":[436,320,1564,2399,3842,3934,4114,4237,2908,2308,2453,3364,2671,3694,1466],"1008":[3690,4529,2401,2937,2158,2971,440,3366,4082,1566,4142,2669,4141,1364,2970],"442":[2400,2848,3032,3632,977,109,2911,857,3064,2190,1749,1159,1125,4590,4294],"797":[4590,710,1099,3182,1159,1442,1125,3245,3459,163,888,4054,2910,2190,4414],"914":[1031,3211,3871,1467,1219,2158,2937,46,646,4380,1364,3064,4714,2911,138],"766":[4687,3993,4590,1338,2726,1159,3032,1219,857,1099,4202,4294,1032,3902,2848],"530":[3782,1159,3515,3965,3245,4142,2666,1690,2245,3002,709,3367,163,710,2874],"677":[3002,3367,2666,710,4649,3604,1442,4054,501,3245,4142,2971,3276,2911,3331],"828":[4293,2937,3366,440,4082,2669,2309,2550,1306,2970,4201,4141,2189,1690,1277],"739":[977,2970,4590,4201,857,3871,79,441,2341,2821,4294,2910,3604,3063,3301],"500":[2874,1278,3301,1718,3965,3515,2158,1690,2128,2611,1247,3367,3992,4502,2669],"328":[4716,3579,576,2223,240,1160,3462,120,2249,2283,3220,2864,861,745,3583],"416":[3341,2645,1369,2944,174,2286,1347,984,116,2854,1445,2883,1310,3096,4064],"654":[173,4064,1576,1602,1754,3073,1051,632,1603,3281,4304,3942,3280,2915,4505],"771":[801,632,1310,1503,1576,4064,3552,1602,3280,2915,578,4567,1754,3073,1051],"982":[3942,2854,2630,3815,3521,1692,1445,3968,1107,3431,2138,83,2283,4277,3258],"951":[84,173,1576,2333,1661,2915,632,3190,1503,922,1160,1754,4090,2645,1051],"51":[1661,84,355,173,4242,1576,3190,2333,3073,632,48,4605,922,2431,1754],"1074":[1347,861,48,2097,988,484,24,4241,2708,4605,2645,1471,893,1790,4034],"54":[3610,892,1603,3969,2097,1252,202,4547,3968,24,1790,2289,238,4188,4418],"716":[355,860,3190,1091,832,2915,2431,4090,3341,2349,4182,2883,48,2100,2255],"55":[657,4660,1783,4122,1190,4065,4329,3639,4628,2527,4506,387,204,2646,1473],"354":[3405,141,1783,2767,657,1370,3551,387,204,1255,4065,1131,1446,3376,1109],"326":[1783,387,204,1473,4065,4717,1190,4628,356,3580,3887,3639,4506,4329,1284],"479":[2492,3405,2433,633,3008,2351,3789,176,141,657,2767,1071,2194,2406,3223],"772":[2736,4329,1370,2527,356,3376,657,4065,1071,2350,1190,4628,1131,3887,1783],"1223":[1255,3133,4448,1662,387,204,4660,4122,3405,3789,2884,4208,1577,1016,2098],"1504":[3607,633,3551,3192,3703,1071,3223,3193,4065,4700,176,577,453,1370,1284],"52":[3729,3492,1370,2350,3816,4700,2586,2351,175,4660,3789,923,4122,1071,453],"478":[923,175,1016,2652,1255,3789,577,4448,4122,4660,2098,3405,1131,141,2736],"1637":[1255,1016,2652,387,204,141,4208,3008,1131,2884,1577,3639,1603,3133,2492],"26":[2946,50,573,1784,4031,2200,3706,1606,3342,3608,2553,574,507,3704,3195],"327":[117,3523,3157,480,2650,1163,1310,1072,684,4131,4718,3224,2436,1755,4603],"954":[4031,3342,3608,573,2946,1784,3523,2407,3157,895,2805,1505,2650,1163,684],"717":[1017,985,3760,4718,573,1755,3342,4281,1784,4251,3704,1163,895,577,2407],"388":[2803,2495,3709,1692,1600,1445,3132,3731,3761,2102,1789,1163,3608,3134,4421],"508":[4452,3195,3283,1611,358,1602,3039,3731,4420,1669,3095,1371,3343,3255,2376],"579":[4507,4604,3343,1192,3970,1348,4452,833,1611,4131,2436,1072,2861,4723,2529],"325":[1602,3998,507,3132,1474,1789,1191,541,684,25,1445,2712,833,1481,3311],"1133":[1371,3039,3195,418,1479,4215,1077,3765,2553,512,117,2712,480,3095,3998],"1285":[1699,1602,358,2376,3195,4420,3857,4452,3283,1611,3039,2200,3970,833,2529],"981":[1725,655,925,143,205,2432,4330,2886,1785,2858,2314,956,2947,4032,1600],"482":[2315,834,3282,4067,1641,1474,3762,2554,1054,143,896,683,3075,1700,4389],"1079":[1312,2654,3377,2290,2623,4609,2887,143,1639,1049,1375,956,538,269,3158],"862":[86,655,2857,1756,2554,1600,2947,2886,4032,1785,3041,4243,2432,683,2290],"389":[3158,27,2707,2887,2623,1474,1315,1448,4389,863,2654,2290,1312,1478,4248],"511":[3377,2654,1312,3075,539,4662,4508,4280,2290,4483,2530,4158,4609,269,1478],"1134":[2857,2886,1725,4243,1785,4032,86,2947,956,2432,1600,655,4330,683,4539],"1225":[2587,3319,3817,3554,1695,3464,324,1111,2136,1049,4422,3525,3158,2499,896],"1194":[3041,2886,2857,1785,1725,956,925,4032,2554,86,4243,2432,4330,2290,85],"685":[143,655,4508,3762,2886,4483,2432,896,774,4719,2857,925,4726,2947,2408],"40":[2658,531,1513,1039,2748,2359,942,2118,919,2418,4585,460,2954,1658,768],"2092":[969,1460,4165,3959,3108,3898,3118,2812,3777,2729,2965,4205,3668,2543,2422],"432":[223,2539,254,20,3777,2751,2152,1426,2792,4085,2208,1685,3853,3590,1210],"41":[1238,3508,2894,3726,3268,1598,2811,4519,1741,3958,4708,3697,2751,1368,104],"678":[1041,3726,3648,2161,4597,2894,4708,1060,3853,3590,1598,1741,3548,3886,4116],"1094":[2543,1741,2842,531,4116,1039,3268,1093,3697,2751,3853,3590,313,2392,3490],"1007":[2607,2422,4205,3623,714,4058,254,20,942,4549,2965,195,3668,1179,3428],"819":[2842,4475,2895,1512,1741,4040,3697,1598,3491,3853,3590,3188,4519,1433,3696],"852":[1060,2161,1041,3648,2894,2459,195,4708,4519,1684,3243,1794,1570,3107,2811],"1119":[4678,1513,1712,1276,3188,3186,2895,1598,3215,3035,4475,792,2359,4040,919]};
+        let isRevisionMode = false;              // true during a revision-package quiz or its follow-ups
+        let revisionSeenIds = new Set();         // ids already served this revision session (avoid repeats)
+
+        // Column list fetched for a quiz question (kept in one place so every quiz entry matches)
+        const QUIZ_COLS = 'id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url';
+
+        // Fill the topic dropdown from REVISION_PACKAGES (once)
+        function populateRevisionPackages() {
+            const sel = document.getElementById('revPkgSelect');
+            if (!sel || sel.dataset.filled === '1') return;
+            REVISION_PACKAGES.forEach((pkg, i) => {
+                const opt = document.createElement('option');
+                opt.value = String(i);
+                opt.textContent = pkg.topic;
+                sel.appendChild(opt);
+            });
+            sel.dataset.filled = '1';
+        }
+
+        // Load a curated topic package into the on-screen quiz (premium only)
+        async function startRevisionPackage() {
+            if (!(userRole === 'premium_student' || userRole === 'admin')) {
+                alert('Topical Revision MCQs are a premium feature.');
+                return;
+            }
+            const sel = document.getElementById('revPkgSelect');
+            const idx = (sel && sel.value !== '') ? parseInt(sel.value) : -1;
+            if (idx < 0 || !REVISION_PACKAGES[idx]) { alert('Please choose a topic first.'); return; }
+            const pkg = REVISION_PACKAGES[idx];
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .select(QUIZ_COLS)
+                    .eq('syllabus', 'h2_chem')
+                    .in('id', pkg.ids);
+                if (error) throw error;
+                document.getElementById('loadingOverlay').style.display = 'none';
+                const byId = {};
+                (data || []).forEach(q => { byId[q.id] = q; });
+                const ordered = pkg.ids.map(id => byId[id]).filter(Boolean); // preserve curated order
+                if (ordered.length === 0) { alert('Sorry, this revision set is unavailable right now.'); return; }
+                isWeakQuizMode = false;
+                isRevisionMode = true;
+                revisionSeenIds = new Set(pkg.ids);
+                shuffleMap = []; // preserve option order (image-based MCQs)
+                currentQuiz = ordered;
+                currentQuestionIndex = 0;
+                userAnswers = new Array(currentQuiz.length).fill(null);
+                document.getElementById('prevBtn').onclick = previousQuestion;
+                document.getElementById('nextBtn').onclick = nextQuestion;
+                document.getElementById('quizSubmitBtn').onclick = submitQuiz;
+                document.getElementById('nextBtn').textContent = 'Next Question';
+                document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
+                quizInProgress = true;
+                showView('quiz');
+                displayQuizQuestion();
+                saveQuizProgress();
+            } catch (e) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error loading revision quiz: ' + e.message);
+            }
+        }
+
+        // After a revision quiz: serve follow-up MCQs that test the SAME CONCEPT as each wrong answer.
+        // Primary source is the precomputed SIMILAR_BY_ID shortlist (concept-matched within the topic).
+        // If a wrong question has no shortlist (a deeper-level follow-up that is not a package question)
+        // or its list is used up, fall back to same-topic + same-difficulty so the button never dead-ends.
+        async function startSimilarQuestions() {
+            const wrong = [];
+            currentQuiz.forEach((q, i) => { if (!isAnswerCorrect(i, userAnswers[i])) wrong.push(q); });
+            if (wrong.length === 0) { alert('You got everything right — no follow-up needed. Nice work!'); return; }
+            const target = Math.min(wrong.length, 10); // one follow-up per mistake, capped
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                // 1) Candidate ids from each wrong question's precomputed concept shortlist
+                const wantIds = new Set();
+                wrong.forEach(seed => (SIMILAR_BY_ID[seed.id] || []).forEach(id => {
+                    if (!revisionSeenIds.has(id)) wantIds.add(id);
+                }));
+                const byId = {};
+                if (wantIds.size > 0) {
+                    const { data, error } = await supabaseClient
+                        .from('questions').select(QUIZ_COLS)
+                        .eq('syllabus', 'h2_chem').in('id', [...wantIds]);
+                    if (error) throw error;
+                    (data || []).forEach(q => { byId[q.id] = q; });
+                }
+                // 2) One per mistake, walking each seed's ranked list; prefer the seed's own difficulty
+                const picked = [], used = new Set();
+                for (const seed of wrong) {
+                    if (picked.length >= target) break;
+                    const list = SIMILAR_BY_ID[seed.id] || [];
+                    const ok = id => byId[id] && !revisionSeenIds.has(id) && !used.has(id);
+                    const pick = list.find(id => ok(id) && byId[id].difficulty === seed.difficulty)
+                              || list.find(id => ok(id));
+                    if (pick) { picked.push(byId[pick]); used.add(pick); }
+                }
+                // 3) Fallback top-up for any shortfall (deeper levels / lists used up): same topic + same difficulty
+                if (picked.length < target) {
+                    const shortfall = target - picked.length;
+                    const needPairs = wrong.map(q => ({ topic: q.topic, difficulty: q.difficulty }));
+                    const diffs = [...new Set(wrong.map(q => q.difficulty).filter(Boolean))];
+                    if (diffs.length > 0) {
+                        const PAGE_SIZE = 1000;
+                        let allData = [], from = 0;
+                        while (true) {
+                            const { data: pageData, error: pageError } = await supabaseClient
+                                .from('questions').select(QUIZ_COLS)
+                                .eq('syllabus', 'h2_chem').in('difficulty', diffs)
+                                .range(from, from + PAGE_SIZE - 1);
+                            if (pageError) throw pageError;
+                            if (!pageData || pageData.length === 0) break;
+                            allData = allData.concat(pageData);
+                            if (pageData.length < PAGE_SIZE) break;
+                            from += PAGE_SIZE;
+                        }
+                        const extra = shuffleArray(allData.filter(q => {
+                            if (revisionSeenIds.has(q.id) || used.has(q.id)) return false;
+                            const qTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
+                            return needPairs.some(p => p.difficulty === q.difficulty && (q.topic === p.topic || qTopics.includes(p.topic)));
+                        })).slice(0, shortfall);
+                        extra.forEach(q => { picked.push(q); used.add(q.id); });
+                    }
+                }
+                document.getElementById('loadingOverlay').style.display = 'none';
+                if (picked.length === 0) { alert('No further similar questions available for the topics you missed. Well revised!'); return; }
+                picked.forEach(q => revisionSeenIds.add(q.id));
+                isWeakQuizMode = false;
+                isRevisionMode = true;
+                shuffleMap = [];
+                currentQuiz = picked;
+                currentQuestionIndex = 0;
+                userAnswers = new Array(currentQuiz.length).fill(null);
+                document.getElementById('prevBtn').onclick = previousQuestion;
+                document.getElementById('nextBtn').onclick = nextQuestion;
+                document.getElementById('quizSubmitBtn').onclick = submitQuiz;
+                document.getElementById('nextBtn').textContent = 'Next Question';
+                document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
+                quizInProgress = true;
+                showView('quiz');
+                displayQuizQuestion();
+                saveQuizProgress();
+            } catch (e) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error loading similar questions: ' + e.message);
+            }
+        }
 
         // ── Quiz progress protection ─────────────────────────────
         window.addEventListener('beforeunload', function(e) {
@@ -5005,6 +5203,7 @@ Option D" required></textarea>
                 currentQuestionIndex = 0;
                 userAnswers = new Array(currentQuiz.length).fill(null);
                 isWeakQuizMode = true;
+                isRevisionMode = false;
                 shuffleMap = []; // No option shuffling — preserves MCT image-based questions
                 // Reset button states
                 document.getElementById('prevBtn').onclick = previousQuestion;
@@ -5024,6 +5223,7 @@ Option D" required></textarea>
 
         async function startQuiz() {
             isWeakQuizMode = false;
+            isRevisionMode = false;
             shuffleMap = [];
             const selectedTopics = Array.from(document.querySelectorAll('.topic-checkbox:checked'))
                 .map(cb => cb.value);
@@ -5353,7 +5553,13 @@ Option D" required></textarea>
             }
             
             document.getElementById('resultsBreakdown').innerHTML = breakdownHtml;
-            
+
+            // Offer supplementary "similar" questions after a topical-revision quiz with mistakes
+            const trySimilarBtn = document.getElementById('trySimilarBtn');
+            if (trySimilarBtn) {
+                trySimilarBtn.style.display = (isRevisionMode && correct < currentQuiz.length) ? 'inline-flex' : 'none';
+            }
+
             showView('results');
         }
         
@@ -6189,6 +6395,13 @@ Option D" required></textarea>
                 loadPersonalBests();
                 loadTopicMastery();
                 loadReferralCTA();
+                // Topical Revision MCQs: premium sees the picker, free students see the teaser
+                const revPrem = (userRole === 'premium_student' || userRole === 'admin');
+                const revInterface = document.getElementById('revPkgInterface');
+                const revTeaser = document.getElementById('revPkgTeaser');
+                if (revInterface) revInterface.style.display = revPrem ? 'block' : 'none';
+                if (revTeaser) revTeaser.style.display = revPrem ? 'none' : 'block';
+                if (revPrem) populateRevisionPackages();
             } else if (tab === 'worksheets') {
                 wsPanel.style.display = 'block';
                 tabWs.classList.add('active');

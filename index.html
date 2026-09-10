@@ -2392,6 +2392,20 @@ Option D" required></textarea>
   #trainingSection .tr-fb-block p, #trainingSection .tr-fb-block div.tr-ms { margin: 0; line-height: 1.6; color: var(--light); white-space: pre-wrap; }
   #trainingSection .tr-ms { border-left: 3px solid var(--primary); padding-left: 12px; }
   #trainingSection .tr-note { color: var(--danger); font-size: 0.9rem; margin-top: 8px; }
+  #trainingSection .tr-flag { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--cyan-border); }
+  #trainingSection .tr-flag-link { background: none; border: none; padding: 0; cursor: pointer; color: rgba(240,244,248,0.75); font: inherit; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
+  #trainingSection .tr-flag-link:hover, #trainingSection .tr-flag-link:focus-visible { color: var(--primary); outline: none; }
+  #trainingSection .tr-flag-box { margin-top: 8px; }
+  #trainingSection .tr-flags { margin: 0 0 1.5rem; }
+  #trainingSection .tr-flags-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+  #trainingSection .tr-flags-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--danger); }
+  #trainingSection .tr-flag-card { background: var(--surface); border: 1px solid var(--cyan-border); border-left: 3px solid var(--danger); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
+  #trainingSection .tr-flag-card.resolved { border-left-color: var(--success); opacity: 0.7; }
+  #trainingSection .tr-flag-meta { font-family: 'DM Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  #trainingSection .tr-flag-card h4 { margin: 8px 0 2px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); font-weight: 500; }
+  #trainingSection .tr-flag-card p { margin: 0; color: var(--light); line-height: 1.5; white-space: pre-wrap; font-size: 0.93rem; }
+  #trainingSection .tr-flag-card details summary { cursor: pointer; font-size: 0.8rem; color: var(--primary); margin-top: 6px; }
+  #trainingSection .tr-flag-card label { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; color: var(--light); cursor: pointer; }
   #trainingSection .tr-divider { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1.5rem; color: rgba(240,244,248,0.75); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
   #trainingSection .tr-divider::before, #trainingSection .tr-divider::after { content: ''; flex: 1; border-top: 1px solid var(--cyan-border); }
   #trainingSection .tr-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
@@ -2429,6 +2443,7 @@ Option D" required></textarea>
   </div>
 
   <div id="trainingHome" style="display:none;">
+    <div id="trainingFlags" class="tr-flags" style="display:none;"></div>
     <div class="page-title">Train by concept</div>
     <p class="page-sub">Each concept starts with its real TYS questions, marked against the mark scheme. Miss one and you get a similar prelim question to try again. Pass two different questions to tick the concept off.</p>
     <div class="tr-chips" id="trainingTysChips" role="toolbar" aria-label="Times tested in the TYS">
@@ -8580,7 +8595,7 @@ Option D" required></textarea>
         const TRAINING_PASSES_NEEDED = 2;
         const TRAINING_MAX_FAILS = 3;
         const TRAINING_FN_URL = SUPABASE_URL + '/functions/v1/training-ai';
-        let trState = { conceptId: null, part: null, busy: false, mode: 'tys', kind: 'tys' };
+        let trState = { conceptId: null, part: null, busy: false, mode: 'tys', kind: 'tys', last: null };
         let trPartsCache = {};   // concept id -> parts loaded for the question picker
         let trTysFilter = (function () { try { return sessionStorage.getItem('chembank_training_tys') || 'all'; } catch (e) { return 'all'; } })();
 
@@ -8621,6 +8636,94 @@ Option D" required></textarea>
             trainingRenderChecklist();
         }
 
+        // ---- "Marking seems wrong?" flags ----
+        function trainingFlagOpen() {
+            const box = document.getElementById('trainingFlagBox'); if (!box) return;
+            box.style.display = 'block';
+            const ta = document.getElementById('trainingFlagReason'); if (ta) ta.focus();
+        }
+        function trainingFlagCancel() {
+            const box = document.getElementById('trainingFlagBox'); if (box) box.style.display = 'none';
+        }
+        async function trainingFlagSend() {
+            const last = trState.last; if (!last || !last.part) return;
+            const reason = (document.getElementById('trainingFlagReason').value || '').trim();
+            const done = document.getElementById('trainingFlagDone');
+            if (!reason) { alert('Tell Mr Khemistry what the marker got wrong.'); return; }
+            if (!currentUser || !currentUser.id) { alert('Your session has expired. Please log in again.'); return; }
+            const btn = document.getElementById('trainingFlagSendBtn'); if (btn) btn.disabled = true;
+            const row = {
+                user_id: currentUser.id,
+                attempt_id: last.attemptId,
+                part_id: last.part.id,
+                concept_id: last.conceptId,
+                answer_text: String(last.answer || '').slice(0, 6000),
+                marks: last.body.marks != null ? last.body.marks : null,
+                marks_awarded: last.body.marks_awarded != null ? last.body.marks_awarded : null,
+                pass: !!last.body.pass,
+                feedback: last.body.feedback || null,
+                reason: reason.slice(0, 500)
+            };
+            const { error } = await supabaseClient.from('training_flags').insert(row);
+            if (btn) btn.disabled = false;
+            if (error) {
+                const dup = String(error.code || '') === '23505';
+                done.textContent = dup ? 'You have already flagged this marking.' : 'Could not send the flag. Please try again.';
+                done.style.display = 'block';
+                if (dup) { last.flagged = true; trainingFlagCancel(); const link = document.getElementById('trainingFlagLink'); if (link) link.style.display = 'none'; }
+                return;
+            }
+            last.flagged = true;
+            trainingFlagCancel();
+            const link = document.getElementById('trainingFlagLink'); if (link) link.style.display = 'none';
+            done.textContent = 'Sent to Mr Khemistry. Thank you.';
+            done.style.display = 'block';
+        }
+
+        // Admin-only list of open flags at the top of the checklist
+        async function trainingLoadFlags() {
+            const box = document.getElementById('trainingFlags'); if (!box) return;
+            if (userRole !== 'admin') { box.style.display = 'none'; return; }
+            const { data, error } = await supabaseClient
+                .from('training_flags')
+                .select('id, created_at, reason, answer_text, marks, marks_awarded, pass, feedback, resolved, concept_id, structured_parts(id, part_label, part_text, mark_scheme, structured_questions(year, paper, source, school, question_number))')
+                .order('resolved', { ascending: true }).order('created_at', { ascending: false }).limit(50);
+            if (error) { box.style.display = 'none'; return; }
+            trainingRenderFlags(data || []);
+        }
+        function trainingRenderFlags(rows) {
+            const box = document.getElementById('trainingFlags'); if (!box) return;
+            if (!rows.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+            const conceptName = id => { const c = TRAINING_CONCEPTS.find(x => x.id === id); return c ? c.name : ''; };
+            const open = rows.filter(r => !r.resolved).length;
+            let html = '<div class="tr-flags-head"><span class="tr-flags-title">Marking flags (' + open + ' open)</span></div>';
+            rows.forEach(r => {
+                const p = r.structured_parts || {}; const q = p.structured_questions || {};
+                const ref = q.year ? ((q.source === 'TYS' ? 'TYS' : (q.school || 'Prelim')) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '')) : 'Part ' + (p.id || '');
+                const fb = r.feedback || {};
+                const when = r.created_at ? new Date(r.created_at).toLocaleString('en-SG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                html += '<div class="tr-flag-card' + (r.resolved ? ' resolved' : '') + '" data-id="' + r.id + '">'
+                    + '<div class="tr-flag-meta"><span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(conceptName(r.concept_id)) + '</span><span>' + escapeHtml(String(r.marks_awarded != null ? r.marks_awarded : '?')) + '/' + escapeHtml(String(r.marks != null ? r.marks : '?')) + (r.pass ? ' pass' : ' miss') + '</span><span>' + escapeHtml(when) + '</span></div>'
+                    + '<h4>Student says</h4><p>' + trText(r.reason) + '</p>'
+                    + '<h4>Their answer</h4><p>' + trText(r.answer_text) + '</p>'
+                    + (fb.missing ? '<h4>Marker: missing</h4><p>' + trText(fb.missing) + '</p>' : '')
+                    + (fb.incorrect ? '<h4>Marker: incorrect</h4><p>' + trText(fb.incorrect) + '</p>' : '')
+                    + '<details><summary>Question and mark scheme</summary><h4>Question</h4><p>' + trText(p.part_text || '') + '</p><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(p.mark_scheme || ''))) + '</div></details>'
+                    + '<label><input type="checkbox" ' + (r.resolved ? 'checked' : '') + ' onchange="trainingFlagResolve(' + r.id + ', this.checked, this)"> Resolved</label>'
+                    + '</div>';
+            });
+            box.innerHTML = html;
+            box.style.display = 'block';
+            trTypeset(box);
+        }
+        async function trainingFlagResolve(id, resolved, cb) {
+            const { error } = await supabaseClient.from('training_flags').update({ resolved: resolved, resolved_at: resolved ? new Date().toISOString() : null }).eq('id', id);
+            if (error) { cb.checked = !resolved; alert('Could not update the flag.'); return; }
+            const card = cb.closest('.tr-flag-card'); if (card) card.classList.toggle('resolved', resolved);
+            const open = document.querySelectorAll('#trainingFlags .tr-flag-card:not(.resolved)').length;
+            const title = document.querySelector('#trainingFlags .tr-flags-title'); if (title) title.textContent = 'Marking flags (' + open + ' open)';
+        }
+
         function trainingOpen() {
             const teaser = document.getElementById('trainingTeaser');
             const home = document.getElementById('trainingHome');
@@ -8631,6 +8734,7 @@ Option D" required></textarea>
             teaser.style.display = 'none';
             home.style.display = 'block';
             trainingRenderChecklist();
+            trainingLoadFlags();
         }
 
         function trainingRenderChecklist() {
@@ -8963,6 +9067,7 @@ Option D" required></textarea>
                 if (rec.fails >= TRAINING_MAX_FAILS) rec.teacher = true;
             }
             trState.mode = body.pass ? 'tys' : 'prelim';
+            trState.last = { attemptId: body.attempt_id || null, part: trState.part, conceptId: trState.conceptId, answer: answer, body: body, flagged: false };
             trSaveProgress(progress);
             trainingRenderSessionHead();
             trainingRenderFeedback(body, rec);
@@ -8995,7 +9100,14 @@ Option D" required></textarea>
                 html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">Try a similar prelim question</button>'
                     + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
             }
-            html += '</div></div>';
+            html += '</div>';
+            html += '<div class="tr-flag"><button type="button" class="tr-flag-link" id="trainingFlagLink" onclick="trainingFlagOpen()">Marking seems wrong?</button>'
+                + '<div class="tr-flag-box" id="trainingFlagBox" style="display:none;"><label class="tr-label" for="trainingFlagReason">What did the marker get wrong?</label>'
+                + '<textarea id="trainingFlagReason" rows="2" maxlength="500" placeholder="For example: I did state the lone pair on nitrogen, in my second sentence."></textarea>'
+                + '<div class="tr-actions"><button type="button" class="btn btn-primary" id="trainingFlagSendBtn" onclick="trainingFlagSend()">Send to Mr Khemistry</button>'
+                + '<button type="button" class="btn btn-secondary" onclick="trainingFlagCancel()">Cancel</button></div></div>'
+                + '<div class="tr-muted" id="trainingFlagDone" style="display:none;"></div></div>';
+            html += '</div>';
             const box = document.getElementById('trainingFeedback');
             box.innerHTML = html;
             box.style.display = 'block';

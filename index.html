@@ -2337,6 +2337,141 @@ Option D" required></textarea>
   </div>
 </div>
 
+<!-- TRAIN BY CONCEPT (premium): one explanation question at a time, marked against the mark scheme -->
+<style>
+  #trainingSection { margin-bottom: 2rem; }
+  #trainingSection .tr-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -0.5rem 0 0.9rem; }
+  #trainingSection .tr-chip-label { font-family: 'DM Mono', Consolas, monospace; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(240,244,248,0.75); margin-right: 4px; }
+  #trainingSection .tr-chip { cursor: pointer; background: transparent; color: var(--light); border: 1px solid rgba(240,244,248,0.35); border-radius: 999px; padding: 5px 13px; font-family: inherit; font-size: 0.82rem; font-weight: 500; }
+  #trainingSection .tr-chip[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); background: rgba(0,229,255,0.12); }
+  #trainingSection .tr-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  #trainingSection .tr-summary { font-family: 'DM Mono', Consolas, monospace; font-size: 0.85rem; color: var(--primary); margin: 0 0 1rem; }
+  #trainingSection .tr-topic { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); margin: 1.4rem 0 0.4rem; }
+  #trainingSection .tr-row { display: grid; grid-template-columns: 26px 1fr auto; gap: 0 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--cyan-border); }
+  #trainingSection .tr-row:last-child { border-bottom: 1px solid var(--cyan-border); }
+  #trainingSection .tr-tick { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(240,244,248,0.35); position: relative; }
+  #trainingSection .tr-progress .tr-tick { border-color: var(--primary); }
+  #trainingSection .tr-done .tr-tick { border-color: var(--primary); background: var(--primary); }
+  #trainingSection .tr-done .tr-tick::after { content: ''; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid #0a0a0a; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  #trainingSection .tr-teacher .tr-tick { border-color: var(--danger); }
+  #trainingSection .tr-name { color: var(--light); font-weight: 500; line-height: 1.3; }
+  #trainingSection .tr-done .tr-name { color: rgba(240,244,248,0.75); }
+  #trainingSection .tr-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: 'DM Mono', Consolas, monospace; font-size: 0.75rem; color: rgba(240,244,248,0.75); margin-top: 2px; }
+  #trainingSection .tr-teacher .tr-meta span:first-child { color: var(--danger); }
+  #trainingSection .tr-done .tr-meta span:first-child { color: var(--primary); }
+  #trainingSection .tr-start { padding: 6px 14px; font-size: 0.85rem; white-space: nowrap; }
+  #trainingSection .tr-session-head { margin: 1rem 0 0.75rem; }
+  #trainingSection .tr-session-name { font-family: 'Archivo Black', sans-serif; font-size: 1.25rem; color: var(--light); }
+  #trainingSection .tr-session-stat { font-family: 'DM Mono', Consolas, monospace; font-size: 0.8rem; color: rgba(240,244,248,0.75); margin-top: 4px; }
+  #trainingSection .tr-qcard { background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+  #trainingSection .tr-ref { font-family: 'DM Mono', Consolas, monospace; font-size: 0.8rem; color: var(--primary); margin-bottom: 8px; }
+  #trainingSection .tr-bg { margin: 0 0 12px; border-bottom: 1px solid var(--cyan-border); padding-bottom: 10px; }
+  #trainingSection .tr-bg summary { cursor: pointer; list-style: none; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); padding: 2px 0 6px; }
+  #trainingSection .tr-bg summary::-webkit-details-marker { display: none; }
+  #trainingSection .tr-bg summary::before { content: '+'; display: inline-block; width: 14px; }
+  #trainingSection .tr-bg[open] summary::before { content: '\2013'; }
+  #trainingSection .tr-bg .tr-stem { color: var(--light); line-height: 1.6; font-size: 0.97rem; white-space: pre-wrap; }
+  #trainingSection .tr-earlier { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--cyan-border); color: var(--light); line-height: 1.6; font-size: 0.95rem; white-space: pre-wrap; }
+  #trainingSection .tr-earlier-label { display: block; font-family: 'DM Mono', Consolas, monospace; font-size: 0.75rem; color: var(--primary); margin-bottom: 2px; }
+  #trainingSection .tr-bg figure { margin: 10px 0 0; }
+  #trainingSection .tr-bg img { max-width: 100%; height: auto; display: block; background: #fff; border-radius: 6px; }
+  #trainingSection .tr-bg figcaption { font-family: 'DM Mono', Consolas, monospace; font-size: 0.75rem; color: rgba(240,244,248,0.75); margin-top: 4px; }
+  #trainingSection .tr-qtext { color: var(--light); line-height: 1.6; font-size: 1rem; }
+  #trainingSection .tr-label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); margin-bottom: 6px; }
+  #trainingSection textarea { width: 100%; padding: 12px; background: var(--surface); border: 2px solid var(--cyan-border); border-radius: 8px; color: var(--light); font-family: inherit; font-size: 1rem; line-height: 1.5; resize: vertical; }
+  #trainingSection textarea:focus { outline: none; border-color: var(--primary); }
+  #trainingSection .tr-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  #trainingSection .tr-muted { color: rgba(240,244,248,0.75); font-size: 0.9rem; margin-top: 10px; }
+  #trainingSection .tr-fb { margin-top: 16px; background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 12px; padding: 14px 16px; }
+  #trainingSection .tr-verdict { display: inline-flex; align-items: center; gap: 10px; border: 1px solid; border-radius: 30px; padding: 6px 16px; font-weight: 500; margin-bottom: 12px; }
+  #trainingSection .tr-verdict.pass { color: var(--success); border-color: var(--success); }
+  #trainingSection .tr-verdict.fail { color: var(--danger); border-color: var(--danger); }
+  #trainingSection .tr-verdict .tr-score { font-family: 'DM Mono', Consolas, monospace; }
+  #trainingSection .tr-fb-block { margin-top: 12px; }
+  #trainingSection .tr-fb-block h4 { margin: 0 0 4px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); font-weight: 500; }
+  #trainingSection .tr-fb-block p, #trainingSection .tr-fb-block div.tr-ms { margin: 0; line-height: 1.6; color: var(--light); white-space: pre-wrap; }
+  #trainingSection .tr-ms { border-left: 3px solid var(--primary); padding-left: 12px; }
+  #trainingSection .tr-note { color: var(--danger); font-size: 0.9rem; margin-top: 8px; }
+  #trainingSection .tr-divider { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1.5rem; color: rgba(240,244,248,0.75); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  #trainingSection .tr-divider::before, #trainingSection .tr-divider::after { content: ''; flex: 1; border-top: 1px solid var(--cyan-border); }
+  #trainingSection .tr-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
+  #trainingSection .tr-pick-title { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); }
+  #trainingSection .tr-q { display: block; width: 100%; text-align: left; cursor: pointer; background: var(--surface); color: var(--light); border: 1px solid var(--cyan-border); border-left: 3px solid var(--cyan-border); border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-family: inherit; }
+  #trainingSection .tr-q:hover, #trainingSection .tr-q:focus-visible { border-color: var(--primary); outline: none; }
+  #trainingSection .tr-q-passed { border-left-color: var(--success); }
+  #trainingSection .tr-q-missed { border-left-color: var(--danger); }
+  #trainingSection .tr-q-seen { border-left-color: var(--primary); }
+  #trainingSection .tr-q-ref { display: block; font-family: 'DM Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); margin-bottom: 4px; }
+  #trainingSection .tr-q-ref em { font-style: normal; color: rgba(240,244,248,0.75); margin-left: 8px; }
+  #trainingSection .tr-q-passed .tr-q-ref em { color: var(--success); }
+  #trainingSection .tr-q-missed .tr-q-ref em { color: var(--danger); }
+  #trainingSection .tr-q-snip { display: block; font-size: 0.93rem; line-height: 1.45; color: var(--light); }
+  #trainingSection .tr-prelim { margin-top: 1rem; }
+  #trainingSection .tr-prelim summary { cursor: pointer; list-style: none; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--primary); padding: 6px 0; }
+  #trainingSection .tr-prelim summary::-webkit-details-marker { display: none; }
+  #trainingSection .tr-prelim summary::before { content: '+'; display: inline-block; width: 14px; }
+  #trainingSection .tr-prelim[open] summary::before { content: '\2013'; }
+  @media (max-width: 600px) {
+    #trainingSection .tr-row { grid-template-columns: 22px 1fr; }
+    #trainingSection .tr-start { grid-column: 2; justify-self: start; margin-top: 8px; }
+  }
+</style>
+
+<div id="trainingSection">
+  <div id="trainingTeaser" style="display:none;">
+    <div class="p2p3-teaser">
+      <span class="p2p3-pill">Premium feature</span>
+      <h3>Train by concept</h3>
+      <p>Premium students work through the explanation questions the A-level keeps coming back to, one concept at a time, with instant marking against the mark scheme and a fresh question on every retry.</p>
+      <a class="btn btn-primary" href="https://www.mrkhemistry.com" target="_blank" rel="noopener" style="margin-top:0.5rem;">Book a free trial class</a>
+      <p style="font-size:0.85rem;opacity:0.6;margin-top:0.9rem;">Already enrolled? Ask Mr Khemistry to upgrade your account to Premium.</p>
+    </div>
+  </div>
+
+  <div id="trainingHome" style="display:none;">
+    <div class="page-title">Train by concept</div>
+    <p class="page-sub">Each concept starts with its real TYS questions, marked against the mark scheme. Miss one and you get a similar prelim question to try again. Pass two different questions to tick the concept off.</p>
+    <div class="tr-chips" id="trainingTysChips" role="toolbar" aria-label="Times tested in the TYS">
+      <span class="tr-chip-label">Tested in TYS 2017 to 2025</span>
+      <button type="button" class="tr-chip" data-tys="all" aria-pressed="true" onclick="trainingSetTysFilter('all')">All</button>
+      <button type="button" class="tr-chip" data-tys="5" aria-pressed="false" onclick="trainingSetTysFilter('5')">5+ qns</button>
+      <button type="button" class="tr-chip" data-tys="4" aria-pressed="false" onclick="trainingSetTysFilter('4')">4 qns</button>
+      <button type="button" class="tr-chip" data-tys="3" aria-pressed="false" onclick="trainingSetTysFilter('3')">3 qns</button>
+      <button type="button" class="tr-chip" data-tys="2" aria-pressed="false" onclick="trainingSetTysFilter('2')">2 qns</button>
+    </div>
+    <div class="tr-summary" id="trainingSummary"></div>
+    <div id="trainingChecklist"></div>
+  </div>
+
+  <div id="trainingSession" style="display:none;">
+    <button class="back-btn" id="trainingBackBtn" onclick="trainingBack()">&larr; Back to concepts</button>
+    <div class="tr-session-head">
+      <div class="tr-session-name" id="trainingConceptName"></div>
+      <div class="tr-session-stat" id="trainingSessionStat"></div>
+    </div>
+    <div id="trainingPicker"></div>
+    <div id="trainingAttempt" style="display:none;">
+    <div class="tr-qcard">
+      <details class="tr-bg" id="trainingBackground" style="display:none;"><summary id="trainingBackgroundLabel">Question background</summary><div id="trainingBackgroundBody"></div></details>
+      <div class="tr-ref" id="trainingRef"></div>
+      <div class="tr-qtext" id="trainingQuestionText"></div>
+    </div>
+    <div id="trainingAnswerWrap">
+      <label class="tr-label" for="trainingAnswer">Your answer</label>
+      <textarea id="trainingAnswer" rows="6" placeholder="Type your explanation as you would write it in the exam."></textarea>
+      <div class="tr-actions">
+        <button class="btn btn-primary" id="trainingCheckBtn" onclick="trainingCheck()">Check my answer</button>
+        <button class="btn btn-secondary" onclick="trainingSkip()">Different question</button>
+      </div>
+      <div id="trainingSpinner" class="tr-muted" style="display:none;">Marking your answer&hellip;</div>
+    </div>
+    <div id="trainingFeedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="tr-divider" id="trainingDivider"><span>Or check any answer</span></div>
+</div>
+
 <!-- BROWSE -->
       <div id="sPanel-browse">
 
@@ -6497,6 +6632,7 @@ Option D" required></textarea>
             } else if (tab === 'check') {
                 checkPanel.style.display = 'block';
                 tabCheck.classList.add('active');
+                trainingOpen();
                 if (!cc_loaded) {
                     cc_fetchQuestions().then(() => {
                         cc_loaded = true;
@@ -8429,6 +8565,443 @@ Option D" required></textarea>
             const bar = document.getElementById('quizTimerBar');
             if (display) display.classList.remove('timer-warning');
             if (bar) bar.style.display = 'none';
+        }
+
+        // ═══ TRAIN BY CONCEPT (premium; sits above Check My Answer) ═══
+        // Concepts = the TYS-repeat shortlist Eric reviewed on 10 Sep 2026: stand-alone explanation parts
+        // (self_contained, not novel context) on concepts tested in two or more TYS questions, minus synthesis
+        // and the concepts he dropped. Questions are served live from the Paper 2 & 3 store; marking goes
+        // through the training-ai Edge Function (mark scheme stays server-side). Progress is kept in this
+        // browser for the preview; a training_progress table replaces that before launch.
+        const TRAINING_CONCEPTS = [{"id": 1, "name": "Ionic vs atomic radius and effective nuclear charge", "topic": "Atomic structure", "tys_q": 4, "tys": [46, 107, 193, 431, 432], "prelim": [1132, 1319, 1684, 1816, 2191, 2985, 3669, 3967, 4211, 4560, 4950, 4954, 5728, 6354, 6924, 7007, 7009, 8850, 8853, 9625, 9781]}, {"id": 3, "name": "Successive ionisation energies as evidence for shells", "topic": "Atomic structure", "tys_q": 3, "tys": [433, 657, 774], "prelim": [1025, 1531, 1909, 1910, 2427, 2619, 2840, 2841, 3254, 3450, 3451, 3665, 4463, 4563, 4861, 5345, 5456, 6432, 7482, 8172, 8275, 8680, 8696, 9038, 9080, 9453]}, {"id": 4, "name": "Ionisation energies and periodic/group trends", "topic": "Atomic structure", "tys_q": 2, "tys": [190, 654], "prelim": [914, 1024, 1243, 1324, 1668, 1864, 2005, 2006, 2142, 2725, 3046, 3351, 4224, 4314, 4860, 5144, 5539, 6205, 6275, 6614, 6647, 6856, 8339, 8562, 8619, 8871, 9506]}, {"id": 10, "name": "Intermolecular forces (id-id, pd-pd, hydrogen bonding)", "topic": "Chemical bonding", "tys_q": 8, "tys": [5, 74, 238, 239, 519, 597, 758, 759, 816, 825], "prelim": [1101, 1291, 1350, 1352, 1785, 1796, 2071, 2130, 2215, 2284, 2514, 2590, 2677, 2678, 2940, 3076, 3347, 3356, 3616, 3787, 3862, 3960, 4288, 4310, 4417, 4973, 4986, 4987, 5094, 5169, 5393, 5394, 5441, 5443, 5605, 5668, 5817, 5938, 6035, 6107, 6126, 6249, 6331, 6472, 6762, 7540, 8552, 8665, 8692, 8840, 8876, 8918, 9193, 9195, 9354, 9457, 9608, 9741, 9742, 9788, 9792, 9842, 9854, 9882]}, {"id": 8, "name": "Structure vs physical properties (giant vs simple)", "topic": "Chemical bonding", "tys_q": 7, "tys": [52, 119, 311, 319, 475, 777, 815], "prelim": [1170, 1171, 1180, 1372, 2041, 2173, 2524, 2867, 3500, 3501, 3603, 3688, 3952, 3968, 4199, 4509, 4699, 4800, 5208, 5797, 5842, 6280, 6282, 6603, 6731, 6813, 7083, 8321, 8647, 8874, 9124, 9239, 9534, 9571, 9774, 9878]}, {"id": 14, "name": "VSEPR: shapes and bond angles", "topic": "Chemical bonding", "tys_q": 6, "tys": [2, 157, 333, 572, 573, 649, 682, 683], "prelim": [1130, 1241, 1430, 1520, 1799, 1806, 2207, 2941, 3262, 3355, 4058, 4452, 4508, 4996, 5378, 6344, 6347, 6958, 7048, 8002, 8214, 8519, 8695, 9194, 9237, 9456, 9728, 9869, 9889]}, {"id": 13, "name": "Sigma and pi bonds; orbital overlap and hybridisation", "topic": "Chemical bonding", "tys_q": 4, "tys": [191, 398, 496, 701], "prelim": [920, 1178, 1179, 1229, 1389, 2074, 2121, 2236, 2803, 2930, 2982, 3104, 3260, 3354, 3702, 4212, 4546, 6306, 6346, 6630, 6814, 7406, 8218, 8572, 9684, 9860]}, {"id": 12, "name": "Electronegativity and bond polarity", "topic": "Chemical bonding", "tys_q": 3, "tys": [4, 436, 723], "prelim": [915, 916, 1518, 1793, 1845, 2578, 2579, 4685, 5048, 5050, 5379, 6888, 9279, 9902]}, {"id": 17, "name": "Ionic bonding and lattice structure", "topic": "Chemical bonding", "tys_q": 2, "tys": [194, 817], "prelim": [2008, 2721, 2935, 3736, 5257, 6176, 6420, 6523, 7687, 8053, 8070, 9540, 9626]}, {"id": 25, "name": "Ideal vs real gas behaviour and deviations", "topic": "Gases", "tys_q": 3, "tys": [338, 560, 596], "prelim": [1201, 1658, 1659, 1762, 1938, 1945, 2045, 2556, 2676, 2750, 2875, 3081, 3231, 3938, 4019, 4268, 4511, 4923, 5918, 6374, 6667, 7383, 8517, 8664, 9511, 9681, 9715]}, {"id": 29, "name": "Enthalpy of solution and hydration", "topic": "Thermochemistry", "tys_q": 3, "tys": [100, 197, 590], "prelim": [1071, 1952, 2683, 3627, 4665, 4901, 6233, 9646]}, {"id": 31, "name": "Bond energies and enthalpy change", "topic": "Thermochemistry", "tys_q": 2, "tys": [153, 749], "prelim": [5312, 6405, 9575, 9901]}, {"id": 30, "name": "Born-Haber cycles and lattice energy", "topic": "Thermochemistry", "tys_q": 2, "tys": [142, 195], "prelim": [1690, 1863, 1951, 2193, 2784, 4575, 4659, 4660, 4661, 4919, 4962, 5256, 6639, 7783, 9324]}, {"id": 38, "name": "Entropy and the sign of an entropy change", "topic": "Thermodynamics", "tys_q": 6, "tys": [35, 198, 322, 384, 489, 490, 587, 588, 589], "prelim": [972, 1133, 1233, 1368, 1645, 2090, 2106, 2224, 2482, 2779, 3075, 3609, 3790, 3923, 4151, 4167, 4169, 4726, 4795, 4909, 5128, 5765, 6105, 6250, 6512, 6581, 6671, 6732, 6817, 6934, 7183, 8626, 8720, 8771, 9538, 9578, 9618]}, {"id": 53, "name": "Catalysis (homogeneous and heterogeneous)", "topic": "Kinetics", "tys_q": 5, "tys": [156, 406, 485, 637, 638, 797], "prelim": [958, 1102, 1147, 1417, 1538, 1539, 1585, 1808, 1890, 1968, 2046, 2104, 2156, 2186, 2249, 2660, 3747, 3879, 4522, 5088, 5329, 5373, 5374, 5479, 5661, 5662, 6376, 6627, 6742, 6927, 7385, 7581, 8010, 8589, 9318, 9828]}, {"id": 54, "name": "Activation energy, temperature and the Boltzmann distribution", "topic": "Kinetics", "tys_q": 3, "tys": [401, 687, 708], "prelim": [974, 1339, 1483, 1670, 1942, 2534, 3361, 3934, 4009, 5087, 5309, 5418, 5519, 5584, 7024, 7346, 7478, 8460, 8704, 8705, 9429, 9515, 9627, 9703, 9802]}, {"id": 57, "name": "Determining order (initial rates, graphs, half-life)", "topic": "Kinetics", "tys_q": 3, "tys": [58, 155, 537], "prelim": [1290, 1578, 1855, 2494, 2738, 3771, 6313, 6454, 6456, 9358, 9432]}, {"id": 41, "name": "Le Chatelier: concentration, pressure, temperature", "topic": "Chemical equilibrium", "tys_q": 4, "tys": [11, 12, 81, 493, 680, 681], "prelim": [979, 982, 1081, 1302, 1363, 1472, 1521, 1720, 1751, 1888, 1896, 1974, 2036, 2066, 2582, 2671, 2742, 2850, 2851, 3419, 3443, 3511, 3512, 3754, 3811, 4022, 4056, 4364, 4678, 4791, 4896, 4953, 5104, 5422, 5532, 5533, 5594, 6255, 6285, 6340, 6366, 6445, 6479, 6917, 8288, 9035, 9267, 9398, 9465, 9466, 9563, 9633, 9661, 9711, 9798, 9800, 9801, 9834, 9843]}, {"id": 44, "name": "Dynamic equilibrium (meaning)", "topic": "Chemical equilibrium", "tys_q": 3, "tys": [9, 170, 269], "prelim": [1357, 1717, 2848, 3438, 3808, 3881, 4676, 5354, 6108, 6617, 6882, 7279, 8149]}, {"id": 48, "name": "Buffer action and calculations", "topic": "Acid base equilibrium", "tys_q": 6, "tys": [166, 204, 250, 521, 576, 624], "prelim": [1012, 1327, 1636, 1894, 2077, 2792, 2946, 3217, 3369, 3950, 4338, 5071, 5265, 5266, 5408, 5729, 6713, 8096, 8785, 8933, 9004, 9087, 9771]}, {"id": 51, "name": "Bronsted-Lowry and Lewis acids and bases", "topic": "Acid base equilibrium", "tys_q": 5, "tys": [305, 578, 659, 678, 844], "prelim": [1076, 1089, 1186, 1630, 1819, 2275, 3397, 3871, 4124, 4284, 4449, 4840, 4844, 4864, 5007, 5173, 5486, 5489, 5491, 6294, 6332, 7166, 7612, 7887, 8021, 8555, 8917, 9581, 9666]}, {"id": 45, "name": "Solubility product Ksp and the common-ion effect", "topic": "Acid base equilibrium", "tys_q": 5, "tys": [87, 179, 209, 620, 824], "prelim": [1005, 1411, 1647, 1746, 1860, 2040, 2137, 2454, 2538, 2855, 2989, 3328, 3367, 3593, 3942, 3986, 4262, 4437, 4475, 5040, 5308, 5675, 5837, 8828, 8831, 8838, 9019, 9206, 9212, 9416]}, {"id": 47, "name": "Salt hydrolysis", "topic": "Acid base equilibrium", "tys_q": 2, "tys": [247, 522], "prelim": [1118, 1255, 2890, 3336, 3345, 3553, 4525, 5322, 5629, 6431, 8348, 9447, 9688]}, {"id": 46, "name": "Titration curves and indicators", "topic": "Acid base equilibrium", "tys_q": 2, "tys": [249, 726], "prelim": [5264, 6459, 6558, 7444, 9699, 9700]}, {"id": 71, "name": "Effect of concentration / pH on electrode potential", "topic": "Electrochemical cell", "tys_q": 4, "tys": [38, 449, 486, 796], "prelim": [1104, 1152, 1609, 2470, 2704, 3745, 5006, 5391, 6831, 9640, 9810, 9877]}, {"id": 72, "name": "Feasibility of reaction from E values", "topic": "Electrochemical cell", "tys_q": 2, "tys": [567, 731], "prelim": [1096, 1271, 2146, 2263, 2879, 2881, 3420, 3424, 3449, 3550, 3928, 4047, 4132, 4300, 4420, 5148, 5325, 5337, 5653, 5720, 6237, 6384, 6585, 6996, 7064, 8793, 9094, 9405, 9768]}, {"id": 76, "name": "Chlorides across Period 3 (hydrolysis and structure)", "topic": "Periodic table", "tys_q": 4, "tys": [175, 314, 315, 364, 658], "prelim": [1069, 1311, 1735, 1797, 1798, 1865, 1953, 2050, 2143, 2505, 2527, 2732, 2934, 3098, 3241, 3460, 3604, 3716, 3917, 4012, 4479, 4530, 4727, 5051, 5231, 5232, 5348, 5633, 5646, 6182, 6434, 6616, 6798, 7771, 8068, 8229, 8564, 9030, 9663, 9764, 9765, 9840]}, {"id": 77, "name": "Oxides across Period 3 (acid-base and bonding)", "topic": "Periodic table", "tys_q": 3, "tys": [510, 530, 853], "prelim": [1119, 1300, 1412, 1525, 1685, 1992, 2157, 2506, 2903, 2942, 3396, 3818, 3819, 3880, 4222, 4292, 4293, 4717, 5036, 5497, 5750, 6519, 6954, 7366, 7435, 7953, 7969, 7970, 8230, 8563, 8729, 8999, 9082, 9772, 9893]}, {"id": 82, "name": "Thermal stability of carbonates and nitrates", "topic": "Group 2", "tys_q": 4, "tys": [285, 418, 584, 744], "prelim": [1061, 1062, 1198, 1365, 1618, 1705, 2079, 2233, 2235, 2713, 2729, 2905, 2906, 3264, 3393, 3642, 4016, 4256, 4716, 4869, 5055, 5236, 5438, 5859, 6277, 6386, 6507, 6652, 7839, 8052, 8164, 8782, 9321, 9445, 9629, 9630, 9631]}, {"id": 85, "name": "Relative strengths of the hydrogen halides", "topic": "Group 17", "tys_q": 4, "tys": [201, 410, 762, 814], "prelim": [1003, 1029, 1199, 1310, 1401, 1588, 1784, 1847, 1954, 2268, 2423, 2735, 3038, 3138, 3143, 3329, 3378, 3848, 3966, 4418, 4477, 4931, 5025, 5288, 5516, 5643, 6653, 6763, 6921, 7094, 7303, 8228, 8290, 8540, 8743, 9248, 9469, 9693, 9694, 9903]}, {"id": 88, "name": "Displacement reactions of halogens", "topic": "Group 17", "tys_q": 3, "tys": [313, 340, 629], "prelim": [1002, 1030, 1786, 2701, 3016, 4273, 7713, 7820, 8539, 9468, 9649]}, {"id": 90, "name": "Trends in volatility and colour", "topic": "Group 17", "tys_q": 2, "tys": [339, 628], "prelim": [1001, 3459, 4749, 4930, 6920, 7149, 7561, 9558, 9648]}, {"id": 92, "name": "Colour and d-d transitions (d-orbital splitting)", "topic": "Transition elements", "tys_q": 10, "tys": [136, 323, 324, 375, 376, 381, 390, 455, 553, 602, 693, 695, 799, 838], "prelim": [986, 1098, 1135, 1267, 1278, 1380, 1452, 1565, 1569, 1768, 1853, 2082, 2145, 2243, 2280, 2477, 2602, 2604, 2700, 2718, 2798, 2844, 2846, 2997, 3413, 3596, 3597, 3748, 3797, 3922, 3985, 4108, 4239, 4299, 4523, 4528, 4645, 4713, 4815, 4898, 5015, 5016, 5193, 5195, 5326, 5366, 5452, 5587, 5764, 5895, 5958, 6302, 6305, 6430, 9045]}, {"id": 95, "name": "Electronic configuration and ions of transition metals", "topic": "Transition elements", "tys_q": 3, "tys": [134, 552, 690], "prelim": [1097, 1276, 1766, 1877, 2242, 2797, 4113, 4519, 8240]}, {"id": 93, "name": "Ligand exchange reactions", "topic": "Transition elements", "tys_q": 2, "tys": [554, 694], "prelim": [1268, 1453, 1568, 1770, 2147, 2174, 2178, 2184, 2448, 2449, 2686, 2715, 2790, 3000, 3662, 5158, 5330, 5332, 5453, 5810, 6566]}, {"id": 96, "name": "Transition elements: definition and general properties", "topic": "Transition elements", "tys_q": 2, "tys": [51, 837], "prelim": [1687, 3796, 4960, 5134, 5331, 6429, 6780]}, {"id": 98, "name": "Enantiomerism, chirality and optical activity", "topic": "Introduction to Organic", "tys_q": 4, "tys": [71, 109, 261, 607], "prelim": [1742, 2014, 2255, 2544, 2642, 2762, 3102, 3272, 3359, 3403, 3405, 4091, 4412, 4499, 4877, 4974, 5401, 5688, 6689, 7161, 7657, 8126, 8624, 9725, 9739]}, {"id": 105, "name": "Free-radical substitution (mechanism)", "topic": "Alkane", "tys_q": 3, "tys": [273, 542, 543, 850], "prelim": [935, 1999, 2002, 3610, 3914, 3962, 3965, 4481, 4722, 5648, 5954, 7428, 9189, 9496, 9884]}, {"id": 112, "name": "Comparative reactivity of substituted arenes", "topic": "Arene", "tys_q": 3, "tys": [30, 479, 544], "prelim": [1775, 3009, 3286, 3618, 4128, 4552, 5112, 6849]}, {"id": 115, "name": "Electrophilic substitution mechanisms (nitration, halogenation, sulfonation, Friedel-Crafts)", "topic": "Arene", "tys_q": 3, "tys": [242, 478, 696], "prelim": [2162, 2861, 3400, 3493, 3751, 4123, 5299, 5930, 6189, 8122, 8864, 9291]}, {"id": 113, "name": "Substitution vs addition (delocalisation / resonance stability)", "topic": "Arene", "tys_q": 3, "tys": [29, 240, 813], "prelim": [930, 1123, 1955, 2273, 2551, 4178, 4393, 5713, 8764, 9500, 9610, 9859, 9890]}, {"id": 119, "name": "Nucleophilic substitution (SN1 / SN2 mechanisms)", "topic": "Halogenoalkane", "tys_q": 4, "tys": [163, 164, 517, 518, 547, 719, 720], "prelim": [977, 1475, 1482, 2546, 4410, 4458, 4878, 5359, 5619, 6059, 6470, 6541, 6543, 6621, 7035, 7293, 8272, 8514, 8778, 8824, 9244, 9550, 9723, 9724, 9907]}, {"id": 120, "name": "Acidity of phenols vs alcohols; reactions of phenol", "topic": "Hydroxyl Compounds", "tys_q": 2, "tys": [62, 118], "prelim": [1439, 1867, 2210, 2258, 3034, 3149, 3496, 4386, 4512, 5070, 6462, 6463, 7590, 9330, 9585]}, {"id": 129, "name": "Nucleophilic addition (HCN mechanism)", "topic": "Carbonyl Compound", "tys_q": 2, "tys": [95, 97, 788], "prelim": [2444, 2858, 3402, 6400, 7192, 7453, 8754, 8795, 9722]}, {"id": 134, "name": "Acidity and salt formation", "topic": "Carboxylic Acid", "tys_q": 2, "tys": [160, 207], "prelim": [1059, 1075, 1191, 1437, 1499, 1633, 1737, 2023, 2117, 2690, 2830, 3033, 3047, 3048, 3214, 3334, 3489, 3759, 4332, 4333, 4585, 4891, 5030, 5170, 5492, 5493, 5565, 5566, 5752, 5851, 6009, 6206, 6264, 6475, 6546, 6700, 6804, 6868, 6896, 6939, 7069, 7304, 8000, 8091, 8515, 8611, 8735, 8736, 9113, 9200, 9355, 9356, 9368, 9593, 9653, 9705]}, {"id": 139, "name": "Basicity of amines (aliphatic vs aromatic; substituent effects)", "topic": "Nitrogen Compound", "tys_q": 6, "tys": [114, 146, 306, 308, 520, 532, 632], "prelim": [1085, 1091, 1212, 1406, 1513, 1623, 1780, 1870, 1923, 2144, 2609, 2865, 3234, 3316, 3433, 3632, 3729, 3812, 3935, 4099, 4200, 4219, 4336, 4446, 5008, 5272, 5350, 5512, 5904, 6085, 6152, 6333, 6334, 6711, 6847, 7553, 7740, 8174, 8315, 8601, 8776, 8913, 9590, 9668, 9669, 9746, 9861, 9870]}];
+        // Parts the answerability scan flagged as leaning on the stem or a figure: their background opens automatically.
+        const TRAINING_NEEDS_CONTEXT = new Set([4, 5, 11, 12, 30, 35, 38, 58, 81, 97, 109, 114, 118, 156, 195, 198, 207, 238, 239, 242, 247, 249, 308, 311, 384, 431, 432, 449, 475, 485, 521, 522, 532, 542, 547, 560, 596, 597, 607, 620, 624, 629, 632, 637, 657, 681, 696, 708, 719, 726, 774, 788, 796, 799, 815, 844, 850, 914, 916, 935, 958, 974, 979, 1024, 1025, 1062, 1081, 1085, 1089, 1091, 1104, 1118, 1130, 1170, 1171, 1201, 1212, 1229, 1255, 1290, 1291, 1302, 1319, 1324, 1350, 1352, 1363, 1389, 1406, 1417, 1453, 1472, 1521, 1531, 1568, 1569, 1578, 1585, 1609, 1623, 1647, 1668, 1737, 1746, 1751, 1762, 1816, 1845, 1853, 1860, 1870, 1894, 1896, 1909, 1910, 1923, 1938, 1942, 1945, 1968, 1974, 1999, 2002, 2023, 2036, 2050, 2066, 2071, 2074, 2077, 2090, 2106, 2117, 2130, 2162, 2174, 2184, 2233, 2235, 2236, 2255, 2258, 2275, 2280, 2284, 2449, 2534, 2546, 2551, 2556, 2582, 2642, 2660, 2671, 2715, 2718, 2738, 2762, 2779, 2830, 2840, 2841, 2858, 2875, 2935, 3009, 3033, 3138, 3214, 3260, 3272, 3334, 3345, 3359, 3367, 3450, 3451, 3496, 3511, 3512, 3604, 3610, 3616, 3632, 3662, 3665, 3669, 3688, 3729, 3745, 3754, 3771, 3787, 3790, 3797, 3879, 3938, 3962, 3965, 3966, 3968, 3986, 4058, 4091, 4128, 4132, 4199, 4219, 4256, 4299, 4310, 4336, 4338, 4386, 4410, 4412, 4458, 4463, 4525, 4560, 4590, 4665, 4678, 4722, 4795, 4878, 4891, 4896, 4901, 4909, 4950, 4954, 4973, 4986, 5008, 5030, 5055, 5112, 5144, 5169, 5195, 5264, 5266, 5299, 5322, 5332, 5345, 5350, 5354, 5366, 5374, 5378, 5379, 5393, 5401, 5441, 5443, 5453, 5456, 5479, 5492, 5493, 5512, 5532, 5533, 5565, 5566, 5587, 5594, 5619, 5629, 5648, 5662, 5668, 5688, 5752, 5765, 5817, 5837, 5851, 5918, 5930, 6009, 6059, 6085, 6107, 6189, 6206, 6237, 6249, 6255, 6264, 6285, 6294, 6302, 6305, 6313, 6333, 6334, 6340, 6346, 6347, 6366, 6384, 6445, 6454, 6456, 6462, 6470, 6472, 6475, 6512, 6523, 6558, 6667, 6711, 6732, 6804, 6813, 6831, 6849, 6868, 6934, 6939, 6958, 7035, 7083, 7161, 7444, 7482, 7581, 7612, 7657, 7783, 8096, 8126, 8164, 8218, 8460, 8514, 8555, 8601, 8619, 8626, 8647, 8704, 8771, 8778, 8795, 8838, 8871, 8913, 9038, 9080, 9193, 9194, 9195, 9200, 9206, 9239, 9330, 9432, 9453, 9465, 9466, 9496, 9540, 9558, 9563, 9581, 9585, 9618, 9640, 9653, 9661, 9668, 9669, 9684, 9694, 9700, 9705, 9711, 9715, 9722, 9723, 9725, 9739, 9741, 9746, 9798, 9800, 9801, 9802, 9810, 9828, 9843, 9854, 9860, 9869, 9870, 9877, 9889, 9907]);
+        const TRAINING_VERBS = /\b(explain|suggest|why|account|describe|discuss|compare|predict|justify|comment|reason)\b/i;
+        const TRAINING_PASSES_NEEDED = 2;
+        const TRAINING_MAX_FAILS = 3;
+        const TRAINING_FN_URL = SUPABASE_URL + '/functions/v1/training-ai';
+        let trState = { conceptId: null, part: null, busy: false, mode: 'tys', kind: 'tys' };
+        let trPartsCache = {};   // concept id -> parts loaded for the question picker
+        let trTysFilter = (function () { try { return sessionStorage.getItem('chembank_training_tys') || 'all'; } catch (e) { return 'all'; } })();
+
+        function trIsPremium() { return userRole === 'premium_student' || userRole === 'admin'; }
+        function trStoreKey() { return 'chembank_training_' + ((currentUser && currentUser.id) ? currentUser.id : 'anon'); }
+        function trLoadProgress() { try { return JSON.parse(localStorage.getItem(trStoreKey()) || '{}'); } catch (e) { return {}; } }
+        function trSaveProgress(p) { try { localStorage.setItem(trStoreKey(), JSON.stringify(p)); } catch (e) {} }
+        function trRecord(progress, id) {
+            if (!progress[id]) progress[id] = { passes: [], fails: 0, seen: [], done: false, teacher: false, failed: [] };
+            if (!progress[id].failed) progress[id].failed = [];
+            return progress[id];
+        }
+        function trStatusOf(rec) {
+            if (!rec) return 'new';
+            if (rec.done) return 'done';
+            if (rec.teacher) return 'teacher';
+            if (rec.passes.length || rec.fails) return 'progress';
+            return 'new';
+        }
+        function trConcept() { return TRAINING_CONCEPTS.find(c => c.id === trState.conceptId) || null; }
+        // Same renderer as the Paper 2 & 3 tab: keeps the bank's inline tags, entities and LaTeX, escapes everything else
+        function trText(s) { return sanitizeQuestionText(String(s == null ? '' : s)).replace(/\r?\n/g, '<br>'); }
+        function trTypeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(() => {}); }
+        function trRefLabel(q, part) {
+            const src = q.source === 'TYS' ? 'TYS' : (q.school ? q.school + ' Prelim' : 'Prelim');
+            const m = part.marks || 1;
+            return src + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (part.part_label || '') + ' · ' + m + ' mark' + (m === 1 ? '' : 's');
+        }
+
+        function trTysMatch(c) {
+            if (trTysFilter === 'all') return true;
+            const n = Number(trTysFilter);
+            return n >= 5 ? c.tys_q >= 5 : c.tys_q === n;
+        }
+        function trainingSetTysFilter(v) {
+            trTysFilter = v;
+            try { sessionStorage.setItem('chembank_training_tys', v); } catch (e) {}
+            trainingRenderChecklist();
+        }
+
+        function trainingOpen() {
+            const teaser = document.getElementById('trainingTeaser');
+            const home = document.getElementById('trainingHome');
+            const session = document.getElementById('trainingSession');
+            if (!teaser || !home || !session) return;
+            session.style.display = 'none';
+            if (!trIsPremium()) { teaser.style.display = 'block'; home.style.display = 'none'; return; }
+            teaser.style.display = 'none';
+            home.style.display = 'block';
+            trainingRenderChecklist();
+        }
+
+        function trainingRenderChecklist() {
+            const progress = trLoadProgress();
+            const shown = TRAINING_CONCEPTS.filter(trTysMatch);
+            const total = shown.length;
+            const done = shown.filter(c => progress[c.id] && progress[c.id].done).length;
+            document.getElementById('trainingSummary').textContent = done + ' of ' + total + ' concepts ticked off' + (trTysFilter === 'all' ? '' : ' in this group');
+            document.querySelectorAll('#trainingTysChips .tr-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tys === trTysFilter)));
+            let html = shown.length ? '' : '<p class="tr-muted">No concepts in this group.</p>', lastTopic = null;
+            shown.forEach(c => {
+                if (c.topic !== lastTopic) { html += '<div class="tr-topic">' + escapeHtml(c.topic) + '</div>'; lastTopic = c.topic; }
+                const rec = progress[c.id];
+                const st = trStatusOf(rec);
+                const passed = rec ? rec.passes.length : 0;
+                const label = st === 'done' ? 'Ticked off'
+                    : st === 'teacher' ? 'Ask Mr Khemistry'
+                    : st === 'progress' ? passed + ' of ' + TRAINING_PASSES_NEEDED + ' passed'
+                    : 'Not started';
+                const btn = st === 'done' ? 'Practise again' : (st === 'new' ? 'Start' : 'Continue');
+                html += '<div class="tr-row tr-' + st + '">'
+                    + '<div class="tr-tick" aria-hidden="true"></div>'
+                    + '<div class="tr-info"><div class="tr-name">' + escapeHtml(c.name) + '</div>'
+                    + '<div class="tr-meta"><span>' + label + '</span><span>TYS ' + c.tys_q + ' qns</span></div></div>'
+                    + '<button class="btn btn-secondary tr-start" onclick="trainingStart(' + c.id + ')">' + btn + '</button>'
+                    + '</div>';
+            });
+            document.getElementById('trainingChecklist').innerHTML = html;
+        }
+
+        function trainingRenderSessionHead() {
+            const c = trConcept(); if (!c) return;
+            const rec = trRecord(trLoadProgress(), c.id);
+            document.getElementById('trainingConceptName').textContent = c.name;
+            const bits = ['Passed ' + rec.passes.length + ' of ' + TRAINING_PASSES_NEEDED];
+            if (rec.fails) bits.push('Missed ' + rec.fails);
+            if (rec.done) bits.push('Ticked off');
+            document.getElementById('trainingSessionStat').textContent = bits.join(' · ');
+        }
+
+        function trainingStart(conceptId) {
+            trState.conceptId = conceptId;
+            trState.mode = 'tys';
+            trState.part = null;
+            document.getElementById('trainingHome').style.display = 'none';
+            document.getElementById('trainingSession').style.display = 'block';
+            trainingRenderSessionHead();
+            trainingShowPicker();
+        }
+
+        function trainingBack() {
+            if (document.getElementById('trainingAttempt').style.display !== 'none') trainingShowPicker();
+            else trainingBackToList();
+        }
+
+        async function trLoadConceptParts(c) {
+            if (trPartsCache[c.id]) return trPartsCache[c.id];
+            const ids = (c.tys || []).concat(c.prelim || []);
+            if (!ids.length) return [];
+            const { data, error } = await supabaseClient
+                .from('structured_parts')
+                .select('id, part_text, marks, part_label, question_id, structured_questions!inner(id, year, paper, source, school, question_number, is_visible)')
+                .in('id', ids);
+            if (error || !data) return null;
+            trPartsCache[c.id] = data;
+            return data;
+        }
+
+        // First words of a part, never cutting inside a \( ... \) maths run
+        function trSnippet(text, max) {
+            const s = String(text || '').replace(/\s+/g, ' ').trim();
+            if (s.length <= max) return s;
+            let cut = max;
+            const before = s.slice(0, cut);
+            const opens = (before.match(/\\\(/g) || []).length, closes = (before.match(/\\\)/g) || []).length;
+            if (opens > closes) { const j = s.indexOf('\\)', cut); cut = j === -1 ? s.length : j + 2; }
+            return s.slice(0, cut) + (cut < s.length ? ' …' : '');
+        }
+
+        function trPartStatus(rec, id) {
+            if (rec.passes.includes(id)) return ['passed', 'Passed'];
+            if (rec.failed.includes(id)) return ['missed', 'Missed'];
+            if (rec.seen.includes(id)) return ['seen', 'Started'];
+            return ['new', ''];
+        }
+
+        async function trainingShowPicker() {
+            const c = trConcept(); if (!c) return;
+            trState.part = null;
+            document.getElementById('trainingAttempt').style.display = 'none';
+            document.getElementById('trainingBackBtn').innerHTML = '&larr; Back to concepts';
+            const box = document.getElementById('trainingPicker');
+            box.style.display = 'block';
+            box.innerHTML = '<p class="tr-muted">Loading questions…</p>';
+            const parts = await trLoadConceptParts(c);
+            if (!parts) { box.innerHTML = '<p class="tr-muted">Could not load the questions. Please try again.</p>'; return; }
+            trainingRenderPicker(c, parts);
+        }
+
+        function trainingRenderPicker(c, parts) {
+            const rec = trRecord(trLoadProgress(), c.id);
+            const byId = {}; parts.forEach(p => { byId[p.id] = p; });
+            const sortKey = p => { const q = p.structured_questions; return [-(q.year || 0), String(q.paper || ''), q.question_number || 0, String(p.part_label || '')]; };
+            const order = ids => ids.map(id => byId[id]).filter(Boolean).sort((a, b) => {
+                const ka = sortKey(a), kb = sortKey(b);
+                for (let i = 0; i < ka.length; i++) { if (ka[i] < kb[i]) return -1; if (ka[i] > kb[i]) return 1; }
+                return 0;
+            });
+            const row = (p, kind) => {
+                const st = trPartStatus(rec, p.id);
+                return '<button type="button" class="tr-q tr-q-' + st[0] + '" onclick="trainingAttempt(' + p.id + ', \'' + kind + '\')">'
+                    + '<span class="tr-q-ref">' + escapeHtml(trRefLabel(p.structured_questions, p)) + (st[1] ? '<em>' + st[1] + '</em>' : '') + '</span>'
+                    + '<span class="tr-q-snip">' + trText(trSnippet(p.part_text, 110)) + '</span></button>';
+            };
+            const tys = order(c.tys || []), prelim = order(c.prelim || []);
+            let html = '<div class="tr-pick-head"><span class="tr-pick-title">TYS questions (' + tys.length + ' part' + (tys.length === 1 ? '' : 's') + ')</span>'
+                + '<button type="button" class="btn btn-secondary tr-start" onclick="trainingNextQuestion()">Pick one for me</button></div>';
+            html += tys.length ? tys.map(p => row(p, 'tys')).join('') : '<p class="tr-muted">No TYS questions are available for this concept.</p>';
+            html += '<details class="tr-prelim"><summary>Similar prelim questions (' + prelim.length + ' part' + (prelim.length === 1 ? '' : 's') + ')</summary>'
+                + (prelim.length ? prelim.map(p => row(p, 'prelim')).join('') : '<p class="tr-muted">None yet.</p>') + '</details>';
+            const box = document.getElementById('trainingPicker');
+            box.innerHTML = html;
+            trTypeset(box);
+        }
+
+        function trainingAttempt(id, kind) { trainingServe(id, kind === 'prelim' ? 'prelim' : 'tys'); }
+
+        function trainingBackToList() {
+            trState.part = null;
+            document.getElementById('trainingSession').style.display = 'none';
+            document.getElementById('trainingHome').style.display = 'block';
+            trainingRenderChecklist();
+        }
+
+        function trPick(list) { return list[Math.floor(Math.random() * list.length)]; }
+        function trIsAnswerFigure(f) { return sqIsAnswerFig(f.figure_key); }
+        // Same figure routing as the Paper 2 & 3 view and the worksheet: sqShowFigForPrinted decides from the
+        // figure key (part path such as fig_1_e_..., or a "Fig/Table N.M" citation in the stem or a part),
+        // with the served part as the only printed part. Answer figures are never shown with the question.
+        function trFiguresFor(figs, part, stem, allParts) {
+            const printed = [part], all = (allParts && allParts.length) ? allParts : [part];
+            const routed = (figs || []).filter(f => f.storage_path && !sqIsAnswerFig(f.figure_key) && sqShowFigForPrinted(f, printed, all, stem || ''));
+            // When the part names its figures ("Fig. 4.1", "Table 2.2"), show just those. Letter-level and
+            // question-wide figures only fill in when the part cites nothing by number.
+            const text = part.part_text || '';
+            const cited = routed.filter(f => {
+                const r = sqFigNumRef(f.figure_key);
+                if (r && sqTextCitesFig(text, r)) return true;
+                return !!(f.label && /^(fig|figure|table|diagram|scheme)\b/i.test(f.label) && text.indexOf(f.label) !== -1);
+            });
+            return cited.length ? cited : routed;
+        }
+        // Earlier parts this part leans on: the store's context_parts, plus any "(a)(ii)" / "in (b)" reference in the
+        // wording. Only parts that exist in the question and come before this one count; "(g)" alone is a state symbol.
+        function trReferencedParts(part, allParts) {
+            const labels = new Set();
+            (part.context_parts || []).forEach(l => labels.add(String(l).toLowerCase().replace(/\s+/g, '')));
+            const text = part.part_text || '';
+            const re = /(?:\b(?:in|to|from|of|for|part|parts|and|with|answer|answers)\s*\(([a-h])\)(?:\(([ivx]+)\))?|\(([a-h])\)\(([ivx]+)\))/gi;
+            let m;
+            while ((m = re.exec(text))) {
+                const letter = (m[1] || m[3] || '').toLowerCase(), roman = (m[2] || m[4] || '').toLowerCase();
+                if (!letter || (letter === 'g' && !roman)) continue;
+                labels.add('(' + letter + ')' + (roman ? '(' + roman + ')' : ''));
+            }
+            if (!labels.size) return [];
+            const ordered = (allParts || []).slice().sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+            const me = ordered.findIndex(p => p.id === part.id);
+            const before = me === -1 ? ordered : ordered.slice(0, me);
+            const norm = l => String(l || '').toLowerCase().replace(/\s+/g, '');
+            const out = [];
+            before.forEach(p => {
+                const pl = norm(p.part_label);
+                // "(a)" on its own means the whole lettered group; "(a)(ii)" means that sub-part
+                if ([...labels].some(l => pl === l || (l.length === 3 && pl.indexOf(l) === 0))) out.push(p);
+            });
+            return out;
+        }
+        async function trLoadBackground(part) {
+            const stem = (part.structured_questions && part.structured_questions.stem || '').trim();
+            let figures = [], figError = '', earlier = [];
+            try {
+                const [{ data: figs }, { data: allParts }] = await Promise.all([
+                    supabaseClient.from('structured_figures').select('id, part_id, figure_key, label, storage_path, caption').eq('question_id', part.question_id).order('id'),
+                    supabaseClient.from('structured_parts').select('id, part_label, part_text, order_index, context_parts').eq('question_id', part.question_id)
+                ]);
+                earlier = trReferencedParts(part, allParts);
+                // Figures for this part, then for the earlier parts shown with it (each routed as its own printed part)
+                let wanted = trFiguresFor(figs, part, stem, allParts);
+                earlier.forEach(ep => { trFiguresFor(figs, ep, stem, allParts).forEach(f => { if (wanted.indexOf(f) === -1) wanted.push(f); }); });
+                if (wanted.length) {
+                    const { data: signed } = await supabaseClient.storage.from('structured-figures').createSignedUrls(wanted.map(f => f.storage_path), 28800);
+                    const urlByPath = {};
+                    (signed || []).forEach(s => { if (s && s.signedUrl && !s.error) urlByPath[s.path] = s.signedUrl; });
+                    figures = wanted.map(f => ({ url: urlByPath[f.storage_path] || '', label: f.label || '', caption: f.caption || '' })).filter(f => f.url);
+                    if (!figures.length) figError = 'This question has ' + wanted.length + ' figure' + (wanted.length === 1 ? '' : 's') + ' but they could not be loaded.';
+                }
+            } catch (e) { console.error('training background:', e); figures = []; figError = 'The figures for this question could not be loaded.'; }
+            return { stem, figures, figError, earlier };
+        }
+        function trainingShowQuestion(part, kind, bg) {
+            const qBox = document.getElementById('trainingQuestionText');
+            const ref = document.getElementById('trainingRef');
+            const box = document.getElementById('trainingBackground');
+            const body = document.getElementById('trainingBackgroundBody');
+            const label = document.getElementById('trainingBackgroundLabel');
+            const hasBg = !!((bg && bg.stem) || (bg && bg.figures && bg.figures.length) || (bg && bg.figError) || (bg && bg.earlier && bg.earlier.length));
+            if (hasBg) {
+                let html = bg.stem ? '<div class="tr-stem">' + trText(bg.stem) + '</div>' : '';
+                (bg.earlier || []).forEach(ep => {
+                    html += '<div class="tr-earlier"><span class="tr-earlier-label">Part ' + escapeHtml(ep.part_label || '') + '</span>' + trText(ep.part_text) + '</div>';
+                });
+                if (bg.figError) html += '<div class="tr-note">' + escapeHtml(bg.figError) + '</div>';
+                (bg.figures || []).forEach(f => {
+                    html += '<figure><img src="' + escapeHtml(f.url) + '" alt="' + escapeHtml(f.label || 'Figure') + '" loading="lazy">'
+                        + (f.label || f.caption ? '<figcaption>' + escapeHtml([f.label, f.caption].filter(Boolean).join(' · ')) + '</figcaption>' : '') + '</figure>';
+                });
+                body.innerHTML = html;
+                const needed = TRAINING_NEEDS_CONTEXT.has(part.id) || !!(bg.earlier && bg.earlier.length);
+                box.open = needed;
+                label.textContent = needed ? 'Question background (read this first)' : 'Show question background';
+                box.style.display = 'block';
+                trTypeset(body);
+            } else {
+                box.style.display = 'none';
+                body.innerHTML = '';
+            }
+            ref.textContent = (kind === 'prelim' ? 'Similar question · ' : '') + trRefLabel(part.structured_questions, part);
+            qBox.innerHTML = trText(part.part_text);
+            trTypeset(qBox);
+        }
+        async function trainingNextQuestion() {
+            const c = trConcept(); if (!c) return;
+            const rec = trRecord(trLoadProgress(), c.id);
+            const tys = c.tys || [], prelim = c.prelim || [];
+            const unseenTys = tys.filter(id => !rec.seen.includes(id));
+            const unseenPrelim = prelim.filter(id => !rec.seen.includes(id));
+            // TYS questions come first. After a miss the next question is a similar prelim one;
+            // after a pass we go back to the TYS list. Unseen questions are preferred throughout.
+            let id = null, kind = 'tys';
+            if (trState.mode === 'prelim' && prelim.length) { id = trPick(unseenPrelim.length ? unseenPrelim : prelim); kind = 'prelim'; }
+            else if (unseenTys.length) { id = trPick(unseenTys); }
+            else if (unseenPrelim.length) { id = trPick(unseenPrelim); kind = 'prelim'; }
+            else if (tys.length) { id = trPick(tys); }
+            else if (prelim.length) { id = trPick(prelim); kind = 'prelim'; }
+            if (!id) {
+                document.getElementById('trainingPicker').style.display = 'none';
+                document.getElementById('trainingAttempt').style.display = 'block';
+                document.getElementById('trainingQuestionText').innerHTML = '<span class="tr-muted">No questions are available for this concept yet.</span>';
+                document.getElementById('trainingAnswerWrap').style.display = 'none';
+                return;
+            }
+            await trainingServe(id, kind);
+        }
+
+        async function trainingServe(id, kind) {
+            const c = trConcept(); if (!c) return;
+            const qBox = document.getElementById('trainingQuestionText');
+            const wrap = document.getElementById('trainingAnswerWrap');
+            document.getElementById('trainingPicker').style.display = 'none';
+            document.getElementById('trainingAttempt').style.display = 'block';
+            document.getElementById('trainingBackBtn').innerHTML = '&larr; Choose another question';
+            document.getElementById('trainingFeedback').style.display = 'none';
+            document.getElementById('trainingBackground').style.display = 'none';
+            document.getElementById('trainingAnswer').value = '';
+            wrap.style.display = 'block';
+            document.getElementById('trainingRef').textContent = '';
+            qBox.innerHTML = '<span class="tr-muted">Loading the question…</span>';
+            trState.part = null;
+            const progress = trLoadProgress();
+            const rec = trRecord(progress, c.id);
+            const { data: part, error } = await supabaseClient
+                .from('structured_parts')
+                .select('id, part_text, marks, part_label, question_id, context_parts, structured_questions!inner(id, year, paper, source, school, question_number, is_visible, stem)')
+                .eq('id', id)
+                .maybeSingle();
+            if (error || !part) { qBox.innerHTML = '<span class="tr-muted">Could not load the question. Please try again.</span>'; wrap.style.display = 'none'; return; }
+            const bg = await trLoadBackground(part);
+            trState.part = part;
+            trState.kind = kind;
+            if (!rec.seen.includes(part.id)) rec.seen.push(part.id);
+            trSaveProgress(progress);
+            trainingShowQuestion(part, kind, bg);
+            trainingRenderSessionHead();
+            document.getElementById('trainingAttempt').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function trainingSkip() { if (!trState.busy) trainingNextQuestion(); }
+
+        function trainingShowError(msg) {
+            const fb = document.getElementById('trainingFeedback');
+            fb.innerHTML = '<div class="tr-fb"><div class="tr-note">' + escapeHtml(msg) + '</div></div>';
+            fb.style.display = 'block';
+        }
+
+        async function trainingCheck() {
+            if (trState.busy || !trState.part) return;
+            const answer = document.getElementById('trainingAnswer').value.trim();
+            if (!answer) { alert('Type your answer first.'); return; }
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { alert('Your session has expired. Please log in again.'); return; }
+            trState.busy = true;
+            const btn = document.getElementById('trainingCheckBtn');
+            btn.disabled = true;
+            document.getElementById('trainingSpinner').style.display = 'block';
+            document.getElementById('trainingFeedback').style.display = 'none';
+            let res = null, body = {};
+            try {
+                res = await fetch(TRAINING_FN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_ANON_KEY },
+                    body: JSON.stringify({ part_id: trState.part.id, answer: answer, concept_id: trState.conceptId, kind: trState.kind })
+                });
+                body = await res.json().catch(() => ({}));
+            } catch (e) { res = null; }
+            trState.busy = false;
+            btn.disabled = false;
+            document.getElementById('trainingSpinner').style.display = 'none';
+            if (!res) { trainingShowError('Marking is not reachable right now. In the local preview this means the marking function has not been switched on yet.'); return; }
+            if (res.status === 429) { trainingShowError(body.error || "You have used today's marked answers. Come back tomorrow."); return; }
+            if (!res.ok) { trainingShowError(body.error || 'Marking failed. Please try again.'); return; }
+            const progress = trLoadProgress();
+            const rec = trRecord(progress, trState.conceptId);
+            if (body.pass) {
+                if (!rec.passes.includes(trState.part.id)) rec.passes.push(trState.part.id);
+                if (rec.passes.length >= TRAINING_PASSES_NEEDED) rec.done = true;
+            } else {
+                rec.fails += 1;
+                if (!rec.failed.includes(trState.part.id)) rec.failed.push(trState.part.id);
+                if (rec.fails >= TRAINING_MAX_FAILS) rec.teacher = true;
+            }
+            trState.mode = body.pass ? 'tys' : 'prelim';
+            trSaveProgress(progress);
+            trainingRenderSessionHead();
+            trainingRenderFeedback(body, rec);
+        }
+
+        function trainingRenderFeedback(body, rec) {
+            const fb = body.feedback || {};
+            const pass = !!body.pass;
+            let html = '<div class="tr-fb">';
+            html += '<div class="tr-verdict ' + (pass ? 'pass' : 'fail') + '"><span>' + (pass ? 'Pass' : 'Not yet') + '</span>'
+                + '<span class="tr-score">' + escapeHtml(String(body.marks_awarded != null ? body.marks_awarded : '?')) + '/' + escapeHtml(String(body.marks || '?')) + '</span></div>';
+            if (fb.overall) html += '<p style="margin:0;color:var(--light);line-height:1.6;">' + trText(fb.overall) + '</p>';
+            if (fb.missing) html += '<div class="tr-fb-block"><h4>Points you left out</h4><p>' + trText(fb.missing) + '</p></div>';
+            if (fb.incorrect) html += '<div class="tr-fb-block"><h4>Wrong or muddled</h4><p>' + trText(fb.incorrect) + '</p></div>';
+            if (fb.tips) html += '<div class="tr-fb-block"><h4>Tip</h4><p>' + trText(fb.tips) + '</p></div>';
+            if (body.mark_scheme) {
+                html += '<div class="tr-fb-block"><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(body.mark_scheme))) + '</div></div>';
+                if (body.examiner_comment) html += '<div class="tr-fb-block"><h4>Examiner comment</h4><p>' + trText(body.examiner_comment) + '</p></div>';
+            }
+            if (!pass && rec.teacher) html += '<div class="tr-note">Three misses on this concept. The full mark scheme is shown above. Bring this one to class.</div>';
+            html += '<div class="tr-actions">';
+            if (rec.done) {
+                html += '<span class="tr-muted" style="margin:0;align-self:center;">Concept ticked off.</span>'
+                    + '<button class="btn btn-primary" onclick="trainingBackToList()">Back to concepts</button>'
+                    + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
+            } else if (pass) {
+                html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">Next TYS question</button>'
+                    + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
+            } else {
+                html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">Try a similar prelim question</button>'
+                    + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
+            }
+            html += '</div></div>';
+            const box = document.getElementById('trainingFeedback');
+            box.innerHTML = html;
+            box.style.display = 'block';
+            trTypeset(box);
+            document.getElementById('trainingAnswerWrap').style.display = 'none';
+            box.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // ═══ CHEMCHECK TAB ═══

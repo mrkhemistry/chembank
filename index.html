@@ -8982,7 +8982,7 @@ Option D" required></textarea>
                 html += '<div class="tr-fb-block"><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(body.mark_scheme))) + '</div></div>';
                 if (body.examiner_comment) html += '<div class="tr-fb-block"><h4>Examiner comment</h4><p>' + trText(body.examiner_comment) + '</p></div>';
             }
-            if (!pass && rec.teacher) html += '<div class="tr-note">Three misses on this concept. The full mark scheme is shown above. Bring this one to class.</div>';
+            if (!pass && rec.teacher) html += '<div class="tr-note">Three misses on this concept. Bring this one to class.</div>';
             html += '<div class="tr-actions">';
             if (rec.done) {
                 html += '<span class="tr-muted" style="margin:0;align-self:center;">Concept ticked off.</span>'

@@ -2416,7 +2416,7 @@ Option D" required></textarea>
   #trainingSection .tr-q-missed { border-left-color: var(--danger); }
   #trainingSection .tr-q-seen { border-left-color: var(--primary); }
   #trainingSection .tr-q-ref { display: block; font-family: 'DM Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); margin-bottom: 4px; }
-  #trainingSection .tr-q-ref em { font-style: normal; color: rgba(240,244,248,0.75); margin-left: 8px; }
+  #trainingSection .tr-q-ref em { display: block; font-style: normal; color: rgba(240,244,248,0.75); margin-top: 3px; }
   #trainingSection .tr-q-passed .tr-q-ref em { color: var(--success); }
   #trainingSection .tr-q-missed .tr-q-ref em { color: var(--danger); }
   #trainingSection .tr-q-snip { display: block; font-size: 0.93rem; line-height: 1.45; color: var(--light); }
@@ -2445,7 +2445,7 @@ Option D" required></textarea>
   <div id="trainingHome" style="display:none;">
     <div id="trainingFlags" class="tr-flags" style="display:none;"></div>
     <div class="page-title">Train by concept</div>
-    <p class="page-sub">Each concept starts with its real TYS questions, marked against the mark scheme. Miss one and you get a similar prelim question to try again. Pass two different questions to tick the concept off.</p>
+    <p class="page-sub">Each concept starts with its real TYS questions, marked against the mark scheme. Miss one and you get a similar prelim question to try again. Pass two different questions to tick the concept off. Your progress is saved to your account, so it follows you from phone to laptop.</p>
     <div class="tr-chips" id="trainingTysChips" role="toolbar" aria-label="Times tested in the TYS">
       <span class="tr-chip-label">Tested in TYS 2017 to 2025</span>
       <button type="button" class="tr-chip" data-tys="all" aria-pressed="true" onclick="trainingSetTysFilter('all')">All</button>
@@ -8601,12 +8601,102 @@ Option D" required></textarea>
 
         function trIsPremium() { return userRole === 'premium_student' || userRole === 'admin'; }
         function trStoreKey() { return 'chembank_training_' + ((currentUser && currentUser.id) ? currentUser.id : 'anon'); }
-        function trLoadProgress() { try { return JSON.parse(localStorage.getItem(trStoreKey()) || '{}'); } catch (e) { return {}; } }
-        function trSaveProgress(p) { try { localStorage.setItem(trStoreKey(), JSON.stringify(p)); } catch (e) {} }
+        // Progress lives in training_attempts (one row per marked answer, written by the marking function), so it
+        // follows the student across devices. The page keeps an in-memory copy, mirrored to localStorage only as an
+        // offline fallback and to remember questions the student opened without answering.
+        let trProgressCache = null, trProgressCacheKey = null;
+        let trLocalEdits = 0;   // bumped by every marked answer, so a sync that overlapped one knows to query again
+        function trReadLocal() { try { return JSON.parse(localStorage.getItem(trStoreKey()) || '{}'); } catch (e) { return {}; } }
+        function trLoadProgress() {
+            const key = trStoreKey();
+            if (!trProgressCache || trProgressCacheKey !== key) { trProgressCache = trReadLocal(); trProgressCacheKey = key; }
+            return trProgressCache;
+        }
+        function trSaveProgress(p) { trProgressCache = p; trProgressCacheKey = trStoreKey(); try { localStorage.setItem(trStoreKey(), JSON.stringify(p)); } catch (e) {} }
         function trRecord(progress, id) {
-            if (!progress[id]) progress[id] = { passes: [], fails: 0, seen: [], done: false, teacher: false, failed: [] };
-            if (!progress[id].failed) progress[id].failed = [];
-            return progress[id];
+            if (!progress[id]) progress[id] = { passes: [], fails: 0, seen: [], done: false, teacher: false, failed: [], attempted: 0, parts: {} };
+            const rec = progress[id];
+            if (!rec.failed) rec.failed = [];
+            if (!rec.parts) rec.parts = {};
+            if (rec.attempted == null) rec.attempted = Object.keys(rec.parts).length || (rec.passes.length + rec.failed.length);
+            return rec;
+        }
+        // One marked answer: keeps the per-question history (tries, best marks, last date) and the concept tallies in step
+        function trNoteAttempt(rec, pid, pass, awarded, total, when) {
+            if (!rec.seen.includes(pid)) rec.seen.push(pid);
+            const q = rec.parts[pid] || (rec.parts[pid] = { tries: 0, best: null, total: null, pass: false, when: null });
+            q.tries += 1;
+            if (awarded != null && (q.best == null || Number(awarded) > q.best)) q.best = Number(awarded);
+            if (total != null) q.total = Number(total);
+            if (when) q.when = when;
+            if (pass) {
+                q.pass = true;
+                if (!rec.passes.includes(pid)) rec.passes.push(pid);
+                rec.failed = rec.failed.filter(x => x !== pid);
+            } else {
+                rec.fails += 1;
+                if (!rec.passes.includes(pid) && !rec.failed.includes(pid)) rec.failed.push(pid);
+            }
+            rec.attempted = Object.keys(rec.parts).length;
+            rec.done = rec.passes.length >= TRAINING_PASSES_NEEDED;
+            rec.teacher = rec.fails >= TRAINING_MAX_FAILS;
+            return rec;
+        }
+        // Rebuild every concept's record from the attempt rows, oldest first (in-flight reservations, marks_awarded null, are skipped).
+        function trProgressFromAttempts(rows, local) {
+            const p = {};
+            (rows || []).forEach(r => {
+                if (r.marks_awarded == null || r.concept_id == null || r.part_id == null) return;
+                trNoteAttempt(trRecord(p, r.concept_id), r.part_id, !!r.pass, r.marks_awarded, r.marks, r.created_at);
+            });
+            // Questions opened without an answer are only known to this browser; keep them so "Pick one for me" moves on.
+            // A browser-only pass or miss (a question the server has no rows for at all) is carried over too, once each,
+            // so nothing a student earned before the account sync existed is lost; where the server has rows, they decide.
+            const list = v => (Array.isArray(v) ? v : []);
+            Object.keys(local || {}).forEach(id => {
+                const l = local[id]; if (!l || typeof l !== 'object') return;
+                const rec = trRecord(p, id);
+                list(l.seen).forEach(pid => { if (!rec.seen.includes(pid)) rec.seen.push(pid); });
+                list(l.passes).forEach(pid => {
+                    if (rec.parts[pid] || rec.passes.includes(pid)) return;
+                    trNoteAttempt(rec, pid, true, null, null, null);
+                });
+                list(l.failed).forEach(pid => {
+                    if (rec.parts[pid] || rec.passes.includes(pid) || rec.failed.includes(pid)) return;
+                    trNoteAttempt(rec, pid, false, null, null, null);
+                });
+            });
+            return p;
+        }
+        async function trainingSyncProgress() {
+            if (!currentUser || !currentUser.id) return trLoadProgress();
+            const uid = currentUser.id;
+            for (let round = 0; round < 3; round++) {
+                const editsBefore = trLocalEdits;
+                let data = null;
+                try {
+                    // Oldest first, in pages of 1000 (the server caps a single query at 1000 rows), so a long history is never cut short
+                    data = await fetchAllPaginated(() => supabaseClient
+                        .from('training_attempts')
+                        .select('part_id, concept_id, pass, marks, marks_awarded, created_at')
+                        .eq('user_id', uid)
+                        .order('created_at', { ascending: true })
+                        .order('id', { ascending: true }));
+                } catch (e) { data = null; }
+                if (!currentUser || currentUser.id !== uid) break;   // someone else logged in meanwhile: this answer is not theirs
+                if (!data) break;
+                if (trLocalEdits !== editsBefore) continue;   // an answer was marked during the query; its row is on the server now
+                const merged = trProgressFromAttempts(data, trReadLocal());
+                trSaveProgress(merged);
+                return merged;
+            }
+            return trLoadProgress();
+        }
+        function trWhen(iso) {
+            const d = iso ? new Date(iso) : null;
+            if (!d || isNaN(d.getTime())) return '';
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return d.getDate() + ' ' + months[d.getMonth()] + (d.getFullYear() === new Date().getFullYear() ? '' : ' ' + d.getFullYear());
         }
         function trStatusOf(rec) {
             if (!rec) return 'new';
@@ -8735,6 +8825,11 @@ Option D" required></textarea>
             home.style.display = 'block';
             trainingRenderChecklist();
             trainingLoadFlags();
+            trainingSyncProgress().then(() => {
+                if (home.style.display !== 'none') { trainingRenderChecklist(); return; }
+                const c = trConcept(), picker = document.getElementById('trainingPicker');
+                if (c && picker && picker.style.display === 'block' && trPartsCache[c.id]) trainingRenderPicker(c, trPartsCache[c.id]);
+            });
         }
 
         function trainingRenderChecklist() {
@@ -8742,7 +8837,8 @@ Option D" required></textarea>
             const shown = TRAINING_CONCEPTS.filter(trTysMatch);
             const total = shown.length;
             const done = shown.filter(c => progress[c.id] && progress[c.id].done).length;
-            document.getElementById('trainingSummary').textContent = done + ' of ' + total + ' concepts ticked off' + (trTysFilter === 'all' ? '' : ' in this group');
+            const started = shown.filter(c => progress[c.id] && trStatusOf(progress[c.id]) !== 'new' && !progress[c.id].done).length;
+            document.getElementById('trainingSummary').textContent = done + ' of ' + total + ' concepts ticked off' + (trTysFilter === 'all' ? '' : ' in this group') + (started ? ' \u00b7 ' + started + ' in progress' : '');
             document.querySelectorAll('#trainingTysChips .tr-chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tys === trTysFilter)));
             let html = shown.length ? '' : '<p class="tr-muted">No concepts in this group.</p>', lastTopic = null;
             shown.forEach(c => {
@@ -8750,9 +8846,11 @@ Option D" required></textarea>
                 const rec = progress[c.id];
                 const st = trStatusOf(rec);
                 const passed = rec ? rec.passes.length : 0;
-                const label = st === 'done' ? 'Ticked off'
-                    : st === 'teacher' ? 'Ask Mr Khemistry'
-                    : st === 'progress' ? passed + ' of ' + TRAINING_PASSES_NEEDED + ' passed'
+                const tried = rec ? (rec.attempted != null ? rec.attempted : rec.passes.length + rec.failed.length) : 0;
+                const triedText = tried + ' attempted';
+                const label = st === 'done' ? 'Ticked off' + (tried ? ' \u00b7 ' + triedText : '')
+                    : st === 'teacher' ? 'Ask Mr Khemistry \u00b7 ' + triedText
+                    : st === 'progress' ? triedText + ' \u00b7 ' + passed + ' of ' + TRAINING_PASSES_NEEDED + ' passed'
                     : 'Not started';
                 const btn = st === 'done' ? 'Practise again' : (st === 'new' ? 'Start' : 'Continue');
                 html += '<div class="tr-row tr-' + st + '">'
@@ -8815,10 +8913,16 @@ Option D" required></textarea>
         }
 
         function trPartStatus(rec, id) {
-            if (rec.passes.includes(id)) return ['passed', 'Passed'];
-            if (rec.failed.includes(id)) return ['missed', 'Missed'];
-            if (rec.seen.includes(id)) return ['seen', 'Started'];
-            return ['new', ''];
+            const q = rec.parts ? rec.parts[id] : null;
+            const passed = rec.passes.includes(id) || !!(q && q.pass);
+            if (!passed && !rec.failed.includes(id) && !q) return ['new', ''];
+            let label = passed ? 'Passed' : 'Missed';
+            if (q) {
+                if (q.best != null && q.total != null) label += ' ' + q.best + '/' + q.total;
+                if (q.tries > 1) label += ' \u00b7 ' + q.tries + ' tries';
+                const when = trWhen(q.when); if (when) label += ' \u00b7 ' + when;
+            }
+            return [passed ? 'passed' : 'missed', label];
         }
 
         async function trainingShowPicker() {
@@ -9058,14 +9162,8 @@ Option D" required></textarea>
             if (!res.ok) { trainingShowError(body.error || 'Marking failed. Please try again.'); return; }
             const progress = trLoadProgress();
             const rec = trRecord(progress, trState.conceptId);
-            if (body.pass) {
-                if (!rec.passes.includes(trState.part.id)) rec.passes.push(trState.part.id);
-                if (rec.passes.length >= TRAINING_PASSES_NEEDED) rec.done = true;
-            } else {
-                rec.fails += 1;
-                if (!rec.failed.includes(trState.part.id)) rec.failed.push(trState.part.id);
-                if (rec.fails >= TRAINING_MAX_FAILS) rec.teacher = true;
-            }
+            trNoteAttempt(rec, trState.part.id, !!body.pass, body.marks_awarded, body.marks || trState.part.marks, new Date().toISOString());
+            trLocalEdits += 1;
             trState.mode = body.pass ? 'tys' : 'prelim';
             trState.last = { attemptId: body.attempt_id || null, part: trState.part, conceptId: trState.conceptId, answer: answer, body: body, flagged: false };
             trSaveProgress(progress);

@@ -4925,6 +4925,9 @@ Option D" required></textarea>
                 if (prelimSection) prelimSection.style.display = isPremium ? 'block' : 'none';
                 const promosSection = document.getElementById('promosFilters');
                 if (promosSection) promosSection.style.display = isPremium ? 'block' : 'none';
+                // Admin doesn't need the student Paper 2 & 3 tab (admin uses the Structured Questions view)
+                const p2p3TabBtn = document.getElementById('tabP2P3');
+                if (p2p3TabBtn) p2p3TabBtn.style.display = (userRole === 'admin') ? 'none' : '';
                 checkWeakQuestions(); // Show weak questions button if applicable
             }
 
@@ -6395,6 +6398,8 @@ Option D" required></textarea>
         let allWorksheets = [];
 
         function switchStudentTab(tab) {
+            // Admin doesn't use the student Paper 2 & 3 tab; fall back to the quiz tab
+            if (tab === 'p2p3' && userRole === 'admin') tab = 'quiz';
             sessionStorage.setItem('chembank_lastStudentTab', tab);
             const quizPanel = document.getElementById('studentQuizPanel');
             const wsPanel = document.getElementById('studentWorksheetsPanel');

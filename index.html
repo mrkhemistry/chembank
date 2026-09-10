@@ -2495,6 +2495,8 @@ Option D" required></textarea>
                     .p2p3-part-h{font-size:0.92rem;margin-bottom:0.2rem;}
                     .p2p3-marks{opacity:0.55;font-weight:400;font-size:0.85rem;}
                     .p2p3-part-t{font-size:0.92rem;line-height:1.6;margin-bottom:0.4rem;}
+                    .p2p3-lead{font-size:0.92rem;line-height:1.6;margin:0.5rem 0;}
+                    .sq-li{display:block;padding-left:1.6em;text-indent:-1.15em;}
                     .p2p3-figs{margin:0.5rem 0;}
                     .p2p3-fig{margin:0.4rem 0;text-align:center;}
                     .p2p3-fig img{max-width:100%;max-height:300px;border:1px solid var(--border);border-radius:6px;background:#fff;}
@@ -6373,6 +6375,63 @@ Option D" required></textarea>
             return processed;
         }
 
+        // ---- Faithful P2/P3 reproduction (verbatim remediation) --------------------------------
+        // A remediated part_text/stem can carry: inline figure markers [[fig:KEY]] (draw that image
+        // right there), lead-in markers [[lead]] / [[lead:(X)]] (context before the numbered command,
+        // unlabelled or carrying the paper's group letter), and number/bullet/roman lists to indent.
+        // All of this is gated behind sqIsRemediated() so every existing (marker-less) question renders
+        // exactly as before. Part labels are then shown as the paper prints them: the group letter once,
+        // then short romans.
+        function sqIsRemediated(q){
+            if (/\[\[(lead|fig:)/.test(q.stem||'')) return true;
+            return (q.parts||[]).some(p=>/\[\[(lead|fig:)/.test(p.part_text||''));
+        }
+        function sqInlineFigKeys(q){
+            const set=new Set();
+            [q.stem].concat((q.parts||[]).map(p=>p.part_text)).forEach(t=>{
+                (String(t||'').match(/\[\[fig:([^\]]+)\]\]/g)||[]).forEach(m=>set.add(m.slice(6,-2)));
+            });
+            return set;
+        }
+        // Group letter once, then short romans: '(a)(i)' first in group a -> '(a)(i)', next '(a)(ii)' -> '(ii)'.
+        function sqDisplayLabel(full, shown){
+            const comps = String(full||'').match(/\([^)]*\)/g) || [];
+            if (!comps.length) return full||'';
+            const g = comps[0];
+            if (shown.has(g)) return comps.slice(1).join('') || full;
+            shown.add(g); return full;
+        }
+        // Wrap number / bullet / roman-paren list lines as hanging-indent blocks (paper shows them indented).
+        function sqIndentLists(html){
+            if (!/(?:^|<br\s*\/?>)\s*(?:\d+\.|•|\(?[IVX]+\))\s/i.test(html)) return html;   // no list line -> unchanged
+            const out=[]; let run=[];
+            const flush=()=>{ if(run.length){ out.push(run.join('<br>')); run=[]; } };
+            html.split(/<br\s*\/?>/i).forEach(ln=>{
+                const bare = ln.replace(/^(?:<[^>]+>)+/,'');
+                if (/^\s*(?:\d+\.|•|\(?[IVX]+\))\s/i.test(bare)){ flush(); out.push('<span class="sq-li">'+ln+'</span>'); }
+                else run.push(ln);
+            });
+            flush();
+            return out.join('');
+        }
+        // Render body text: draw [[fig:KEY]] inline (renderFig(f)), sanitize the rest, indent lists.
+        function sqRenderBody(text, figByKey, renderedKeys, renderFig){
+            if (text==null) return '';
+            let html='';
+            String(text).split(/(\[\[fig:[^\]]+\]\])/).forEach(seg=>{
+                const m = seg.match(/^\[\[fig:([^\]]+)\]\]$/);
+                if (m){ const f=figByKey&&figByKey[m[1]]; if (f){ if(renderedKeys) renderedKeys.add(m[1]); html += renderFig(f); } return; }
+                if (seg) html += sqIndentLists(sanitizeQuestionText(seg));
+            });
+            return html;
+        }
+        // Split a part_text into its lead segments and the trailing command text.
+        function sqSplitLeads(text){
+            const leads=[]; const re=/\[\[lead(?::([^\]]*))?\]\]/g; let last=0, m;
+            while ((m=re.exec(String(text||'')))!==null){ leads.push({ text:String(text).slice(last,m.index), label:(m[1]!=null?m[1]:null) }); last=re.lastIndex; }
+            return { leads, command:String(text||'').slice(last) };
+        }
+
         // Mark schemes are stored as one continuous blob (no line breaks). For readability, put each
         // sentence / marking point on its own line before it goes through sanitizeQuestionText. LaTeX
         // spans are protected so a break is never inserted inside chemistry, and common abbreviations
@@ -6602,7 +6661,11 @@ Option D" required></textarea>
             const matchSet = p2pPartMatches[q.id];
             const item = { q: q, partFilter: !!(matchSet && matchSet.size), matchIds: matchSet };
             const parts = sqWorksheetPartsFor(item).slice().sort((a,b) => (a.order_index||0)-(b.order_index||0));
-            let qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key));
+            const remediated = sqIsRemediated(q);                                  // faithful markers present?
+            const figByKey = {}; figs.forEach(f=>{ figByKey[f.figure_key]=f; });
+            const inlineKeys = remediated ? sqInlineFigKeys(q) : new Set();          // figs drawn inline at [[fig:]]
+            const shown = new Set();                                                 // groups whose letter is shown
+            let qFigs = figs.filter(f => !sqIsAnswerFig(f.figure_key) && !inlineKeys.has(f.figure_key));
             let ansFigs = figs.filter(f => sqIsAnswerFig(f.figure_key));
             if (item.partFilter){
                 qFigs = qFigs.filter(f => sqShowFigForPrinted(f, parts, allParts, q.stem));
@@ -6613,12 +6676,27 @@ Option D" required></textarea>
             ansFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a!=null) (ansByPart[a]=ansByPart[a]||[]).push(f); else ansLoose.push(f); });
             const src = [q.year, q.paper, (q.school||q.source||''), 'Q'+q.question_number].filter(x => x!=null && x!=='').join(' · ');
             let html = '<div class="p2p3-q"><div class="p2p3-q-head">'+sqEsc(src)+'</div>';
-            if (q.stem) html += '<div class="p2p3-stem">'+sanitizeQuestionText(q.stem)+'</div>';
+            if (q.stem) html += '<div class="p2p3-stem">'+(remediated ? sqRenderBody(q.stem, figByKey, null, p2p3FigImg) : sanitizeQuestionText(q.stem))+'</div>';
             if (stemFigs.length) html += '<div class="p2p3-figs">'+stemFigs.map(p2p3FigImg).join('')+'</div>';
             parts.forEach(p => {
-                html += '<div class="p2p3-part">';
-                html += '<div class="p2p3-part-h"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null ? ' <span class="p2p3-marks">['+p.marks+']</span>' : '')+'</div>';
-                if (p.part_text) html += '<div class="p2p3-part-t">'+sanitizeQuestionText(p.part_text)+'</div>';
+                if (remediated){
+                    const parsed = sqSplitLeads(p.part_text||'');
+                    parsed.leads.forEach(s=>{
+                        if (!s.text.trim()) return;
+                        const body = sqRenderBody(s.text, figByKey, null, p2p3FigImg);
+                        if (s.label){
+                            const g=(s.label.match(/\([^)]*\)/)||[])[0]; if(g) shown.add(g);
+                            html += '<div class="p2p3-part"><div class="p2p3-part-h"><b>'+sqEsc(s.label)+'</b></div><div class="p2p3-part-t">'+body+'</div></div>';
+                        } else { html += '<div class="p2p3-lead">'+body+'</div>'; }
+                    });
+                    html += '<div class="p2p3-part">';
+                    html += '<div class="p2p3-part-h"><b>'+sqEsc(sqDisplayLabel(p.part_label, shown))+'</b>'+(p.marks!=null ? ' <span class="p2p3-marks">['+p.marks+']</span>' : '')+'</div>';
+                    if (parsed.command.trim()) html += '<div class="p2p3-part-t">'+sqRenderBody(parsed.command, figByKey, null, p2p3FigImg)+'</div>';
+                } else {
+                    html += '<div class="p2p3-part">';
+                    html += '<div class="p2p3-part-h"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null ? ' <span class="p2p3-marks">['+p.marks+']</span>' : '')+'</div>';
+                    if (p.part_text) html += '<div class="p2p3-part-t">'+sanitizeQuestionText(p.part_text)+'</div>';
+                }
                 if (qByPart[p.id]) html += '<div class="p2p3-figs">'+qByPart[p.id].map(p2p3FigImg).join('')+'</div>';
                 const hasMs = p.mark_scheme && String(p.mark_scheme).trim();
                 const hasAnsFig = ansByPart[p.id] && ansByPart[p.id].length;
@@ -6714,6 +6792,7 @@ Option D" required></textarea>
               + '.p-head{font-size:11pt;}'
               + '.p-marks{color:#555;font-weight:normal;}'
               + '.p-text{font-size:11pt;line-height:1.5;margin:2px 0 6px;}'
+              + '.sq-li{display:block;padding-left:1.7em;text-indent:-1.2em;}'
               + '.p-ans{margin:4px 0 2px;}'
               + '.p-ans .sq-ans-line{border-bottom:1px solid #999;height:20px;margin-bottom:6px;}'
               + '.p-ms{font-size:11pt;line-height:1.5;padding:6px 9px;margin-top:3px;}'
@@ -9628,12 +9707,16 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const parts=sqWorksheetPartsFor(item);
                 const marks=parts.reduce((a,p)=>a+(Number(p.marks)||0),0);
                 let figs=q.figures||[];
+                const remediated=sqIsRemediated(q);
+                const figByKey={}; (q.figures||[]).forEach(f=>{ figByKey[f.figure_key]=f; });
+                const inlineKeys=remediated?sqInlineFigKeys(q):new Set();   // figs drawn inline at [[fig:]]
+                const shown=new Set();
                 // When only some parts are printed, drop figures that belong to the parts we are NOT
                 // printing (e.g. organic reaction schemes on a colour-only sheet). A figure is kept if its
                 // key names a printed part, or (for generic numbered figures) the stem or a printed part
                 // cites its "Fig/Table N.M". Only figures cited solely by non-printed parts are dropped.
                 if (item.partFilter){ const allParts=(q.parts||[]); figs=figs.filter(f=>sqShowFigForPrinted(f, parts, allParts, q.stem)); }
-                const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key));
+                const qFigs=figs.filter(f=>!sqIsAnswerFig(f.figure_key) && !inlineKeys.has(f.figure_key));
                 const ansFigs=figs.filter(f=>sqIsAnswerFig(f.figure_key));
                 const srcBits=[];
                 if (q.year!=null) srcBits.push(q.year);
@@ -9651,12 +9734,26 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 html+='<div class="q-block">';
                 html+='<div class="q-head"><span class="q-num">Question '+(idx+1)+'</span>'
                     +'<span class="q-src">'+sqEsc(srcBits.join('  ·  '))+'<br>['+marks+' mark'+(marks===1?'':'s')+']</span></div>';
-                if (q.stem) html+='<div class="q-stem">'+sanitizeQuestionText(q.stem)+'</div>';
+                if (q.stem) html+='<div class="q-stem">'+(remediated?sqRenderBody(q.stem, figByKey, null, sqWorksheetFigImg):sanitizeQuestionText(q.stem))+'</div>';
                 if (stemFigs.length) html+='<div class="q-figs">'+stemFigs.map(sqWorksheetFigImg).join('')+'</div>';
                 parts.forEach(p=>{
-                    html+='<div class="p-block">';
-                    html+='<div class="p-head"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null?(' <span class="p-marks">['+p.marks+']</span>'):'')+'</div>';
-                    if (p.part_text) html+='<div class="p-text">'+sanitizeQuestionText(p.part_text)+'</div>';
+                    if (remediated){
+                        const parsed=sqSplitLeads(p.part_text||'');
+                        parsed.leads.forEach(s=>{
+                            if (!s.text.trim()) return;
+                            const body=sqRenderBody(s.text, figByKey, null, sqWorksheetFigImg);
+                            if (s.label){ const g=(s.label.match(/\([^)]*\)/)||[])[0]; if(g) shown.add(g);
+                                html+='<div class="p-block"><div class="p-head"><b>'+sqEsc(s.label)+'</b></div><div class="p-text">'+body+'</div></div>';
+                            } else { html+='<div class="p-block"><div class="p-text">'+body+'</div></div>'; }
+                        });
+                        html+='<div class="p-block">';
+                        html+='<div class="p-head"><b>'+sqEsc(sqDisplayLabel(p.part_label, shown))+'</b>'+(p.marks!=null?(' <span class="p-marks">['+p.marks+']</span>'):'')+'</div>';
+                        if (parsed.command.trim()) html+='<div class="p-text">'+sqRenderBody(parsed.command, figByKey, null, sqWorksheetFigImg)+'</div>';
+                    } else {
+                        html+='<div class="p-block">';
+                        html+='<div class="p-head"><b>'+sqEsc(p.part_label||'')+'</b>'+(p.marks!=null?(' <span class="p-marks">['+p.marks+']</span>'):'')+'</div>';
+                        if (p.part_text) html+='<div class="p-text">'+sanitizeQuestionText(p.part_text)+'</div>';
+                    }
                     if (qFigByPart[p.id]) html+='<div class="q-figs">'+qFigByPart[p.id].map(sqWorksheetFigImg).join('')+'</div>';
                     if (isTutor){
                         if (p.mark_scheme) html+='<div class="p-ms"><span class="p-ms-lbl">Mark scheme</span>'+sanitizeQuestionText(sqMarkSchemeBreaks(p.mark_scheme))+'</div>';
@@ -9728,6 +9825,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'.p-head{font-size:10.5pt;}'
               +'.p-marks{color:#555;font-weight:normal;}'
               +'.p-text{font-size:10.5pt;line-height:1.5;margin:2px 0 6px;}'
+              +'.sq-li{display:block;padding-left:1.7em;text-indent:-1.2em;}'
               +'.p-ans{margin:4px 0 2px;}'
               +'.p-ans .sq-ans-line{border-bottom:1px solid #999;height:20px;margin-bottom:6px;}'
               +'.p-ms{font-size:10pt;line-height:1.5;background:#f7f7f7;border:1px solid #bbb;border-left:3px solid #000;border-radius:3px;padding:6px 9px;margin-top:3px;}'

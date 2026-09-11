@@ -9045,6 +9045,27 @@ Option D" required></textarea>
             });
             return out;
         }
+        // Lettered group of a part label: '(a)(ii)' -> 'a', '(b)' -> 'b'
+        function trGroupOf(p) { const m = /^[(]([a-z]+)[)]/i.exec((p && p.part_label) || ''); return m ? m[1].toLowerCase() : ''; }
+        // Safety net for a part the answerability scan flagged as needing context when the question has no stem and the
+        // wording names no earlier part ("in this reaction"): the context sits in the earlier parts, so show them, wording only.
+        // Earlier parts of the same lettered group first; if this is the first of its group, the whole previous group.
+        function trFallbackEarlier(part, allParts) {
+            const list = allParts || [];
+            const me = list.find(p => p.id === part.id) || part;
+            const myIdx = me.order_index || 0;
+            const before = list.filter(p => p.id !== part.id && (p.order_index || 0) < myIdx).sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+            if (!before.length) return [];
+            const same = before.filter(p => trGroupOf(p) === trGroupOf(me));
+            if (same.length) return same;
+            const prev = trGroupOf(before[before.length - 1]);
+            return before.filter(p => trGroupOf(p) === prev);
+        }
+        function trContextParts(part, allParts, stem) {
+            const refs = trReferencedParts(part, allParts);
+            if (refs.length || stem || !TRAINING_NEEDS_CONTEXT.has(part.id)) return refs;
+            return trFallbackEarlier(part, allParts);
+        }
         async function trLoadBackground(part) {
             const stem = (part.structured_questions && part.structured_questions.stem || '').trim();
             let figures = [], figError = '', earlier = [];
@@ -9053,7 +9074,7 @@ Option D" required></textarea>
                     supabaseClient.from('structured_figures').select('id, part_id, figure_key, label, storage_path, caption').eq('question_id', part.question_id).order('id'),
                     supabaseClient.from('structured_parts').select('id, part_label, part_text, order_index, context_parts').eq('question_id', part.question_id)
                 ]);
-                earlier = trReferencedParts(part, allParts);
+                earlier = trContextParts(part, allParts, stem);
                 // Figures for this part, then for the earlier parts shown with it (each routed as its own printed part)
                 let wanted = trFiguresFor(figs, part, stem, allParts);
                 earlier.forEach(ep => { trFiguresFor(figs, ep, stem, allParts).forEach(f => { if (wanted.indexOf(f) === -1) wanted.push(f); }); });

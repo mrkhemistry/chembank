@@ -2380,6 +2380,10 @@ Option D" required></textarea>
   #trainingSection .tr-label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); margin-bottom: 6px; }
   #trainingSection textarea { width: 100%; padding: 12px; background: var(--surface); border: 2px solid var(--cyan-border); border-radius: 8px; color: var(--light); font-family: inherit; font-size: 1rem; line-height: 1.5; resize: vertical; }
   #trainingSection textarea:focus { outline: none; border-color: var(--primary); }
+  .chem-sym { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
+  .chem-sym button { cursor: pointer; min-width: 40px; height: 36px; padding: 0 10px; background: transparent; color: var(--light); border: 1px solid rgba(240,244,248,0.35); border-radius: 999px; font-family: 'DM Mono', Consolas, monospace; font-size: 1rem; line-height: 1; }
+  .chem-sym button:hover, .chem-sym button:focus-visible { border-color: var(--primary); color: var(--primary); outline: none; }
+  .chem-sym-hint { flex-basis: 100%; font-size: 0.8rem; color: rgba(240,244,248,0.85); margin-top: 2px; }
   #trainingSection .tr-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
   #trainingSection .tr-muted { color: rgba(240,244,248,0.75); font-size: 0.9rem; margin-top: 10px; }
   #trainingSection .tr-fb { margin-top: 16px; background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 12px; padding: 14px 16px; }
@@ -2473,6 +2477,7 @@ Option D" required></textarea>
     </div>
     <div id="trainingAnswerWrap">
       <label class="tr-label" for="trainingAnswer">Your answer</label>
+      <div class="chem-sym" data-for="trainingAnswer" role="toolbar" aria-label="Chemistry symbols"></div>
       <textarea id="trainingAnswer" rows="6" placeholder="Type your explanation as you would write it in the exam."></textarea>
       <div class="tr-actions">
         <button class="btn btn-primary" id="trainingCheckBtn" onclick="trainingCheck()">Check my answer</button>
@@ -2527,6 +2532,7 @@ Option D" required></textarea>
             <!-- TYPE MODE -->
             <div id="cc_typeMode">
               <div class="field">
+                <div class="chem-sym" data-for="cc_studentAnswer" role="toolbar" aria-label="Chemistry symbols"></div>
                 <textarea id="cc_studentAnswer" rows="7" placeholder="Write your answer here..."></textarea>
               </div>
             </div>
@@ -8598,6 +8604,28 @@ Option D" required></textarea>
         let trState = { conceptId: null, part: null, busy: false, mode: 'tys', kind: 'tys', last: null };
         let trPartsCache = {};   // concept id -> parts loaded for the question picker
         let trTysFilter = (function () { try { return sessionStorage.getItem('chembank_training_tys') || 'all'; } catch (e) { return 'all'; } })();
+
+        // One-tap chemistry symbols for the answer boxes. Plain typing (H+, CO2, <=>) is accepted by the marker too.
+        const CHEM_SYMBOLS = ['⇌', '→', '⁺', '⁻', '²', '³', '₂', '₃', '₄', 'Δ', 'δ⁺', 'δ⁻', 'π', 'σ', '°'];
+        function chemInsert(id, text) {
+            const ta = document.getElementById(id); if (!ta) return;
+            const s = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
+            const e = ta.selectionEnd != null ? ta.selectionEnd : s;
+            if (typeof ta.setRangeText === 'function') ta.setRangeText(text, s, e, 'end');
+            else { ta.value = ta.value.slice(0, s) + text + ta.value.slice(e); ta.selectionStart = ta.selectionEnd = s + text.length; }
+            ta.focus();
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        function chemBuildSymbolStrips() {
+            document.querySelectorAll('.chem-sym[data-for]').forEach(box => {
+                if (box.dataset.built) return;
+                box.dataset.built = '1';
+                const id = box.dataset.for;
+                box.innerHTML = CHEM_SYMBOLS.map(s => '<button type="button" onpointerdown="event.preventDefault()" onclick="chemInsert(&quot;' + id + '&quot;, &quot;' + s + '&quot;)" aria-label="Insert ' + s + '">' + s + '</button>').join('')
+                    + '<span class="chem-sym-hint">Tap to insert. Plain typing such as H+ and CO2 is fine too.</span>';
+            });
+        }
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chemBuildSymbolStrips); else chemBuildSymbolStrips();
 
         function trIsPremium() { return userRole === 'premium_student' || userRole === 'admin'; }
         function trStoreKey() { return 'chembank_training_' + ((currentUser && currentUser.id) ? currentUser.id : 'anon'); }

@@ -2377,6 +2377,12 @@ Option D" required></textarea>
   #trainingSection .tr-bg img { max-width: 100%; height: auto; display: block; background: #fff; border-radius: 6px; }
   #trainingSection .tr-bg figcaption { font-family: 'DM Mono', Consolas, monospace; font-size: 0.75rem; color: rgba(240,244,248,0.75); margin-top: 4px; }
   #trainingSection .tr-qtext { color: var(--light); line-height: 1.6; font-size: 1rem; }
+  #trainingSection .tr-lead { color: var(--light); line-height: 1.6; font-size: 1rem; margin-bottom: 10px; }
+  #trainingSection .tr-lead-label { font-family: 'DM Mono', Consolas, monospace; font-size: 0.85rem; color: var(--primary); margin-right: 8px; }
+  #trainingSection .tr-inline-fig { margin: 10px 0; text-align: center; }
+  #trainingSection .tr-inline-fig img { max-width: 100%; max-height: 500px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  #trainingSection .tr-inline-fig figcaption { font-family: 'DM Mono', Consolas, monospace; font-size: 0.75rem; color: rgba(240,244,248,0.85); margin-top: 4px; }
+  #trainingSection .sq-li { display: block; padding-left: 1.6em; text-indent: -1.15em; }
   #trainingSection .tr-label { display: block; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); margin-bottom: 6px; }
   #trainingSection textarea { width: 100%; padding: 12px; background: var(--surface); border: 2px solid var(--cyan-border); border-radius: 8px; color: var(--light); font-family: inherit; font-size: 1rem; line-height: 1.5; resize: vertical; }
   #trainingSection textarea:focus { outline: none; border-color: var(--primary); }
@@ -8754,7 +8760,34 @@ Option D" required></textarea>
         }
         function trConcept() { return TRAINING_CONCEPTS.find(c => c.id === trState.conceptId) || null; }
         // Same renderer as the Paper 2 & 3 tab: keeps the bank's inline tags, entities and LaTeX, escapes everything else
-        function trText(s) { return sanitizeQuestionText(String(s == null ? '' : s)).replace(/\r?\n/g, '<br>'); }
+        // Store text can carry the faithful-reproduction markers [[lead:(X)]] / [[lead]] / [[fig:KEY]] (see sqSplitLeads).
+        // trText strips them (snippets, flags list); trPartHtml / trBody render them the way the Paper 2 & 3 tab does.
+        function trStripMarkers(s) { return String(s == null ? '' : s).replace(/\[\[fig:[^\]]+\]\]/g, ' ').replace(/\[\[lead(?::[^\]]*)?\]\]/g, ' '); }
+        function trText(s) { return sanitizeQuestionText(trStripMarkers(s)).replace(/\r?\n/g, '<br>'); }
+        function trFigHtml(f) {
+            return '<figure class="tr-inline-fig"><img src="' + escapeHtml(f.url) + '" alt="' + escapeHtml(f.label || 'Figure') + '" loading="lazy">'
+                + (f.label || f.caption ? '<figcaption>' + escapeHtml([f.label, f.caption].filter(Boolean).join(' \u00b7 ')) + '</figcaption>' : '') + '</figure>';
+        }
+        // Body text with [[fig:KEY]] drawn in place (when that figure was loaded) and list lines indented
+        function trBody(text, figByKey) {
+            let html = '';
+            String(text == null ? '' : text).split(/(\[\[fig:[^\]]+\]\])/).forEach(seg => {
+                const m = seg.match(/^\[\[fig:([^\]]+)\]\]$/);
+                if (m) { const f = figByKey && figByKey[m[1]]; if (f) html += trFigHtml(f); return; }
+                if (seg) html += sqIndentLists(trText(seg));
+            });
+            return html;
+        }
+        // A part as the paper prints it: any lead-in text (with its group letter) above the numbered command
+        function trPartHtml(text, figByKey) {
+            const parsed = sqSplitLeads(text);
+            let html = '';
+            parsed.leads.forEach(s => {
+                if (!s.text.trim()) return;
+                html += '<div class="tr-lead">' + (s.label ? '<span class="tr-lead-label">' + escapeHtml(s.label) + '</span>' : '') + trBody(s.text, figByKey) + '</div>';
+            });
+            return html + trBody(parsed.command, figByKey);
+        }
         function trTypeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(() => {}); }
         function trRefLabel(q, part) {
             const src = q.source === 'TYS' ? 'TYS' : (q.school ? q.school + ' Prelim' : 'Prelim');
@@ -9088,6 +9121,7 @@ Option D" required></textarea>
         async function trLoadBackground(part) {
             const stem = (part.structured_questions && part.structured_questions.stem || '').trim();
             let figures = [], figError = '', earlier = [];
+            const figByKey = {};
             try {
                 const [{ data: figs }, { data: allParts }] = await Promise.all([
                     supabaseClient.from('structured_figures').select('id, part_id, figure_key, label, storage_path, caption').eq('question_id', part.question_id).order('id'),
@@ -9097,15 +9131,24 @@ Option D" required></textarea>
                 // Figures for this part, then for the earlier parts shown with it (each routed as its own printed part)
                 let wanted = trFiguresFor(figs, part, stem, allParts);
                 earlier.forEach(ep => { trFiguresFor(figs, ep, stem, allParts).forEach(f => { if (wanted.indexOf(f) === -1) wanted.push(f); }); });
+                // Figures the text names in place ([[fig:KEY]] in the part, the stem or a shown earlier part) are drawn there
+                const inlineKeys = new Set();
+                [part.part_text, stem].concat(earlier.map(ep => ep.part_text)).forEach(t => {
+                    (String(t || '').match(/\[\[fig:([^\]]+)\]\]/g) || []).forEach(m => inlineKeys.add(m.slice(6, -2)));
+                });
+                (figs || []).forEach(f => { if (inlineKeys.has(f.figure_key) && !sqIsAnswerFig(f.figure_key) && wanted.indexOf(f) === -1) wanted.push(f); });   // never an answer diagram
+                wanted = wanted.filter(f => f && f.storage_path);   // a figure row whose image was never uploaded must not break the signed-URL call
                 if (wanted.length) {
                     const { data: signed } = await supabaseClient.storage.from('structured-figures').createSignedUrls(wanted.map(f => f.storage_path), 28800);
                     const urlByPath = {};
                     (signed || []).forEach(s => { if (s && s.signedUrl && !s.error) urlByPath[s.path] = s.signedUrl; });
-                    figures = wanted.map(f => ({ url: urlByPath[f.storage_path] || '', label: f.label || '', caption: f.caption || '' })).filter(f => f.url);
-                    if (!figures.length) figError = 'This question has ' + wanted.length + ' figure' + (wanted.length === 1 ? '' : 's') + ' but they could not be loaded.';
+                    const loaded = wanted.map(f => ({ key: f.figure_key, url: urlByPath[f.storage_path] || '', label: f.label || '', caption: f.caption || '' })).filter(f => f.url);
+                    loaded.forEach(f => { figByKey[f.key] = f; });
+                    figures = loaded.filter(f => !inlineKeys.has(f.key));
+                    if (!loaded.length) figError = 'This question has ' + wanted.length + ' figure' + (wanted.length === 1 ? '' : 's') + ' but they could not be loaded.';
                 }
             } catch (e) { console.error('training background:', e); figures = []; figError = 'The figures for this question could not be loaded.'; }
-            return { stem, figures, figError, earlier };
+            return { stem, figures, figError, earlier, figByKey };
         }
         function trainingShowQuestion(part, kind, bg) {
             const qBox = document.getElementById('trainingQuestionText');
@@ -9115,9 +9158,9 @@ Option D" required></textarea>
             const label = document.getElementById('trainingBackgroundLabel');
             const hasBg = !!((bg && bg.stem) || (bg && bg.figures && bg.figures.length) || (bg && bg.figError) || (bg && bg.earlier && bg.earlier.length));
             if (hasBg) {
-                let html = bg.stem ? '<div class="tr-stem">' + trText(bg.stem) + '</div>' : '';
+                let html = bg.stem ? '<div class="tr-stem">' + trBody(bg.stem, bg.figByKey) + '</div>' : '';
                 (bg.earlier || []).forEach(ep => {
-                    html += '<div class="tr-earlier"><span class="tr-earlier-label">Part ' + escapeHtml(ep.part_label || '') + '</span>' + trText(ep.part_text) + '</div>';
+                    html += '<div class="tr-earlier"><span class="tr-earlier-label">Part ' + escapeHtml(ep.part_label || '') + '</span>' + trPartHtml(ep.part_text, bg.figByKey) + '</div>';
                 });
                 if (bg.figError) html += '<div class="tr-note">' + escapeHtml(bg.figError) + '</div>';
                 (bg.figures || []).forEach(f => {
@@ -9135,7 +9178,7 @@ Option D" required></textarea>
                 body.innerHTML = '';
             }
             ref.textContent = (kind === 'prelim' ? 'Similar question · ' : '') + trRefLabel(part.structured_questions, part);
-            qBox.innerHTML = trText(part.part_text);
+            qBox.innerHTML = trPartHtml(part.part_text, bg && bg.figByKey);
             trTypeset(qBox);
         }
         async function trainingNextQuestion() {

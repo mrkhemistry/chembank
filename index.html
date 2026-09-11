@@ -3176,6 +3176,22 @@ Option D" required></textarea>
         let isPasswordRecovery = false;
         const initialHash = window.location.hash;
         const initialSearch = window.location.search;
+        // Deep link: index.html?tab=training (or check / quiz / worksheets / history / p2p3) opens that student tab once the
+        // logged-in view is up. 'training' opens Check My Answer and scrolls to Train by concept. One-shot; the query is then removed.
+        let deepLinkTab = (function () { try { const t = new URLSearchParams(initialSearch).get('tab') || ''; return /^(training|check|quiz|worksheets|history|p2p3)$/.test(t) ? t : ''; } catch (e) { return ''; } })();
+        function applyDeepLinkTab() {
+            if (!deepLinkTab) return;
+            const wanted = deepLinkTab; deepLinkTab = '';
+            showView('student');
+            switchStudentTab(wanted === 'training' ? 'check' : wanted);
+            if (wanted === 'training') setTimeout(() => {
+                const s = document.getElementById('trainingSection'); if (!s) return;
+                const bar = document.querySelector('header');   // sticky top bar; keep the section title below it
+                s.style.scrollMarginTop = ((bar ? bar.offsetHeight : 0) + 12) + 'px';
+                s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 250);
+            try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+        }
 
         // Check if we've already handled password reset in this session
         const passwordResetHandled = sessionStorage.getItem('passwordResetHandled');
@@ -3667,6 +3683,7 @@ Option D" required></textarea>
                 const savedTab = (restoreView === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
                 showView(restoreView);
                 if (savedTab) switchStudentTab(savedTab);
+                applyDeepLinkTab();
             } else if (userRole === 'teacher') {
                 // Teachers see Teacher Portal + Print Worksheets
                 const teacherCard = document.getElementById('teacherCard');
@@ -3681,6 +3698,7 @@ Option D" required></textarea>
                 const savedTab2 = (restoreView2 === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
                 showView(restoreView2);
                 if (savedTab2) switchStudentTab(savedTab2);
+                applyDeepLinkTab();
             } else if (userRole === 'student' || userRole === 'premium_student') {
                 // Check if student needs to set their name first
                 const name = userProfile && userProfile.full_name ? userProfile.full_name.trim() : '';
@@ -3695,6 +3713,7 @@ Option D" required></textarea>
                     showView('student');
                     // Restore student tab if saved
                     if (savedTab) switchStudentTab(savedTab);
+                    applyDeepLinkTab();
                     // Show resume button if there's cached quiz progress
                     setTimeout(() => updateResumeButton(), 500);
                 }
@@ -9778,6 +9797,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 userProfile.full_name = name;
                 document.getElementById('namePromptModal').style.display = 'none';
                 showView('student');
+                applyDeepLinkTab();   // a first-time student who arrived by deep link still lands on the requested tab
             } catch (err) {
                 errEl.textContent = 'Could not save name. Please try again.';
                 errEl.style.display = 'block';

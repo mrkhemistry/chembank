@@ -2853,6 +2853,7 @@ Option D" required></textarea>
                         <button class="analytics-tab active" onclick="switchAnalyticsTab('students', this)">Students</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('topics', this)">Topics</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">Question Bank</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('revision', this)">Revision</button>
                     </div>
 
                     <!-- Students tab -->
@@ -2873,6 +2874,13 @@ Option D" required></textarea>
                     <div id="analyticsQuestionbank" class="analytics-section">
                         <div id="questionBankContainer">
                             <div class="empty-state"><h3>Loading question bank data...</h3></div>
+                        </div>
+                    </div>
+
+                    <!-- Revision tab (Topical Revision MCQ packages) -->
+                    <div id="analyticsRevision" class="analytics-section">
+                        <div id="revisionReportContainer">
+                            <div class="empty-state"><h3>Loading revision data...</h3></div>
                         </div>
                     </div>
                 </div>
@@ -7684,6 +7692,7 @@ Option D" required></textarea>
                 renderMostImproved();
                 renderTopicChart();
                 renderQuestionBankChart();
+                renderRevisionReport();
 
             } catch (err) {
                 console.error('Analytics load error:', err);
@@ -8395,6 +8404,152 @@ Option D" required></textarea>
             } catch (err) {
                 container.innerHTML = `<div class="empty-state"><h3>Error loading question bank</h3><p>${err.message}</p></div>`;
             }
+        }
+
+        // ── Topical Revision MCQ report (admin) ──────────────────────────
+        // Revision-package attempts are saved as ordinary quiz_attempts with no flag,
+        // so we identify them by matching an attempt's EXACT set of answered question
+        // ids against the known REVISION_PACKAGES id lists. Reuses data already loaded
+        // into analyticsData (attempts + responses), so no extra fetch is needed.
+        function computeRevisionReport() {
+            const { attempts, responses, students } = analyticsData;
+            const studentIds = new Set((students || []).map(s => s.id));
+
+            // quiz_attempt_id -> { ids:Set of answered question ids, wrong:Set of wrong ids }
+            const byAttempt = {};
+            for (const r of (responses || [])) {
+                let e = byAttempt[r.quiz_attempt_id];
+                if (!e) { e = byAttempt[r.quiz_attempt_id] = { ids: new Set(), wrong: new Set() }; }
+                e.ids.add(r.question_id);
+                if (r.is_correct === false) e.wrong.add(r.question_id);
+            }
+
+            // Signature per package = its 10 ids sorted + joined (order-independent match)
+            const pkgSig = REVISION_PACKAGES.map(p => [...p.ids].sort((a, b) => a - b).join(','));
+
+            const report = REVISION_PACKAGES.map(p => ({
+                topic: p.topic,
+                ids: p.ids,
+                attempts: [],                                   // {userId, score, correct, total, date}
+                wrongByPos: new Array(p.ids.length).fill(0),    // wrong count per question position
+                seenByPos: new Array(p.ids.length).fill(0)      // attempts that included each position
+            }));
+
+            for (const a of (attempts || [])) {
+                if (!studentIds.has(a.user_id)) continue;       // exclude admin / teacher attempts
+                const e = byAttempt[a.id];
+                if (!e) continue;
+                const sig = [...e.ids].sort((x, y) => x - y).join(',');
+                const idx = pkgSig.indexOf(sig);                // exact-set match to one package
+                if (idx < 0) continue;
+                const p = report[idx];
+                p.attempts.push({
+                    userId: a.user_id,
+                    score: a.score,
+                    correct: a.correct_answers,
+                    total: a.total_questions,
+                    date: a.completed_at
+                });
+                p.ids.forEach((qid, pos) => {
+                    p.seenByPos[pos]++;
+                    if (e.wrong.has(qid)) p.wrongByPos[pos]++;
+                });
+            }
+            return report;
+        }
+
+        function renderRevisionReport() {
+            const container = document.getElementById('revisionReportContainer');
+            if (!container) return;
+            const { students } = analyticsData;
+            const byId = {};
+            (students || []).forEach(s => { byId[s.id] = s; });
+
+            const report = computeRevisionReport();
+            const totalAttempts = report.reduce((s, p) => s + p.attempts.length, 0);
+            const distinctStudents = new Set();
+            report.forEach(p => p.attempts.forEach(a => distinctStudents.add(a.userId)));
+
+            if (totalAttempts === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No revision attempts yet</h3>' +
+                    '<p>When a premium student completes a Topical Revision MCQ set, their result appears here grouped by topic.</p></div>';
+                return;
+            }
+
+            let html = `
+                <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1.25rem;">
+                    <div class="stat-card" style="flex:1; min-width:150px;">
+                        <div class="stat-value">${distinctStudents.size}</div>
+                        <div class="stat-label">Students Using Revision</div>
+                    </div>
+                    <div class="stat-card" style="flex:1; min-width:150px;">
+                        <div class="stat-value">${totalAttempts}</div>
+                        <div class="stat-label">Total Revision Attempts</div>
+                    </div>
+                </div>
+                <p style="opacity:0.6; font-size:0.85rem; margin-bottom:1.5rem;">Each student's <strong>best</strong> score is shown per topic (a student may attempt a set more than once). Attempts by admin or teacher accounts are excluded. Q numbers under "Most missed" are the question's position (1-10) in the revision set.</p>
+            `;
+
+            report.forEach(p => {
+                // best attempt + try count + latest date, per student
+                const best = {}, count = {}, latest = {};
+                p.attempts.forEach(a => {
+                    if (!best[a.userId] || a.score > best[a.userId].score) best[a.userId] = a;
+                    count[a.userId] = (count[a.userId] || 0) + 1;
+                    if (!latest[a.userId] || new Date(a.date) > new Date(latest[a.userId])) latest[a.userId] = a.date;
+                });
+                const rowsData = Object.values(best).sort((x, y) => x.score - y.score); // weakest first
+                const nStudents = rowsData.length;
+
+                if (nStudents === 0) {
+                    html += `<div style="background:var(--surface); border-radius:12px; padding:1rem 1.25rem; margin-bottom:1rem; opacity:0.55;">
+                        <span style="font-weight:700; color:var(--primary);">${escapeHtml(p.topic)}</span>
+                        <span style="font-size:0.85rem; opacity:0.8; margin-left:0.75rem;">No attempts yet</span></div>`;
+                    return;
+                }
+
+                const avg = Math.round(rowsData.reduce((s, a) => s + a.score, 0) / nStudents);
+                const avgBadge = avg >= 70 ? 'score-high' : avg >= 50 ? 'score-mid' : 'score-low';
+
+                // most-missed question positions (highest wrong-rate first, cap 3)
+                const misses = p.wrongByPos
+                    .map((w, i) => ({ pos: i + 1, rate: p.seenByPos[i] ? Math.round((w / p.seenByPos[i]) * 100) : 0 }))
+                    .filter(m => m.rate > 0)
+                    .sort((a, b) => b.rate - a.rate)
+                    .slice(0, 3);
+                const missLine = misses.length
+                    ? `<div style="font-size:0.82rem; opacity:0.75; margin-top:0.6rem;">Most missed: ${misses.map(m => `Q${m.pos} (${m.rate}% wrong)`).join(', ')}</div>`
+                    : '';
+
+                const rows = rowsData.map(a => {
+                    const s = byId[a.userId] || { full_name: 'Unknown', role: '' };
+                    const badge = a.score >= 70 ? 'score-high' : a.score >= 50 ? 'score-mid' : 'score-low';
+                    const dt = new Date(latest[a.userId]).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const arch = s.role === 'archived' ? ' <span style="opacity:0.5; font-size:0.7rem;">(archived)</span>' : '';
+                    const tries = count[a.userId] > 1 ? ` <span style="opacity:0.6; font-size:0.78rem;">· ${count[a.userId]} tries</span>` : '';
+                    return `<div class="history-item">
+                        <div style="font-size:0.9rem;">${escapeHtml(s.full_name)}${arch}${tries}</div>
+                        <div><span class="score-badge ${badge}">${a.score}%</span></div>
+                        <div style="font-size:0.85rem;">${a.correct}/${a.total}</div>
+                        <div style="font-size:0.85rem; opacity:0.8;">${dt}</div>
+                    </div>`;
+                }).join('');
+
+                html += `
+                    <div style="background:var(--surface); border-radius:12px; padding:1.1rem 1.25rem; margin-bottom:1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.85rem;">
+                            <div style="font-weight:700; color:var(--primary); font-size:1.05rem;">${escapeHtml(p.topic)}</div>
+                            <div style="font-size:0.85rem;">${nStudents} student${nStudents > 1 ? 's' : ''} · avg <span class="score-badge ${avgBadge}">${avg}%</span></div>
+                        </div>
+                        <div class="history-item" style="background:rgba(0,217,255,0.1); font-size:0.78rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">
+                            <div>Student</div><div>Best</div><div>Correct</div><div>Last Attempt</div>
+                        </div>
+                        ${rows}
+                        ${missLine}
+                    </div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         function switchAnalyticsTab(tab, btn) {

@@ -8411,9 +8411,16 @@ Option D" required></textarea>
         // so we identify them by matching an attempt's EXACT set of answered question
         // ids against the known REVISION_PACKAGES id lists. Reuses data already loaded
         // into analyticsData (attempts + responses), so no extra fetch is needed.
+        // Test / staff accounts to exclude from the Revision report (emails, lower-case).
+        // Eric's own premium test login shows as full_name "justme".
+        const REVISION_EXCLUDED_EMAILS = ['erickua2003@yahoo.com'];
+
         function computeRevisionReport() {
             const { attempts, responses, students } = analyticsData;
-            const studentIds = new Set((students || []).map(s => s.id));
+            const excludedEmails = new Set(REVISION_EXCLUDED_EMAILS.map(e => e.toLowerCase()));
+            const studentIds = new Set((students || [])
+                .filter(s => !excludedEmails.has((s.email || '').toLowerCase()))
+                .map(s => s.id));
 
             // quiz_attempt_id -> { ids:Set of answered question ids, wrong:Set of wrong ids }
             const byAttempt = {};
@@ -8487,7 +8494,7 @@ Option D" required></textarea>
                         <div class="stat-label">Total Revision Attempts</div>
                     </div>
                 </div>
-                <p style="opacity:0.6; font-size:0.85rem; margin-bottom:1.5rem;">Each student's <strong>best</strong> score is shown per topic (a student may attempt a set more than once). Attempts by admin or teacher accounts are excluded. Q numbers under "Most missed" are the question's position (1-10) in the revision set.</p>
+                <p style="opacity:0.6; font-size:0.85rem; margin-bottom:1.5rem;">Each student's <strong>best</strong> score is shown per topic (a student may attempt a set more than once). Attempts by admin, teacher and test accounts are excluded. Q numbers under "Most missed" are the question's position (1-10) in the revision set.</p>
             `;
 
             report.forEach(p => {

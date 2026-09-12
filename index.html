@@ -8413,7 +8413,7 @@ Option D" required></textarea>
         // into analyticsData (attempts + responses), so no extra fetch is needed.
         // Test / staff accounts to exclude from the Revision report (emails, lower-case).
         // Eric's own premium test login shows as full_name "justme".
-        const REVISION_EXCLUDED_EMAILS = ['erickua2003@yahoo.com'];
+        const REVISION_EXCLUDED_EMAILS = ['erickua2003@yahoo.com', 'p2p3.premium.test@mrkhemistry.com'];
 
         function computeRevisionReport() {
             const { attempts, responses, students } = analyticsData;

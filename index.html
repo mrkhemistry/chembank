@@ -938,6 +938,12 @@
 
         .analytics-section { display: none; }
         .analytics-section.active { display: block; }
+        .ct-scroll { overflow-x: auto; }
+        .ct-row { display: grid; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(10, 14, 39, 0.6); border: 1px solid rgba(0, 217, 255, 0.15); border-radius: 10px; margin-bottom: 0.45rem; font-size: 0.9rem; min-width: 640px; align-items: center; }
+        .ct-students .ct-row { grid-template-columns: 1.5fr 0.6fr 0.6fr 0.7fr 1.5fr 1fr; }
+        .ct-concepts .ct-row { grid-template-columns: 1.7fr 0.6fr 0.9fr 0.6fr 1.6fr; }
+        .ct-head { background: rgba(0, 217, 255, 0.1); font-size: 0.76rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .ct-sub { font-size: 0.78rem; opacity: 0.75; }
 
         /* Student tabs */
         .student-tab {
@@ -2854,6 +2860,7 @@ Option D" required></textarea>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('topics', this)">Topics</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">Question Bank</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('revision', this)">Revision</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('trainer', this)">Concept Trainer</button>
                     </div>
 
                     <!-- Students tab -->
@@ -2881,6 +2888,13 @@ Option D" required></textarea>
                     <div id="analyticsRevision" class="analytics-section">
                         <div id="revisionReportContainer">
                             <div class="empty-state"><h3>Loading revision data...</h3></div>
+                        </div>
+                    </div>
+
+                    <!-- Concept Trainer tab (training_attempts: per student and per concept) -->
+                    <div id="analyticsTrainer" class="analytics-section">
+                        <div id="trainerReportContainer">
+                            <div class="empty-state"><h3>Loading Concept Trainer data...</h3></div>
                         </div>
                     </div>
                 </div>
@@ -7693,6 +7707,7 @@ Option D" required></textarea>
                 renderTopicChart();
                 renderQuestionBankChart();
                 renderRevisionReport();
+                loadTrainerReport();
 
             } catch (err) {
                 console.error('Analytics load error:', err);
@@ -8557,6 +8572,111 @@ Option D" required></textarea>
             });
 
             container.innerHTML = html;
+        }
+
+        // ═══ CONCEPT TRAINER REPORT (admin Analytics tab) ═══
+        // Every marked answer in Concept Trainer is a training_attempts row (admin row security reads them all).
+        // Reservation rows still in flight (marks_awarded null) are skipped; admin, teacher and the test accounts
+        // in REVISION_EXCLUDED_EMAILS are left out, the same way the Revision report does it.
+        let trainerData = null;   // { attempts, refs: part id -> 'TYS 2024 P3 Q2(a)(ii)' }
+        async function loadTrainerReport() {
+            const box = document.getElementById('trainerReportContainer');
+            if (!box || userRole !== 'admin') return;
+            box.innerHTML = '<div class="empty-state"><h3>Loading Concept Trainer data...</h3></div>';
+            try {
+                const attempts = await fetchAllPaginated(() => supabaseClient.from('training_attempts')
+                    .select('id, user_id, part_id, concept_id, kind, marks, marks_awarded, pass, created_at')
+                    .not('marks_awarded', 'is', null).order('created_at', { ascending: true }).order('id', { ascending: true }));
+                const partIds = [...new Set(attempts.map(a => a.part_id))];
+                const refs = {};
+                for (let i = 0; i < partIds.length; i += 500) {
+                    const slice = partIds.slice(i, i + 500);
+                    const chunk = await fetchAllPaginated(() => supabaseClient.from('structured_parts')
+                        .select('id, part_label, structured_questions!inner(year, paper, source, school, question_number)')
+                        .in('id', slice).order('id'));
+                    chunk.forEach(p => {
+                        const q = p.structured_questions || {};
+                        refs[p.id] = (q.source === 'TYS' ? 'TYS' : (q.school || 'Prelim')) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '');
+                    });
+                }
+                trainerData = { attempts, refs };
+                renderTrainerReport();
+            } catch (err) {
+                console.error('Concept Trainer report:', err);
+                box.innerHTML = '<div class="empty-state"><h3>Error loading Concept Trainer data</h3><p>' + escapeHtml(err.message || String(err)) + '</p></div>';
+            }
+        }
+        function computeTrainerReport() {
+            const { attempts, refs } = trainerData;
+            const excluded = new Set(REVISION_EXCLUDED_EMAILS.map(e => e.toLowerCase()));
+            const byId = {};
+            (analyticsData.students || []).forEach(s => { if (!excluded.has((s.email || '').toLowerCase())) byId[s.id] = s; });
+            const concept = {};
+            TRAINING_CONCEPTS.forEach(c => { concept[c.id] = c; });
+            const perStudent = {}, perConcept = {};
+            attempts.forEach(a => {
+                const s = byId[a.user_id]; if (!s) return;
+                const st = perStudent[a.user_id] || (perStudent[a.user_id] = { student: s, attempts: 0, passes: 0, misses: 0, concepts: {}, last: null });
+                st.attempts++; if (a.pass) st.passes++; else st.misses++;
+                if (!st.last || a.created_at > st.last) st.last = a.created_at;
+                const sc = st.concepts[a.concept_id] || (st.concepts[a.concept_id] = { passed: new Set(), misses: 0 });
+                if (a.pass) sc.passed.add(a.part_id); else sc.misses++;
+                const c = perConcept[a.concept_id] || (perConcept[a.concept_id] = { id: a.concept_id, attempts: 0, passes: 0, misses: 0, students: new Set(), parts: {} });
+                c.attempts++; if (a.pass) c.passes++; else c.misses++; c.students.add(a.user_id);
+                const pp = c.parts[a.part_id] || (c.parts[a.part_id] = { attempts: 0, misses: 0 });
+                pp.attempts++; if (!a.pass) pp.misses++;
+            });
+            const nameOf = cid => (concept[cid] || {}).name || ('Concept ' + cid);
+            const studentRows = Object.values(perStudent).map(st => {
+                const ticked = Object.values(st.concepts).filter(c => c.passed.size >= TRAINING_PASSES_NEEDED).length;
+                let weakest = null;
+                Object.entries(st.concepts).forEach(([cid, c]) => { if (c.misses > 0 && (!weakest || c.misses > weakest.misses)) weakest = { cid: Number(cid), misses: c.misses }; });
+                return { name: st.student.full_name || st.student.email || 'Unknown', role: st.student.role || '', attempts: st.attempts, passes: st.passes, misses: st.misses,
+                         tried: Object.keys(st.concepts).length, ticked, last: st.last, weakest: weakest ? nameOf(weakest.cid) + ' (' + weakest.misses + ' missed)' : '' };
+            }).sort((a, b) => b.attempts - a.attempts || String(b.last || '').localeCompare(String(a.last || '')));
+            const conceptRows = Object.values(perConcept).map(c => {
+                const worst = Object.entries(c.parts).sort((x, y) => y[1].misses - x[1].misses || y[1].attempts - x[1].attempts)[0];
+                return { name: nameOf(c.id), topic: (concept[c.id] || {}).topic || '', attempts: c.attempts, passes: c.passes, misses: c.misses,
+                         rate: Math.round(100 * c.misses / c.attempts), students: c.students.size,
+                         worst: worst && worst[1].misses ? (refs[worst[0]] || ('part ' + worst[0])) + ' (' + worst[1].misses + ' of ' + worst[1].attempts + ' missed)' : '' };
+            }).sort((a, b) => b.misses - a.misses || b.rate - a.rate || b.attempts - a.attempts);
+            return { studentRows, conceptRows };
+        }
+        function renderTrainerReport() {
+            const box = document.getElementById('trainerReportContainer');
+            if (!box || !trainerData) return;
+            const { studentRows, conceptRows } = computeTrainerReport();
+            const marked = studentRows.reduce((s, r) => s + r.attempts, 0);
+            if (!marked) {
+                box.innerHTML = '<div class="empty-state"><h3>No Concept Trainer attempts yet</h3><p>When a premium student has an answer marked in Concept Trainer, it appears here by student and by concept.</p></div>';
+                return;
+            }
+            const passes = studentRows.reduce((s, r) => s + r.passes, 0);
+            const ticked = studentRows.reduce((s, r) => s + r.ticked, 0);
+            const when = iso => iso ? new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            const card = (v, l) => '<div class="stat-card" style="flex:1; min-width:140px;"><div class="stat-value">' + v + '</div><div class="stat-label">' + l + '</div></div>';
+            let html = '<div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1.25rem;">'
+                + card(studentRows.length, 'Students Using Concept Trainer') + card(marked, 'Marked Answers') + card(Math.round(100 * passes / marked) + '%', 'Pass Rate') + card(ticked, 'Concepts Ticked Off') + '</div>'
+                + '<p style="opacity:0.6; font-size:0.85rem; margin-bottom:1.25rem;">Every marked answer counts once. A concept is ticked off after two different questions are passed. Admin, teacher and test accounts are left out.</p>';
+            html += '<div style="font-weight:700; color:var(--primary); font-size:1.05rem; margin:0.5rem 0 0.75rem;">By student</div><div class="ct-scroll ct-students">'
+                + '<div class="ct-row ct-head"><div>Student</div><div>Marked</div><div>Passed</div><div>Ticked off</div><div>Weakest concept</div><div>Last attempt</div></div>'
+                + studentRows.map(r => {
+                    const pct = Math.round(100 * r.passes / r.attempts);
+                    const badge = pct >= 70 ? 'score-high' : pct >= 50 ? 'score-mid' : 'score-low';
+                    const arch = r.role === 'archived' ? ' <span style="opacity:0.5; font-size:0.7rem;">(archived)</span>' : '';
+                    return '<div class="ct-row"><div>' + escapeHtml(r.name) + arch + '<div class="ct-sub">' + r.tried + ' concept' + (r.tried === 1 ? '' : 's') + ' tried</div></div>'
+                        + '<div>' + r.attempts + '</div><div><span class="score-badge ' + badge + '">' + r.passes + '/' + r.attempts + '</span></div><div>' + r.ticked + '</div>'
+                        + '<div class="ct-sub" style="opacity:0.9;">' + escapeHtml(r.weakest || '') + '</div><div class="ct-sub" style="opacity:0.9;">' + escapeHtml(when(r.last)) + '</div></div>';
+                }).join('') + '</div>';
+            html += '<div style="font-weight:700; color:var(--primary); font-size:1.05rem; margin:1.5rem 0 0.75rem;">Most missed concepts</div><div class="ct-scroll ct-concepts">'
+                + '<div class="ct-row ct-head"><div>Concept</div><div>Marked</div><div>Missed</div><div>Students</div><div>Most missed question</div></div>'
+                + conceptRows.map(r => {
+                    const badge = r.rate >= 50 ? 'score-low' : r.rate >= 25 ? 'score-mid' : 'score-high';
+                    return '<div class="ct-row"><div>' + escapeHtml(r.name) + '<div class="ct-sub">' + escapeHtml(r.topic) + '</div></div><div>' + r.attempts + '</div>'
+                        + '<div><span class="score-badge ' + badge + '">' + r.misses + ' (' + r.rate + '%)</span></div><div>' + r.students + '</div>'
+                        + '<div class="ct-sub" style="opacity:0.9;">' + escapeHtml(r.worst || '') + '</div></div>';
+                }).join('') + '</div>';
+            box.innerHTML = html;
         }
 
         function switchAnalyticsTab(tab, btn) {

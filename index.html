@@ -2407,6 +2407,7 @@ Option D" required></textarea>
   #trainingSection .tr-fb-block h4 { margin: 0 0 4px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); font-weight: 500; }
   #trainingSection .tr-fb-block p, #trainingSection .tr-fb-block div.tr-ms { margin: 0; line-height: 1.6; color: var(--light); white-space: pre-wrap; }
   #trainingSection .tr-ms { border-left: 3px solid var(--primary); padding-left: 12px; }
+  #trainingSection .tr-your-answer p { border-left: 3px solid var(--cyan-border); padding-left: 12px; }
   #trainingSection .tr-note { color: var(--danger); font-size: 0.9rem; margin-top: 8px; }
   #trainingSection .tr-flag { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--cyan-border); }
   #trainingSection .tr-flag-link { background: none; border: none; padding: 0; cursor: pointer; color: rgba(240,244,248,0.75); font: inherit; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
@@ -2418,6 +2419,7 @@ Option D" required></textarea>
   #trainingSection .tr-flag-card { background: var(--surface); border: 1px solid var(--cyan-border); border-left: 3px solid var(--danger); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
   #trainingSection .tr-flag-card.resolved { border-left-color: var(--success); opacity: 0.7; }
   #trainingSection .tr-flag-meta { font-family: 'DM Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  #trainingSection .tr-flag-who { color: var(--light); font-weight: 500; }
   #trainingSection .tr-flag-card h4 { margin: 8px 0 2px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); font-weight: 500; }
   #trainingSection .tr-flag-card p { margin: 0; color: var(--light); line-height: 1.5; white-space: pre-wrap; font-size: 0.93rem; }
   #trainingSection .tr-flag-card details summary { cursor: pointer; font-size: 0.8rem; color: var(--primary); margin-top: 6px; }
@@ -9138,12 +9140,21 @@ Option D" required></textarea>
             if (userRole !== 'admin') { box.style.display = 'none'; return; }
             const { data, error } = await supabaseClient
                 .from('training_flags')
-                .select('id, created_at, reason, answer_text, marks, marks_awarded, pass, feedback, resolved, concept_id, structured_parts(id, part_label, part_text, mark_scheme, structured_questions(year, paper, source, school, question_number))')
+                .select('id, user_id, created_at, reason, answer_text, marks, marks_awarded, pass, feedback, resolved, concept_id, structured_parts(id, part_label, part_text, mark_scheme, structured_questions(year, paper, source, school, question_number))')
                 .order('resolved', { ascending: true }).order('created_at', { ascending: false }).limit(50);
             if (error) { box.style.display = 'none'; return; }
-            trainingRenderFlags(data || []);
+            // Eric (14 Sep 2026): name the student on each flag. No FK from training_flags to user_profiles, so look the profiles up separately (admin reads all profiles).
+            const rows = data || [];
+            const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+            const who = {};
+            if (ids.length) {
+                const { data: profs } = await supabaseClient.from('user_profiles').select('id, full_name, email').in('id', ids);
+                (profs || []).forEach(u => { who[u.id] = u; });
+            }
+            trainingRenderFlags(rows, who);
         }
-        function trainingRenderFlags(rows) {
+        function trainingRenderFlags(rows, who) {
+            who = who || {};
             const box = document.getElementById('trainingFlags'); if (!box) return;
             if (!rows.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
             const conceptName = id => { const c = TRAINING_CONCEPTS.find(x => x.id === id); return c ? c.name : ''; };
@@ -9154,8 +9165,10 @@ Option D" required></textarea>
                 const ref = q.year ? ((q.source === 'TYS' ? 'TYS' : (q.school || 'Prelim')) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '')) : 'Part ' + (p.id || '');
                 const fb = r.feedback || {};
                 const when = r.created_at ? new Date(r.created_at).toLocaleString('en-SG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                const u = who[r.user_id] || {};
+                const student = escapeHtml(u.full_name || u.email || 'Unknown student') + (u.full_name && u.email ? ' (' + escapeHtml(u.email) + ')' : '');
                 html += '<div class="tr-flag-card' + (r.resolved ? ' resolved' : '') + '" data-id="' + r.id + '">'
-                    + '<div class="tr-flag-meta"><span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(conceptName(r.concept_id)) + '</span><span>' + escapeHtml(String(r.marks_awarded != null ? r.marks_awarded : '?')) + '/' + escapeHtml(String(r.marks != null ? r.marks : '?')) + (r.pass ? ' pass' : ' miss') + '</span><span>' + escapeHtml(when) + '</span></div>'
+                    + '<div class="tr-flag-meta"><span class="tr-flag-who">' + student + '</span><span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(conceptName(r.concept_id)) + '</span><span>' + escapeHtml(String(r.marks_awarded != null ? r.marks_awarded : '?')) + '/' + escapeHtml(String(r.marks != null ? r.marks : '?')) + (r.pass ? ' pass' : ' miss') + '</span><span>' + escapeHtml(when) + '</span></div>'
                     + '<h4>Student says</h4><p>' + trText(r.reason) + '</p>'
                     + '<h4>Their answer</h4><p>' + trText(r.answer_text) + '</p>'
                     + (fb.missing ? '<h4>Marker: missing</h4><p>' + trText(fb.missing) + '</p>' : '')
@@ -9561,16 +9574,18 @@ Option D" required></textarea>
             trState.last = { attemptId: body.attempt_id || null, part: trState.part, conceptId: trState.conceptId, answer: answer, body: body, flagged: false };
             trSaveProgress(progress);
             trainingRenderSessionHead();
-            trainingRenderFeedback(body, rec);
+            trainingRenderFeedback(body, rec, answer);
         }
 
-        function trainingRenderFeedback(body, rec) {
+        function trainingRenderFeedback(body, rec, answer) {
             const fb = body.feedback || {};
             const pass = !!body.pass;
             let html = '<div class="tr-fb">';
             html += '<div class="tr-verdict ' + (pass ? 'pass' : 'fail') + '"><span>' + (pass ? 'Pass' : 'Not yet') + '</span>'
                 + '<span class="tr-score">' + escapeHtml(String(body.marks_awarded != null ? body.marks_awarded : '?')) + '/' + escapeHtml(String(body.marks || '?')) + '</span></div>';
             if (fb.overall) html += '<p style="margin:0;color:var(--light);line-height:1.6;">' + trText(fb.overall) + '</p>';
+            // Eric (14 Sep 2026): the answer box is hidden once marked, so quote what the student wrote under the summary line (plain text, no markup)
+            if (answer) html += '<div class="tr-fb-block tr-your-answer"><h4>Your answer</h4><p>' + escapeHtml(String(answer)) + '</p></div>';
             if (fb.missing) html += '<div class="tr-fb-block"><h4>Points you left out</h4><p>' + trText(fb.missing) + '</p></div>';
             if (fb.incorrect) html += '<div class="tr-fb-block"><h4>Wrong or muddled</h4><p>' + trText(fb.incorrect) + '</p></div>';
             if (fb.tips) html += '<div class="tr-fb-block"><h4>Tip</h4><p>' + trText(fb.tips) + '</p></div>';

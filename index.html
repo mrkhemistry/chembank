@@ -10762,17 +10762,71 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 const badges='<span class="sq-badge '+diffClass+'">'+sqEsc(p.difficulty||'')+'</span>'
                     +(p.is_novel_context?'<span class="sq-badge sq-novel">novel</span>':'')
                     +(p.self_contained===false?'<span class="sq-badge sq-ctx">needs '+sqEsc((p.context_parts||[]).join(', '))+'</span>':'');
+                // A part that leans on an earlier part (self_contained===false) gets a "show part"
+                // toggle that renders it exactly as the student worksheet does (stem + the context
+                // parts it pulls in + figures), so an admin can confirm the dependency is really wired.
+                const svShow=(p.self_contained===false && userRole==='admin');
+                const svToggle=svShow?'<button class="sq-editbtn sq-showpart" id="sqsvbtn-'+p.id+'" onclick="sqShowStudentView(event,'+p.id+')">show part</button>':'';
+                const svBox=svShow?'<div class="sq-studentview" id="sqsv-'+p.id+'" hidden></div>':'';
                 return '<div class="sq-part'+(isMatch?' sq-match':'')+'">'
-                    +'<div class="sq-part-head"><b>'+sqEsc(p.part_label||'')+'</b><span style="opacity:0.6">['+(p.marks==null?'':p.marks)+']</span>'+badges
+                    +'<div class="sq-part-head"><b>'+sqEsc(p.part_label||'')+'</b><span style="opacity:0.6">['+(p.marks==null?'':p.marks)+']</span>'+badges+svToggle
                     +'<span class="sq-tag">'+sqEsc(c.topic||'?')+' &rsaquo; '+sqEsc(c.name||'?')+'</span>'+'<button class="sq-editbtn" onclick="sqOpenEditPart('+p.id+')">edit</button></div>'
                     +'<div class="sq-part-text">'+sqEsc(p.part_text||'')+'</div>'
-                    +'<div class="sq-ms"><b>Mark scheme:</b> '+sqEsc(p.mark_scheme||'')+'</div></div>';
+                    +'<div class="sq-ms"><b>Mark scheme:</b> '+sqEsc(p.mark_scheme||'')+'</div>'+svBox+'</div>';
             }).join('');
             return '<div class="sq-card">'
                 +'<div class="sq-qhead">'+q.year+' '+sqEsc(q.paper)+' &middot; Q'+q.question_number+(q.section?(' &middot; Section '+sqEsc(q.section)):'')+' &middot; '+(q.total_marks==null?'':q.total_marks)+' marks <span style="opacity:0.5;font-weight:400">('+sqEsc(q.answer_source||'')+')</span> <button class="sq-editbtn" onclick="sqOpenEditQuestion('+q.id+')">edit stem</button></div>'
                 +(q.stem?'<div class="sq-stem">'+sqEsc(q.stem)+'</div>':'')
                 +(figs?'<div class="sq-figs">'+figs+'</div>':'')
                 +parts+'</div>';
+        }
+
+        // Admin preview: render one part exactly as the student worksheet shows it (stem + the
+        // context parts it pulls in + figures + rendered formulae), in an isolated iframe, so an
+        // admin reviewing the browse list can confirm a "needs (x)" dependency is really wired.
+        // Admin-only. The in-flight guard lives OUTSIDE the DOM (a re-render replaces the list markup,
+        // which would drop a DOM flag), and every DOM write re-fetches the live element by id so a
+        // list re-render during the await can never write to a detached node.
+        const sqSvInFlight=new Set();
+        async function sqShowStudentView(ev, partId){
+            if (userRole!=='admin') return;            // admin-only, matching where the button renders
+            const getBox=()=>document.getElementById('sqsv-'+partId);
+            const getBtn=()=>document.getElementById('sqsvbtn-'+partId);
+            const box=getBox();
+            if (!box) return;
+            if (!box.hidden){                          // already open -> close
+                box.hidden=true; box.innerHTML='';
+                const b=getBtn(); if (b) b.textContent='show part';
+                return;
+            }
+            if (sqSvInFlight.has(partId)) return;       // a request is already loading for this part
+            const q=(sqData||[]).find(qq=>(qq.parts||[]).some(p=>String(p.id)===String(partId)));
+            if (!q){ box.hidden=false; box.textContent='Could not find the question for this part.'; return; }
+            sqSvInFlight.add(partId);
+            { const b=getBtn(); if (b){ b.disabled=true; b.textContent='loading…'; } }
+            try{
+                // Signed URLs for the private figure bucket, exactly as the Print worksheet path does.
+                const folders=new Set();
+                (q.figures||[]).forEach(f=>{ const fo=sqFigFolder(f.storage_path); if(fo) folders.add(fo); });
+                await sqLoadFigFolders(Array.from(folders), false);
+                const liveBox=getBox();                 // re-fetch: the list may have re-rendered while awaiting
+                if (!liveBox || !document.body.contains(liveBox)) return;
+                const item={ q, matchIds:new Set([partId]), partFilter:true };
+                const docHtml=sqBuildWorksheetDoc([item], ['student'], 'Student view', true);
+                const ifr=document.createElement('iframe');
+                ifr.setAttribute('title','Student view preview');
+                ifr.style.cssText='width:100%;height:520px;border:1px solid var(--border);border-radius:6px;background:#fff;margin-top:8px;';
+                ifr.srcdoc=docHtml;
+                liveBox.innerHTML=''; liveBox.appendChild(ifr); liveBox.hidden=false;
+                const b=getBtn(); if (b) b.textContent='hide part';
+            }catch(e){
+                const eb=getBox();
+                if (eb && document.body.contains(eb)){ eb.hidden=false; eb.textContent='Could not render the preview: '+((e&&e.message)||e); }
+                const b=getBtn(); if (b) b.textContent='show part';
+            }finally{
+                sqSvInFlight.delete(partId);            // off-DOM flag, always safe to clear
+                const b=getBtn(); if (b) b.disabled=false;
+            }
         }
 
         function renderStructuredFig(f){
@@ -11004,7 +11058,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
 
         // types is an array: ['student'], ['tutor'], or ['student','tutor'] (both in ONE document, each
         // version starting on a new page). A single document means a single pop-up, which the browser allows.
-        function sqBuildWorksheetDoc(items, types, title){
+        function sqBuildWorksheetDoc(items, types, title, preview){
             const wsTitle=title||'Paper 2 & 3 Worksheet';
             const tabLabel=(types.length>1)?'STUDENT + TUTOR':(types[0]==='tutor'?'TUTOR ANSWER KEY':'STUDENT WORKSHEET');
             const sections=types.map(function(t){ return sqBuildWorksheetSection(items, t, title); }).join('');
@@ -11047,13 +11101,13 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'.q-ansfigs-lbl{font-size:8.5pt;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;color:#333;margin-bottom:4px;}'
               +'.ws-footer{margin-top:22px;padding-top:8px;border-top:1px solid #ccc;font-size:8pt;color:#777;display:flex;justify-content:space-between;}'
               +'</style>'
-              +'<script>'
+              +(preview?'':('<script>'
               +'(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}'
               +'function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();'
-              +'<\/script>'
+              +'<\/script>'))
               +'<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
               +'</head><body>'
-              +'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>'
+              +(preview?'':'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>')
               +sections
               +'</body></html>';
         }

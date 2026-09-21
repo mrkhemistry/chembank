@@ -5070,7 +5070,7 @@ Option D" required></textarea>
                             <button class="btn btn-danger" style="padding: 0.5rem 1rem;" onclick="deleteQuestionFromSupabase(${question.id})">Delete</button>
                         </div>
                     </div>
-                    <div class="question-text">${escapeHtml(question.text)}</div>
+                    <div class="question-text">${sanitizeQuestionText(question.text)}</div>
                     ${imagesHtml}
                     <ul class="options-list">
                         ${question.options.map((opt, idx) => `
@@ -5080,7 +5080,7 @@ Option D" required></textarea>
                             </li>
                         `).join('')}
                     </ul>
-                    ${(question.explanation || question.explanation_image_url) ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong>${question.explanation ? ` ${escapeHtml(question.explanation)}` : ''}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
+                    ${(question.explanation || question.explanation_image_url) ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong>${question.explanation ? ` ${sanitizeQuestionText(question.explanation)}` : ''}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
                     ${question.video_url ? `<div style="margin-top: 1rem;"><a href="${escapeHtml(question.video_url)}" target="_blank" style="color: var(--primary);">Video Explanation</a></div>` : ''}
                 </div>
             `}).join('');

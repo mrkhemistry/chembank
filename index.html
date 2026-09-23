@@ -2428,6 +2428,34 @@ Option D" required></textarea>
   #trainingSection .tr-flag-card p { margin: 0; color: var(--light); line-height: 1.5; white-space: pre-wrap; font-size: 0.93rem; }
   #trainingSection .tr-flag-card details summary { cursor: pointer; font-size: 0.8rem; color: var(--primary); margin-top: 6px; }
   #trainingSection .tr-flag-card label { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; color: var(--light); cursor: pointer; }
+  /* Content flags: student "Report a problem" widget (MCQ quiz + Paper 2 & 3) */
+  .cf-wrap { margin-top: 14px; }
+  .cf-link { background: none; border: none; padding: 0; cursor: pointer; color: rgba(240,244,248,0.75); font: inherit; font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; }
+  .cf-link:hover, .cf-link:focus-visible { color: var(--primary); outline: none; }
+  .cf-link.cf-sent { color: var(--success); text-decoration: none; cursor: default; }
+  .cf-box { margin-top: 10px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--cyan-border); border-radius: 10px; max-width: 620px; }
+  .cf-box .cf-prompt { font-size: 0.85rem; color: rgba(240,244,248,0.85); margin-bottom: 8px; }
+  .cf-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .cf-cat { background: none; border: 1px solid var(--cyan-border); color: var(--light); border-radius: 20px; padding: 5px 12px; font: inherit; font-size: 0.82rem; cursor: pointer; }
+  .cf-cat:hover, .cf-cat:focus-visible { border-color: var(--primary); outline: none; }
+  .cf-cat.active { background: var(--primary); color: #04141a; border-color: var(--primary); font-weight: 600; }
+  .cf-note { width: 100%; box-sizing: border-box; background: var(--surface2); color: var(--white); border: 1px solid var(--cyan-border); border-radius: 8px; padding: 0.5rem 0.6rem; font: inherit; font-size: 0.9rem; resize: vertical; }
+  .cf-actions { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+  .cf-send { background: var(--primary); color: #04141a; border: none; border-radius: 20px; padding: 6px 16px; font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+  .cf-send:disabled { opacity: 0.6; cursor: default; }
+  .cf-cancel { background: none; border: none; color: rgba(240,244,248,0.7); font: inherit; font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
+  .cf-done { margin-top: 8px; font-size: 0.85rem; color: var(--success); }
+  /* Admin Reports tab cards */
+  .cf-card { background: var(--surface); border: 1px solid var(--cyan-border); border-left: 3px solid var(--danger); border-radius: 10px; padding: 12px 14px; margin: 8px 0; }
+  .cf-card.resolved { border-left-color: var(--success); opacity: 0.7; }
+  .cf-meta { font-family: 'DM Mono', Consolas, monospace; font-size: 0.78rem; color: var(--primary); margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+  .cf-who { color: var(--light); font-weight: 500; }
+  .cf-badge { background: rgba(0,229,255,0.15); border: 1px solid var(--cyan-border); color: var(--primary); border-radius: 12px; padding: 1px 10px; font-family: inherit; }
+  .cf-card h4 { margin: 8px 0 2px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(240,244,248,0.75); font-weight: 500; }
+  .cf-card p { margin: 0; color: var(--light); line-height: 1.5; white-space: pre-wrap; font-size: 0.93rem; }
+  .cf-card details summary { cursor: pointer; font-size: 0.8rem; color: var(--primary); margin-top: 6px; }
+  .cf-snippet { color: var(--light); font-size: 0.9rem; margin-top: 6px; }
+  .cf-card label { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; color: var(--light); cursor: pointer; }
   #trainingSection .tr-divider { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1.5rem; color: rgba(240,244,248,0.75); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
   #trainingSection .tr-divider::before, #trainingSection .tr-divider::after { content: ''; flex: 1; border-top: 1px solid var(--cyan-border); }
   #trainingSection .tr-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
@@ -2761,6 +2789,8 @@ Option D" required></textarea>
                         <label>Explanation</label>
                         <div style="background: rgba(10, 14, 39, 0.8); padding: 1rem; border-radius: 8px; margin-top: 0.5rem;" id="quizExplanation"></div>
                     </div>
+
+                    <div id="quizReport"></div>
                 </div>
                 
                 <div style="display: flex; gap: 1rem; justify-content: center;">
@@ -2867,6 +2897,7 @@ Option D" required></textarea>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">Question Bank</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('revision', this)">Revision</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('trainer', this)">Concept Trainer</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('reports', this)">Reports</button>
                     </div>
 
                     <!-- Students tab -->
@@ -2901,6 +2932,13 @@ Option D" required></textarea>
                     <div id="analyticsTrainer" class="analytics-section">
                         <div id="trainerReportContainer">
                             <div class="empty-state"><h3>Loading Concept Trainer data...</h3></div>
+                        </div>
+                    </div>
+
+                    <!-- Reports tab (content_flags: student "Report a problem" on MCQ + Paper 2 & 3) -->
+                    <div id="analyticsReports" class="analytics-section">
+                        <div id="contentFlagsContainer">
+                            <div class="empty-state"><h3>Loading reports...</h3></div>
                         </div>
                     </div>
                 </div>
@@ -5643,7 +5681,27 @@ Option D" required></textarea>
             document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
             document.getElementById('nextBtn').style.display = currentQuestionIndex < currentQuiz.length - 1 ? 'block' : 'none';
             document.getElementById('quizSubmitBtn').style.display = currentQuestionIndex === currentQuiz.length - 1 ? 'block' : 'none';
-            
+
+            // "Report a problem" widget for this question (any logged-in student)
+            const quizReport = document.getElementById('quizReport');
+            if (quizReport) {
+                if (currentUser && currentUser.id && question && question.id != null) {
+                    quizReport.innerHTML = contentFlagWidget({
+                        source: 'mcq',
+                        question_id: question.id,
+                        context: {
+                            topic: (Array.isArray(question.topics) && question.topics.length ? question.topics[0] : (question.topic || '')),
+                            source: question.source || '',
+                            year: question.source_year || '',
+                            school: question.school || '',
+                            difficulty: question.difficulty || ''
+                        }
+                    });
+                } else {
+                    quizReport.innerHTML = '';
+                }
+            }
+
             // Render math — only scan the quiz question, not the whole page
             if (window.MathJax) {
                 MathJax.typesetClear([document.getElementById('quizView')]);
@@ -6926,6 +6984,22 @@ Option D" required></textarea>
                 html += '<div class="p2p3-part"><div class="p2p3-part-h"><b>Answer diagrams</b></div>';
                 html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
                 html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none"><div class="p2p3-figs">'+ansLoose.map(p2p3FigImg).join('')+'</div></div></div>';
+            }
+            // "Report a problem" widget for this question (premium students who can see it)
+            if (currentUser && currentUser.id) {
+                const cfTopicEl = document.getElementById('p2p3Topic');
+                const cfTopic = (cfTopicEl && cfTopicEl.selectedIndex >= 0) ? cfTopicEl.options[cfTopicEl.selectedIndex].text : '';
+                html += contentFlagWidget({
+                    source: 'p2p3',
+                    structured_question_id: q.id,
+                    context: {
+                        topic: cfTopic,
+                        year: q.year || '',
+                        paper: q.paper || '',
+                        school: (q.school || q.source || ''),
+                        question_number: q.question_number || ''
+                    }
+                });
             }
             html += '</div>';
             return html;
@@ -8691,6 +8765,7 @@ Option D" required></textarea>
             btn.classList.add('active');
             const sectionId = 'analytics' + tab.charAt(0).toUpperCase() + tab.slice(1);
             document.getElementById(sectionId).classList.add('active');
+            if (tab === 'reports') contentFlagsLoadAdmin();
         }
 
         function openDrilldown(userId, studentName) {
@@ -9136,6 +9211,160 @@ Option D" required></textarea>
             const link = document.getElementById('trainingFlagLink'); if (link) link.style.display = 'none';
             done.textContent = 'Sent to Mr Khemistry. Thank you.';
             done.style.display = 'block';
+        }
+
+        // ================= Content flags: student "Report a problem" (MCQ quiz + Paper 2 & 3) =================
+        // Student side: a "Report a problem" link on each question opens quick-pick chips + an optional note and
+        // inserts one row into public.content_flags. Admin side: the Reports tab (analytics) lists open/resolved flags.
+        const CONTENT_FLAG_CATS = [
+            { slug: 'missing_figure', label: 'Missing or broken figure' },
+            { slug: 'raw_tags',       label: 'Raw tags / code showing' },
+            { slug: 'duplicate',      label: 'Duplicate question' },
+            { slug: 'wrong_answer',   label: 'Wrong answer / mark scheme' },
+            { slug: 'typo',           label: 'Typo in the text' },
+            { slug: 'other',          label: 'Something else' }
+        ];
+        function cfCatLabel(slug) { const c = CONTENT_FLAG_CATS.find(x => x.slug === slug); return c ? c.label : (slug || 'Other'); }
+        let cfSeq = 0;
+        const cfTargets = {};   // cfid -> { source, question_id?, structured_question_id?, context }
+        function contentFlagWidget(target) {
+            const cfid = 'cf' + (++cfSeq);
+            cfTargets[cfid] = target;
+            const chips = CONTENT_FLAG_CATS.map(c =>
+                '<button type="button" class="cf-cat" data-slug="' + c.slug + '" onclick="contentFlagPickCat(this)">' + escapeHtml(c.label) + '</button>'
+            ).join('');
+            return '<div class="cf-wrap" data-cfid="' + cfid + '">'
+                + '<button type="button" class="cf-link" onclick="contentFlagOpen(this)">Report a problem</button>'
+                + '<div class="cf-box" style="display:none;">'
+                +   '<div class="cf-prompt">Spotted something wrong with this question? Tell Mr Khemistry so it can be fixed.</div>'
+                +   '<div class="cf-cats">' + chips + '</div>'
+                +   '<textarea class="cf-note" rows="2" maxlength="2000" placeholder="Add any detail (optional), e.g. which part is affected"></textarea>'
+                +   '<div class="cf-actions">'
+                +     '<button type="button" class="cf-send" onclick="contentFlagSend(this)">Send report</button>'
+                +     '<button type="button" class="cf-cancel" onclick="contentFlagCancel(this)">Cancel</button>'
+                +   '</div>'
+                +   '<div class="cf-done" style="display:none;"></div>'
+                + '</div></div>';
+        }
+        function cfWrapOf(el) { return (el && el.closest) ? el.closest('.cf-wrap') : null; }
+        function contentFlagOpen(btn) {
+            const w = cfWrapOf(btn); if (!w) return;
+            const box = w.querySelector('.cf-box'); if (box) box.style.display = 'block';
+            btn.style.display = 'none';
+            const ta = w.querySelector('.cf-note'); if (ta) ta.focus();
+        }
+        function contentFlagCancel(btn) {
+            const w = cfWrapOf(btn); if (!w) return;
+            const box = w.querySelector('.cf-box'); if (box) box.style.display = 'none';
+            const link = w.querySelector('.cf-link'); if (link) link.style.display = '';
+            w.querySelectorAll('.cf-cat.active').forEach(c => c.classList.remove('active'));
+            const done = w.querySelector('.cf-done'); if (done) done.style.display = 'none';
+        }
+        function contentFlagPickCat(btn) {
+            const w = cfWrapOf(btn); if (!w) return;
+            w.querySelectorAll('.cf-cat').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        async function contentFlagSend(btn) {
+            const w = cfWrapOf(btn); if (!w) return;
+            const target = cfTargets[w.getAttribute('data-cfid')];
+            const done = w.querySelector('.cf-done');
+            if (!target) return;
+            const cat = w.querySelector('.cf-cat.active');
+            if (!cat) { if (done) { done.textContent = 'Please pick what is wrong first.'; done.style.display = 'block'; } return; }
+            if (!currentUser || !currentUser.id) { alert('Your session has expired. Please log in again.'); return; }
+            const note = (w.querySelector('.cf-note').value || '').trim().slice(0, 2000);
+            const row = {
+                user_id: currentUser.id,
+                source: target.source,
+                question_id: (target.question_id != null ? target.question_id : null),
+                structured_question_id: (target.structured_question_id != null ? target.structured_question_id : null),
+                category: cat.getAttribute('data-slug'),
+                note: note || null,
+                context: target.context || null
+            };
+            btn.disabled = true;
+            const { error } = await supabaseClient.from('content_flags').insert(row);
+            btn.disabled = false;
+            if (error) {
+                const dup = String(error.code || '') === '23505';
+                if (done) { done.textContent = dup ? 'You have already reported this one. Thank you.' : 'Could not send the report. Please try again.'; done.style.display = 'block'; }
+                if (dup) { const box = w.querySelector('.cf-box'); if (box) box.style.display = 'none'; const link = w.querySelector('.cf-link'); if (link) { link.textContent = 'Already reported'; link.classList.add('cf-sent'); link.style.display = ''; } }
+                return;
+            }
+            const box = w.querySelector('.cf-box'); if (box) box.style.display = 'none';
+            const link = w.querySelector('.cf-link'); if (link) { link.textContent = 'Reported — thank you'; link.classList.add('cf-sent'); link.style.display = ''; }
+        }
+
+        // ---- Admin Reports tab (reads every content_flags row; lazy-loaded when the tab opens) ----
+        let cfAdminCache = { rows: [], who: {}, mcq: {}, sq: {} };
+        async function contentFlagsLoadAdmin() {
+            const box = document.getElementById('contentFlagsContainer'); if (!box) return;
+            if (userRole !== 'admin') { box.innerHTML = '<div class="empty-state"><h3>Admins only.</h3></div>'; return; }
+            box.innerHTML = '<div class="empty-state"><h3>Loading reports...</h3></div>';
+            const COLS = 'id, user_id, created_at, source, question_id, structured_question_id, structured_part_id, category, note, context, resolved';
+            const q = () => supabaseClient.from('content_flags').select(COLS).order('created_at', { ascending: false });
+            const [openRes, doneRes] = await Promise.all([ q().eq('resolved', false).limit(300), q().eq('resolved', true).limit(60) ]);
+            if (openRes.error || doneRes.error) { box.innerHTML = '<div class="empty-state"><h3>Could not load reports.</h3></div>'; return; }
+            const rows = (openRes.data || []).concat(doneRes.data || []);
+            const who = {}, mcq = {}, sq = {};
+            const jobs = [];
+            const uids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+            if (uids.length) jobs.push(supabaseClient.from('user_profiles').select('id, full_name, email').in('id', uids).then(({ data }) => { (data || []).forEach(u => { who[u.id] = u; }); }));
+            const mcqIds = [...new Set(rows.filter(r => r.source === 'mcq').map(r => r.question_id).filter(Boolean))];
+            if (mcqIds.length) jobs.push(supabaseClient.from('questions').select('id, text, topic, source, source_year, school, image_url, option_image_url').in('id', mcqIds).then(({ data }) => { (data || []).forEach(x => { mcq[x.id] = x; }); }));
+            const sqIds = [...new Set(rows.filter(r => r.source === 'p2p3').map(r => r.structured_question_id).filter(Boolean))];
+            if (sqIds.length) jobs.push(supabaseClient.from('structured_questions').select('id, year, paper, school, source, question_number').in('id', sqIds).then(({ data }) => { (data || []).forEach(x => { sq[x.id] = x; }); }));
+            await Promise.all(jobs);
+            cfAdminCache = { rows: rows, who: who, mcq: mcq, sq: sq };
+            contentFlagsRenderAdmin();
+        }
+        function cfFlagCard(r) {
+            const who = cfAdminCache.who, mcq = cfAdminCache.mcq, sq = cfAdminCache.sq;
+            const u = who[r.user_id];
+            const student = u ? (u.full_name ? (escapeHtml(u.full_name) + ' (' + escapeHtml(u.email || '') + ')') : escapeHtml(u.email || '')) : 'Unknown student';
+            let when = '';
+            try { when = new Date(r.created_at).toLocaleDateString('en-SG', { day: 'numeric', month: 'short' }); } catch (e) { when = ''; }
+            const ctx = r.context || {};
+            let ref = '', snippet = '';
+            if (r.source === 'mcq') {
+                const info = mcq[r.question_id] || {};
+                ref = 'MCQ · id ' + r.question_id + ' · ' + [ (ctx.topic || info.topic), (info.source || ctx.source), (info.source_year || ctx.year), (info.school || ctx.school) ].filter(Boolean).join(' · ');
+                if (info.text) snippet = sanitizeQuestionText(info.text);
+            } else {
+                const info = sq[r.structured_question_id] || {};
+                const qn = info.question_number ? ('Q' + info.question_number) : (ctx.question_number ? ('Q' + ctx.question_number) : '');
+                ref = 'Paper 2 & 3 · qid ' + r.structured_question_id + ' · ' + [ (info.year || ctx.year), (info.paper || ctx.paper), (info.school || info.source || ctx.school), qn, ctx.topic ].filter(Boolean).join(' · ');
+            }
+            return '<div class="cf-card' + (r.resolved ? ' resolved' : '') + '" data-cfid="' + r.id + '">'
+                + '<div class="cf-meta"><span class="cf-who">' + student + '</span>'
+                +   '<span class="cf-badge">' + escapeHtml(cfCatLabel(r.category)) + '</span>'
+                +   '<span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(when) + '</span></div>'
+                + (r.note ? ('<h4>Student note</h4><p>' + escapeHtml(r.note) + '</p>') : '')
+                + (snippet ? ('<details><summary>Question text</summary><div class="cf-snippet">' + snippet + '</div></details>') : '')
+                + '<label><input type="checkbox" ' + (r.resolved ? 'checked' : '') + ' onchange="contentFlagResolve(' + r.id + ', this.checked)"> Resolved</label>'
+                + '</div>';
+        }
+        function contentFlagsRenderAdmin() {
+            const box = document.getElementById('contentFlagsContainer'); if (!box) return;
+            const rows = cfAdminCache.rows || [];
+            const openRows = rows.filter(r => !r.resolved), doneRows = rows.filter(r => r.resolved);
+            const affected = new Set(rows.filter(r => !r.resolved).map(r => r.source + ':' + (r.question_id || r.structured_question_id))).size;
+            const card = (v, l) => '<div class="stat-card" style="flex:1; min-width:140px;"><div class="stat-value">' + v + '</div><div class="stat-label">' + l + '</div></div>';
+            let html = '<div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem;">'
+                + card(openRows.length, 'Open reports') + card(affected, 'Questions affected') + card(doneRows.length, 'Resolved') + '</div>';
+            if (!rows.length) { box.innerHTML = html + '<div class="empty-state"><h3>No reports yet.</h3><p>Students can report a problem on any MCQ or Paper 2 &amp; 3 question, and they will show up here.</p></div>'; return; }
+            html += '<h3 style="color:var(--primary); margin:0 0 0.5rem;">Open (' + openRows.length + ')</h3>';
+            html += openRows.length ? openRows.map(cfFlagCard).join('') : '<p style="opacity:0.6;">Nothing open right now.</p>';
+            if (doneRows.length) html += '<details style="margin-top:1.5rem;"><summary style="cursor:pointer; color:var(--primary);">Resolved (' + doneRows.length + ')</summary>' + doneRows.map(cfFlagCard).join('') + '</details>';
+            box.innerHTML = html;
+            if (window.MathJax && MathJax.typesetPromise) { try { MathJax.typesetPromise([box]); } catch (e) {} }
+        }
+        async function contentFlagResolve(id, resolved) {
+            const { error } = await supabaseClient.from('content_flags').update({ resolved: resolved, resolved_at: resolved ? new Date().toISOString() : null }).eq('id', id);
+            if (error) { alert('Could not update. Please try again.'); contentFlagsRenderAdmin(); return; }
+            const row = (cfAdminCache.rows || []).find(r => r.id === id); if (row) row.resolved = resolved;
+            contentFlagsRenderAdmin();
         }
 
         // Admin-only list of open flags at the top of the checklist

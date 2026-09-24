@@ -2706,6 +2706,8 @@ Option D" required></textarea>
                     .p2p3-showans{background:transparent;color:var(--primary);border:1px solid var(--cyan-border);border-radius:6px;padding:0.32rem 0.9rem;font-size:0.83rem;cursor:pointer;margin-top:0.2rem;}
                     .p2p3-showans:hover{background:var(--cyan-dim);}
                     .p2p3-answer{margin-top:0.6rem;background:rgba(0,229,255,0.05);border:1px solid var(--cyan-border);border-radius:8px;padding:0.7rem 0.9rem;}
+                    .p2p3-videowrap{position:relative;padding-top:56.25%;border-radius:8px;overflow:hidden;background:#000;}
+                    .p2p3-videowrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
                     .p2p3-ms{font-size:0.9rem;line-height:1.6;}
                     .p2p3-teaser{max-width:520px;margin:2rem auto;text-align:center;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:14px;padding:2rem 1.5rem;}
                     .p2p3-pill{display:inline-block;border:1px solid var(--cyan-border);color:var(--primary);border-radius:20px;padding:2px 14px;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.8rem;}
@@ -6985,6 +6987,18 @@ Option D" required></textarea>
                 html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
                 html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none"><div class="p2p3-figs">'+ansLoose.map(p2p3FigImg).join('')+'</div></div></div>';
             }
+            // Full worked-solution video (question level), behind a button so it doesn't spoil the practice
+            // and the iframe only loads when opened. Shown when the question has a video_url.
+            if (q.video_url){
+                const vm = String(q.video_url).match(/(?:youtu\.be\/|[?&]v=|\/embed\/)([\w-]{11})/);
+                if (vm){
+                    const vcId = 'p2pv_'+q.id;
+                    html += '<div class="p2p3-part">';
+                    html += '<button class="p2p3-showans" onclick="p2p3Video(\''+vcId+'\',\''+vm[1]+'\',this)">&#9654; Watch full worked-solution video</button>';
+                    html += '<div id="'+vcId+'" class="p2p3-answer" style="display:none"></div>';
+                    html += '</div>';
+                }
+            }
             // "Report a problem" widget for this question (premium students who can see it)
             if (currentUser && currentUser.id) {
                 const cfTopicEl = document.getElementById('p2p3Topic');
@@ -7012,6 +7026,25 @@ Option D" required></textarea>
             el.style.display = show ? 'block' : 'none';
             if (btn) btn.textContent = show ? 'Hide answer' : 'Show answer';
             if (show && window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([el]); }catch(e){} }
+        }
+
+        // Toggle a question's full worked-solution video. The YouTube iframe is created only on first
+        // open (lazy), so pulling many questions never loads many videos at once. `vid` is a validated
+        // 11-char YouTube id from the render step.
+        function p2p3Video(cid, vid, btn){
+            const box = document.getElementById(cid);
+            if (!box) return;
+            const show = box.style.display === 'none';
+            if (show){
+                if (!box.dataset.loaded){
+                    box.innerHTML = '<div class="p2p3-videowrap"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'" title="Full worked-solution video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
+                    box.dataset.loaded = '1';
+                }
+                box.style.display = 'block';
+            } else {
+                box.style.display = 'none';
+            }
+            if (btn) btn.innerHTML = show ? '&#9660; Hide video' : '&#9654; Watch full worked-solution video';
         }
 
         // Print / Save as PDF: Question Paper (blank answer space) + Worked Solutions (answers in blue),

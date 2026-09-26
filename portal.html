@@ -28,6 +28,8 @@
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
   .view { display: none; }
   .view.active { display: flex; }
+  /* Hide everything until the signed-in check finishes, so signed-in users don't see the login flash */
+  .auth-checking .view.active { display: none; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -104,7 +106,7 @@
   }
 </style>
 </head>
-<body>
+<body class="auth-checking">
 
 <!-- LOGIN -->
 <div id="loginView" class="view active">
@@ -128,6 +130,19 @@
       <a href="#" id="signupLink">Student? Sign up here</a><br><br>
       <a href="#" id="forgotLink">Forgot password?</a>
     </div>
+  </div>
+</div>
+
+<!-- SLOW LOAD (signed in, but the account details have not arrived) -->
+<div id="slowView" class="view">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>Mr Khemistry</h1>
+      <p>Student Portal</p>
+      <div class="divider"></div>
+    </div>
+    <div class="error-msg visible">Your account is taking longer than usual to load. Please check your connection and refresh.</div>
+    <button class="btn-primary" onclick="window.location.reload()">Refresh</button>
   </div>
 </div>
 
@@ -308,6 +323,21 @@
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
 
+  function reveal() { document.body.classList.remove('auth-checking'); }
+  // Safety net: never leave the page blank if the check hangs
+  var signedInFound = false;
+  var dashTimer = null;
+  function showSlowOrLogin() {
+    if (signedInFound) {
+      document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+      document.getElementById('slowView').classList.add('active');
+    }
+    reveal();
+  }
+  setTimeout(function() {
+    if (document.body.classList.contains('auth-checking')) showSlowOrLogin();
+  }, 8000);
+
   function init() {
     // Detect PKCE recovery code BEFORE Supabase processes the URL.
     // Portal only uses PKCE for password recovery (no OAuth/magic links/PKCE signup),
@@ -328,17 +358,25 @@
     try {
       sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch(e) {
+      reveal();
       document.getElementById('loginError').textContent = 'Portal failed to load. Please refresh the page.';
       document.getElementById('loginError').classList.add('visible');
       return;
     }
 
     function showView(id) {
+      reveal();
       document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
       document.getElementById(id).classList.add('active');
     }
 
     function showDashboard(user) {
+      signedInFound = true;
+      // If the account details don't arrive, show the slow-load screen rather than a stuck form
+      clearTimeout(dashTimer);
+      dashTimer = setTimeout(function() {
+        if (signedInFound && !document.getElementById('dashboardView').classList.contains('active')) showSlowOrLogin();
+      }, 8000);
       document.getElementById('userEmail').textContent = user.email;
       sb.from('user_profiles').select('role, chembank_only').eq('id', user.id).single().then(function(res) {
         console.log('role check:', res);
@@ -350,6 +388,7 @@
         if (res.data && res.data.chembank_only === true) {
           document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.remove(); });
         }
+        clearTimeout(dashTimer);
         showView('dashboardView');
         if (res.error) {
           var errEl = document.getElementById('loginError');
@@ -363,7 +402,7 @@
         if (res.data && res.data.role === 'admin') {
           document.getElementById('adminCard').style.display = 'block';
         }
-      }).catch(function(e) { console.error('role check failed:', e); });
+      }).catch(function(e) { console.error('role check failed:', e); showSlowOrLogin(); });
     }
 
     function showRecoveryView() {
@@ -410,9 +449,10 @@
       if (result.data && result.data.session && !isRecoveryHash) {
         showDashboard(result.data.session.user);
       } else if (!isRecoveryHash) {
+        reveal();
         maybeOpenSignupFromQuery();
       }
-    }).catch(function(e) { console.error('Session check failed:', e); });
+    }).catch(function(e) { console.error('Session check failed:', e); reveal(); });
 
     document.getElementById('loginBtn').addEventListener('click', function() {
       var email = document.getElementById('loginEmail').value.trim();
@@ -454,6 +494,8 @@
 
     document.getElementById('signOutBtn').addEventListener('click', function() {
       sb.auth.signOut().then(function() {
+        signedInFound = false;
+        clearTimeout(dashTimer);
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
         showView('loginView');

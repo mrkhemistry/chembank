@@ -226,7 +226,7 @@
         </div>
       </a>
 
-      <a class="tool-card" href="https://notebooklm.google.com/notebook/530fd3ef-0af3-43e3-b3b5-4ed9b46719f7" target="_blank">
+      <a class="tool-card" data-hide-chembank-only href="https://notebooklm.google.com/notebook/530fd3ef-0af3-43e3-b3b5-4ed9b46719f7" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#128215;</div>
           <div class="card-name">NotebookLM</div>
@@ -238,7 +238,7 @@
         </div>
       </a>
 
-      <a class="tool-card" href="courses.html">
+      <a class="tool-card" data-hide-chembank-only href="courses.html">
         <div class="card-header">
           <div class="card-icon">&#127891;</div>
           <div class="card-name">Courses</div>
@@ -250,7 +250,7 @@
         </div>
       </a>
 
-      <a class="tool-card" href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank">
+      <a class="tool-card" data-hide-chembank-only href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
           <div class="card-name">Google Classroom</div>
@@ -262,7 +262,7 @@
         </div>
       </a>
 
-      <a class="tool-card" href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank">
+      <a class="tool-card" data-hide-chembank-only href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
           <div class="card-name">Google Classroom</div>
@@ -340,11 +340,15 @@
 
     function showDashboard(user) {
       document.getElementById('userEmail').textContent = user.email;
-      sb.from('user_profiles').select('role').eq('id', user.id).single().then(function(res) {
+      sb.from('user_profiles').select('role, chembank_only').eq('id', user.id).single().then(function(res) {
         console.log('role check:', res);
         if (res.data && res.data.role === 'sec_student') {
           window.location.href = 'courses.html';
           return;
+        }
+        // ChemBank-only accounts: remove the NotebookLM, Google Classroom and Courses cards
+        if (res.data && res.data.chembank_only === true) {
+          document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.remove(); });
         }
         showView('dashboardView');
         if (res.error) {

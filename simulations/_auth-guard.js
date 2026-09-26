@@ -52,6 +52,24 @@
     }
   }
 
+  async function hasSession() {
+    const sb = getClient();
+    if (!sb) return false;
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      return !!session;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Sign out, then go to the portal login
+  async function signOut() {
+    const sb = getClient();
+    try { if (sb) await sb.auth.signOut(); } catch (e) { console.warn('[SimAuth] sign out failed:', e); }
+    global.location.href = PORTAL_URL;
+  }
+
   async function isPremium() {
     const role = await getRole();
     return PREMIUM_ROLES.includes(role);
@@ -222,6 +240,8 @@
     PREMIUM_ROLES,
     getRole,
     isPremium,
+    hasSession,
+    signOut,
     isFreeSim,
     applyHubLocks,
     guardPage,

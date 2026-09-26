@@ -39,6 +39,9 @@
   .nav-name { font-size: 15px; font-weight: 600; color: var(--text); }
   .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
   .nav-back:hover { color: var(--accent); }
+  .nav-pills { display: flex; gap: 8px; }
+  .nav-pill { padding: 7px 16px; border-radius: 100px; border: 1px solid var(--border-hover); background: transparent; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.2s; }
+  .nav-pill:hover { border-color: #00e5ff; color: #00e5ff; }
 
   .hero { position: relative; z-index: 1; text-align: center; padding: 80px 40px 60px; }
   .hero-badge {
@@ -134,10 +137,10 @@
     <div class="nav-logo">K</div>
     <span class="nav-name">Mr Khemistry</span>
   </a>
-  <a href="https://chembank.mrkhemistry.com/" class="nav-back">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
-    Back to ChemBank
-  </a>
+  <div class="nav-pills">
+    <a href="https://chembank.mrkhemistry.com/portal.html" class="nav-pill">Portal</a>
+    <button type="button" class="nav-pill" id="navSignOut" style="display:none;" onclick="window.SimAuth && SimAuth.signOut()">Sign Out</button>
+  </div>
 </nav>
 
 <section class="hero">
@@ -603,7 +606,7 @@
 </div>
 
 <footer>
-  <a href="https://chembank.mrkhemistry.com/">← Back to Student Portal</a> &nbsp;·&nbsp; Mr Khemistry Tuition Centre · H2 Chemistry Singapore
+  <a href="https://chembank.mrkhemistry.com/portal.html">← Back to Student Portal</a> &nbsp;·&nbsp; Mr Khemistry Tuition Centre · H2 Chemistry Singapore
 </footer>
 
 <script>
@@ -636,6 +639,10 @@ function filterCards(tag, btn) {
 <!-- Auth gating: lock premium sims for non-premium users -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./_auth-guard.js"></script>
+<script>
+// Show Sign Out only to signed-in visitors
+if (window.SimAuth) SimAuth.hasSession().then(function(yes) { if (yes) document.getElementById('navSignOut').style.display = ''; });
+</script>
 
 <script>
 (function(){

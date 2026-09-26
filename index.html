@@ -4000,17 +4000,8 @@ Option D" required></textarea>
                 sessionStorage.removeItem('chembank_lastView');
                 sessionStorage.removeItem('chembank_lastStudentTab');
                 
-                // Show login view first
-                showAuthView('login');
-                
-                // Then reset login form button state with multiple attempts to ensure it works
-                setTimeout(() => {
-                    resetLoginButton();
-                }, 50);
-                
-                setTimeout(() => {
-                    resetLoginButton();
-                }, 200);
+                // Sign in again through the student portal, not ChemBank's own login
+                window.location.href = 'portal.html';
                 
             } catch (error) {
                 console.error('Logout error:', error);
@@ -5289,6 +5280,13 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
+            }
+
+            // Way back to the student portal cards (not mid-quiz)
+            if (viewId !== 'quizView') {
+                buttons = `
+                    <button class="btn btn-secondary" onclick="window.location.href='portal.html'">Portal</button>
+                ` + buttons;
             }
 
             navButtons.innerHTML = buttons;

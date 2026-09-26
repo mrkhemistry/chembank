@@ -385,9 +385,10 @@
           return;
         }
         // ChemBank-only accounts: remove the NotebookLM, Google Classroom and Courses cards
-        if (res.data && res.data.chembank_only === true) {
-          document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.remove(); });
-        }
+        // Worked out afresh at every sign-in: signing out does not reload the page
+        var chembankOnly = !!(res.data && res.data.chembank_only === true);
+        document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.style.display = chembankOnly ? 'none' : ''; });
+        document.getElementById('adminCard').style.display = 'none';
         clearTimeout(dashTimer);
         showView('dashboardView');
         if (res.error) {
@@ -496,6 +497,10 @@
       sb.auth.signOut().then(function() {
         signedInFound = false;
         clearTimeout(dashTimer);
+        var loginBtn = document.getElementById('loginBtn');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In';
+        document.getElementById('loginError').classList.remove('visible');
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginPassword').value = '';
         showView('loginView');

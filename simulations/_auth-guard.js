@@ -103,10 +103,10 @@
       <div class="_sim-modal-bg"></div>
       <div class="_sim-modal-card">
         <h2>Premium simulation</h2>
-        <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
+        <p>This simulation comes free with every <strong>Mr Khemistry plan</strong>.</p>
+        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>ChemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
         <div class="_sim-modal-btns">
-          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_sim-btn-primary">Get the recording package</a>
+          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_sim-btn-primary">See plans</a>
           <a href="${PORTAL_URL}" class="_sim-btn-secondary">Sign in</a>
           <button class="_sim-btn-secondary" onclick="document.getElementById('_simUpgradeModal').style.display='none'">Maybe later</button>
         </div>
@@ -229,10 +229,10 @@
       </style>
       <div class="_lock-card">
         <h1>Premium simulation</h1>
-        <p>This 3D simulation is part of the <strong>Mr Khemistry recording package</strong>.</p>
-        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. The recording package ($100/month) unlocks every simulation, all ChemBank topics and the full lesson-recording library.</p>
+        <p>This simulation comes free with every <strong>Mr Khemistry plan</strong>.</p>
+        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>ChemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
         <div class="_btns">
-          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_btn-primary">Get the recording package</a>
+          <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_btn-primary">See plans</a>
           <a href="${PORTAL_URL}" class="_btn-secondary">Sign in</a>
           <a href="${SIMS_HUB_URL}" class="_btn-secondary">Back to simulations</a>
         </div>

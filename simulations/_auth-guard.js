@@ -33,7 +33,7 @@
     return _client;
   }
 
-  async function getRole() {
+  async function getProfile() {
     const sb = getClient();
     if (!sb) return null;
     try {
@@ -41,15 +41,20 @@
       if (!session) return null;
       const { data, error } = await sb
         .from('user_profiles')
-        .select('role')
+        .select('role, sims_access')
         .eq('id', session.user.id)
         .single();
       if (error) return null;
-      return data?.role || null;
+      return data || null;
     } catch (e) {
       console.warn('[SimAuth] role lookup failed:', e);
       return null;
     }
+  }
+
+  async function getRole() {
+    const profile = await getProfile();
+    return profile?.role || null;
   }
 
   async function hasSession() {
@@ -70,9 +75,11 @@
     global.location.href = PORTAL_URL;
   }
 
+  // Premium roles, or any account given all sims (recordings-only codes set sims_access)
   async function isPremium() {
-    const role = await getRole();
-    return PREMIUM_ROLES.includes(role);
+    const profile = await getProfile();
+    if (!profile) return false;
+    return PREMIUM_ROLES.includes(profile.role) || profile.sims_access === true;
   }
 
   function isFreeSim(href) {

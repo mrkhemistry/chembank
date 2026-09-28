@@ -265,7 +265,7 @@
         </div>
       </a>
 
-      <a class="tool-card" data-hide-chembank-only href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank">
+      <a class="tool-card" data-hide-chembank-only data-classroom="J1" href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
           <div class="card-name">Google Classroom</div>
@@ -277,7 +277,7 @@
         </div>
       </a>
 
-      <a class="tool-card" data-hide-chembank-only href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank">
+      <a class="tool-card" data-hide-chembank-only data-classroom="J2" href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
           <div class="card-name">Google Classroom</div>
@@ -378,7 +378,7 @@
         if (signedInFound && !document.getElementById('dashboardView').classList.contains('active')) showSlowOrLogin();
       }, 8000);
       document.getElementById('userEmail').textContent = user.email;
-      sb.from('user_profiles').select('role, chembank_only').eq('id', user.id).single().then(function(res) {
+      sb.from('user_profiles').select('role, chembank_only, classroom').eq('id', user.id).single().then(function(res) {
         console.log('role check:', res);
         if (res.data && res.data.role === 'sec_student') {
           window.location.href = 'courses.html';
@@ -388,6 +388,11 @@
         // Worked out afresh at every sign-in: signing out does not reload the page
         var chembankOnly = !!(res.data && res.data.chembank_only === true);
         document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.style.display = chembankOnly ? 'none' : ''; });
+        // Accounts tied to one year (recordings-only codes) see only that year's Google Classroom card
+        var classroom = res.data && res.data.classroom;
+        document.querySelectorAll('[data-classroom]').forEach(function(c) {
+          c.style.display = (chembankOnly || (classroom && c.getAttribute('data-classroom') !== classroom)) ? 'none' : '';
+        });
         document.getElementById('adminCard').style.display = 'none';
         clearTimeout(dashTimer);
         showView('dashboardView');

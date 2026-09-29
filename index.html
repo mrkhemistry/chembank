@@ -9763,6 +9763,18 @@ Option D" required></textarea>
             const prev = trGroupOf(before[before.length - 1]);
             return before.filter(p => trGroupOf(p) === prev);
         }
+        // A lettered group's shared lead-in ("In (i) and (ii) deduce...") is stored once, in front of the [[lead]] marker of
+        // the group's first sub-part. A later sub-part of that group needs it too, so return that text (never the sibling's own command).
+        function trGroupLead(part, allParts, earlier) {
+            if (String(part.part_text || '').indexOf('[[lead') !== -1) return '';
+            const list = allParts || [];
+            const me = list.find(p => p.id === part.id) || part;
+            const holder = list.filter(p => p.id !== part.id && (p.order_index || 0) < (me.order_index || 0) && trGroupOf(p) === trGroupOf(me)
+                && String(p.part_text || '').indexOf('[[lead') !== -1).sort((a, b) => (b.order_index || 0) - (a.order_index || 0))[0];
+            if (!holder || (earlier || []).some(ep => ep.id === holder.id)) return '';   // already shown in full
+            const t = String(holder.part_text);   // a lead can come in several paragraphs, each ended by a marker; the command follows the last one
+            return t.slice(0, t.lastIndexOf('[[lead')).replace(/\[\[lead(:[^\]]*)?\]\]/g, '<br><br>').trim();
+        }
         function trContextParts(part, allParts, stem) {
             const refs = trReferencedParts(part, allParts);
             if (refs.length || stem || !TRAINING_NEEDS_CONTEXT.has(part.id)) return refs;
@@ -9770,7 +9782,7 @@ Option D" required></textarea>
         }
         async function trLoadBackground(part) {
             const stem = (part.structured_questions && part.structured_questions.stem || '').trim();
-            let figures = [], figError = '', earlier = [];
+            let figures = [], figError = '', earlier = [], groupLead = '';
             const figByKey = {};
             try {
                 const [{ data: figs }, { data: allParts }] = await Promise.all([
@@ -9778,12 +9790,13 @@ Option D" required></textarea>
                     supabaseClient.from('structured_parts').select('id, part_label, part_text, order_index, context_parts').eq('question_id', part.question_id)
                 ]);
                 earlier = trContextParts(part, allParts, stem);
+                groupLead = trGroupLead(part, allParts, earlier);
                 // Figures for this part, then for the earlier parts shown with it (each routed as its own printed part)
                 let wanted = trFiguresFor(figs, part, stem, allParts);
                 earlier.forEach(ep => { trFiguresFor(figs, ep, stem, allParts).forEach(f => { if (wanted.indexOf(f) === -1) wanted.push(f); }); });
                 // Figures the text names in place ([[fig:KEY]] in the part, the stem or a shown earlier part) are drawn there
                 const inlineKeys = new Set();
-                [part.part_text, stem].concat(earlier.map(ep => ep.part_text)).forEach(t => {
+                [part.part_text, stem, groupLead].concat(earlier.map(ep => ep.part_text)).forEach(t => {
                     (String(t || '').match(/\[\[fig:([^\]]+)\]\]/g) || []).forEach(m => inlineKeys.add(m.slice(6, -2)));
                 });
                 (figs || []).forEach(f => { if (inlineKeys.has(f.figure_key) && !sqIsAnswerFig(f.figure_key) && wanted.indexOf(f) === -1) wanted.push(f); });   // never an answer diagram
@@ -9798,7 +9811,7 @@ Option D" required></textarea>
                     if (!loaded.length) figError = 'This question has ' + wanted.length + ' figure' + (wanted.length === 1 ? '' : 's') + ' but they could not be loaded.';
                 }
             } catch (e) { console.error('training background:', e); figures = []; figError = 'The figures for this question could not be loaded.'; }
-            return { stem, figures, figError, earlier, figByKey };
+            return { stem, figures, figError, earlier, figByKey, groupLead };
         }
         function trainingShowQuestion(part, kind, bg) {
             const qBox = document.getElementById('trainingQuestionText');
@@ -9806,9 +9819,10 @@ Option D" required></textarea>
             const box = document.getElementById('trainingBackground');
             const body = document.getElementById('trainingBackgroundBody');
             const label = document.getElementById('trainingBackgroundLabel');
-            const hasBg = !!((bg && bg.stem) || (bg && bg.figures && bg.figures.length) || (bg && bg.figError) || (bg && bg.earlier && bg.earlier.length));
+            const hasBg = !!((bg && bg.stem) || (bg && bg.figures && bg.figures.length) || (bg && bg.figError) || (bg && bg.earlier && bg.earlier.length) || (bg && bg.groupLead));
             if (hasBg) {
                 let html = bg.stem ? '<div class="tr-stem">' + trBody(bg.stem, bg.figByKey) + '</div>' : '';
+                if (bg.groupLead) html += '<div class="tr-stem">' + trBody(bg.groupLead, bg.figByKey) + '</div>';
                 (bg.earlier || []).forEach(ep => {
                     html += '<div class="tr-earlier"><span class="tr-earlier-label">Part ' + escapeHtml(ep.part_label || '') + '</span>' + trPartHtml(ep.part_text, bg.figByKey) + '</div>';
                 });
@@ -9818,7 +9832,7 @@ Option D" required></textarea>
                         + (f.label || f.caption ? '<figcaption>' + escapeHtml([f.label, f.caption].filter(Boolean).join(' · ')) + '</figcaption>' : '') + '</figure>';
                 });
                 body.innerHTML = html;
-                const needed = TRAINING_NEEDS_CONTEXT.has(part.id) || !!(bg.earlier && bg.earlier.length);
+                const needed = TRAINING_NEEDS_CONTEXT.has(part.id) || !!(bg.earlier && bg.earlier.length) || !!bg.groupLead;
                 box.open = needed;
                 label.textContent = needed ? 'Question background (read this first)' : 'Show question background';
                 box.style.display = 'block';

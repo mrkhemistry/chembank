@@ -6766,6 +6766,22 @@ Option D" required></textarea>
             });
             return html;
         }
+        // Lead-ins a printed part inherits from SKIPPED earlier sub-parts of its lettered group. A group's shared lead-in
+        // ("In (i) and (ii) deduce...") is stored once, before the [[lead]] marker of its first sub-part, so a pull that prints
+        // (b)(ii) but not (b)(i) would lose it. Returns lead segments only (never a skipped part's own command), each group's
+        // skipped holders at most once (tracked in doneIds).
+        function sqSkippedLeads(p, printedIds, allParts, doneIds){
+            const grp = x => ((String((x&&x.part_label)||'').match(/^\([a-z]+\)/i)||[''])[0]).toLowerCase();
+            const g = grp(p); if (!g) return [];
+            const ord = x => (x.order_index!=null ? x.order_index : 0);
+            const out = [];
+            (allParts||[]).filter(x => x.id!==p.id && !printedIds.has(x.id) && !(doneIds&&doneIds.has(x.id)) && grp(x)===g && ord(x)<ord(p)
+                && String(x.part_text||'').indexOf('[[lead')!==-1).sort((a,b)=>ord(a)-ord(b)).forEach(x => {
+                if (doneIds) doneIds.add(x.id);
+                sqSplitLeads(x.part_text).leads.forEach(s => { if (s.text.trim()) out.push(s); });
+            });
+            return out;
+        }
         // Split a part_text into its lead segments and the trailing command text.
         function sqSplitLeads(text){
             const leads=[]; const re=/\[\[lead(?::([^\]]*))?\]\]/g; let last=0, m;
@@ -7020,10 +7036,11 @@ Option D" required></textarea>
             let html = '<div class="p2p3-q"><div class="p2p3-q-head">'+sqEsc(src)+'</div>';
             if (q.stem) html += '<div class="p2p3-stem">'+(remediated ? sqRenderBody(q.stem, figByKey, null, p2p3FigImg) : sanitizeQuestionText(q.stem))+'</div>';
             if (stemFigs.length) html += '<div class="p2p3-figs">'+stemFigs.map(p2p3FigImg).join('')+'</div>';
+            const printedIds = new Set(parts.map(p => p.id)), leadsDone = new Set();
             parts.forEach(p => {
                 if (remediated){
                     const parsed = sqSplitLeads(p.part_text||'');
-                    parsed.leads.forEach(s=>{
+                    sqSkippedLeads(p, printedIds, allParts, leadsDone).concat(parsed.leads).forEach(s=>{
                         if (!s.text.trim()) return;
                         const body = sqRenderBody(s.text, figByKey, null, p2p3FigImg);
                         if (s.label){
@@ -11351,10 +11368,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                     +'<span class="q-src">'+sqEsc(srcBits.join('  ·  '))+'<br>['+marks+' mark'+(marks===1?'':'s')+']</span></div>';
                 if (q.stem) html+='<div class="q-stem">'+(remediated?sqRenderBody(q.stem, figByKey, null, sqWorksheetFigImg):sanitizeQuestionText(q.stem))+'</div>';
                 if (stemFigs.length) html+='<div class="q-figs">'+stemFigs.map(sqWorksheetFigImg).join('')+'</div>';
+                const printedIds=new Set(parts.map(p=>p.id)), leadsDone=new Set();
                 parts.forEach(p=>{
                     if (remediated){
                         const parsed=sqSplitLeads(p.part_text||'');
-                        parsed.leads.forEach(s=>{
+                        sqSkippedLeads(p, printedIds, (q.parts||[]), leadsDone).concat(parsed.leads).forEach(s=>{
                             if (!s.text.trim()) return;
                             const body=sqRenderBody(s.text, figByKey, null, sqWorksheetFigImg);
                             if (s.label){ const g=(s.label.match(/\([^)]*\)/)||[])[0]; if(g) shown.add(g);

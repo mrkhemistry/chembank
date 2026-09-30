@@ -6782,6 +6782,71 @@ Option D" required></textarea>
             });
             return out;
         }
+        // Inline [[fig:]] figures that this print would never draw (their marker sits in a skipped part's own text) but that a
+        // printed part cites by number ("Table 2.2", "Fig. 4.1", read from the figure's label, else its key). Returns
+        // { stem: [figs], byPart: { partId: [figs] } }: each goes under the stem if the stem cites it, else under the first
+        // printed part that cites it. Answer figures are never included. A whole-question print has no orphans.
+        function sqOrphanInlineFigs(q, printedParts, figs){
+            const out={ stem:[], byPart:{} };
+            const all=q.parts||[];
+            if (!printedParts.length || printedParts.length===all.length) return out;
+            const printedIds=new Set(printedParts.map(p=>p.id));
+            // What each printed part shows: its inherited lead-ins (same order and once-per-group rule as the renderers) + its own text
+            // A grouped citation names the type once ("Tables 5.2 and 5.3", "Fig. 5.1 and 5.2"): repeat it before each number.
+            // Numbers may carry a sub-figure letter (Fig. 6.2a). Kinds: 'table', 'graph', else 'fig' (Fig/Figure/Diagram/Scheme).
+            // (inline tags and &nbsp; are removed first so "Figure <strong>3.1</strong>" still reads as Figure 3.1)
+            const ungroup=t=>String(t||'').replace(/\[\[[^\]]*\]\]/g,' ').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').replace(/\b(fig(?:ure)?s?|tables?|diagrams?|schemes?|graphs?)\.?\s*(\d+\.\d+[a-z]?(?:\s*(?:,|and|or|to|&amp;|&)\s*\d+\.\d+[a-z]?)+)(?![0-9a-z])/gi,
+                (all0, w, list)=>list.replace(/\d+\.\d+[a-z]?/gi, n=>w.replace(/s$/i,'')+' '+n));
+            const kindOf=w=>/^table/i.test(w)?'table':(/^graph/i.test(w)?'graph':'fig');
+            const kindWords={ table:'tables?', graph:'graphs?', fig:'fig(?:ure)?s?|diagrams?|schemes?' };
+            // Does `text` cite r? "Fig. 6.2" answers a citation of Fig. 6.2 or 6.2a; "Fig. 6.2b" answers only 6.2b.
+            const cites=(text, r)=>{
+                const num=r.ref.replace(/\./g,'\\.')+(/[a-z]$/i.test(r.ref)?'':'[a-z]?');
+                return new RegExp('\\b(?:'+kindWords[r.kind]+')\\.?\\s*'+num+'(?![0-9a-z])','i').test(String(text||''));
+            };
+            const done=new Set(), rawShown={}, shownText={};
+            printedParts.forEach(p=>{
+                rawShown[p.id]=sqSkippedLeads(p, printedIds, all, done).map(s=>s.text).concat([p.part_text||'']).join(' ');
+                shownText[p.id]=ungroup(rawShown[p.id]);   // citation-matching copy (markers and tags removed)
+            });
+            const stemText=ungroup(q.stem);
+            const texts=[q.stem].concat(printedParts.map(p=>rawShown[p.id]));   // raw: keeps the [[fig:]] markers
+            const drawn=new Set();
+            texts.forEach(t=>{ (String(t||'').match(/\[\[fig:([^\]]+)\]\]/g)||[]).forEach(m=>drawn.add(m.slice(6,-2))); });
+            const inline=sqInlineFigKeys(q);
+            // every number a figure's label names ("Fig 2.1 and Fig 2.2" is one image), else the key's own number
+            const refsOf=f=>{
+                let refs=[...ungroup(f.label).matchAll(/\b(fig(?:ure)?|table|diagram|scheme|graph)s?\.?\s*(\d+\.\d+[a-z]?)(?![0-9a-z])/gi)]
+                    .map(m=>({ ref:m[2].toLowerCase(), kind:kindOf(m[1]) }));
+                // the key's number only when there is no label at all: a descriptive label ("aspartic acid") means the key's
+                // number is not the paper's figure number (SAJC 2024 P3 Q6: fig_6_1 is aspartic acid, Fig. 6.1 is fig_6_2)
+                if (!refs.length && !String(f.label||'').trim()){ const r=sqFigNumRef(f.figure_key); if (r) refs=[{ ref:r.ref, kind:kindOf(String(f.figure_key)) }]; }
+                return refs;
+            };
+            const tag=r=>r.kind+'|'+r.ref;
+            // Numbers already answered by a figure the page shows (drawn inline, or routed normally). A question can reuse a
+            // number for two different images, so a citation that a shown figure already answers never pulls in another one.
+            const covered=new Set();
+            (figs||[]).forEach(f=>{
+                if (sqIsAnswerFig(f.figure_key)) return;
+                const onPage=inline.has(f.figure_key) ? drawn.has(f.figure_key) : sqShowFigForPrinted(f, printedParts, all, q.stem);
+                if (onPage) refsOf(f).forEach(r=>covered.add(tag(r)));
+            });
+            (figs||[]).forEach(f=>{
+                const k=f.figure_key;
+                if (!inline.has(k) || drawn.has(k) || sqIsAnswerFig(k)) return;
+                const refs=refsOf(f).filter(r=>!covered.has(tag(r)));
+                if (!refs.length) return;
+                let placed=false;
+                if (refs.some(r=>cites(stemText, r))){ out.stem.push(f); placed=true; }
+                else {
+                    const host=printedParts.find(p=>refs.some(r=>cites(shownText[p.id], r)));
+                    if (host){ (out.byPart[host.id]=out.byPart[host.id]||[]).push(f); placed=true; }
+                }
+                if (placed) refs.forEach(r=>covered.add(tag(r)));
+            });
+            return out;
+        }
         // Split a part_text into its lead segments and the trailing command text.
         function sqSplitLeads(text){
             const leads=[]; const re=/\[\[lead(?::([^\]]*))?\]\]/g; let last=0, m;
@@ -7032,6 +7097,11 @@ Option D" required></textarea>
             const stemFigs = [], qByPart = {}, ansByPart = {}, ansLoose = [];
             qFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a==null) stemFigs.push(f); else (qByPart[a]=qByPart[a]||[]).push(f); });
             ansFigs.forEach(f => { const a = sqFigAnchorPart(f, parts, q.stem); if (a!=null) (ansByPart[a]=ansByPart[a]||[]).push(f); else ansLoose.push(f); });
+            if (remediated && item.partFilter){   // a cited figure whose inline marker sits in a skipped part
+                const orph = sqOrphanInlineFigs(q, parts, figs);
+                orph.stem.forEach(f => stemFigs.push(f));
+                Object.keys(orph.byPart).forEach(id => { qByPart[id] = (qByPart[id]||[]).concat(orph.byPart[id]); });
+            }
             const src = [q.year, q.paper, (q.school||q.source||''), 'Q'+q.question_number].filter(x => x!=null && x!=='').join(' · ');
             let html = '<div class="p2p3-q"><div class="p2p3-q-head">'+sqEsc(src)+'</div>';
             if (q.stem) html += '<div class="p2p3-stem">'+(remediated ? sqRenderBody(q.stem, figByKey, null, p2p3FigImg) : sanitizeQuestionText(q.stem))+'</div>';
@@ -11363,6 +11433,11 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 qFigs.forEach(f=>{ const aid=sqFigAnchorPart(f, parts, q.stem); if (aid==null) stemFigs.push(f); else (qFigByPart[aid]=qFigByPart[aid]||[]).push(f); });
                 const ansFigByPart={}, ansFigLoose=[];
                 ansFigs.forEach(f=>{ const aid=sqFigAnchorPart(f, parts, q.stem); if (aid==null) ansFigLoose.push(f); else (ansFigByPart[aid]=ansFigByPart[aid]||[]).push(f); });
+                if (remediated && item.partFilter){   // a cited figure whose inline marker sits in a skipped part
+                    const orph=sqOrphanInlineFigs(q, parts, (q.figures||[]));
+                    orph.stem.forEach(f=>stemFigs.push(f));
+                    Object.keys(orph.byPart).forEach(id=>{ qFigByPart[id]=(qFigByPart[id]||[]).concat(orph.byPart[id]); });
+                }
                 html+='<div class="q-block">';
                 html+='<div class="q-head"><span class="q-num">Question '+(idx+1)+'</span>'
                     +'<span class="q-src">'+sqEsc(srcBits.join('  ·  '))+'<br>['+marks+' mark'+(marks===1?'':'s')+']</span></div>';

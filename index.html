@@ -6791,38 +6791,17 @@ Option D" required></textarea>
             const all=q.parts||[];
             if (!printedParts.length || printedParts.length===all.length) return out;
             const printedIds=new Set(printedParts.map(p=>p.id));
-            // What each printed part shows: its inherited lead-ins (same order and once-per-group rule as the renderers) + its own text
-            // A grouped citation names the type once ("Tables 5.2 and 5.3", "Fig. 5.1 and 5.2"): repeat it before each number.
-            // Numbers may carry a sub-figure letter (Fig. 6.2a). Kinds: 'table', 'graph', else 'fig' (Fig/Figure/Diagram/Scheme).
-            // (inline tags and &nbsp; are removed first so "Figure <strong>3.1</strong>" still reads as Figure 3.1)
-            const ungroup=t=>String(t||'').replace(/\[\[[^\]]*\]\]/g,' ').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').replace(/\b(fig(?:ure)?s?|tables?|diagrams?|schemes?|graphs?)\.?\s*(\d+\.\d+[a-z]?(?:\s*(?:,|and|or|to|&amp;|&)\s*\d+\.\d+[a-z]?)+)(?![0-9a-z])/gi,
-                (all0, w, list)=>list.replace(/\d+\.\d+[a-z]?/gi, n=>w.replace(/s$/i,'')+' '+n));
-            const kindOf=w=>/^table/i.test(w)?'table':(/^graph/i.test(w)?'graph':'fig');
-            const kindWords={ table:'tables?', graph:'graphs?', fig:'fig(?:ure)?s?|diagrams?|schemes?' };
-            // Does `text` cite r? "Fig. 6.2" answers a citation of Fig. 6.2 or 6.2a; "Fig. 6.2b" answers only 6.2b.
-            const cites=(text, r)=>{
-                const num=r.ref.replace(/\./g,'\\.')+(/[a-z]$/i.test(r.ref)?'':'[a-z]?');
-                return new RegExp('\\b(?:'+kindWords[r.kind]+')\\.?\\s*'+num+'(?![0-9a-z])','i').test(String(text||''));
-            };
-            const done=new Set(), rawShown={}, shownText={};
-            printedParts.forEach(p=>{
-                rawShown[p.id]=sqSkippedLeads(p, printedIds, all, done).map(s=>s.text).concat([p.part_text||'']).join(' ');
-                shownText[p.id]=ungroup(rawShown[p.id]);   // citation-matching copy (markers and tags removed)
-            });
-            const stemText=ungroup(q.stem);
-            const texts=[q.stem].concat(printedParts.map(p=>rawShown[p.id]));   // raw: keeps the [[fig:]] markers
+            // What each printed part shows: its inherited lead-ins (same order and once-per-group rule as the renderers) + its own text.
+            // Citations are matched with the shared sqTextCitesFig / sqFigRefs (numbers from the label, grouped and lettered forms).
+            const done=new Set(), shownText={};
+            printedParts.forEach(p=>{ shownText[p.id]=sqSkippedLeads(p, printedIds, all, done).map(s=>s.text).concat([p.part_text||'']).join(' '); });
+            const texts=[q.stem].concat(printedParts.map(p=>shownText[p.id]));
             const drawn=new Set();
             texts.forEach(t=>{ (String(t||'').match(/\[\[fig:([^\]]+)\]\]/g)||[]).forEach(m=>drawn.add(m.slice(6,-2))); });
             const inline=sqInlineFigKeys(q);
-            // every number a figure's label names ("Fig 2.1 and Fig 2.2" is one image), else the key's own number
-            const refsOf=f=>{
-                let refs=[...ungroup(f.label).matchAll(/\b(fig(?:ure)?|table|diagram|scheme|graph)s?\.?\s*(\d+\.\d+[a-z]?)(?![0-9a-z])/gi)]
-                    .map(m=>({ ref:m[2].toLowerCase(), kind:kindOf(m[1]) }));
-                // the key's number only when there is no label at all: a descriptive label ("aspartic acid") means the key's
-                // number is not the paper's figure number (SAJC 2024 P3 Q6: fig_6_1 is aspartic acid, Fig. 6.1 is fig_6_2)
-                if (!refs.length && !String(f.label||'').trim()){ const r=sqFigNumRef(f.figure_key); if (r) refs=[{ ref:r.ref, kind:kindOf(String(f.figure_key)) }]; }
-                return refs;
-            };
+            const refsOf=sqFigRefs;
+            const cites=sqTextCitesFig;
+            const stemText=q.stem;
             const tag=r=>r.kind+'|'+r.ref;
             // Numbers already answered by a figure the page shows (drawn inline, or routed normally). A question can reuse a
             // number for two different images, so a citation that a shown figure already answers never pulls in another one.
@@ -9797,16 +9776,23 @@ Option D" required></textarea>
         // with the served part as the only printed part. Answer figures are never shown with the question.
         function trFiguresFor(figs, part, stem, allParts) {
             const printed = [part], all = (allParts && allParts.length) ? allParts : [part];
-            const routed = (figs || []).filter(f => f.storage_path && !sqIsAnswerFig(f.figure_key) && sqShowFigForPrinted(f, printed, all, stem || ''));
+            const text = part.part_text || '';
+            // A figure placed in the text by a [[fig:]] marker in a LATER part is never needed here (a part only leans on the
+            // stem, itself or earlier parts), so it is left out unless this part or the stem cites its paper number.
+            const inlineAll = sqInlineFigKeys({ stem: stem || '', parts: all });
+            const me = all.find(p => p.id === part.id) || part;
+            const hostOf = k => all.find(p => String(p.part_text || '').indexOf('[[fig:' + k + ']]') !== -1);
+            const isLater = h => h && h.id !== me.id && (h.order_index || 0) > (me.order_index || 0);
+            const placedByMarker = f => inlineAll.has(f.figure_key) && !sqFigPartPath(f.figure_key).length
+                && !sqTextCitesAnyRef(text + ' ' + (stem || ''), sqFigRefs(f)) && isLater(hostOf(f.figure_key));
+            const routed = (figs || []).filter(f => f.storage_path && !sqIsAnswerFig(f.figure_key) && !placedByMarker(f)
+                && sqShowFigForPrinted(f, printed, all, stem || ''));
             // When the part names its figures ("Fig. 4.1", "Table 2.2"), show just those. Letter-level and
             // question-wide figures only fill in when the part cites nothing by number.
-            const text = part.part_text || '';
-            const cited = routed.filter(f => {
-                const r = sqFigNumRef(f.figure_key);
-                if (r && sqTextCitesFig(text, r)) return true;
-                return !!(f.label && /^(fig|figure|table|diagram|scheme)\b/i.test(f.label) && text.indexOf(f.label) !== -1);
-            });
-            return cited.length ? cited : routed;
+            // numbers from the label (sqFigRefs); when the part cites some, drop only the OTHER numbered figures and keep
+            // unnumbered companions (a structure or data table the part uses without naming a number)
+            const cited = routed.filter(f => sqTextCitesAnyRef(text, sqFigRefs(f)));
+            return cited.length ? routed.filter(f => cited.indexOf(f) !== -1 || !sqFigRefs(f).length) : routed;
         }
         // Earlier parts this part leans on: the store's context_parts, plus any "(a)(ii)" / "in (b)" reference in the
         // wording. Only parts that exist in the question and come before this one count; "(g)" alone is a state symbol.
@@ -11346,17 +11332,46 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             return printedPaths.some(pp=> fp.length<=pp.length && fp.every((t,i)=>t===pp[i]));
         }
         // A generic numbered figure key -> {ref:'5.1', words:...} matched to the figure TYPE (a table_ key
-        // is cited only as "Table 5.1", a fig_/diagram_ key as "Fig/Figure/Diagram/Scheme 5.1"), else null.
+        // is cited only as "Table 5.1", a graph_ key as "Graph 5.1", else "Fig/Figure/Diagram/Scheme 5.1"), else null.
+        // The key's number is only the digitiser's running order within the question, NOT the paper's number;
+        // use sqFigRefs(f), which trusts the label, and falls back to this only for an unlabelled figure.
+        const SQ_KIND_WORDS={ table:'tables?', graph:'graphs?', fig:'fig(?:ure)?s?|diagrams?|schemes?' };
         function sqFigNumRef(key){
             const m=String(key||'').match(/^([a-z]+)_(\d+)_(\d+)(?:_|$)/);
             if (!m) return null;
-            return { ref:m[2]+'.'+m[3], words:(m[1]==='table'?'table':'fig|figure|diagram|scheme') };
+            const kind=m[1]==='table'?'table':(m[1]==='graph'?'graph':'fig');
+            // an unlabelled graph_ key may be printed as "Graph N.M" or "Fig. N.M" (graph_4_1 is cited as Fig. 4.1)
+            return { ref:m[2]+'.'+m[3], kind, words:(kind==='graph' ? SQ_KIND_WORDS.graph+'|'+SQ_KIND_WORDS.fig : SQ_KIND_WORDS[kind]) };
         }
-        // Does `text` cite the figure, e.g. "Fig. 5.1" for a fig_ key or "Table 5.1" for a table_ key?
+        // Text as a reader sees it, for finding "Fig/Table N.M": markers and inline tags removed ("Figure <strong>3.1</strong>"),
+        // and a grouped citation that names the type once ("Tables 5.2 and 5.3", "Figs. 5.1 and 5.2") spelt out per number.
+        function sqCiteText(t){
+            return String(t||'').replace(/\[\[[^\]]*\]\]/g,' ').replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ')
+                .replace(/\b(fig(?:ure)?s?|tables?|diagrams?|schemes?|graphs?)\.?\s*(\d+\.\d+[a-z]?(?:\s*(?:,|and|or|to|&amp;|&)\s*\d+\.\d+[a-z]?)+)(?![0-9a-z])/gi,
+                    (all0, w, list)=>list.replace(/\d+\.\d+[a-z]?/gi, n=>w.replace(/s$/i,'')+' '+n));
+        }
+        // The paper numbers a figure carries, read from its LABEL (verbatim from the paper: "Table 4.1", "Fig 2.1 and Fig 2.2",
+        // "Graph 3.2", "Fig. 6.2a"). A label with no number ("aspartic acid") means the paper prints no number, so the figure has
+        // none. Only an unlabelled figure falls back to its key. Each ref: { ref:'6.2a', kind:'table'|'graph'|'fig', words }.
+        function sqFigRefs(f){
+            const label=String((f&&f.label)||'').trim();
+            if (label){
+                return [...sqCiteText(label).matchAll(/\b(fig(?:ure)?|table|diagram|scheme|graph)s?\.?\s*(\d+\.\d+[a-z]?)(?![0-9a-z])/gi)].map(m=>{
+                    const kind=/^table/i.test(m[1])?'table':(/^graph/i.test(m[1])?'graph':'fig');
+                    return { ref:m[2].toLowerCase(), kind, words:SQ_KIND_WORDS[kind] };
+                });
+            }
+            const r=sqFigNumRef(f&&f.figure_key);
+            return r ? [r] : [];
+        }
+        // Does `text` cite r? "Fig. 5.1" for a fig, "Table 5.1" for a table. A ref without a letter also answers a lettered
+        // citation (Fig. 6.2 covers "Fig. 6.2a"); a lettered ref answers only its own letter.
         function sqTextCitesFig(text, r){
-            if (!text) return false;
-            return new RegExp('('+r.words+')\\.?\\s*'+r.ref.replace(/\./g,'\\.')+'(\\D|$)','i').test(text);
+            if (!text || !r) return false;
+            const num=String(r.ref).replace(/\./g,'\\.')+(/[a-z]$/i.test(r.ref)?'':'[a-z]?');
+            return new RegExp('\\b(?:'+(r.words||SQ_KIND_WORDS[r.kind]||SQ_KIND_WORDS.fig)+')\\.?\\s*'+num+'(?![0-9a-z])','i').test(sqCiteText(text));
         }
+        function sqTextCitesAnyRef(text, refs){ return (refs||[]).some(r=>sqTextCitesFig(text, r)); }
         // Whether to print figure f, given the parts being printed, all the question's parts, and the stem.
         //  - key encodes a part (struct_5_c_i) -> show iff that part is among those printed (prefix match).
         //  - generic numbered figure (fig_5_1) -> resolve by citation: show if the stem or a printed part
@@ -11364,17 +11379,18 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         //    found anywhere (never hide a figure a printed part might need).
         //  - generic descriptive figure (fig_5_safranal) -> keep (handled by explicit tagging, not here).
         function sqShowFigForPrinted(f, printedParts, allParts, stem){
+            if (f.part_id != null && printedParts.some(p=>p.id===f.part_id)) return true;   // recorded against a printed part
             const fp=sqFigPartPath(f.figure_key);
             if (fp.length){
                 const printedPaths=printedParts.map(p=>sqPartLabelPath(p.part_label));
                 return printedPaths.some(pp=> fp.length<=pp.length && fp.every((t,i)=>t===pp[i]));
             }
-            const r=sqFigNumRef(f.figure_key);
-            if (r){
-                if (sqTextCitesFig(stem, r)) return true;
-                if (printedParts.some(p=>sqTextCitesFig(p.part_text, r))) return true;
+            const refs=sqFigRefs(f);
+            if (refs.length){
+                if (sqTextCitesAnyRef(stem, refs)) return true;
+                if (printedParts.some(p=>sqTextCitesAnyRef(p.part_text, refs))) return true;
                 const printedIds=new Set(printedParts.map(p=>p.id));
-                if (allParts.some(p=>!printedIds.has(p.id) && sqTextCitesFig(p.part_text, r))) return false;
+                if (allParts.some(p=>!printedIds.has(p.id) && sqTextCitesAnyRef(p.part_text, refs))) return false;
                 return true;
             }
             return true;
@@ -11384,6 +11400,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         // question-level (printed with the stem). Same routing as sqShowFigForPrinted — part path from
         // the key, else a numbered figure resolves to the printed part that cites "Fig/Table N.M".
         function sqFigAnchorPart(f, printedParts, stem){
+            if (f.part_id != null && printedParts.some(p=>p.id===f.part_id)) return f.part_id;   // recorded against a printed part
             const fp=sqFigPartPath(f.figure_key);
             if (fp.length){
                 for (let i=0;i<printedParts.length;i++){
@@ -11392,10 +11409,10 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 }
                 return null;
             }
-            const r=sqFigNumRef(f.figure_key);
-            if (r){
-                if (sqTextCitesFig(stem, r)) return null;
-                for (let i=0;i<printedParts.length;i++){ if (sqTextCitesFig(printedParts[i].part_text, r)) return printedParts[i].id; }
+            const refs=sqFigRefs(f);
+            if (refs.length){
+                if (sqTextCitesAnyRef(stem, refs)) return null;
+                for (let i=0;i<printedParts.length;i++){ if (sqTextCitesAnyRef(printedParts[i].part_text, refs)) return printedParts[i].id; }
                 return null;
             }
             return null;

@@ -2693,6 +2693,10 @@ Option D" required></textarea>
                     #studentP2P3Panel select{background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.6rem;font-size:0.9rem;min-width:210px;}
                     #studentP2P3Panel .p2p3-lbl{display:block;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;opacity:0.6;margin-bottom:3px;}
                     .p2p3-filters{display:flex;gap:1.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:0.6rem 0.85rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;}
+                    .p2p3-modes{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.9rem;}
+                    .p2p3-mode{background:transparent;color:var(--white);border:1px solid var(--cyan-border);border-radius:20px;padding:0.35rem 1rem;font-size:0.85rem;cursor:pointer;}
+                    .p2p3-mode:hover{background:var(--cyan-dim);}
+                    .p2p3-mode.active{color:var(--primary);border-color:var(--primary);background:var(--cyan-dim);}
                     .p2p3-fgroup{display:flex;gap:0.65rem;align-items:center;flex-wrap:wrap;}
                     .p2p3-fgroup .p2p3-lbl{display:inline;margin:0 0.25rem 0 0;}
                     .p2p3-fgroup label{font-size:0.85rem;display:inline-flex;align-items:center;gap:0.3rem;cursor:pointer;white-space:nowrap;}
@@ -2725,7 +2729,12 @@ Option D" required></textarea>
                 <div class="panel" style="max-width:1000px;margin:0 auto;">
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
-                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Pick a topic and a concept, narrow with the filters if you like, then reveal the worked answer part by part.</p>
+                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic and a concept, narrow with the filters if you like, then reveal the worked answer part by part.</p>
+                        <div class="p2p3-modes" role="tablist" aria-label="Practice mode">
+                            <button type="button" class="p2p3-mode active" id="p2p3ModeConcept" role="tab" aria-selected="true" onclick="p2p3SetMode('concept')">By concept</button>
+                            <button type="button" class="p2p3-mode" id="p2p3ModePaper" role="tab" aria-selected="false" onclick="p2p3SetMode('paper')">Whole paper</button>
+                        </div>
+                        <div id="p2p3ConceptControls">
                         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
                             <div><label class="p2p3-lbl">Topic (required)</label><select id="p2p3Topic" onchange="p2p3TopicChange()"><option value="">Select a topic&hellip;</option></select></div>
                             <div><label class="p2p3-lbl">Concept (required)</label><select id="p2p3Concept"><option value="">Select a concept&hellip;</option></select></div>
@@ -2748,6 +2757,15 @@ Option D" required></textarea>
                             </div>
                             <div class="p2p3-fgroup" id="p2p3YearGroup"><span class="p2p3-lbl">Years</span></div>
                             <div class="p2p3-fgroup" id="p2p3SchoolGroup"><span class="p2p3-lbl">Schools</span></div>
+                        </div>
+                        </div>
+                        <div id="p2p3PaperControls" style="display:none;">
+                            <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+                                <div><label class="p2p3-lbl">School</label><select id="p2p3PaperSchool" onchange="p2p3PaperSchoolChange()"></select></div>
+                                <div><label class="p2p3-lbl">Year</label><select id="p2p3PaperYear" onchange="p2p3PaperYearChange()"></select></div>
+                                <div><label class="p2p3-lbl">Paper</label><select id="p2p3PaperPaper"></select></div>
+                                <button class="btn btn-primary" id="p2p3PaperBtn" onclick="p2p3ShowPaper()">Show paper</button>
+                            </div>
                         </div>
                         <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, choose how many questions, then click &ldquo;Show questions&rdquo;.</div>
                         <div id="p2p3Toolbar" style="display:none;margin-bottom:1rem;"><button class="btn btn-secondary" onclick="p2p3Print()">Print / Save as PDF (question paper + worked solutions)</button></div>
@@ -6923,6 +6941,7 @@ Option D" required></textarea>
         // Reuses the structured fetch/render helpers. Free students only ever see the teaser
         // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
         let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [], p2pPartMatches = {};
+        let p2pMode = 'concept', p2pPapers = {}, p2pPaperTitle = '', p2pReqGen = 0;   // Whole paper mode (Eric, 5 Oct 2026): 'TYS' or school|source -> year -> papers; p2pReqGen voids stale loads
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
         function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
         // "Select all" master toggle for the Years / Schools filter rows.
@@ -6954,11 +6973,19 @@ Option D" required></textarea>
                 const [topicRows, concepts, index] = await Promise.all([
                     fetchAllPaginated(() => supabaseClient.from('topics').select('id,name').order('id')),
                     fetchAllPaginated(() => supabaseClient.from('concepts').select('id,name,topic_id').order('id')),
-                    fetchAllPaginated(() => supabaseClient.from('structured_questions').select('id,year,paper,source,school').order('id'))
+                    fetchAllPaginated(() => supabaseClient.from('structured_questions').select('id,year,paper,source,school,question_number').order('id'))
                 ]);
                 const topicMap = {}; topicRows.forEach(t => { topicMap[t.id] = t.name; });
                 p2pAllConcepts = concepts.map(c => ({ id:c.id, name:c.name, topic: topicMap[c.topic_id]||'' }));
-                p2pIndex = {}; index.forEach(q => { p2pIndex[q.id] = { year:q.year, paper:q.paper, source:q.source, school:q.school }; });
+                p2pIndex = {}; index.forEach(q => { p2pIndex[q.id] = { year:q.year, paper:q.paper, source:q.source, school:q.school, question_number:q.question_number }; });
+                // Whole paper mode: which (school, year, paper) combinations the bank holds; TYS has no school and keys as 'TYS'
+                p2pPapers = {};
+                index.forEach(q => {
+                    if (q.year == null || !q.paper || !q.source) return;
+                    const key = (q.source === 'TYS') ? 'TYS' : (q.school ? q.school + '|' + q.source : ''); if (!key) return;   // a school's prelim and timed practice stay separate (Codex)
+                    const by = (p2pPapers[key] = p2pPapers[key] || {}); (by[q.year] = by[q.year] || new Set()).add(q.paper);
+                });
+                p2p3PaperFill();
                 const topics = [...new Set(p2pAllConcepts.map(c => c.topic).filter(Boolean))].sort();
                 const tEl = document.getElementById('p2p3Topic');
                 if (tEl) tEl.innerHTML = '<option value="">Select a topic…</option>' + topics.map(t => '<option>'+sqEsc(t)+'</option>').join('');
@@ -6991,7 +7018,8 @@ Option D" required></textarea>
             const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
             const toolbar = document.getElementById('p2p3Toolbar');
             res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none'; p2pQuestions = [];
-            // Anti-bulk guard: both a topic AND a concept are required (no whole-topic / whole-paper pulls).
+            const gen = ++p2pReqGen;
+            // Anti-bulk guard for this mode: both a topic AND a concept are required (whole papers come only through Whole paper mode, one paper at a time).
             if (!topic || !concept){ hint.innerHTML = '<span style="color:var(--primary)">Please choose both a topic and a concept.</span>'; return; }
             const sources = p2pChecked('p2p3-src'), papers = p2pChecked('p2p3-paper'), diffs = p2pChecked('p2p3-diff'), years = p2pChecked('p2p3-year').map(Number), schools = p2pChecked('p2p3-school');
             if (!sources.length || !papers.length || !diffs.length || !years.length){
@@ -7007,6 +7035,7 @@ Option D" required></textarea>
                     if (diffFilter) q = q.in('difficulty', diffFilter);
                     return q.order('question_id').order('id');
                 });
+                if (gen !== p2pReqGen) return;   // mode switched or a newer pull started while the parts were loading
                 // question-level filters (source / paper / year / school) resolved against the in-memory index
                 const srcSet = new Set(sources), paperSet = new Set(papers), yearSet = new Set(years), schoolSet = new Set(schools);
                 p2pMatchIds = [...new Set((rows||[]).map(r => r.question_id))].filter(id => {
@@ -7024,9 +7053,85 @@ Option D" required></textarea>
             }
         }
 
+        // ---- Whole paper mode (Eric, 5 Oct 2026): one school's Paper 2 or 3 for one year, every question and every part, in the order of the original paper ----
+        function p2p3SetMode(mode){
+            p2pMode = (mode === 'paper') ? 'paper' : 'concept';
+            const paper = p2pMode === 'paper';
+            const bc = document.getElementById('p2p3ModeConcept'), bp = document.getElementById('p2p3ModePaper');
+            if (bc){ bc.classList.toggle('active', !paper); bc.setAttribute('aria-selected', paper ? 'false' : 'true'); }
+            if (bp){ bp.classList.toggle('active', paper); bp.setAttribute('aria-selected', paper ? 'true' : 'false'); }
+            const cc = document.getElementById('p2p3ConceptControls'), pc = document.getElementById('p2p3PaperControls');
+            if (cc) cc.style.display = paper ? 'none' : '';
+            if (pc) pc.style.display = paper ? '' : 'none';
+            const res = document.getElementById('p2p3Results'), toolbar = document.getElementById('p2p3Toolbar'), hint = document.getElementById('p2p3Hint');
+            if (res) res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none';
+            p2pQuestions = []; p2pMatchIds = []; p2pPartMatches = {}; p2pPaperTitle = ''; p2pReqGen++;   // any load still in flight is thrown away when it lands
+            if (hint) hint.textContent = paper ? 'Choose a school, year and paper, then click \u201cShow paper\u201d. The questions appear in the order of the original paper.'
+                : 'Pick a topic and a concept, choose how many questions, then click \u201cShow questions\u201d.';
+        }
+        function p2p3PaperFill(){
+            const el = document.getElementById('p2p3PaperSchool'); if (!el) return;
+            const keys = Object.keys(p2pPapers).filter(k => k !== 'TYS').sort((a,b) => p2p3PaperKeyLabel(a).localeCompare(p2p3PaperKeyLabel(b)));
+            if (p2pPapers.TYS) keys.unshift('TYS');
+            el.innerHTML = keys.map(k => '<option value="'+sqAttr(k)+'">'+sqEsc(p2p3PaperKeyLabel(k))+'</option>').join('');
+            p2p3PaperSchoolChange();
+        }
+        function p2p3PaperSchoolChange(){
+            const yEl = document.getElementById('p2p3PaperYear'); if (!yEl) return;
+            const by = p2pPapers[sqVal('p2p3PaperSchool')] || {};
+            const years = Object.keys(by).map(Number).sort((a,b) => b-a);
+            yEl.innerHTML = years.map(y => '<option value="'+y+'">'+y+'</option>').join('');
+            p2p3PaperYearChange();
+        }
+        function p2p3PaperYearChange(){
+            const pEl = document.getElementById('p2p3PaperPaper'); if (!pEl) return;
+            const by = p2pPapers[sqVal('p2p3PaperSchool')] || {};
+            const papers = [...(by[Number(sqVal('p2p3PaperYear'))] || [])].sort();
+            pEl.innerHTML = papers.map(p => '<option value="'+sqAttr(p)+'">Paper '+sqEsc(String(p).replace(/^P/i, ''))+'</option>').join('');
+        }
+        function p2p3SourceName(s){ return ({ TP: 'Timed Practice', TP2: 'Timed Practice 2', Promo: 'Promo' })[s] || s; }
+        function p2p3PaperKeyParts(key){ if (key === 'TYS') return { school: null, source: 'TYS' }; const i = key.indexOf('|'); return { school: key.slice(0, i), source: key.slice(i + 1) }; }
+        function p2p3PaperKeyLabel(key){ if (key === 'TYS') return 'TYS (A-level)'; const k = p2p3PaperKeyParts(key); return k.source === 'Prelim' ? k.school : k.school + ' (' + p2p3SourceName(k.source) + ')'; }
+        function p2p3PaperLabel(key, year, paper){
+            const k = p2p3PaperKeyParts(key);
+            const src = (key === 'TYS') ? 'TYS' : (k.school + ' ' + (k.source === 'Prelim' ? 'Prelim' : p2p3SourceName(k.source)));
+            return src + ' ' + year + ' Paper ' + String(paper).replace(/^P/i, '');
+        }
+        async function p2p3ShowPaper(){
+            const key = sqVal('p2p3PaperSchool'), year = Number(sqVal('p2p3PaperYear')), paper = sqVal('p2p3PaperPaper');
+            const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results'), toolbar = document.getElementById('p2p3Toolbar');
+            res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none';
+            p2pQuestions = []; p2pPartMatches = {}; p2pPaperTitle = '';   // no part filter: the whole paper, every part
+            const gen = ++p2pReqGen;
+            const k = p2p3PaperKeyParts(key || '');
+            if (!key || !year || !paper){ hint.innerHTML = '<span style="color:var(--primary)">Choose a school, a year and a paper.</span>'; return; }
+            const ids = Object.keys(p2pIndex).map(Number).filter(id => {
+                const m = p2pIndex[id];
+                return m && m.year === year && m.paper === paper && m.source === k.source && (key === 'TYS' || m.school === k.school);
+            }).sort((a,b) => ((p2pIndex[a].question_number||0) - (p2pIndex[b].question_number||0)) || (a-b));
+            p2pMatchIds = ids;
+            if (!ids.length){ hint.textContent = 'That paper is not in the bank yet.'; return; }
+            hint.textContent = 'Loading\u2026';
+            try{
+                const qs = await sqFetchByIds(ids);   // comes back sorted by question number
+                await sqEnsureFigFolders(qs);
+                if (gen !== p2pReqGen) return;   // the student switched mode or asked for another paper meanwhile (Codex)
+                p2pQuestions = qs;
+                p2pPaperTitle = p2p3PaperLabel(key, year, paper);
+                const marks = qs.reduce((s,q) => s + (q.parts||[]).reduce((a,p) => a + (Number(p.marks)||0), 0), 0);
+                if (toolbar) toolbar.style.display = qs.length ? 'block' : 'none';
+                hint.textContent = p2pPaperTitle + ': ' + qs.length + ' question' + (qs.length===1?'':'s') + ', ' + marks + ' marks, in the order of the original paper.';
+                res.innerHTML = qs.map(p2p3RenderQuestion).join('');
+                if (window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([res]); }catch(e){} }
+            }catch(e){
+                hint.innerHTML = '<span style="color:var(--danger)">Could not load the paper: '+sqEsc(e.message||e)+'</span>';
+            }
+        }
+
         async function p2p3RenderSet(){
             const hint = document.getElementById('p2p3Hint'), res = document.getElementById('p2p3Results');
             const toolbar = document.getElementById('p2p3Toolbar');
+            const gen = ++p2pReqGen;
             const ids = p2pMatchIds.slice();
             for (let i = ids.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
             const numEl = document.getElementById('p2p3Num');
@@ -7036,6 +7141,7 @@ Option D" required></textarea>
             try{
                 const qs = await sqFetchByIds(pick);
                 await sqEnsureFigFolders(qs);
+                if (gen !== p2pReqGen) return;   // stale: the student moved on while this set was loading
                 p2pQuestions = qs;
                 if (toolbar) toolbar.style.display = qs.length ? 'block' : 'none';
                 const more = (p2pMatchIds.length > qs.length)
@@ -7193,7 +7299,7 @@ Option D" required></textarea>
             // worksheet prints only the relevant sub-parts, matching the on-screen preview.
             const items = p2pQuestions.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m }; });
             const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
-            const title = (topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : '');
+            const title = (p2pMode === 'paper' && p2pPaperTitle) ? p2pPaperTitle : ((topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : ''));
             const win = window.open('', '_blank');
             if (!win){ alert('Your browser blocked the pop-up.\n\nAllow pop-ups for this site (there is usually a small blocked-popup icon near the address bar), then click Print again.'); return; }
             try{ win.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){}

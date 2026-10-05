@@ -2732,7 +2732,7 @@ Option D" required></textarea>
                 <div class="panel" style="max-width:1000px;margin:0 auto;">
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
-                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic and a concept, narrow with the filters if you like, then reveal the worked answer part by part.</p>
+                        <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic, add a concept if you want one, narrow with the filters if you like, then reveal the worked answer part by part.</p>
                         <div class="p2p3-modes" role="tablist" aria-label="Practice mode">
                             <button type="button" class="p2p3-mode active" id="p2p3ModeConcept" role="tab" aria-selected="true" onclick="p2p3SetMode('concept')">By concept</button>
                             <button type="button" class="p2p3-mode" id="p2p3ModePaper" role="tab" aria-selected="false" onclick="p2p3SetMode('paper')">Whole paper</button>
@@ -2740,7 +2740,7 @@ Option D" required></textarea>
                         <div id="p2p3ConceptControls">
                         <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
                             <div><label class="p2p3-lbl">Topic (required)</label><select id="p2p3Topic" onchange="p2p3TopicChange()"><option value="">Select a topic&hellip;</option></select></div>
-                            <div><label class="p2p3-lbl">Concept (required)</label><select id="p2p3Concept"><option value="">Select a concept&hellip;</option></select></div>
+                            <div><label class="p2p3-lbl">Concept</label><select id="p2p3Concept"><option value="">Select a topic first&hellip;</option></select></div>
                             <div><label class="p2p3-lbl">No. of questions</label><input type="number" id="p2p3Num" min="1" max="50" value="10" style="width:96px;background:var(--surface2);color:var(--white);border:1px solid var(--cyan-border);border-radius:6px;padding:0.45rem 0.6rem;font-size:0.9rem;"></div>
                             <button class="btn btn-primary" id="p2p3ShowBtn" onclick="p2p3Show()">Show questions</button>
                         </div>
@@ -2770,7 +2770,7 @@ Option D" required></textarea>
                                 <button class="btn btn-primary" id="p2p3PaperBtn" onclick="p2p3ShowPaper()">Show paper</button>
                             </div>
                         </div>
-                        <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic and a concept, choose how many questions, then click &ldquo;Show questions&rdquo;.</div>
+                        <div id="p2p3Hint" style="font-size:0.85rem;opacity:0.6;margin-bottom:1rem;">Pick a topic (and a concept if you want one), choose how many questions, then click &ldquo;Show questions&rdquo;. Topic-wide pulls show up to 20 questions at a time.</div>
                         <div id="p2p3Toolbar" style="display:none;margin-bottom:1rem;"><button class="btn btn-secondary" id="p2p3PrintBtn" onclick="p2p3Print()">Print / Save as PDF (question paper + worked solutions)</button><span id="p2p3PrintNote" class="p2p3-print-note"></span></div>
                         <div id="p2p3PrintNotice" style="display:none;">Paper 2 &amp; 3 practice is view-only on screen. Use the Download button for a prelim question paper.</div>
                         <div id="p2p3Results"></div>
@@ -6945,7 +6945,7 @@ Option D" required></textarea>
         // Reuses the structured fetch/render helpers. Free students only ever see the teaser
         // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
         let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [], p2pPartMatches = {};
-        let p2pMode = 'concept', p2pPapers = {}, p2pPaperTitle = '', p2pReqGen = 0;   // Whole paper mode (Eric, 5 Oct 2026): 'TYS' or school|source -> year -> papers; p2pReqGen voids stale loads
+        let p2pMode = 'concept', p2pPapers = {}, p2pPaperTitle = '', p2pReqGen = 0, p2pPullCap = 50;   // p2pPullCap: 20 for a topic-wide pull, 50 for one concept (Eric, 5 Oct 2026)   // Whole paper mode (Eric, 5 Oct 2026): 'TYS' or school|source -> year -> papers; p2pReqGen voids stale loads
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
         function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
         // "Select all" master toggle for the Years / Schools filter rows.
@@ -7015,7 +7015,7 @@ Option D" required></textarea>
             const topic = sqVal('p2p3Topic');
             const names = [...new Set((p2pAllConcepts||[]).filter(c => !topic || c.topic === topic).map(c => c.name))].sort();
             const cEl = document.getElementById('p2p3Concept');
-            if (cEl) cEl.innerHTML = '<option value="">Select a concept…</option>' + names.map(n => '<option>'+sqEsc(n)+'</option>').join('');
+            if (cEl) cEl.innerHTML = (topic ? '<option value="*">All concepts in this topic</option>' : '<option value="">Select a topic first…</option>') + names.map(n => '<option>'+sqEsc(n)+'</option>').join('');
         }
 
         async function p2p3Show(){
@@ -7024,15 +7024,18 @@ Option D" required></textarea>
             const toolbar = document.getElementById('p2p3Toolbar');
             res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none'; p2pQuestions = [];
             const gen = ++p2pReqGen;
-            // Anti-bulk guard for this mode: both a topic AND a concept are required (whole papers come only through Whole paper mode, one paper at a time).
-            if (!topic || !concept){ hint.innerHTML = '<span style="color:var(--primary)">Please choose both a topic and a concept.</span>'; return; }
+            // A topic is required; the concept is optional (Eric, 5 Oct 2026). A topic-wide pull is capped at 20 questions, one concept at 50;
+            // whole papers come only through Whole paper mode, one paper at a time.
+            if (!topic){ hint.innerHTML = '<span style="color:var(--primary)">Please choose a topic.</span>'; return; }
+            const allConcepts = !concept || concept === '*';
+            p2pPullCap = allConcepts ? 20 : 50;
             const sources = p2pChecked('p2p3-src'), papers = p2pChecked('p2p3-paper'), diffs = p2pChecked('p2p3-diff'), years = p2pChecked('p2p3-year').map(Number), schools = p2pChecked('p2p3-school');
             if (!sources.length || !papers.length || !diffs.length || !years.length){
                 hint.innerHTML = '<span style="color:var(--primary)">Leave at least one box ticked under Source, Paper, Difficulty and Years.</span>'; return;
             }
             hint.textContent = 'Finding questions…';
             try{
-                const conceptIds = (p2pAllConcepts||[]).filter(c => c.topic === topic && c.name === concept).map(c => c.id);
+                const conceptIds = (p2pAllConcepts||[]).filter(c => c.topic === topic && (allConcepts || c.name === concept)).map(c => c.id);
                 if (!conceptIds.length){ hint.textContent = 'No questions found for that selection.'; return; }
                 const diffFilter = (diffs.length < 3) ? diffs : null;   // all three ticked = no difficulty filter
                 const rows = await fetchAllPaginated(() => {
@@ -7072,7 +7075,7 @@ Option D" required></textarea>
             if (res) res.innerHTML = ''; if (toolbar) toolbar.style.display = 'none';
             p2pQuestions = []; p2pMatchIds = []; p2pPartMatches = {}; p2pPaperTitle = ''; p2pReqGen++;   // any load still in flight is thrown away when it lands
             if (hint) hint.textContent = paper ? 'Choose a school, year and paper, then click \u201cShow paper\u201d. The questions appear in the order of the original paper.'
-                : 'Pick a topic and a concept, choose how many questions, then click \u201cShow questions\u201d.';
+                : 'Pick a topic (and a concept if you want one), choose how many questions, then click \u201cShow questions\u201d. Topic-wide pulls show up to 20 questions at a time.';
         }
         function p2p3PaperFill(){
             const el = document.getElementById('p2p3PaperSchool'); if (!el) return;
@@ -7141,7 +7144,7 @@ Option D" required></textarea>
             const ids = p2pMatchIds.slice();
             for (let i = ids.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); const t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
             const numEl = document.getElementById('p2p3Num');
-            const nReq = Math.max(1, Math.min(50, parseInt(numEl && numEl.value, 10) || 10));   // student-chosen count, 1..50
+            const nReq = Math.max(1, Math.min(p2pPullCap, parseInt(numEl && numEl.value, 10) || 10));   // student-chosen count, up to the pull's cap (20 topic-wide, 50 per concept)
             const pick = ids.slice(0, nReq);
             hint.textContent = 'Loading…';
             try{
@@ -7153,7 +7156,8 @@ Option D" required></textarea>
                 p2p3UpdateToolbar();
                 const more = (p2pMatchIds.length > qs.length)
                     ? ' <button class="btn btn-secondary" style="padding:0.3rem 0.8rem;font-size:0.8rem;margin-left:0.5rem" onclick="p2p3RenderSet()">New set</button>' : '';
-                hint.innerHTML = 'Showing ' + qs.length + ' of ' + p2pMatchIds.length + ' matching question' + (p2pMatchIds.length===1?'':'s') + '.' + more;
+                const capNote = (p2pPullCap === 20 && p2pMatchIds.length > 20) ? ' Topic-wide pulls show up to 20 at a time.' : '';
+                hint.innerHTML = 'Showing ' + qs.length + ' of ' + p2pMatchIds.length + ' matching question' + (p2pMatchIds.length===1?'':'s') + '.' + capNote + more;
                 res.innerHTML = qs.map(p2p3RenderQuestion).join('');
                 if (window.MathJax && MathJax.typesetPromise){ try{ MathJax.typesetPromise([res]); }catch(e){} }
             }catch(e){
@@ -7322,7 +7326,7 @@ Option D" required></textarea>
             // worksheet prints only the relevant sub-parts, matching the on-screen preview.
             const items = qs.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m }; });
             const topic = sqVal('p2p3Topic'), concept = sqVal('p2p3Concept');
-            const title = (p2pMode === 'paper' && p2pPaperTitle) ? p2pPaperTitle : ((topic || 'Paper 2 & 3') + (concept ? ' - ' + concept : ''));
+            const title = (p2pMode === 'paper' && p2pPaperTitle) ? p2pPaperTitle : ((topic || 'Paper 2 & 3') + ((concept && concept !== '*') ? ' - ' + concept : ''));
             const win = window.open('', '_blank');
             if (!win){ alert('Your browser blocked the pop-up.\n\nAllow pop-ups for this site (there is usually a small blocked-popup icon near the address bar), then click Print again.'); return; }
             try{ win.document.write('<!DOCTYPE html><title>Preparing worksheet</title><body style="font-family:Arial;padding:2rem;color:#333;">Preparing worksheet&hellip;</body>'); }catch(e){}

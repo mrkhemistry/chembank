@@ -2464,6 +2464,8 @@ Option D" required></textarea>
   .cf-card details summary { cursor: pointer; font-size: 0.8rem; color: var(--primary); margin-top: 6px; }
   .cf-snippet { color: var(--light); font-size: 0.9rem; margin-top: 6px; }
   .cf-card label { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 0.85rem; color: var(--light); cursor: pointer; }
+  #trainingSection .tr-free { background: var(--surface2); border: 1px solid var(--cyan-border); border-radius: 10px; padding: 0.7rem 1rem; margin: 0 0 1rem; font-size: 0.9rem; line-height: 1.6; color: var(--white); }
+  #trainingSection .tr-free a { color: var(--primary); }
   #trainingSection .tr-divider { display: flex; align-items: center; gap: 12px; margin: 2rem 0 1.5rem; color: rgba(240,244,248,0.75); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; }
   #trainingSection .tr-divider::before, #trainingSection .tr-divider::after { content: ''; flex: 1; border-top: 1px solid var(--cyan-border); }
   #trainingSection .tr-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
@@ -2512,6 +2514,7 @@ Option D" required></textarea>
       <button type="button" class="tr-chip" data-tys="3" aria-pressed="false" onclick="trainingSetTysFilter('3')">3 qns</button>
       <button type="button" class="tr-chip" data-tys="2" aria-pressed="false" onclick="trainingSetTysFilter('2')">2 qns</button>
     </div>
+    <div class="tr-free" id="trainingFreeNote" style="display:none;"></div>
     <div class="tr-summary" id="trainingSummary"></div>
     <div id="trainingChecklist"></div>
   </div>
@@ -2533,6 +2536,7 @@ Option D" required></textarea>
       <label class="tr-label" for="trainingAnswer">Your answer</label>
       <div class="chem-sym" data-for="trainingAnswer" role="toolbar" aria-label="Chemistry symbols"></div>
       <textarea id="trainingAnswer" rows="6" placeholder="Type your explanation as you would write it in the exam."></textarea>
+      <div class="tr-muted" id="trainingFreeLeft" style="display:none;"></div>
       <div class="tr-actions">
         <button class="btn btn-primary" id="trainingCheckBtn" onclick="trainingCheck()">Check my answer</button>
         <button class="btn btn-secondary" onclick="trainingSkip()">Different question</button>
@@ -2724,6 +2728,9 @@ Option D" required></textarea>
                     .p2p3-videowrap{position:relative;padding-top:56.25%;border-radius:8px;overflow:hidden;background:#000;}
                     .p2p3-videowrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
                     .p2p3-ms{font-size:0.9rem;line-height:1.6;}
+                    .p2p3-freenote{background:var(--surface2);border:1px solid var(--cyan-border);border-radius:10px;padding:0.8rem 1rem;margin-bottom:1rem;font-size:0.9rem;line-height:1.6;color:var(--white);}
+                    .p2p3-freenote a{color:var(--primary);}
+                    .p2p3-lock{font-size:0.72rem;color:var(--primary);border:1px solid var(--cyan-border);border-radius:999px;padding:0 0.45rem;margin-left:0.2rem;}
                     .p2p3-teaser{max-width:520px;margin:2rem auto;text-align:center;background:var(--surface2);border:1px solid var(--cyan-border);border-radius:14px;padding:2rem 1.5rem;}
                     .p2p3-pill{display:inline-block;border:1px solid var(--cyan-border);color:var(--primary);border-radius:20px;padding:2px 14px;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.8rem;}
                     .p2p3-teaser h3{color:var(--primary);margin:0 0 0.6rem;}
@@ -2733,6 +2740,7 @@ Option D" required></textarea>
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
                         <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic, add a concept if you want one, narrow with the filters if you like, then reveal the worked answer part by part.</p>
+                        <div id="p2p3FreeNote" class="p2p3-freenote" style="display:none;">Your free account includes every <b>Ten-Year-Series</b> Paper&nbsp;2 and Paper&nbsp;3 question (2017 to 2025), with the answers. <b>Premium</b> adds more than 1,300 school Prelim questions from every JC. <a href="https://www.mrkhemistry.com" target="_blank" rel="noopener">Book a free trial class</a> or ask Mr Khemistry about Premium.</div>
                         <div class="p2p3-modes" role="tablist" aria-label="Practice mode">
                             <button type="button" class="p2p3-mode active" id="p2p3ModeConcept" role="tab" aria-selected="true" onclick="p2p3SetMode('concept')">By concept</button>
                             <button type="button" class="p2p3-mode" id="p2p3ModePaper" role="tab" aria-selected="false" onclick="p2p3SetMode('paper')">Whole paper</button>
@@ -2747,7 +2755,7 @@ Option D" required></textarea>
                         <div class="p2p3-filters">
                             <div class="p2p3-fgroup"><span class="p2p3-lbl">Source</span>
                                 <label><input type="checkbox" class="p2p3-src" value="TYS" checked> TYS</label>
-                                <label><input type="checkbox" class="p2p3-src" value="Prelim" checked> Prelim</label>
+                                <label><input type="checkbox" class="p2p3-src" value="Prelim" checked> <span id="p2p3PrelimLbl">Prelim</span></label>
                             </div>
                             <div class="p2p3-fgroup"><span class="p2p3-lbl">Paper</span>
                                 <label><input type="checkbox" class="p2p3-paper" value="P2" checked> P2</label>
@@ -6941,12 +6949,14 @@ Option D" required></textarea>
             }
         }
 
-        // ===== Student "Paper 2 & 3 Practice" (premium_student + admin only) =====
-        // Reuses the structured fetch/render helpers. Free students only ever see the teaser
-        // (no data is fetched for them); RLS also returns them zero rows as a hard backstop.
+        // ===== Student "Paper 2 & 3 Practice" (premium_student + admin; free students get TYS only) =====
+        // Reuses the structured fetch/render helpers. Free accounts (role 'student') see the TYS questions only
+        // (Eric, 6 Oct 2026); RLS returns them no prelim or timed-practice rows as the hard backstop.
         let p2pAllConcepts = null, p2pMatchIds = [], p2pIndex = {}, p2pQuestions = [], p2pPartMatches = {};
         let p2pMode = 'concept', p2pPapers = {}, p2pPaperTitle = '', p2pReqGen = 0, p2pPullCap = 50;   // p2pPullCap: 20 for a topic-wide pull, 50 for one concept (Eric, 5 Oct 2026)   // Whole paper mode (Eric, 5 Oct 2026): 'TYS' or school|source -> year -> papers; p2pReqGen voids stale loads
         function p2pIsPremium(){ return userRole === 'premium_student' || userRole === 'admin'; }
+        function p2pIsFree(){ return userRole === 'student'; }
+        function p2pIsStudentAcct(){ return userRole === 'premium_student' || userRole === 'student'; }   // student print rules (TYS view-only, no solutions PDF)
         function p2pChecked(cls){ return [...document.querySelectorAll('.'+cls+':checked')].map(e => e.value); }
         // "Select all" master toggle for the Years / Schools filter rows.
         function p2pToggleAll(masterCb, cls){ document.querySelectorAll('.'+cls).forEach(cb => { cb.checked = masterCb.checked; }); }
@@ -6960,14 +6970,19 @@ Option D" required></textarea>
         async function p2p3Open(){
             const iface = document.getElementById('p2p3Interface');
             const teaser = document.getElementById('p2p3Teaser');
-            if (!p2pIsPremium()){
+            if (!p2pIsPremium() && !p2pIsFree()){
                 if (iface) iface.style.display = 'none';
                 if (teaser) teaser.style.display = 'block';
                 return;
             }
             if (teaser) teaser.style.display = 'none';
             if (iface) iface.style.display = 'block';
-            document.body.classList.toggle('p2p3-student', userRole === 'premium_student');   // print guard for student accounts (Eric, 5 Oct 2026)
+            document.body.classList.toggle('p2p3-student', p2pIsStudentAcct());   // print guard for student accounts (Eric, 5 Oct 2026)
+            // Free accounts: TYS only, prelims shown as a Premium extra (Eric, 6 Oct 2026)
+            const free = p2pIsFree();
+            const freeNote = document.getElementById('p2p3FreeNote'); if (freeNote) freeNote.style.display = free ? 'block' : 'none';
+            const preCb = document.querySelector('.p2p3-src[value="Prelim"]');
+            if (preCb){ preCb.disabled = free; preCb.checked = !free; const lab = document.getElementById('p2p3PrelimLbl'); if (lab) lab.innerHTML = free ? 'Prelim <span class="p2p3-lock">Premium</span>' : 'Prelim'; }
             if (p2pAllConcepts === null) await p2p3Init();
         }
 
@@ -7081,7 +7096,8 @@ Option D" required></textarea>
             const el = document.getElementById('p2p3PaperSchool'); if (!el) return;
             const keys = Object.keys(p2pPapers).filter(k => k !== 'TYS').sort((a,b) => p2p3PaperKeyLabel(a).localeCompare(p2p3PaperKeyLabel(b)));
             if (p2pPapers.TYS) keys.unshift('TYS');
-            el.innerHTML = keys.map(k => '<option value="'+sqAttr(k)+'">'+sqEsc(p2p3PaperKeyLabel(k))+'</option>').join('');
+            el.innerHTML = keys.map(k => '<option value="'+sqAttr(k)+'">'+sqEsc(p2p3PaperKeyLabel(k))+'</option>').join('')
+                + (p2pIsFree() ? '<option value="" disabled>School prelims (every JC): Premium</option>' : '');
             p2p3PaperSchoolChange();
         }
         function p2p3PaperSchoolChange(){
@@ -7270,7 +7286,7 @@ Option D" required></textarea>
                     }
                 });
             }
-            if (q.source === 'TYS') html += '<div class="p2p3-copyright">&copy; SEAB. Reproduced for enrolled students&rsquo; own practice; view only.</div>';
+            if (q.source === 'TYS') html += '<div class="p2p3-copyright">&copy; SEAB. Reproduced for students&rsquo; own practice; view only.</div>';
             html += '</div>';
             return html;
         }
@@ -7311,7 +7327,7 @@ Option D" required></textarea>
             const toolbar = document.getElementById('p2p3Toolbar'), btn = document.getElementById('p2p3PrintBtn'), note = document.getElementById('p2p3PrintNote');
             if (!toolbar || !btn || !note) return;
             if (!p2pQuestions.length){ toolbar.style.display = 'none'; return; }
-            if (userRole !== 'premium_student'){ btn.style.display = ''; btn.textContent = 'Print / Save as PDF (question paper + worked solutions)'; note.textContent = ''; toolbar.style.display = 'block'; return; }
+            if (!p2pIsStudentAcct()){ btn.style.display = ''; btn.textContent = 'Print / Save as PDF (question paper + worked solutions)'; note.textContent = ''; toolbar.style.display = 'block'; return; }
             const printable = p2pQuestions.filter(q => q.source !== 'TYS').length, tys = p2pQuestions.length - printable;
             if (!printable){ btn.style.display = 'none'; note.textContent = 'TYS questions and their answers are view-only on screen.'; }
             else { btn.style.display = ''; btn.textContent = 'Download question paper (PDF)'; note.textContent = (tys ? tys + ' TYS question' + (tys === 1 ? ' stays' : 's stay') + ' on screen (view only). ' : '') + 'Answers stay on screen.'; }
@@ -7319,7 +7335,7 @@ Option D" required></textarea>
         }
         function p2p3Print(){
             if (!p2pQuestions || !p2pQuestions.length){ alert('Show some questions first.'); return; }
-            const student = userRole === 'premium_student';
+            const student = p2pIsStudentAcct();
             const qs = student ? p2pQuestions.filter(q => q.source !== 'TYS') : p2pQuestions;   // students never print TYS
             if (!qs.length){ alert('TYS questions are view-only on screen.'); return; }
             // Scope each question to the parts that matched the chosen concept (+ prerequisites), so the
@@ -9295,6 +9311,10 @@ Option D" required></textarea>
         const TRAINING_MAX_FAILS = 3;
         const TRAINING_FN_URL = SUPABASE_URL + '/functions/v1/training-ai';
         let trState = { conceptId: null, part: null, busy: false, mode: 'tys', kind: 'tys', last: null };
+        // Free accounts (role 'student') get a taster (Eric, 6 Oct 2026): TYS questions only, TRAINING_FREE_CAP marked answers
+        // in total. The training-ai function enforces both; the page only shows the count and hides the prelim follow-ups.
+        const TRAINING_FREE_CAP = 5;
+        let trFreeUsed = null;   // marked answers this free account has used (its training_attempts rows), null until loaded
         let trPartsCache = {};   // concept id -> parts loaded for the question picker
         let trTysFilter = (function () { try { return sessionStorage.getItem('chembank_training_tys') || 'all'; } catch (e) { return 'all'; } })();
 
@@ -9321,6 +9341,27 @@ Option D" required></textarea>
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chemBuildSymbolStrips); else chemBuildSymbolStrips();
 
         function trIsPremium() { return userRole === 'premium_student' || userRole === 'admin'; }
+        function trIsFree() { return userRole === 'student'; }
+        // TRY2026 ad accounts (free + ChemBank only) do not get the older Chem-Check box (Eric, 6 Oct 2026); chemcheck-ai refuses them too
+        function trIsAdAccount() { return trIsFree() && !!(userProfile && userProfile.chembank_only === true); }
+        function trFreeLeft() { return trFreeUsed == null ? null : Math.max(0, TRAINING_FREE_CAP - trFreeUsed); }
+        function trainingRenderFreeNote() {
+            const note = document.getElementById('trainingFreeNote'), left = document.getElementById('trainingFreeLeft'), btn = document.getElementById('trainingCheckBtn');
+            if (!note || !left) return;
+            if (!trIsFree()) { note.style.display = 'none'; left.style.display = 'none'; if (btn) btn.disabled = false; return; }
+            const n = trFreeLeft();
+            const trial = ' <a href="https://www.mrkhemistry.com" target="_blank" rel="noopener">Book a free trial class</a> or ask Mr Khemistry about Premium.';
+            if (n === 0) {
+                note.innerHTML = 'You have used your ' + TRAINING_FREE_CAP + ' free marked answers. <b>Premium</b> students get ' + 20 + ' a day, plus a similar prelim question after every miss.' + trial;
+                left.innerHTML = 'No free marked answers left.' + trial;
+            } else {
+                note.innerHTML = 'Free account: ' + (n == null ? TRAINING_FREE_CAP : n) + ' of ' + TRAINING_FREE_CAP + ' marked answers left, on the TYS questions. <b>Premium</b> gives ' + 20 + ' a day and adds similar prelim questions.';
+                left.textContent = n == null ? '' : (n + ' free marked answer' + (n === 1 ? '' : 's') + ' left');
+            }
+            note.style.display = 'block';
+            left.style.display = left.innerHTML ? 'block' : 'none';
+            if (btn && !trState.busy) btn.disabled = (n === 0);
+        }
         function trStoreKey() { return 'chembank_training_' + ((currentUser && currentUser.id) ? currentUser.id : 'anon'); }
         // Progress lives in training_attempts (one row per marked answer, written by the marking function), so it
         // follows the student across devices. The page keeps an in-memory copy, mirrored to localStorage only as an
@@ -9407,6 +9448,7 @@ Option D" required></textarea>
                 if (!currentUser || currentUser.id !== uid) break;   // someone else logged in meanwhile: this answer is not theirs
                 if (!data) break;
                 if (trLocalEdits !== editsBefore) continue;   // an answer was marked during the query; its row is on the server now
+                trFreeUsed = data.length;
                 const merged = trProgressFromAttempts(data, trReadLocal());
                 trSaveProgress(merged);
                 return merged;
@@ -9750,12 +9792,20 @@ Option D" required></textarea>
             const session = document.getElementById('trainingSession');
             if (!teaser || !home || !session) return;
             session.style.display = 'none';
-            if (!trIsPremium()) { teaser.style.display = 'block'; home.style.display = 'none'; return; }
+            if (userRole !== 'admin') {   // admin's Chem-Check manage view toggles this panel itself
+                const ad = trIsAdAccount(), browse = document.getElementById('sPanel-browse'), divider = document.getElementById('trainingDivider');
+                if (browse) browse.style.display = ad ? 'none' : '';
+                if (divider) divider.style.display = ad ? 'none' : '';
+            }
+            if (!trIsPremium() && !trIsFree()) { teaser.style.display = 'block'; home.style.display = 'none'; return; }
             teaser.style.display = 'none';
             home.style.display = 'block';
+            if (trIsFree()) trFreeUsed = null;   // recounted from the account below
+            trainingRenderFreeNote();
             trainingRenderChecklist();
             trainingLoadFlags();
             trainingSyncProgress().then(() => {
+                trainingRenderFreeNote();
                 if (home.style.display !== 'none') { trainingRenderChecklist(); return; }
                 const c = trConcept(), picker = document.getElementById('trainingPicker');
                 if (c && picker && picker.style.display === 'block' && trPartsCache[c.id]) trainingRenderPicker(c, trPartsCache[c.id]);
@@ -9820,7 +9870,7 @@ Option D" required></textarea>
 
         async function trLoadConceptParts(c) {
             if (trPartsCache[c.id]) return trPartsCache[c.id];
-            const ids = (c.tys || []).concat(c.prelim || []);
+            const ids = (c.tys || []).concat(trIsFree() ? [] : (c.prelim || []));
             if (!ids.length) return [];
             const { data, error } = await supabaseClient
                 .from('structured_parts')
@@ -9887,7 +9937,8 @@ Option D" required></textarea>
             let html = '<div class="tr-pick-head"><span class="tr-pick-title">TYS questions (' + tys.length + ' part' + (tys.length === 1 ? '' : 's') + ')</span>'
                 + '<button type="button" class="btn btn-secondary tr-start" onclick="trainingNextQuestion()">Pick one for me</button></div>';
             html += tys.length ? tys.map(p => row(p, 'tys')).join('') : '<p class="tr-muted">No TYS questions are available for this concept.</p>';
-            html += '<details class="tr-prelim"><summary>Similar prelim questions (' + prelim.length + ' part' + (prelim.length === 1 ? '' : 's') + ')</summary>'
+            if (trIsFree()) html += '<p class="tr-muted">Similar prelim questions for this concept come with Premium.</p>';
+            else html += '<details class="tr-prelim"><summary>Similar prelim questions (' + prelim.length + ' part' + (prelim.length === 1 ? '' : 's') + ')</summary>'
                 + (prelim.length ? prelim.map(p => row(p, 'prelim')).join('') : '<p class="tr-muted">None yet.</p>') + '</details>';
             const box = document.getElementById('trainingPicker');
             box.innerHTML = html;
@@ -10055,7 +10106,7 @@ Option D" required></textarea>
         async function trainingNextQuestion() {
             const c = trConcept(); if (!c) return;
             const rec = trRecord(trLoadProgress(), c.id);
-            const tys = c.tys || [], prelim = c.prelim || [];
+            const tys = c.tys || [], prelim = trIsFree() ? [] : (c.prelim || []);
             const unseenTys = tys.filter(id => !rec.seen.includes(id));
             const unseenPrelim = prelim.filter(id => !rec.seen.includes(id));
             // TYS questions come first. After a miss the next question is a similar prelim one;
@@ -10120,6 +10171,7 @@ Option D" required></textarea>
             if (trState.busy || !trState.part) return;
             const answer = document.getElementById('trainingAnswer').value.trim();
             if (!answer) { alert('Type your answer first.'); return; }
+            if (trIsFree() && trFreeLeft() === 0) { trainingRenderFreeNote(); trainingShowError('You have used your ' + TRAINING_FREE_CAP + ' free marked answers. Premium students get 20 a day.'); return; }
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { alert('Your session has expired. Please log in again.'); return; }
             trState.busy = true;
@@ -10140,8 +10192,12 @@ Option D" required></textarea>
             btn.disabled = false;
             document.getElementById('trainingSpinner').style.display = 'none';
             if (!res) { trainingShowError('Marking is not reachable right now. In the local preview this means the marking function has not been switched on yet.'); return; }
-            if (res.status === 429) { trainingShowError(body.error || "You have used today's marked answers. Come back tomorrow."); return; }
+            if (res.status === 429) {
+                if (trIsFree()) { trFreeUsed = TRAINING_FREE_CAP; trainingRenderFreeNote(); }
+                trainingShowError(body.error || "You have used today's marked answers. Come back tomorrow."); return;
+            }
             if (!res.ok) { trainingShowError(body.error || 'Marking failed. Please try again.'); return; }
+            if (trIsFree() && body.free_left != null) { trFreeUsed = TRAINING_FREE_CAP - Number(body.free_left); trainingRenderFreeNote(); }
             const progress = trLoadProgress();
             const rec = trRecord(progress, trState.conceptId);
             trNoteAttempt(rec, trState.part.id, !!body.pass, body.marks_awarded, body.marks || trState.part.marks, new Date().toISOString());
@@ -10179,7 +10235,7 @@ Option D" required></textarea>
                 html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">Next TYS question</button>'
                     + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
             } else {
-                html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">Try a similar prelim question</button>'
+                html += '<button class="btn btn-primary" onclick="trainingNextQuestion()">' + (trIsFree() ? 'Try another TYS question' : 'Try a similar prelim question') + '</button>'
                     + '<button class="btn btn-secondary" onclick="trainingShowPicker()">Choose another question</button>';
             }
             html += '</div>';

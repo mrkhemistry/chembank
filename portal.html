@@ -233,7 +233,7 @@
         <div class="card-header">
           <div class="card-icon">&#10003;</div>
           <div class="card-name">Concept Trainer</div>
-          <div class="card-tag">Premium</div>
+          <div class="card-tag" id="trainerTag">Premium</div>
         </div>
         <div class="card-body">
           <div class="card-desc">Tick off the explanation concepts the A-level keeps testing. Answer a real TYS question, get marked against the mark scheme, and see exactly which points you missed.</div>
@@ -388,6 +388,9 @@
         // Worked out afresh at every sign-in: signing out does not reload the page
         var chembankOnly = !!(res.data && res.data.chembank_only === true);
         document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.style.display = chembankOnly ? 'none' : ''; });
+        // Free accounts get 5 marked Concept Trainer answers (Eric, 6 Oct 2026)
+        var trainerTag = document.getElementById('trainerTag');
+        if (trainerTag) trainerTag.textContent = (res.data && res.data.role === 'student') ? '5 free answers' : 'Premium';
         // Accounts tied to one year (recordings-only codes) see only that year's Google Classroom card
         var classroom = res.data && res.data.classroom;
         document.querySelectorAll('[data-classroom]').forEach(function(c) {

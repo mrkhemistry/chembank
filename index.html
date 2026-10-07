@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KhemBank - Chemistry Question Bank System</title>
     
-    <!-- MathJax for mathematical equations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+    <!-- MathJax for mathematical equations. Version 4 wraps long formulas onto the next line
+         on a phone (version 3 could not, so they ran off the screen); displayOverflow does the
+         same for stand-alone \[...\] formulas. textmacros is switched off so \text{...} behaves
+         exactly as it did in version 3. The speech/enrichment layer is off (it doubled typesetting
+         time on phones) and the hidden assistive MathML copy is kept for screen readers, as in v3. -->
+    <script>window.MathJax = { tex: { packages: { '[-]': ['textmacros'] } }, output: { displayOverflow: 'linebreak' }, options: { menuOptions: { settings: { enrich: false, speech: false, braille: false, assistiveMml: true } } } };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"></script>
     
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -7408,7 +7413,7 @@ Option D" required></textarea>
               + '.soln .p-ms-lbl,.soln .q-ansfigs-lbl{color:#1636c2;}'
               + '</style>'
               + '<script>(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();<\/script>'
-              + '<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
+              + '<script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
               + '</head><body>'
               + '<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations, printing starts automatically.</span></div>'
               + body + '</body></html>';
@@ -7493,7 +7498,7 @@ Option D" required></textarea>
 
             // Use iframe to sandbox the worksheet CSS so it cannot affect the main page
             const frame = document.getElementById('wsPreviewFrame');
-            frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"><\/script></head><body style="margin:0;padding:2.54cm;">' + html + '</body></html>';
+            frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"><\/script></head><body style="margin:0;padding:2.54cm;">' + html + '</body></html>';
             document.getElementById('wsPreviewModal').classList.add('show');
         }
 
@@ -11753,7 +11758,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}'
               +'function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();'
               +'<\/script>'))
-              +'<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js" async><\/script>'
+              +'<script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
               +'</head><body>'
               +(preview?'':'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>')
               +sections

@@ -6597,7 +6597,7 @@ Option D" required></textarea>
                 return `
                     <div class="${className}">
                         <div class="option-letter">${displayLetter}</div>
-                        <div class="option-text">${escapeHtml(question.options[originalIndex])}</div>
+                        <div class="option-text">${sanitizeQuestionText(String(question.options[originalIndex] ?? ''))}</div>
                         ${isUserAnswer ? '<span style="margin-left: auto;">Your answer</span>' : ''}
                         ${isCorrectAnswer ? '<span style="margin-left: auto; color: var(--success);">✓ Correct</span>' : ''}
                     </div>

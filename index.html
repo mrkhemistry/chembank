@@ -1920,62 +1920,30 @@ Option D" required></textarea>
         <div id="studentView" class="view">
             <!-- Student Tab Navigation -->
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.5rem; border-bottom: 2px solid rgba(0,217,255,0.2); padding-bottom:0;">
-                <button class="student-tab active" id="tabQuiz" onclick="switchStudentTab('quiz')">Practice Quiz</button>
-                <button class="student-tab" id="tabWorksheets" onclick="switchStudentTab('worksheets')">Worksheets</button>
-                <button class="student-tab" id="tabCheckAnswer" onclick="switchStudentTab('check')">Check My Answer</button>
-                <button class="student-tab" id="tabHistory" onclick="switchStudentTab('history')">My History</button>
-                <button class="student-tab" id="tabP2P3" onclick="switchStudentTab('p2p3')">Paper 2 &amp; 3</button>
+                <!-- Tab clean-up (16 Oct 2026): order = how a student should use them; keys unchanged so deep links and saved tabs still work -->
+                <button class="student-tab active" id="tabQuiz" onclick="openStudentTab('quiz')">Practise MCQ</button>
+                <button class="student-tab" id="tabP2P3" onclick="openStudentTab('p2p3')">Paper 2 &amp; 3</button>
+                <button class="student-tab" id="tabCheckAnswer" onclick="openStudentTab('check')">Concept Trainer</button>
+                <button class="student-tab" id="tabHistory" onclick="openStudentTab('history')">My Progress</button>
+                <!-- Worksheets: admin and teacher only (shown in showView) -->
+                <button class="student-tab" id="tabWorksheets" onclick="openStudentTab('worksheets')" style="display:none;">Worksheets</button>
             </div>
 
             <!-- Quiz Panel -->
             <div id="studentQuizPanel">
-            <!-- Gamification Row: Streak + Personal Bests + Topic Mastery -->
-            <div class="gamification-row" id="gamificationRow" style="display:none;">
-                <!-- Streak Card -->
-                <div class="panel" id="streakCard">
-                    <div class="panel-header" style="cursor:pointer;" onclick="toggleStreak()">
-                        <span>Practice Streak <span class="update-dot" id="streakDot"></span></span>
-                        <span id="streakToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
-                    </div>
-                    <div id="streakContent" style="display:none;">
-                        <div style="padding:1rem; color:#777; text-align:center;">Loading...</div>
+            <!-- Weak-question practice at the top (tab clean-up, 16 Oct 2026): shown only when the student has wrong answers to retry -->
+            <div class="panel" id="weakPracticeRow" style="display:none;">
+                <div class="panel-header">
+                    <span>Practise your weak questions</span>
+                </div>
+                <p style="line-height:1.6; margin:0 0 1rem;">Every MCQ you got wrong, saved until you get it right. Retry them all, or one topic at a time.</p>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="weakTopicSelect">Choose a topic</label>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+                        <select id="weakTopicSelect" onchange="updateWeakButtonLabel()" style="flex:1 1 200px; width:auto; min-width:0;"></select>
+                        <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()">Practice Weak Questions</button>
                     </div>
                 </div>
-
-                <!-- Personal Bests Card -->
-                <div class="panel" id="personalBestsCard">
-                    <div class="panel-header" style="cursor:pointer;" onclick="togglePersonalBests()">
-                        <span>Your Personal Bests <span class="update-dot" id="personalBestsDot"></span></span>
-                        <span id="personalBestsToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
-                    </div>
-                    <div id="personalBestsContent" style="display:none;">
-                        <div style="padding:1rem; color:#777;">Loading your personal bests...</div>
-                    </div>
-                </div>
-
-                <!-- Topic Mastery Card -->
-                <div class="panel" id="topicMasteryCard" style="display:none;">
-                    <div class="panel-header" style="cursor:pointer;" onclick="toggleTopicMastery()">
-                        <span>Topic Mastery <span class="update-dot" id="topicMasteryDot"></span></span>
-                        <span id="topicMasteryToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
-                    </div>
-                    <div id="topicMasteryNote" style="padding:0.35rem 0 0.15rem 0; color:#777; font-size:0.72rem; line-height:1.4; display:none;">Bronze 60% &middot; Silver 75% &middot; Gold 90% (min 20 Qs)</div>
-                    <div id="topicMasteryContent" style="display:none;">
-                        <div style="padding:1rem; color:#777;">Loading your topic mastery...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Referral CTA — paid recording students only -->
-            <div class="referral-card" id="referralCard">
-                <div class="referral-card-text">
-                    <div class="referral-card-headline">Refer a friend, get 1 month free.</div>
-                    <div class="referral-card-sub">Your friend gets $50 off + 50% off any months they missed.</div>
-                </div>
-                <a href="#" id="referralCardBtn" class="referral-card-btn" target="_blank" rel="noopener">
-                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12a11.93 11.93 0 001.64 6.05L0 24l6.13-1.61A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12a11.93 11.93 0 00-3.48-8.52zM12 21.82a9.81 9.81 0 01-5-1.36l-.36-.21-3.64.95.97-3.55-.23-.37A9.82 9.82 0 1121.82 12 9.83 9.83 0 0112 21.82zm5.4-7.36c-.3-.15-1.76-.87-2.04-.97s-.47-.15-.67.15-.77.97-.94 1.17-.35.22-.65.07a8.07 8.07 0 01-2.37-1.46 8.93 8.93 0 01-1.65-2.05c-.17-.3 0-.46.13-.61s.3-.35.45-.52a2.06 2.06 0 00.3-.5.55.55 0 000-.52c-.07-.15-.67-1.62-.92-2.21s-.49-.51-.67-.52h-.57a1.1 1.1 0 00-.8.37 3.36 3.36 0 00-1.05 2.5 5.84 5.84 0 001.22 3.1 13.36 13.36 0 005.13 4.53 17.1 17.1 0 001.71.63 4.13 4.13 0 001.89.12 3.09 3.09 0 002.03-1.43 2.5 2.5 0 00.18-1.43c-.07-.13-.27-.2-.57-.35z"/></svg>
-                    Tell a friend
-                </a>
             </div>
 
             <!-- Topical Revision MCQs — Mr Khemistry's curated per-topic sets (premium only) -->
@@ -1992,7 +1960,7 @@ Option D" required></textarea>
                         </select>
                     </div>
                     <button class="btn btn-primary" onclick="startRevisionPackage()">Start revision quiz</button>
-                    <p style="opacity:0.8; line-height:1.6; margin:1rem 0 0; font-size:0.9rem;">Every question you get wrong is saved. Come back any time and use <strong>Practice Weak Questions</strong> below (pick a topic from its dropdown) to retry them.</p>
+                    <p style="opacity:0.8; line-height:1.6; margin:1rem 0 0; font-size:0.9rem;">Every question you get wrong is saved. Come back any time and use <strong>Practise your weak questions</strong> at the top of this tab (pick a topic from its dropdown) to retry them.</p>
                 </div>
                 <div id="revPkgTeaser" style="display:none;">
                     <div class="p2p3-teaser">
@@ -2119,6 +2087,17 @@ Option D" required></textarea>
                     </div>
                     
                     <div class="form-group">
+                        <label>Number of Questions</label>
+                        <input type="number" id="numQuestions" min="1" max="50" value="10">
+                    </div>
+                    <!-- More options (tab clean-up, 16 Oct 2026): sources, years, schools and timed mode, folded away; the summary counts what is on -->
+                    <details class="source-group" id="quizMoreOptions" style="grid-column: 1 / -1;" onchange="updateQuizMoreOptions(false)">
+                        <summary>
+                            <span class="group-caret">▸</span>
+                            <span class="group-title">More options: sources, years, schools, timed mode<span id="quizMoreOptionsCount"></span></span>
+                        </summary>
+                        <div class="filters" style="margin-top:0.25rem; padding:0 0.85rem 0.85rem;">
+                    <div class="form-group">
                         <label>Sources & Years (Select multiple - Optional)</label>
                         <div id="sourceYearFilters" style="display: flex; flex-direction: column; gap: 1rem;">
                             <!-- TYS Years -->
@@ -2200,33 +2179,22 @@ Option D" required></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label>Number of Questions</label>
-                        <input type="number" id="numQuestions" min="1" max="50" value="10">
-                    </div>
-                    <div class="form-group">
-                        <label>Timed Mode <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(2 min per question)</span></label>
+                        <label>Timed Mode <span style="font-size:0.75rem; color:#ffffff; font-weight:400;">(2 min per question)</span></label>
                         <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:6px;">
                             <div class="timer-toggle-track" id="timerToggleTrack" onclick="toggleTimerMode()">
                                 <div class="timer-toggle-thumb" id="timerToggleThumb"></div>
                             </div>
-                            <span id="timerToggleLabel" style="font-size:0.85rem; color:rgba(240,244,248,0.5);">Off</span>
+                            <span id="timerToggleLabel" style="font-size:0.85rem; color:#ffffff;">Off</span>
                         </label>
                     </div>
+                        </div>
+                    </details>
                 </div>
                 
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                     <button class="btn btn-primary" onclick="startQuiz()">Start Quiz</button>
                     <button class="btn btn-secondary" id="resumeQuizBtn" onclick="resumeQuizProgress()" style="display:none;">Resume Quiz</button>
                 </div>
-                <!-- Weak-question practice: every wrong answer, retried until mastered; optionally one topic at a time -->
-                <div class="form-group" id="weakPracticeRow" style="display:none; margin-top:1.5rem; margin-bottom:0;">
-                    <label for="weakTopicSelect">Practise your weak questions</label>
-                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
-                        <select id="weakTopicSelect" onchange="updateWeakButtonLabel()" style="flex:1 1 200px; width:auto; min-width:0;"></select>
-                        <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()">Practice Weak Questions</button>
-                    </div>
-                </div>
-                <div id="masteredThisWeekStat" style="display:none; margin-top: 0.75rem; font-size: 0.85rem; color: #06FFA5; font-family: 'DM Sans', sans-serif;"></div>
             </div>
             </div><!-- end studentQuizPanel -->
 
@@ -2683,7 +2651,58 @@ Option D" required></textarea>
 
             <!-- History Panel -->
             <div id="studentHistoryPanel" style="display:none;">
-                <div class="panel" style="max-width:900px; margin:0 auto;">
+              <div style="max-width:900px; margin:0 auto;">
+                <div id="masteredThisWeekStat" style="display:none; margin: 0 0 1rem; font-size: 0.85rem; color: #06FFA5; font-family: 'DM Sans', sans-serif;"></div>
+            <!-- Gamification Row: Streak + Personal Bests + Topic Mastery -->
+            <div class="gamification-row" id="gamificationRow" style="display:none;">
+                <!-- Streak Card -->
+                <div class="panel" id="streakCard">
+                    <div class="panel-header" style="cursor:pointer;" onclick="toggleStreak()">
+                        <span>Practice Streak <span class="update-dot" id="streakDot"></span></span>
+                        <span id="streakToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
+                    </div>
+                    <div id="streakContent" style="display:none;">
+                        <div style="padding:1rem; color:#ffffff; text-align:center;">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Personal Bests Card -->
+                <div class="panel" id="personalBestsCard">
+                    <div class="panel-header" style="cursor:pointer;" onclick="togglePersonalBests()">
+                        <span>Your Personal Bests <span class="update-dot" id="personalBestsDot"></span></span>
+                        <span id="personalBestsToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
+                    </div>
+                    <div id="personalBestsContent" style="display:none;">
+                        <div style="padding:1rem; color:#ffffff;">Loading your personal bests...</div>
+                    </div>
+                </div>
+
+                <!-- Topic Mastery Card -->
+                <div class="panel" id="topicMasteryCard" style="display:none;">
+                    <div class="panel-header" style="cursor:pointer;" onclick="toggleTopicMastery()">
+                        <span>Topic Mastery <span class="update-dot" id="topicMasteryDot"></span></span>
+                        <span id="topicMasteryToggle" style="color:var(--primary); font-size:0.85rem; font-weight:600;">Show</span>
+                    </div>
+                    <div id="topicMasteryNote" style="padding:0.35rem 0 0.15rem 0; color:#ffffff; font-size:0.72rem; line-height:1.4; display:none;">Bronze 60% &middot; Silver 75% &middot; Gold 90% (min 20 Qs)</div>
+                    <div id="topicMasteryContent" style="display:none;">
+                        <div style="padding:1rem; color:#ffffff;">Loading your topic mastery...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral CTA — paid recording students only -->
+            <div class="referral-card" id="referralCard">
+                <div class="referral-card-text">
+                    <div class="referral-card-headline">Refer a friend, get 1 month free.</div>
+                    <div class="referral-card-sub">Your friend gets $50 off + 50% off any months they missed.</div>
+                </div>
+                <a href="#" id="referralCardBtn" class="referral-card-btn" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12a11.93 11.93 0 001.64 6.05L0 24l6.13-1.61A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12a11.93 11.93 0 00-3.48-8.52zM12 21.82a9.81 9.81 0 01-5-1.36l-.36-.21-3.64.95.97-3.55-.23-.37A9.82 9.82 0 1121.82 12 9.83 9.83 0 0112 21.82zm5.4-7.36c-.3-.15-1.76-.87-2.04-.97s-.47-.15-.67.15-.77.97-.94 1.17-.35.22-.65.07a8.07 8.07 0 01-2.37-1.46 8.93 8.93 0 01-1.65-2.05c-.17-.3 0-.46.13-.61s.3-.35.45-.52a2.06 2.06 0 00.3-.5.55.55 0 000-.52c-.07-.15-.67-1.62-.92-2.21s-.49-.51-.67-.52h-.57a1.1 1.1 0 00-.8.37 3.36 3.36 0 00-1.05 2.5 5.84 5.84 0 001.22 3.1 13.36 13.36 0 005.13 4.53 17.1 17.1 0 001.71.63 4.13 4.13 0 001.89.12 3.09 3.09 0 002.03-1.43 2.5 2.5 0 00.18-1.43c-.07-.13-.27-.2-.57-.35z"/></svg>
+                    Tell a friend
+                </a>
+            </div>
+
+                <div class="panel">
                     <div class="panel-header">
                         <span>My Quiz History</span>
                         <button class="btn btn-secondary" onclick="loadQuizHistory()" style="padding: 0.5rem 1rem; font-size: 0.85rem;">↻ Refresh</button>
@@ -2694,6 +2713,7 @@ Option D" required></textarea>
                     </div>
                     <div id="historyList"></div>
                 </div>
+              </div>
             </div><!-- end studentHistoryPanel -->
 
             <!-- Paper 2 & 3 Practice Panel (premium students; free students see the teaser) -->
@@ -3295,13 +3315,14 @@ Option D" required></textarea>
         const initialHash = window.location.hash;
         const initialSearch = window.location.search;
         // Deep link: index.html?tab=training (or check / quiz / worksheets / history / p2p3) opens that student tab once the
-        // logged-in view is up. 'training' opens Check My Answer and scrolls to Train by concept. One-shot; the query is then removed.
+        // logged-in view is up. 'training' opens the Concept Trainer tab (key 'check') and scrolls to it. One-shot; the query is then removed.
         let deepLinkTab = (function () { try { const t = new URLSearchParams(initialSearch).get('tab') || ''; return /^(training|check|quiz|worksheets|history|p2p3)$/.test(t) ? t : ''; } catch (e) { return ''; } })();
         function applyDeepLinkTab() {
             if (!deepLinkTab) return;
             const wanted = deepLinkTab; deepLinkTab = '';
             showView('student');
             switchStudentTab(wanted === 'training' ? 'check' : wanted);
+            logStudentUse('tab_open', resolveStudentTab(wanted === 'training' ? 'check' : wanted));
             if (wanted === 'training') setTimeout(() => {
                 const s = document.getElementById('trainingSection'); if (!s) return;
                 const bar = document.querySelector('header');   // sticky top bar; keep the section title below it
@@ -5215,6 +5236,9 @@ Option D" required></textarea>
                 // Admin doesn't need the student Paper 2 & 3 tab (admin uses the Structured Questions view)
                 const p2p3TabBtn = document.getElementById('tabP2P3');
                 if (p2p3TabBtn) p2p3TabBtn.style.display = (userRole === 'admin') ? 'none' : '';
+                // Worksheets tab: admin and teacher only since the 16 Oct 2026 clean-up (they use its Answer Key button)
+                const wsTabBtn = document.getElementById('tabWorksheets');
+                if (wsTabBtn) wsTabBtn.style.display = wsTabAllowed() ? '' : 'none';
                 checkWeakQuestions(); // Show weak questions button if applicable
             }
 
@@ -6893,9 +6917,46 @@ Option D" required></textarea>
 
         let allWorksheets = [];
 
-        function switchStudentTab(tab) {
+        // Tab clean-up (16 Oct 2026): Worksheets and the old Chem-Check box stay for admin and teacher only
+        function wsTabAllowed() { return userRole === 'admin' || userRole === 'teacher'; }
+        function ccBoxAllowed() { return userRole === 'admin' || userRole === 'teacher'; }
+        function resolveStudentTab(tab) {
             // Admin doesn't use the student Paper 2 & 3 tab; fall back to the quiz tab
-            if (tab === 'p2p3' && userRole === 'admin') tab = 'quiz';
+            if (tab === 'p2p3' && userRole === 'admin') return 'quiz';
+            // Students reaching Worksheets by an old deep link or saved tab go to the quiz tab
+            if (tab === 'worksheets' && !wsTabAllowed()) return 'quiz';
+            return tab;
+        }
+
+        // Light usage log so later trimming uses real numbers: one row per tab (or portal card) per user per browser session.
+        // Called from user intent only (tab clicks, deep links), never from switchStudentTab, which showView runs on every sign-in.
+        function logStudentUse(kind, key) {
+            if (!currentUser || !userRole || userRole === 'admin' || userRole === 'teacher') return;
+            const k = 'chembank_logged_' + currentUser.id + '_' + kind + '_' + key;
+            try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch (e) {}
+            try {
+                supabaseClient.rpc('log_user_activity', { p_user_id: currentUser.id, p_activity_type: kind, p_activity_data: { tab: key } })
+                    .then(() => {}, () => {});
+            } catch (e) {}
+        }
+
+        function openStudentTab(tab) {
+            switchStudentTab(tab);
+            logStudentUse('tab_open', resolveStudentTab(tab));
+        }
+
+        // "More options" on the quiz set-up: the summary says how many options are on, so nothing is applied out of sight
+        function updateQuizMoreOptions(openIfActive) {
+            const box = document.getElementById('quizMoreOptions');
+            const label = document.getElementById('quizMoreOptionsCount');
+            if (!box || !label) return;
+            const on = document.querySelectorAll('#quizMoreOptions .source-checkbox:checked').length + (timerModeEnabled ? 1 : 0);
+            label.textContent = on ? ' (' + on + ' on)' : '';
+            if (openIfActive && on) box.open = true;
+        }
+
+        function switchStudentTab(tab) {
+            tab = resolveStudentTab(tab);
             sessionStorage.setItem('chembank_lastStudentTab', tab);
             const quizPanel = document.getElementById('studentQuizPanel');
             const wsPanel = document.getElementById('studentWorksheetsPanel');
@@ -6916,10 +6977,7 @@ Option D" required></textarea>
             if (tab === 'quiz') {
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
-                loadStreak();
-                loadPersonalBests();
-                loadTopicMastery();
-                loadReferralCTA();
+                updateQuizMoreOptions(true);
                 // Topical Revision MCQs: premium sees the picker, free students see the teaser
                 const revPrem = (userRole === 'premium_student' || userRole === 'admin');
                 const revInterface = document.getElementById('revPkgInterface');
@@ -6935,18 +6993,26 @@ Option D" required></textarea>
                 checkPanel.style.display = 'block';
                 tabCheck.classList.add('active');
                 trainingOpen();
-                if (!cc_loaded) {
-                    cc_fetchQuestions().then(() => {
-                        cc_loaded = true;
-                        cc_populateTopicFilter('cc_sFilterTopic');
+                // The old Chem-Check list is admin/teacher only now; students use Concept Trainer
+                if (ccBoxAllowed()) {
+                    if (!cc_loaded) {
+                        cc_fetchQuestions().then(() => {
+                            cc_loaded = true;
+                            cc_populateTopicFilter('cc_sFilterTopic');
+                            cc_renderStudentQuestions();
+                        });
+                    } else {
                         cc_renderStudentQuestions();
-                    });
-                } else {
-                    cc_renderStudentQuestions();
+                    }
                 }
             } else if (tab === 'history') {
+                // My Progress: streak, personal bests, topic mastery, referral card, then quiz history
                 historyPanel.style.display = 'block';
                 tabHist.classList.add('active');
+                loadStreak();
+                loadPersonalBests();
+                loadTopicMastery();
+                loadReferralCTA();
                 loadQuizHistory();
             } else if (tab === 'p2p3') {
                 if (p2p3Panel) p2p3Panel.style.display = 'block';
@@ -9261,7 +9327,8 @@ Option D" required></textarea>
             const label = document.getElementById('timerToggleLabel');
             track.classList.toggle('on', timerModeEnabled);
             label.textContent = timerModeEnabled ? 'On' : 'Off';
-            label.style.color = timerModeEnabled ? 'var(--primary)' : 'rgba(240,244,248,0.5)';
+            label.style.color = timerModeEnabled ? 'var(--primary)' : '#ffffff';
+            updateQuizMoreOptions(false);
         }
 
         function startQuizTimer(totalQuestions) {
@@ -9799,9 +9866,10 @@ Option D" required></textarea>
             if (!teaser || !home || !session) return;
             session.style.display = 'none';
             if (userRole !== 'admin') {   // admin's Chem-Check manage view toggles this panel itself
-                const ad = trIsAdAccount(), browse = document.getElementById('sPanel-browse'), divider = document.getElementById('trainingDivider');
-                if (browse) browse.style.display = ad ? 'none' : '';
-                if (divider) divider.style.display = ad ? 'none' : '';
+                // Students (free, premium, ad) no longer see the old "Or check any answer" box (tab clean-up, 16 Oct 2026); teachers keep it
+                const hide = !ccBoxAllowed(), browse = document.getElementById('sPanel-browse'), divider = document.getElementById('trainingDivider');
+                if (browse) browse.style.display = hide ? 'none' : '';
+                if (divider) divider.style.display = hide ? 'none' : '';
             }
             if (!trIsPremium() && !trIsFree()) { teaser.style.display = 'block'; home.style.display = 'none'; return; }
             teaser.style.display = 'none';

@@ -87,6 +87,10 @@
   .card-body { padding: 1.1rem 1.25rem 1.25rem; }
   .card-desc { font-size: 0.95rem; color: var(--text2); line-height: 1.6; margin-bottom: 1rem; }
   .card-cta { font-size: 0.85rem; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.08em; }
+  .card-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .card-link { display: inline-flex; align-items: center; min-height: 40px; padding: 0.45rem 0.85rem; border: 1px solid var(--cyan-border); border-radius: 6px; background: var(--cyan-dim); color: var(--cyan); font-size: 0.85rem; font-weight: 700; text-decoration: none; letter-spacing: 0.04em; }
+  .card-link:hover, .card-link:focus-visible { border-color: var(--cyan); color: #ffffff; }
+  .tool-card:nth-child(5), .tool-card:nth-child(6) { animation-delay: 0.33s; }
 
   /* RESET */
   #resetView { flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
@@ -217,19 +221,20 @@
     </div>
     <div class="tools-grid">
 
-      <a class="tool-card" href="https://chembank.mrkhemistry.com/" target="_blank">
+      <!-- Portal clean-up (16 Oct 2026): 8 cards to 5. data-card names feed the light usage log -->
+      <a class="tool-card" data-card="chembank" href="https://chembank.mrkhemistry.com/" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#129514;</div>
           <div class="card-name">ChemBank</div>
           <div class="card-tag">Question Bank</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">Access the full question bank, take practice quizzes by topic, check your answers with AI feedback, use the Concept Trainer, and view worksheets.</div>
+          <div class="card-desc">Practise MCQs by topic, retry the ones you got wrong, and work through Paper 2 and 3 questions from the TYS and school prelims.</div>
           <div class="card-cta">Open ChemBank &rarr;</div>
         </div>
       </a>
 
-      <a class="tool-card" href="https://chembank.mrkhemistry.com/?tab=training" target="_blank">
+      <a class="tool-card" data-card="concept_trainer" href="https://chembank.mrkhemistry.com/?tab=training" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#10003;</div>
           <div class="card-name">Concept Trainer</div>
@@ -241,53 +246,47 @@
         </div>
       </a>
 
-      <a class="tool-card" data-hide-chembank-only href="https://notebooklm.google.com/notebook/530fd3ef-0af3-43e3-b3b5-4ed9b46719f7" target="_blank">
+      <a class="tool-card" data-card="simulations" href="https://chembank.mrkhemistry.com/simulations/" target="_blank">
         <div class="card-header">
-          <div class="card-icon">&#128215;</div>
-          <div class="card-name">NotebookLM</div>
-          <div class="card-tag">AI Tutor</div>
+          <div class="card-icon">&#9883;</div>
+          <div class="card-name">Simulations</div>
+          <div class="card-tag">3D Interactive</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">Chat with an AI tutor trained on Mr Khemistry's notes. Ask questions, clarify concepts, and revise interactively.</div>
-          <div class="card-cta">Open NotebookLM &rarr;</div>
+          <div class="card-desc">Interactive 3D mechanism simulations: watch SN2, SN1, electrophilic addition and more come to life. Rotate, pause, and explore at your own pace.</div>
+          <div class="card-cta">Open Simulations &rarr;</div>
         </div>
       </a>
 
-      <a class="tool-card" data-hide-chembank-only href="courses.html">
+      <a class="tool-card" data-hide-chembank-only data-card="recordings" href="courses.html">
         <div class="card-header">
           <div class="card-icon">&#127891;</div>
-          <div class="card-name">Courses</div>
-          <div class="card-tag">Lesson Recordings</div>
+          <div class="card-name">Lesson Recordings</div>
+          <div class="card-tag">Videos</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">Access your enrolled courses and video lessons from Mr Khemistry. Watch recordings organized by topic, at your own pace.</div>
-          <div class="card-cta">Open Courses &rarr;</div>
+          <div class="card-desc">Watch Mr Khemistry's lesson recordings for your enrolled courses, organised by topic, at your own pace.</div>
+          <div class="card-cta">Open recordings &rarr;</div>
         </div>
       </a>
 
-      <a class="tool-card" data-hide-chembank-only data-classroom="J1" href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank">
+      <!-- Notes: Google Classroom (JC1, JC2) and NotebookLM in one card. Not a link itself; each button is.
+           data-classroom keeps the year filter working when a profile has a classroom set. -->
+      <div class="tool-card" data-hide-chembank-only>
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
-          <div class="card-name">Google Classroom</div>
-          <div class="card-tag">J1 Notes</div>
+          <div class="card-name">Notes</div>
+          <div class="card-tag">Classroom &middot; AI Tutor</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">JC1 class notes, assignments and announcements from Mr Khemistry.</div>
-          <div class="card-cta">Open JC1 Classroom &rarr;</div>
+          <div class="card-desc">Class notes, assignments and announcements on Google Classroom, plus an AI tutor that answers questions from Mr Khemistry's notes.</div>
+          <div class="card-links">
+            <a class="card-link" data-classroom="J1" data-card="classroom_j1" href="https://classroom.google.com/c/ODI0MDc1NDA5NTE5?cjc=3ri3aokm" target="_blank" rel="noopener">JC1 Classroom &rarr;</a>
+            <a class="card-link" data-classroom="J2" data-card="classroom_j2" href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank" rel="noopener">JC2 Classroom &rarr;</a>
+            <a class="card-link" data-card="notebooklm" href="https://notebooklm.google.com/notebook/530fd3ef-0af3-43e3-b3b5-4ed9b46719f7" target="_blank" rel="noopener">NotebookLM AI tutor &rarr;</a>
+          </div>
         </div>
-      </a>
-
-      <a class="tool-card" data-hide-chembank-only data-classroom="J2" href="https://classroom.google.com/c/NzQ5NjM5MDAzNjky?cjc=67eemrj" target="_blank">
-        <div class="card-header">
-          <div class="card-icon">&#128218;</div>
-          <div class="card-name">Google Classroom</div>
-          <div class="card-tag">J2 Notes</div>
-        </div>
-        <div class="card-body">
-          <div class="card-desc">JC2 class notes, assignments and announcements from Mr Khemistry.</div>
-          <div class="card-cta">Open JC2 Classroom &rarr;</div>
-        </div>
-      </a>
+      </div>
 
       <a class="tool-card" id="adminCard" href="admin-courses.html" style="display:none;">
         <div class="card-header">
@@ -298,18 +297,6 @@
         <div class="card-body">
           <div class="card-desc">Manage student access to course video libraries. Toggle enrollments per student per course.</div>
           <div class="card-cta">Open Admin &rarr;</div>
-        </div>
-      </a>
-
-      <a class="tool-card" href="https://chembank.mrkhemistry.com/simulations/" target="_blank">
-        <div class="card-header">
-          <div class="card-icon">&#9883;</div>
-          <div class="card-name">Simulations</div>
-          <div class="card-tag">3D Interactive</div>
-        </div>
-        <div class="card-body">
-          <div class="card-desc">Interactive 3D mechanism simulations — watch SN2, SN1, electrophilic addition and more come to life. Rotate, pause, and explore at your own pace.</div>
-          <div class="card-cta">Open Simulations &rarr;</div>
         </div>
       </a>
 
@@ -370,8 +357,26 @@
       document.getElementById(id).classList.add('active');
     }
 
+    // Light usage log (16 Oct 2026): one row per portal card per user per browser session, fire-and-forget.
+    // portalUser is set once the profile loads; admin clicks are not logged. The click listener is bound once, below.
+    var portalUser = null;
+    function logPortalCard(card) {
+      if (!portalUser || portalUser.role === 'admin' || !/^[a-z0-9_]{1,40}$/.test(card)) return;
+      var k = 'chembank_logged_' + portalUser.id + '_portal_card_' + card;
+      try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch (e) {}
+      try {
+        sb.rpc('log_user_activity', { p_user_id: portalUser.id, p_activity_type: 'portal_card', p_activity_data: { card: card } })
+          .then(function() {}, function() {});
+      } catch (e) {}
+    }
+    document.querySelector('.tools-grid').addEventListener('click', function(e) {
+      var el = e.target.closest ? e.target.closest('[data-card]') : null;
+      if (el) logPortalCard(el.getAttribute('data-card'));
+    });
+
     function showDashboard(user) {
       signedInFound = true;
+      portalUser = null;
       // If the account details don't arrive, show the slow-load screen rather than a stuck form
       clearTimeout(dashTimer);
       dashTimer = setTimeout(function() {
@@ -387,6 +392,7 @@
         // ChemBank-only accounts: remove the NotebookLM, Google Classroom and Courses cards
         // Worked out afresh at every sign-in: signing out does not reload the page
         var chembankOnly = !!(res.data && res.data.chembank_only === true);
+        portalUser = res.data ? { id: user.id, role: res.data.role } : null;
         document.querySelectorAll('[data-hide-chembank-only]').forEach(function(c) { c.style.display = chembankOnly ? 'none' : ''; });
         // Free accounts get 5 marked Concept Trainer answers (Eric, 6 Oct 2026)
         var trainerTag = document.getElementById('trainerTag');
@@ -504,6 +510,7 @@
     document.getElementById('signOutBtn').addEventListener('click', function() {
       sb.auth.signOut().then(function() {
         signedInFound = false;
+        portalUser = null;
         clearTimeout(dashTimer);
         var loginBtn = document.getElementById('loginBtn');
         loginBtn.disabled = false;

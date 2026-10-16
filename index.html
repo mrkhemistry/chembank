@@ -3013,6 +3013,7 @@ Option D" required></textarea>
             .sq-part-text{font-size:0.9rem;margin-bottom:0.3rem;line-height:1.5;}
             .sq-ms{font-size:0.85rem;background:rgba(6,255,165,0.06);border-radius:6px;padding:0.4rem 0.6rem;line-height:1.5;}
             .sq-badge{font-size:0.7rem;padding:0.1rem 0.45rem;border-radius:10px;border:1px solid var(--border2);white-space:nowrap;}
+            .sq-figchip{display:inline-block;margin:0.15rem 0.3rem;font-size:0.72rem;padding:0.05rem 0.45rem;border-radius:8px;border:1px solid #00e5ff;color:#00e5ff;white-space:nowrap;}
             .sq-easy{color:#06FFA5;border-color:#06FFA5;} .sq-medium{color:#ffd166;border-color:#ffd166;} .sq-hard{color:#ff5555;border-color:#ff5555;}
             .sq-novel{color:#c792ea;border-color:#c792ea;} .sq-ctx{color:#00e5ff;border-color:#00e5ff;}
             .sq-tag{margin-left:auto;font-size:0.75rem;opacity:0.75;}
@@ -11074,6 +11075,19 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         // selection, loaded when "Show questions" is clicked. The full bank is never pulled here.
         let sqData = null, sqIndex = null, sqLoadedKey = '', sqConcepts = {}, sqAllConcepts = [], sqUploaded = {}, sqLoadWarning = '', sqRenderedQuestions = null;
         function sqEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+        // Admin browse: render stored stem / part text the way students see it (allowed inline tags and entities via
+        // sanitizeQuestionText, list lines indented) instead of printing raw tags. Layout markers: [[lead]] / [[lead:(x)]]
+        // become a line break; [[fig:KEY]] becomes a small "Fig: KEY" chip (the card already shows every figure above).
+        function sqAdminText(t){
+            if (t==null || t==='') return '';
+            let html='';
+            String(t).replace(/\[\[lead(?::[^\]]*)?\]\]/g,'<br>').split(/(\[\[fig:[^\]]+\]\])/).forEach(seg=>{
+                const m=seg.match(/^\[\[fig:([^\]]+)\]\]$/);
+                if (m){ html+='<span class="sq-figchip">Fig: '+sqEsc(m[1])+'</span>'; return; }
+                if (seg) html+=sqIndentLists(sanitizeQuestionText(seg));
+            });
+            return html.replace(/^(?:<br>)+/,'');
+        }
         function sqAttr(s){ return sqEsc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         function sqVal(id){ const el=document.getElementById(id); return el?el.value:''; }
 
@@ -11387,12 +11401,12 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 return '<div class="sq-part'+(isMatch?' sq-match':'')+'">'
                     +'<div class="sq-part-head"><b>'+sqEsc(p.part_label||'')+'</b><span style="opacity:0.6">['+(p.marks==null?'':p.marks)+']</span>'+badges+svToggle
                     +'<span class="sq-tag">'+sqEsc(c.topic||'?')+' &rsaquo; '+sqEsc(c.name||'?')+'</span>'+'<button class="sq-editbtn" onclick="sqOpenEditPart('+p.id+')">edit</button></div>'
-                    +'<div class="sq-part-text">'+sqEsc(p.part_text||'')+'</div>'
-                    +'<div class="sq-ms"><b>Mark scheme:</b> '+sqEsc(p.mark_scheme||'')+'</div>'+svBox+'</div>';
+                    +'<div class="sq-part-text">'+sqAdminText(p.part_text)+'</div>'
+                    +'<div class="sq-ms"><b>Mark scheme:</b> '+sanitizeQuestionText(sqMarkSchemeBreaks(String(p.mark_scheme||'')))+'</div>'+svBox+'</div>';
             }).join('');
             return '<div class="sq-card">'
                 +'<div class="sq-qhead">'+q.year+' '+sqEsc(q.paper)+' &middot; Q'+q.question_number+(q.section?(' &middot; Section '+sqEsc(q.section)):'')+' &middot; '+(q.total_marks==null?'':q.total_marks)+' marks <span style="opacity:0.5;font-weight:400">('+sqEsc(q.answer_source||'')+')</span> <button class="sq-editbtn" onclick="sqOpenEditQuestion('+q.id+')">edit stem</button></div>'
-                +(q.stem?'<div class="sq-stem">'+sqEsc(q.stem)+'</div>':'')
+                +(q.stem?'<div class="sq-stem">'+sqAdminText(q.stem)+'</div>':'')
                 +(figs?'<div class="sq-figs">'+figs+'</div>':'')
                 +parts+'</div>';
         }

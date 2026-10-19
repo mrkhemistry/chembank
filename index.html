@@ -1716,6 +1716,7 @@
                             <option value="TYS">TYS (Ten Year Series)</option>
                             <option value="Prelim">Prelim</option>
                             <option value="Promos">Promos</option>
+                            <option value="Specimen">9476 Specimen</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -1724,6 +1725,7 @@
                         <label>Year</label>
                         <select id="questionYear">
                             <option value="">Select year...</option>
+                            <option value="2026">2026</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
                             <option value="2023">2023</option>
@@ -1892,6 +1894,7 @@ Option D" required></textarea>
                             <option value="TYS">TYS</option>
                             <option value="Prelim">Prelim</option>
                             <option value="Promos">Promos</option>
+                            <option value="Specimen">9476 Specimen</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
@@ -2146,6 +2149,20 @@ Option D" required></textarea>
                                     <label class="checkbox-label">
                                         <input type="checkbox" class="source-checkbox tys-checkbox" data-source="TYS" data-year="2017">
                                         <span>2017</span>
+                                    </label>
+                                </div>
+                            </details>
+
+                            <!-- SEAB 9476 Specimen Paper (2026), free like TYS (Eric, 19 Oct 2026) -->
+                            <details class="source-group">
+                                <summary>
+                                    <span class="group-caret">▸</span>
+                                    <span class="group-title">9476 Specimen (2026)</span>
+                                </summary>
+                                <div class="checkbox-group" style="margin-top:0.6rem;">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" class="source-checkbox" data-source="Specimen" data-year="2026">
+                                        <span>Specimen Paper 1</span>
                                     </label>
                                 </div>
                             </details>
@@ -2765,7 +2782,7 @@ Option D" required></textarea>
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
                         <p style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic, add a concept if you want one, narrow with the filters if you like, then reveal the worked answer part by part.</p>
-                        <div id="p2p3FreeNote" class="p2p3-freenote" style="display:none;">Your free account includes every <b>Ten-Year-Series</b> Paper&nbsp;2 and Paper&nbsp;3 question (2017 to 2025), with the answers. <b>Premium</b> adds more than 1,300 school Prelim questions from every JC. <a href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20sign%20up%20for%20ChemBank%20Premium." target="_blank" rel="noopener">Sign up for Premium on WhatsApp</a>.</div>
+                        <div id="p2p3FreeNote" class="p2p3-freenote" style="display:none;">Your free account includes every <b>Ten-Year-Series</b> Paper&nbsp;2 and Paper&nbsp;3 question (2017 to 2025) and the <b>9476 Specimen</b> Papers&nbsp;2 and&nbsp;3, with the answers. <b>Premium</b> adds more than 1,300 school Prelim questions from every JC. <a href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20sign%20up%20for%20ChemBank%20Premium." target="_blank" rel="noopener">Sign up for Premium on WhatsApp</a>.</div>
                         <div class="p2p3-modes" role="tablist" aria-label="Practice mode">
                             <button type="button" class="p2p3-mode active" id="p2p3ModeConcept" role="tab" aria-selected="true" onclick="p2p3SetMode('concept')">By concept</button>
                             <button type="button" class="p2p3-mode" id="p2p3ModePaper" role="tab" aria-selected="false" onclick="p2p3SetMode('paper')">Whole paper</button>
@@ -2780,6 +2797,7 @@ Option D" required></textarea>
                         <div class="p2p3-filters">
                             <div class="p2p3-fgroup"><span class="p2p3-lbl">Source</span>
                                 <label><input type="checkbox" class="p2p3-src" value="TYS" checked> TYS</label>
+                                <label><input type="checkbox" class="p2p3-src" value="Specimen" checked> 9476 Specimen</label>
                                 <label><input type="checkbox" class="p2p3-src" value="Prelim" checked> <span id="p2p3PrelimLbl">Prelim</span></label>
                             </div>
                             <div class="p2p3-fgroup"><span class="p2p3-lbl">Paper</span>
@@ -4941,7 +4959,7 @@ Option D" required></textarea>
             const yearGroup = document.getElementById('yearGroup');
             const schoolGroup = document.getElementById('schoolGroup');
             
-            if (source === 'TYS' || source === 'Prelim' || source === 'Promos') {
+            if (source === 'TYS' || source === 'Prelim' || source === 'Promos' || source === 'Specimen') {
                 yearGroup.style.display = 'block';
             } else {
                 yearGroup.style.display = 'none';
@@ -4973,7 +4991,7 @@ Option D" required></textarea>
             const school = document.getElementById('questionSchool').value.trim();
             
             // Validate year if source is TYS, Prelim or Promos
-            if ((source === 'TYS' || source === 'Prelim' || source === 'Promos') && !year) {
+            if ((source === 'TYS' || source === 'Prelim' || source === 'Promos' || source === 'Specimen') && !year) {
                 alert('Please select a year for ' + source);
                 return;
             }
@@ -5144,6 +5162,7 @@ Option D" required></textarea>
                     let sourceText = question.source;
                     if (question.source_year) sourceText += ` ${question.source_year}`;
                     if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) sourceText += ` - ${question.school}`;
+                    if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
                     sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
                 }
                 
@@ -5730,6 +5749,7 @@ Option D" required></textarea>
                 if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) {
                     sourceText += ` - ${question.school}`;
                 }
+                if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
                 sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
             }
             
@@ -6566,6 +6586,7 @@ Option D" required></textarea>
                 if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) {
                     sourceText += ` - ${question.school}`;
                 }
+                if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
                 sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
             }
             
@@ -7074,7 +7095,7 @@ Option D" required></textarea>
                 p2pPapers = {};
                 index.forEach(q => {
                     if (q.year == null || !q.paper || !q.source) return;
-                    const key = (q.source === 'TYS') ? 'TYS' : (q.school ? q.school + '|' + q.source : ''); if (!key) return;   // a school's prelim and timed practice stay separate (Codex)
+                    const key = sqIsSeab(q) ? q.source : (q.school ? q.school + '|' + q.source : ''); if (!key) return;   // a school's prelim and timed practice stay separate (Codex)
                     const by = (p2pPapers[key] = p2pPapers[key] || {}); (by[q.year] = by[q.year] || new Set()).add(q.paper);
                 });
                 p2p3PaperFill();
@@ -7166,7 +7187,8 @@ Option D" required></textarea>
         }
         function p2p3PaperFill(){
             const el = document.getElementById('p2p3PaperSchool'); if (!el) return;
-            const keys = Object.keys(p2pPapers).filter(k => k !== 'TYS').sort((a,b) => p2p3PaperKeyLabel(a).localeCompare(p2p3PaperKeyLabel(b)));
+            const keys = Object.keys(p2pPapers).filter(k => k !== 'TYS' && k !== 'Specimen').sort((a,b) => p2p3PaperKeyLabel(a).localeCompare(p2p3PaperKeyLabel(b)));
+            if (p2pPapers.Specimen) keys.unshift('Specimen');
             if (p2pPapers.TYS) keys.unshift('TYS');
             el.innerHTML = keys.map(k => '<option value="'+sqAttr(k)+'">'+sqEsc(p2p3PaperKeyLabel(k))+'</option>').join('')
                 + (p2pIsFree() ? '<option value="" disabled>School prelims (every JC): Premium</option>' : '');
@@ -7185,12 +7207,14 @@ Option D" required></textarea>
             const papers = [...(by[Number(sqVal('p2p3PaperYear'))] || [])].sort();
             pEl.innerHTML = papers.map(p => '<option value="'+sqAttr(p)+'">Paper '+sqEsc(String(p).replace(/^P/i, ''))+'</option>').join('');
         }
+        function sqIsSeab(q){ return !!q && (q.source === 'TYS' || q.source === 'Specimen'); }   // SEAB papers: no school, view-only for students (Eric, 19 Oct 2026)
+        function sqSrcRef(q){ return q.source === 'TYS' ? 'TYS' : (q.source === 'Specimen' ? '9476 Specimen' : (q.school || 'Prelim')); }
         function p2p3SourceName(s){ return ({ TP: 'Timed Practice', TP2: 'Timed Practice 2', Promo: 'Promo' })[s] || s; }
-        function p2p3PaperKeyParts(key){ if (key === 'TYS') return { school: null, source: 'TYS' }; const i = key.indexOf('|'); return { school: key.slice(0, i), source: key.slice(i + 1) }; }
-        function p2p3PaperKeyLabel(key){ if (key === 'TYS') return 'TYS (A-level)'; const k = p2p3PaperKeyParts(key); return k.source === 'Prelim' ? k.school : k.school + ' (' + p2p3SourceName(k.source) + ')'; }
+        function p2p3PaperKeyParts(key){ if (key === 'TYS' || key === 'Specimen') return { school: null, source: key }; const i = key.indexOf('|'); return { school: key.slice(0, i), source: key.slice(i + 1) }; }
+        function p2p3PaperKeyLabel(key){ if (key === 'TYS') return 'TYS (A-level)'; if (key === 'Specimen') return '9476 Specimen'; const k = p2p3PaperKeyParts(key); return k.source === 'Prelim' ? k.school : k.school + ' (' + p2p3SourceName(k.source) + ')'; }
         function p2p3PaperLabel(key, year, paper){
             const k = p2p3PaperKeyParts(key);
-            const src = (key === 'TYS') ? 'TYS' : (k.school + ' ' + (k.source === 'Prelim' ? 'Prelim' : p2p3SourceName(k.source)));
+            const src = (key === 'TYS') ? 'TYS' : (key === 'Specimen') ? '9476 Specimen' : (k.school + ' ' + (k.source === 'Prelim' ? 'Prelim' : p2p3SourceName(k.source)));
             return src + ' ' + year + ' Paper ' + String(paper).replace(/^P/i, '');
         }
         async function p2p3ShowPaper(){
@@ -7203,7 +7227,7 @@ Option D" required></textarea>
             if (!key || !year || !paper){ hint.innerHTML = '<span style="color:var(--primary)">Choose a school, a year and a paper.</span>'; return; }
             const ids = Object.keys(p2pIndex).map(Number).filter(id => {
                 const m = p2pIndex[id];
-                return m && m.year === year && m.paper === paper && m.source === k.source && (key === 'TYS' || m.school === k.school);
+                return m && m.year === year && m.paper === paper && m.source === k.source && (key === 'TYS' || key === 'Specimen' || m.school === k.school);
             }).sort((a,b) => ((p2pIndex[a].question_number||0) - (p2pIndex[b].question_number||0)) || (a-b));
             p2pMatchIds = ids;
             if (!ids.length){ hint.textContent = 'That paper is not in the bank yet.'; return; }
@@ -7358,7 +7382,7 @@ Option D" required></textarea>
                     }
                 });
             }
-            if (q.source === 'TYS') html += '<div class="p2p3-copyright">&copy; SEAB. Reproduced for students&rsquo; own practice; view only.</div>';
+            if (sqIsSeab(q)) html += '<div class="p2p3-copyright">&copy; SEAB. Reproduced for students&rsquo; own practice; view only.</div>';
             html += '</div>';
             return html;
         }
@@ -7400,16 +7424,16 @@ Option D" required></textarea>
             if (!toolbar || !btn || !note) return;
             if (!p2pQuestions.length){ toolbar.style.display = 'none'; return; }
             if (!p2pIsStudentAcct()){ btn.style.display = ''; btn.textContent = 'Print / Save as PDF (question paper + worked solutions)'; note.textContent = ''; toolbar.style.display = 'block'; return; }
-            const printable = p2pQuestions.filter(q => q.source !== 'TYS').length, tys = p2pQuestions.length - printable;
-            if (!printable){ btn.style.display = 'none'; note.textContent = 'TYS questions and their answers are view-only on screen.'; }
-            else { btn.style.display = ''; btn.textContent = 'Download question paper (PDF)'; note.textContent = (tys ? tys + ' TYS question' + (tys === 1 ? ' stays' : 's stay') + ' on screen (view only). ' : '') + 'Answers stay on screen.'; }
+            const printable = p2pQuestions.filter(q => !sqIsSeab(q)).length, tys = p2pQuestions.length - printable;
+            if (!printable){ btn.style.display = 'none'; note.textContent = 'TYS and specimen questions and their answers are view-only on screen.'; }
+            else { btn.style.display = ''; btn.textContent = 'Download question paper (PDF)'; note.textContent = (tys ? tys + ' TYS or specimen question' + (tys === 1 ? ' stays' : 's stay') + ' on screen (view only). ' : '') + 'Answers stay on screen.'; }
             toolbar.style.display = 'block';
         }
         function p2p3Print(){
             if (!p2pQuestions || !p2pQuestions.length){ alert('Show some questions first.'); return; }
             const student = p2pIsStudentAcct();
-            const qs = student ? p2pQuestions.filter(q => q.source !== 'TYS') : p2pQuestions;   // students never print TYS
-            if (!qs.length){ alert('TYS questions are view-only on screen.'); return; }
+            const qs = student ? p2pQuestions.filter(q => !sqIsSeab(q)) : p2pQuestions;   // students never print TYS or the 9476 Specimen
+            if (!qs.length){ alert('TYS and specimen questions are view-only on screen.'); return; }
             // Scope each question to the parts that matched the chosen concept (+ prerequisites), so the
             // worksheet prints only the relevant sub-parts, matching the on-screen preview.
             const items = qs.map(q => { const m = p2pPartMatches[q.id]; return { q: q, partFilter: !!(m && m.size), matchIds: m }; });
@@ -9069,7 +9093,7 @@ Option D" required></textarea>
                         .in('id', slice).order('id'));
                     chunk.forEach(p => {
                         const q = p.structured_questions || {};
-                        refs[p.id] = (q.source === 'TYS' ? 'TYS' : (q.school || 'Prelim')) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '');
+                        refs[p.id] = sqSrcRef(q) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '');
                     });
                 }
                 trainerData = { attempts, refs };
@@ -9573,7 +9597,7 @@ Option D" required></textarea>
         }
         function trTypeset(el) { if (el && window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([el]).catch(() => {}); }
         function trRefLabel(q, part) {
-            const src = q.source === 'TYS' ? 'TYS' : (q.school ? q.school + ' Prelim' : 'Prelim');
+            const src = q.source === 'TYS' ? 'TYS' : (q.source === 'Specimen' ? '9476 Specimen' : (q.school ? q.school + ' Prelim' : 'Prelim'));
             const m = part.marks || 1;
             return src + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (part.part_label || '') + ' · ' + m + ' mark' + (m === 1 ? '' : 's');
         }
@@ -9818,7 +9842,7 @@ Option D" required></textarea>
         function trFlagCardHtml(r, who) {
             const conceptName = id => { const c = TRAINING_CONCEPTS.find(x => x.id === id); return c ? c.name : ''; };
             const p = r.structured_parts || {}; const q = p.structured_questions || {};
-            const ref = q.year ? ((q.source === 'TYS' ? 'TYS' : (q.school || 'Prelim')) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '')) : 'Part ' + (p.id || '');
+            const ref = q.year ? (sqSrcRef(q) + ' ' + q.year + ' ' + q.paper + ' Q' + q.question_number + (p.part_label || '')) : 'Part ' + (p.id || '');
             const fb = r.feedback || {};
             const when = r.created_at ? new Date(r.created_at).toLocaleString('en-SG', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
             const u = who[r.user_id] || {};
@@ -12146,7 +12170,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 +covKpi(nov,'novel parts','beyond-syllabus')
                 +'</div>';
             html+='<div class="cov-controls"><span class="cov-lbl">Source</span>'
-                +covSeg('covSource',[['all','All'],['TYS','TYS'],['Prelim','Prelim']],covSource)
+                +covSeg('covSource',[['all','All'],['TYS','TYS'],['Specimen','Specimen'],['Prelim','Prelim']],covSource)
                 +'<span class="cov-lbl">Paper</span>'
                 +covSeg('covPaper',[['all','All'],['P2','P2'],['P3','P3']],covPaper)
                 +'<span class="cov-lbl">Show</span>'

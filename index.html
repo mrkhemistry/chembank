@@ -11584,6 +11584,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         // Tie a figure to the part it belongs to, from the part path encoded in its key
         // (struct_5_c_i_F_ans -> ['c','i']; table_6_1 / fig_5_safranal -> [] = question-level).
         // Case-sensitive so a compound label like "_A" is not misread as part (a).
+        // Parts (j) to (l) are read only as the FIRST token after the question number (struct_6_j_ans -> ['j']);
+        // deeper in a key a lowercase j/k/l is a compound label (structure_3_a_j, struct_4_d_k_and_l), not a part.
         function sqFigPartPath(key){
             const toks=String(key||'').split('_');
             let i=0;
@@ -11591,7 +11593,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             i++;                                                   // step past the number
             const path=[];
             for (; i<toks.length; i++){
-                if (/^[a-h]$/.test(toks[i]) || /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/.test(toks[i])) path.push(toks[i]);
+                const letter = path.length ? /^[a-h]$/ : /^[a-l]$/;
+                if (letter.test(toks[i]) || /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/.test(toks[i])) path.push(toks[i]);
                 else break;
             }
             return path;

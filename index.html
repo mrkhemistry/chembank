@@ -9981,15 +9981,69 @@ Option D" required></textarea>
             return data;
         }
 
-        // First words of a part, never cutting inside a \( ... \) maths run
-        function trSnippet(text, max) {
-            const s = String(text || '').replace(/\s+/g, ' ').trim();
-            if (s.length <= max) return s;
-            let cut = max;
-            const before = s.slice(0, cut);
-            const opens = (before.match(/\\\(/g) || []).length, closes = (before.match(/\\\)/g) || []).length;
-            if (opens > closes) { const j = s.indexOf('\\)', cut); cut = j === -1 ? s.length : j + 2; }
-            return s.slice(0, cut) + (cut < s.length ? ' …' : '');
+        // List preview of a part (Eric, 20 Oct 2026): a short part is shown whole; a long one shows its opening words, then
+        // "…", then its last sentence, which is where the question is actually asked (with the sentence before it when the last
+        // one is only a follow-up such as "Explain your answer."). Formulae, inline tags with their contents and entities are
+        // kept whole, so a cut never lands inside one. Paragraph breaks become spaces so the list stays compact.
+        const TR_SNIP_FULL = 300, TR_SNIP_HEAD = 120, TR_SNIP_TAIL = 220;
+        const TR_SNIP_FOLLOW_UP = /^(?:briefly )?(?:explain|justify) your (?:answer|reasoning|choice)|^include\b|^calculations? (?:is|are) not|^write (?:an |the |balanced )?equations?\b|^show your working|^explain all the observations/i;
+        const TR_SNIP_COMMAND = /^(?:state|explain|suggest|give|name|write|draw|calculate|identify|describe|predict|deduce|complete|determine|list|show|outline|compare|define|what|which|how|why)\b/i;
+        function trVisLen(s) {
+            return String(s).replace(/\u0003/g, '').replace(/<[^>]*>/g, '').replace(/&[#a-z0-9]+;/gi, 'x').replace(/\\[()\[\]]/g, '')
+                .replace(/\\[a-zA-Z]+/g, '').replace(/[{}_^$]/g, '').replace(/\s+/g, ' ').trim().length;
+        }
+        function trSnippet(text) {
+            const s = trStripMarkers(text).replace(/[\u0001-\u0003]/g, '').replace(/(\s*<br\s*\/?>\s*)+/gi, ' \u0003 ')
+                .replace(/\s+/g, ' ').trim().replace(/^\u0003 |\s\u0003$/g, '');
+            const plain = x => x.replace(/ ?\u0003 ?/g, ' ').replace(/\s+/g, ' ').trim();
+            if (trVisLen(s) <= TR_SNIP_FULL) return plain(s);
+            const keep = [];
+            const hold = m => { keep.push(m); return '\u0001' + (keep.length - 1) + '\u0002'; };
+            const t = s.replace(/\\\([\s\S]*?\\\)|\\\[[\s\S]*?\\\]/g, hold)
+                .replace(/<(b|strong|i|em|u|sub|sup)>[\s\S]*?<\/\1>/gi, hold)
+                .replace(/<[^>]*>|&[#a-z0-9]+;/gi, hold)
+                .replace(/\b(e\.g|i\.e|etc|cf|vs|approx|Fig|No|Eqn|Expt|resp|wrt|Dr|Mr|Mrs|Ms)\.(?=\s)/gi, hold);
+            const back = x => x.replace(/\u0001(\d+)\u0002/g, (_, i) => keep[+i]);
+            const cutWords = (str, max) => {                     // opening words of str, cut at a space
+                let out = '', n = 0;
+                for (const w of str.split(' ')) {
+                    const len = trVisLen(back(w)) + (out ? 1 : 0);
+                    if (out && n + len > max) break;
+                    out += (out ? ' ' : '') + w; n += len;
+                }
+                return out;
+            };
+            const capped = (a, b, max) => { const x = t.slice(a, b); return trVisLen(back(x)) > max ? cutWords(x, max - 20) + ' …' : x; };
+            const head = cutWords(t, TR_SNIP_HEAD);
+            if (head.length >= t.length) return plain(back(t));  // one unbreakable run, nothing left out
+            // Sentence starts: after ". " / "? " / "! " before a capital, digit, bracket or held item; after a paragraph
+            // break; or where a command word begins ("... Table 1.2 Explain why ...")
+            const starts = [];
+            const re = /[.?!]\s+(?=[A-Z0-9(\u0001])|\u0003 |\s(?=(?:Explain|Suggest|State|Describe|Predict|Deduce|Identify|Compare|Comment|Justify|Account|Discuss|Outline|With|By (?:considering|reference)|Using|Hence)\b)/g;
+            let m;
+            while ((m = re.exec(t)) !== null) {
+                const at = re.lastIndex;
+                if (trVisLen(back(t.slice(at))) >= 15 && starts[starts.length - 1] !== at) starts.push(at);
+            }
+            const seg = (a, b) => plain(back(t.slice(a, b))).replace(/<[^>]*>/g, '').replace(/^[^A-Za-z]+/, '').trim();
+            // Answer-line labels at the end ("Group:", "Shape: Bond angle:", "Type of mechanism for reaction 1: SN2") are not
+            // part of the question: no sentence ending, little or nothing after the last colon, and not a command
+            const isLabel = x => x.includes(':') && !/[.?!]/.test(x) && !TR_SNIP_COMMAND.test(x) && trVisLen(x) <= 70
+                && trVisLen(x.slice(x.lastIndexOf(':') + 1)) <= 12;
+            let i = starts.length - 1, end = t.length;
+            while (i >= 0 && starts[i] > head.length && isLabel(seg(starts[i], end))) { end = starts[i]; i -= 1; }
+            let qs = i >= 0 ? starts[i] : 0;
+            const run = t.slice(qs, end).split('\u0003');        // labels left at the end of that run ("... X and Y. X: Y:")
+            while (run.length > 1 && isLabel(plain(back(run[run.length - 1])).replace(/<[^>]*>/g, '').replace(/^[^A-Za-z]+/, '').trim())) run.pop();
+            end = qs + run.join('\u0003').length;
+            let fs = -1;                                          // a follow-up sentence kept after the question sentence
+            if (TR_SNIP_FOLLOW_UP.test(seg(qs, end))) { fs = qs; qs = i > 0 ? starts[i - 1] : 0; }
+            const qEnd = fs >= 0 ? fs : end;
+            const follow = fs >= 0 ? ' ' + t.slice(fs, end) : '';
+            if (qs <= head.length) {                              // the question sentence starts within the opening words
+                return plain(back(capped(0, qEnd, TR_SNIP_FULL - 40) + follow));
+            }
+            return plain(back(head)) + ' … ' + plain(back(capped(qs, qEnd, TR_SNIP_TAIL) + follow));
         }
 
         function trPartStatus(rec, id) {
@@ -10031,7 +10085,7 @@ Option D" required></textarea>
                 const st = trPartStatus(rec, p.id);
                 return '<button type="button" class="tr-q tr-q-' + st[0] + '" onclick="trainingAttempt(' + p.id + ', \'' + kind + '\')">'
                     + '<span class="tr-q-ref">' + escapeHtml(trRefLabel(p.structured_questions, p)) + (st[1] ? '<em>' + st[1] + '</em>' : '') + '</span>'
-                    + '<span class="tr-q-snip">' + trText(trSnippet(p.part_text, 110)) + '</span></button>';
+                    + '<span class="tr-q-snip">' + trText(trSnippet(p.part_text)) + '</span></button>';
             };
             const tys = order(c.tys || []), prelim = order(c.prelim || []);
             let html = '<div class="tr-pick-head"><span class="tr-pick-title">TYS questions (' + tys.length + ' part' + (tys.length === 1 ? '' : 's') + ')</span>'

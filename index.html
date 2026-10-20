@@ -10,7 +10,7 @@
          same for stand-alone \[...\] formulas. textmacros is switched off so \text{...} behaves
          exactly as it did in version 3. The speech/enrichment layer is off (it doubled typesetting
          time on phones) and the hidden assistive MathML copy is kept for screen readers, as in v3. -->
-    <script>window.MathJax = { tex: { packages: { '[-]': ['textmacros'] } }, output: { displayOverflow: 'linebreak' }, options: { menuOptions: { settings: { enrich: false, speech: false, braille: false, assistiveMml: true } } } };</script>
+    <script>window.MathJax = { tex: { packages: { '[-]': ['textmacros', 'html'] }, autoload: { html: [] }, require: { allow: { html: false } } }, output: { displayOverflow: 'linebreak' }, options: { menuOptions: { settings: { enrich: false, speech: false, braille: false, assistiveMml: true } } } };</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"></script>
     
     <!-- Supabase SDK -->
@@ -6726,6 +6726,17 @@ Option D" required></textarea>
             div.textContent = text;
             return div.innerHTML;
         }
+        // For a value placed inside a quoted HTML attribute (escapeHtml leaves " and ' alone).
+        function escapeAttr(text) {
+            return escapeHtml(String(text == null ? '' : text)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        // For text placed inside a single-quoted JS string in an inline handler, onclick="f('...')": escape it for
+        // JS first, then for the attribute (the browser decodes the attribute before the JS runs).
+        function escapeJsAttr(text) {
+            const js = String(text == null ? '' : text).replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+                .replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+            return escapeAttr(js);
+        }
         
         function sanitizeQuestionText(text) {
             // Allow <br>, <u>, <strong>, <b>, <i>, <em>, <sub>, <sup> tags, HTML entities and
@@ -6790,9 +6801,16 @@ Option D" required></textarea>
                 processed = processed.replace(new RegExp(inlineTagPlaceholders[tag].open, 'g'), '<' + tag + '>');
                 processed = processed.replace(new RegExp(inlineTagPlaceholders[tag].close, 'g'), '</' + tag + '>');
             });
-            entityMatches.forEach((ent) => { processed = processed.replace(entityPlaceholder, ent); });
-            latexInlineMatches.forEach((latex) => { processed = processed.replace(latexInlinePlaceholder, latex); });
-            latexDisplayMatches.forEach((latex) => { processed = processed.replace(latexDisplayPlaceholder, latex); });
+            entityMatches.forEach((ent) => { processed = processed.replace(entityPlaceholder, () => ent); });
+            // The held LaTeX goes back HTML-escaped: < and > (and any & that does not start an entity) become
+            // entities, so a formula can never carry a live tag. The browser decodes them back to the same
+            // characters, so MathJax reads exactly the same TeX as before. Function replacers stop a $ in the
+            // TeX being read as a replacement pattern.
+            const escapeLatex = (latex) => latex
+                .replace(/&(?!(#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);)/g, '&amp;')
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            latexInlineMatches.forEach((latex) => { processed = processed.replace(latexInlinePlaceholder, () => escapeLatex(latex)); });
+            latexDisplayMatches.forEach((latex) => { processed = processed.replace(latexDisplayPlaceholder, () => escapeLatex(latex)); });
 
             return processed;
         }
@@ -7504,7 +7522,7 @@ Option D" required></textarea>
               + '.soln .p-ms-lbl,.soln .q-ansfigs-lbl{color:#1636c2;}'
               + '</style>'
               + '<script>(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();<\/script>'
-              + '<script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
+              + '<script>window.MathJax={tex:{packages:{"[-]":["textmacros","html"]},autoload:{html:[]},require:{allow:{html:false}}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
               + '</head><body>'
               + '<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations, printing starts automatically.</span></div>'
               + body + '</body></html>';
@@ -7589,7 +7607,7 @@ Option D" required></textarea>
 
             // Use iframe to sandbox the worksheet CSS so it cannot affect the main page
             const frame = document.getElementById('wsPreviewFrame');
-            frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"><\/script></head><body style="margin:0;padding:2.54cm;">' + html + '</body></html>';
+            frame.srcdoc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><script>window.MathJax={tex:{packages:{"[-]":["textmacros","html"]},autoload:{html:[]},require:{allow:{html:false}}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"><\/script></head><body style="margin:0;padding:2.54cm;">' + html + '</body></html>';
             document.getElementById('wsPreviewModal').classList.add('show');
         }
 
@@ -8448,7 +8466,7 @@ Option D" required></textarea>
                         ? new Date(s.lastAttempt).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })
                         : '<span style="opacity:0.5">—</span>';
 
-                    const safeName = escapeHtml(s.full_name).replace(/'/g, "&#39;");
+                    const safeName = escapeJsAttr(s.full_name);
 
                     if (isArchived) {
                         return `
@@ -8480,7 +8498,7 @@ Option D" required></textarea>
                         : `<button class="btn btn-success" style="padding:0.3rem 0.6rem; font-size:0.75rem;" onclick="togglePremium(event, '${s.id}', '${safeName}', true)">Upgrade</button>`;
 
                     return `
-                        <div class="student-row" data-uid="${s.id}" data-name="${escapeHtml(s.full_name)}">
+                        <div class="student-row" data-uid="${s.id}" data-name="${escapeAttr(s.full_name)}">
                             <div style="cursor:pointer;" onclick="openDrilldownById('${s.id}', '${safeName}')">
                                 <div style="font-weight:600; display:flex; align-items:center; gap:0.5rem;">${escapeHtml(s.full_name)} ${roleBadge}</div>
                                 <div style="font-size:0.8rem; opacity:0.6;">${escapeHtml(s.email)}</div>
@@ -8699,7 +8717,7 @@ Option D" required></textarea>
                 </div>`;
 
             const bodyRows = improved.map(r => {
-                const safeName = escapeHtml(r.student.full_name).replace(/'/g, "&#39;");
+                const safeName = escapeJsAttr(r.student.full_name);
                 const deltaColor = r.delta >= 10 ? 'var(--success)' : 'var(--primary)';
                 return `
                     <div style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:0.5rem; padding:0.6rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.05); align-items:center; font-size:0.9rem;">
@@ -9449,7 +9467,7 @@ Option D" required></textarea>
             if (!note || !left) return;
             if (!trIsFree()) { note.style.display = 'none'; left.style.display = 'none'; if (btn) btn.disabled = false; return; }
             const n = trFreeLeft();
-            const trial = ' <a href= + WA +  target="_blank" rel="noopener">Sign up for Premium on WhatsApp</a>.';
+            const trial = ' <a href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20sign%20up%20for%20ChemBank%20Premium." target="_blank" rel="noopener">Sign up for Premium on WhatsApp</a>.';
             if (n === 0) {
                 note.innerHTML = 'You have used your ' + TRAINING_FREE_CAP + ' free marked answers. <b>Premium</b> students get ' + 20 + ' a day, plus a similar prelim question after every miss.' + trial;
                 left.innerHTML = 'No free marked answers left.' + trial;
@@ -9573,6 +9591,9 @@ Option D" required></textarea>
         // trText strips them (snippets, flags list); trPartHtml / trBody render them the way the Paper 2 & 3 tab does.
         function trStripMarkers(s) { return String(s == null ? '' : s).replace(/\[\[fig:[^\]]+\]\]/g, ' ').replace(/\[\[lead(?::[^\]]*)?\]\]/g, ' '); }
         function trText(s) { return sanitizeQuestionText(trStripMarkers(s)).replace(/\r?\n/g, '<br>'); }
+        // Student-written text (and anything a student can save, such as the feedback snapshot on a flag) is shown
+        // exactly as typed: escaped, never treated as markup. Put it in a mathjax_ignore element so TeX is not typeset either.
+        function trPlain(s) { return escapeHtml(String(s == null ? '' : s)).replace(/\r?\n/g, '<br>'); }
         function trFigHtml(f) {
             return '<figure class="tr-inline-fig"><img src="' + escapeHtml(f.url) + '" alt="' + escapeHtml(f.label || 'Figure') + '" loading="lazy">'
                 + (f.label || f.caption ? '<figcaption>' + escapeHtml([f.label, f.caption].filter(Boolean).join(' \u00b7 ')) + '</figcaption>' : '') + '</figure>';
@@ -9786,7 +9807,7 @@ Option D" required></textarea>
                 + '<div class="cf-meta"><span class="cf-who">' + student + '</span>'
                 +   '<span class="cf-badge">' + escapeHtml(cfCatLabel(r.category)) + '</span>'
                 +   '<span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(when) + '</span></div>'
-                + (r.note ? ('<h4>Student note</h4><p>' + escapeHtml(r.note) + '</p>') : '')
+                + (r.note ? ('<h4>Student note</h4><p class="mathjax_ignore">' + escapeHtml(r.note) + '</p>') : '')
                 + (snippet ? ('<details><summary>Question text</summary><div class="cf-snippet">' + snippet + '</div></details>') : '')
                 + '<label><input type="checkbox" ' + (r.resolved ? 'checked' : '') + ' onchange="contentFlagResolve(' + r.id + ', this.checked)"> Resolved</label>'
                 + '</div>';
@@ -9851,10 +9872,10 @@ Option D" required></textarea>
             const student = escapeHtml(u.full_name || u.email || 'Unknown student') + (u.full_name && u.email ? ' (' + escapeHtml(u.email) + ')' : '');
             return '<div class="tr-flag-card' + (r.resolved ? ' resolved' : '') + '" data-id="' + r.id + '">'
                 + '<div class="tr-flag-meta"><span class="tr-flag-who">' + student + '</span><span>' + escapeHtml(ref) + '</span><span>' + escapeHtml(conceptName(r.concept_id)) + '</span><span>' + escapeHtml(String(r.marks_awarded != null ? r.marks_awarded : '?')) + '/' + escapeHtml(String(r.marks != null ? r.marks : '?')) + (r.pass ? ' pass' : ' miss') + '</span><span>' + escapeHtml(when) + '</span></div>'
-                + '<h4>Student says</h4><p>' + trText(r.reason) + '</p>'
-                + '<h4>Their answer</h4><p>' + trText(r.answer_text) + '</p>'
-                + (fb.missing ? '<h4>Marker: missing</h4><p>' + trText(fb.missing) + '</p>' : '')
-                + (fb.incorrect ? '<h4>Marker: incorrect</h4><p>' + trText(fb.incorrect) + '</p>' : '')
+                + '<h4>Student says</h4><p class="mathjax_ignore">' + trPlain(r.reason) + '</p>'
+                + '<h4>Their answer</h4><p class="mathjax_ignore">' + trPlain(r.answer_text) + '</p>'
+                + (fb.missing ? '<h4>Marker: missing</h4><p class="mathjax_ignore">' + trPlain(fb.missing) + '</p>' : '')
+                + (fb.incorrect ? '<h4>Marker: incorrect</h4><p class="mathjax_ignore">' + trPlain(fb.incorrect) + '</p>' : '')
                 + '<details><summary>Question and mark scheme</summary><h4>Question</h4><p>' + trText(p.part_text || '') + '</p><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(p.mark_scheme || ''))) + '</div></details>'
                 + '<label><input type="checkbox" ' + (r.resolved ? 'checked' : '') + ' onchange="trainingFlagResolve(' + r.id + ', this.checked, this)"> Resolved</label>'
                 + '</div>';
@@ -11923,7 +11944,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
               +'(function(){function ready(){var imgs=Array.prototype.slice.call(document.images);Promise.all(imgs.map(function(img){if(img.complete)return null;return new Promise(function(res){img.addEventListener("load",res);img.addEventListener("error",res);});})).then(function(){var s=document.getElementById("wsReady");if(s)s.textContent="";setTimeout(function(){try{window.focus();}catch(e){}window.print();},250);});}'
               +'function whenMJ(){if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){MathJax.startup.promise.then(ready);}else{setTimeout(whenMJ,150);}}whenMJ();})();'
               +'<\/script>'))
-              +'<script>window.MathJax={tex:{packages:{"[-]":["textmacros"]}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
+              +'<script>window.MathJax={tex:{packages:{"[-]":["textmacros","html"]},autoload:{html:[]},require:{allow:{html:false}}},output:{displayOverflow:"linebreak"},options:{menuOptions:{settings:{enrich:false,speech:false,braille:false,assistiveMml:true}}}};<\/script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js" async><\/script>'
               +'</head><body>'
               +(preview?'':'<div class="toolbar no-print"><button onclick="window.print()">Print / Save as PDF</button><span id="wsReady">Rendering equations &mdash; printing starts automatically.</span></div>')
               +sections

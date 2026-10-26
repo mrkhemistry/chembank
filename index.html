@@ -862,6 +862,13 @@
             margin-bottom: 0.8rem;
         }
 
+        /* Analytics Topics tab: full width looks oversized on PC, so cap it at 60% there */
+        @media (min-width: 900px) {
+            #topicChartContainer {
+                max-width: 60%;
+            }
+        }
+
         .topic-bar-label {
             display: flex;
             justify-content: space-between;
@@ -8756,7 +8763,7 @@ Option D" required></textarea>
             let html = `<div style="margin-bottom:1rem; opacity:0.7; font-size:0.9rem;">Sorted by accuracy (weakest topics first). Requires at least 1 response per topic.</div>`;
 
             sorted.forEach(({ topic, pct, correct, total }) => {
-                const barColor = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--accent)' : 'var(--danger)';
+                const barColor = pct >= 70 ? 'var(--success)' : pct >= 50 ? 'var(--primary)' : 'var(--danger)';
                 html += `
                     <div class="topic-bar-container">
                         <div class="topic-bar-label">

@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live Class | ChemBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0a; --surface: #141414; --surface2: #1c1c1c; --border: #2a2a2a; --border2: #3a3a3a;
+    --text: #ffffff; --text2: #e8eef6; --cyan: #00e5ff; --cyan-dim: rgba(0,229,255,0.10);
+    --red: #ff5555; --amber: #ffc94d; --green: #4ade80;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font-family: 'DM Sans', sans-serif; font-size: 16px; background: var(--bg); color: var(--text); }
+  button, input { font-family: inherit; }
+  .hidden { display: none !important; }
+  .view { min-height: 100vh; }
+  .center { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 100%; max-width: 440px; }
+  .card h1, .card h2 { font-family: 'DM Serif Display', serif; font-weight: 400; margin-bottom: 10px; }
+  .card h1 { font-size: 2rem; }
+  .card p { color: var(--text2); line-height: 1.55; margin-bottom: 12px; }
+  .logo { font-family: 'DM Serif Display', serif; background: linear-gradient(90deg, #fff 0%, #00e5ff 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  label.f { display: block; font-size: 0.85rem; color: var(--text2); margin: 12px 0 6px; }
+  input.t { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 0.7rem 0.9rem; color: var(--text); font-size: 1rem; outline: none; }
+  input.t:focus { border-color: var(--cyan); }
+  input.code { text-transform: uppercase; letter-spacing: 0.3em; font-size: 1.6rem; text-align: center; font-weight: 700; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; padding: 0.6rem 1.1rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); text-decoration: none; }
+  .btn:hover { border-color: var(--cyan); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn.primary { background: var(--cyan); color: #000; border-color: var(--cyan); }
+  .btn.danger { border-color: rgba(255,85,85,0.6); color: #ffb3b3; }
+  .btn.sm { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
+  .btn.block { width: 100%; margin-top: 14px; }
+  .msg { margin-top: 12px; font-size: 0.9rem; color: var(--text2); min-height: 1.2em; }
+  .msg.err { color: #ffb3b3; }
+  .topbar { position: sticky; top: 0; z-index: 20; background: rgba(10,10,10,0.96); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .topbar .logo { font-size: 1.25rem; }
+  .topbar .grow { flex: 1; }
+  .who { font-size: 0.85rem; color: var(--text2); }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+  h2.sec { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.5rem; margin: 18px 0 10px; }
+  .list { display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .row .grow { flex: 1; min-width: 160px; }
+  .row .t1 { font-weight: 600; }
+  .row .t2 { font-size: 0.85rem; color: var(--text2); margin-top: 2px; }
+  .pill { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 100px; border: 1px solid var(--border2); color: var(--text2); }
+  .pill.live { border-color: var(--green); color: var(--green); }
+  .pill.draft { border-color: var(--amber); color: var(--amber); }
+  .empty { color: var(--text2); font-size: 0.95rem; padding: 10px 0; }
+
+  /* teacher session screen */
+  .sess-head { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .sess-head .grow { flex: 1; min-width: 220px; }
+  .sess-title { font-family: 'DM Serif Display', serif; font-size: 1.6rem; }
+  .bigcode { font-size: 2.6rem; font-weight: 700; letter-spacing: 0.25em; color: var(--cyan); line-height: 1; }
+  .codebox { text-align: center; }
+  .codebox .t2 { font-size: 0.8rem; color: var(--text2); margin-top: 6px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pages-strip { display: flex; gap: 10px; overflow-x: auto; padding: 6px 2px 10px; }
+  .pthumb { flex: 0 0 auto; width: 130px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
+  .pthumb .im { width: 100%; aspect-ratio: 1 / 1.414; background: #fff; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.8rem; }
+  .pthumb .im img { width: 100%; height: 100%; object-fit: contain; }
+  .pthumb .lbl { font-size: 0.78rem; color: var(--text2); margin: 5px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pthumb .ctl { display: flex; gap: 4px; }
+  .pthumb .ctl button { flex: 1; padding: 3px 0; font-size: 0.8rem; border-radius: 5px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); cursor: pointer; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+  .tab { padding: 0.35rem 0.8rem; border-radius: 100px; border: 1px solid var(--border2); background: transparent; color: var(--text); cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .tab.on { background: var(--cyan); color: #000; border-color: var(--cyan); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px; cursor: pointer; }
+  .tile:hover { border-color: var(--cyan); }
+  .tile.hand { border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,201,77,0.35); }
+  .tile canvas { width: 100%; display: block; background: #fff; border-radius: 4px; }
+  .tile .nm { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 600; font-size: 0.9rem; }
+  .tile .nm .grow { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .meta { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border2); flex: 0 0 auto; }
+  .dot.on { background: var(--green); }
+  .handicon { color: var(--amber); font-size: 1rem; }
+
+  /* board (student page and teacher focus view) */
+  .boardbar { position: sticky; top: 0; z-index: 20; background: rgba(10,10,10,0.97); border-bottom: 1px solid var(--border); padding: 8px 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .tb { min-width: 40px; height: 40px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-size: 0.9rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; -webkit-user-select: none; user-select: none; }
+  .tb.on { border-color: var(--cyan); background: var(--cyan-dim); color: var(--cyan); }
+  .tb.hand.on { border-color: var(--amber); background: rgba(255,201,77,0.15); color: var(--amber); }
+  .tb:disabled { opacity: 0.45; cursor: default; }
+  .sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border2); cursor: pointer; }
+  .sw.on { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan); }
+  .sep { width: 1px; height: 28px; background: var(--border2); margin: 0 4px; }
+  .pgnum { font-size: 0.9rem; font-weight: 600; padding: 0 4px; white-space: nowrap; }
+  .status { font-size: 0.8rem; color: var(--text2); white-space: nowrap; }
+  .status.err { color: #ffb3b3; }
+  .scroll { overflow: auto; scrollbar-gutter: stable; padding: 14px 10px 80px; -webkit-overflow-scrolling: touch; }
+  .page { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.5); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .page img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; }
+  .page canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .page textarea.ted { position: absolute; z-index: 5; border: 1.5px dashed var(--cyan); background: rgba(255,255,255,0.92); color: #111; resize: none; outline: none; font-family: Arial, Helvetica, sans-serif; line-height: 1.3; padding: 0; overflow: hidden; }
+  .banner { background: rgba(255,201,77,0.12); border-bottom: 1px solid rgba(255,201,77,0.4); color: var(--amber); padding: 8px 14px; font-size: 0.9rem; text-align: center; }
+  .note-small { display: none; background: var(--cyan-dim); color: var(--text2); font-size: 0.85rem; padding: 8px 14px; text-align: center; }
+  @media (max-width: 600px) { .note-small { display: block; } }
+  .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 100; background: #102a30; border: 1px solid var(--cyan); color: var(--text); padding: 10px 16px; border-radius: 10px; font-size: 0.95rem; max-width: 90vw; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  .modal { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; }
+  .modal .scroll { flex: 1; }
+  .feedback-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-left: 4px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div id="vLoading" class="view center"><div class="who">Loading Live Class…</div></div>
+
+<!-- sign in -->
+<div id="vLogin" class="view center hidden">
+  <div class="card">
+    <h1 class="logo">Live Class</h1>
+    <p>Sign in with your ChemBank account to join your class.</p>
+    <form id="loginForm">
+      <label class="f" for="lgEmail">Email</label>
+      <input class="t" id="lgEmail" type="email" autocomplete="username" required>
+      <label class="f" for="lgPass">Password</label>
+      <input class="t" id="lgPass" type="password" autocomplete="current-password" required>
+      <button class="btn primary block" type="submit" id="lgBtn">Sign in</button>
+    </form>
+    <div class="msg" id="lgMsg"></div>
+    <p style="margin-top:14px;font-size:0.85rem">Forgot your password? Reset it from the <a href="portal.html" style="color:var(--cyan)">student portal</a>.</p>
+  </div>
+</div>
+
+<!-- not premium -->
+<div id="vLocked" class="view center hidden">
+  <div class="card">
+    <h1 class="logo">Live Class</h1>
+    <p>Live Class is part of <strong>ChemBank Premium</strong> and is used in Mr Khemistry's lessons.</p>
+    <p>If you are in one of the classes, ask Mr Khemistry to check your account.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://mrkhemistry.sg" target="_blank" rel="noopener">See plans</a>
+      <a class="btn" href="portal.html">Back to portal</a>
+      <button class="btn" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- student: join -->
+<div id="vJoin" class="view hidden">
+  <div class="topbar"><span class="logo">Live Class</span><span class="grow"></span><span class="who" id="joinWho"></span><a class="btn sm" href="portal.html">Portal</a><button class="btn sm" onclick="signOut()">Sign out</button></div>
+  <div class="wrap" style="max-width:560px">
+    <div class="card" style="max-width:none;margin-top:10px">
+      <h2>Join your class</h2>
+      <p>Type the code on the board.</p>
+      <form id="joinForm">
+        <input class="t code" id="joinCode" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123">
+        <button class="btn primary block" type="submit" id="joinBtn">Join</button>
+      </form>
+      <div class="msg" id="joinMsg"></div>
+    </div>
+    <h2 class="sec">Your classes</h2>
+    <div class="list" id="myClasses"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<!-- student: board -->
+<div id="vBoard" class="view hidden" style="display:flex;flex-direction:column;height:100vh">
+  <div class="boardbar" id="stBar">
+    <button class="tb" onclick="stLeave()" title="Back to your classes">&larr;</button>
+    <span class="pgnum" id="stTitle"></span>
+    <span class="sep"></span>
+    <button class="tb" id="stPrev" onclick="stGo(-1)" title="Previous page">&lsaquo;</button>
+    <span class="pgnum" id="stPg">1 / 1</span>
+    <button class="tb" id="stNext" onclick="stGo(1)" title="Next page">&rsaquo;</button>
+    <span class="sep"></span>
+    <span id="stTools" style="display:contents">
+      <button class="tb" data-tool="pen" title="Pen">&#9998; Pen</button>
+      <button class="tb" data-tool="hl" title="Highlighter">&#9646; Highlight</button>
+      <button class="tb" data-tool="text" title="Type a text box">T Text</button>
+      <button class="tb" data-tool="eraser" title="Eraser (removes whole strokes)">&#9003; Eraser</button>
+      <span class="sw" data-color="#111111" style="background:#111111" title="Black"></span>
+      <span class="sw" data-color="#1d4ed8" style="background:#1d4ed8" title="Blue"></span>
+      <span class="sw" data-color="#15803d" style="background:#15803d" title="Green"></span>
+      <button class="tb" onclick="board && board.undo()" title="Undo">&#8630; Undo</button>
+      <button class="tb" id="stFinger" title="Let your finger draw (normally your finger scrolls)">Finger draws</button>
+    </span>
+    <button class="tb" onclick="zoomBy(-1)" title="Smaller">&minus;</button>
+    <button class="tb" onclick="zoomBy(1)" title="Bigger">+</button>
+    <button class="tb hand" id="stHand" onclick="stToggleHand()">&#9995; Raise hand</button>
+    <span class="status" id="stStatus"></span>
+  </div>
+  <div class="banner hidden" id="stEnded">This class has ended. You can still look at your work and Mr Khemistry's feedback.</div>
+  <div class="note-small">Writing works best on an iPad or a laptop.</div>
+  <div class="scroll" id="stScroll" style="flex:1"></div>
+</div>
+
+<!-- teacher: home -->
+<div id="vHome" class="view hidden">
+  <div class="topbar"><span class="logo">Live Class</span><span class="who">Teacher</span><span class="grow"></span><span class="who" id="homeWho"></span><a class="btn sm" href="index.html">ChemBank</a><button class="btn sm" onclick="signOut()">Sign out</button></div>
+  <div class="wrap">
+    <div class="row" style="margin-top:6px">
+      <input class="t" id="newTitle" placeholder="New class title, e.g. J2 Sat: Electrochemistry" maxlength="120" style="flex:1;min-width:220px">
+      <button class="btn primary" id="newBtn" onclick="tCreate()">Create class</button>
+    </div>
+    <div class="msg" id="homeMsg"></div>
+    <h2 class="sec">Your classes</h2>
+    <div class="list" id="sessList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<!-- teacher: session -->
+<div id="vSess" class="view hidden">
+  <div class="topbar"><button class="btn sm" onclick="tHome()">&larr; All classes</button><span class="logo">Live Class</span><span class="grow"></span><span class="status" id="tStatus"></span></div>
+  <div class="wrap" style="max-width:1400px">
+    <div class="sess-head">
+      <div class="grow">
+        <div class="sess-title" id="sTitle"></div>
+        <div style="margin-top:6px"><span class="pill" id="sPill"></span> <span class="who" id="sCount"></span></div>
+        <div class="actions" id="sActions"></div>
+      </div>
+      <div class="codebox">
+        <div class="bigcode" id="sCode"></div>
+        <div class="t2">chembank.mrkhemistry.com/live.html</div>
+      </div>
+    </div>
+
+    <h2 class="sec"><button class="btn sm" id="pagesToggle" onclick="tTogglePages()" style="margin-right:8px">Hide</button>Pages</h2>
+    <div id="pagesBody">
+    <div class="actions" style="margin-top:0">
+      <label class="btn sm" style="cursor:pointer">Upload PDF<input type="file" id="pdfInput" accept="application/pdf" style="display:none"></label>
+      <button class="btn sm" onclick="tAddBlank()">Add blank page</button>
+      <span class="who" id="pagesMsg"></span>
+    </div>
+    <p class="who" style="margin-top:8px">For ChemBank questions: in ChemBank's Structured view, use <strong>Print worksheet</strong> (Student), save it as a PDF, then upload it here.</p>
+    <div class="pages-strip" id="pagesStrip"></div>
+    </div>
+
+    <h2 class="sec">Class</h2>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div class="tabs" id="gridTabs" style="flex:1"></div>
+      <div class="tabs" id="sizeTabs"><span class="who" style="align-self:center">Tile size</span>
+        <button class="tab" data-size="230">S</button><button class="tab" data-size="340">M</button><button class="tab" data-size="520">L</button></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="gridEmpty">No students have joined yet.</div>
+  </div>
+</div>
+
+<!-- teacher: one student's page -->
+<div id="vFocus" class="modal hidden">
+  <div class="boardbar">
+    <button class="tb" onclick="tCloseFocus()">&larr; Class</button>
+    <button class="tb" onclick="tFocusStep(-1)" title="Previous student">&lsaquo;</button>
+    <span class="pgnum" id="fName"></span>
+    <button class="tb" onclick="tFocusStep(1)" title="Next student">&rsaquo;</button>
+    <span class="sep"></span>
+    <button class="tb" id="fPrev" onclick="tFocusPage(-1)" title="Previous page">&lsaquo;</button>
+    <span class="pgnum" id="fPg"></span>
+    <button class="tb" id="fNext" onclick="tFocusPage(1)" title="Next page">&rsaquo;</button>
+    <span class="sep"></span>
+    <span id="fTools" style="display:contents">
+      <button class="tb" data-tool="pen" title="Red pen">&#9998; Pen</button>
+      <button class="tb" data-tool="text" title="Comment">T Comment</button>
+      <button class="tb" data-tool="stamp" data-stamp="tick" title="Tick">&#10003;</button>
+      <button class="tb" data-tool="stamp" data-stamp="cross" title="Cross">&#10007;</button>
+      <button class="tb" data-tool="stamp" data-stamp="star" title="Star">&#9733;</button>
+      <button class="tb" data-tool="stamp" data-stamp="q" title="Question mark">?</button>
+      <button class="tb" data-tool="eraser" title="Remove your own marks">&#9003; Eraser</button>
+      <button class="tb" onclick="board && board.undo()">&#8630; Undo</button>
+    </span>
+    <button class="tb" onclick="zoomBy(-1)">&minus;</button>
+    <button class="tb" onclick="zoomBy(1)">+</button>
+    <button class="tb hand on hidden" id="fLower" onclick="tLowerHand()">&#9995; Lower hand</button>
+  </div>
+  <div class="scroll" id="fScroll"></div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   ChemBank Live Class (28 Oct 2026)
+   Teacher (admin/teacher) builds a class of page images and shares a code.
+   Premium students join, write on their own copy, raise a hand; the teacher
+   watches every copy update live and writes feedback straight onto it.
+   Each stroke / text box / stamp is one row in live_strokes (soft-deleted,
+   never hard-deleted by students). Pages are images in the private
+   'live-class' bucket, so every device shows exactly the same page.
+   Coordinates are stored in page units: the page is 1000 units wide.
+   ===================================================================== */
+const SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2anFzb2hoaXRwbmt2Zmlyb3NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2MDI5OTUsImV4cCI6MjA4NjE3ODk5NX0.EysWH7XML4y-ezkoc0NJ_IYExFA4kvtBpx2DrqylgCU';   // same anon key as index.html
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const STAFF_ROLES = ['admin', 'teacher'];
+const PREMIUM_ROLES = ['premium_student', 'admin', 'teacher'];
+const BUCKET = 'live-class';
+const PW = 1000;                       // page width in page units
+const RENDER_W = 1240;                 // pixel width of uploaded page images
+const TEACHER_RED = '#dc2626';
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+let me = null, myRole = null, myName = '';
+let board = null;                      // the Board currently on screen (student page or teacher focus)
+let zoom = 1;
+let fingerDraws = false;
+
+/* ---------- small helpers ---------- */
+const $ = id => document.getElementById(id);
+function esc(s) { return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+function show(id) {
+  ['vLoading', 'vLogin', 'vLocked', 'vJoin', 'vBoard', 'vHome', 'vSess'].forEach(v => $(v).classList.toggle('hidden', v !== id));
+  $('vBoard').style.display = id === 'vBoard' ? 'flex' : '';
+}
+let toastTimer = null;
+function toast(text, ms) {
+  const t = $('toast'); t.textContent = text; t.classList.remove('hidden');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('hidden'), ms || 3500);
+}
+function fmtDate(s) { try { return new Date(s).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector('script[src="' + src + '"]')) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load ' + src)); document.head.appendChild(s);
+  });
+}
+function errText(e) { return (e && (e.message || e.error_description)) || String(e); }
+async function signOut() { try { await sb.auth.signOut(); } catch (e) {} location.href = 'live.html'; }
+
+/* ---------- drawing (shared by every view) ---------- */
+const STAMPS = { tick: { ch: '✓', c: '#16a34a' }, cross: { ch: '✗', c: TEACHER_RED }, star: { ch: '★', c: '#eab308' }, q: { ch: '?', c: TEACHER_RED } };
+
+function drawInk(ctx, d, k) {
+  const p = d.p || []; if (p.length < 3) return;
+  ctx.save();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = d.c || '#111';
+  if (d.h) {                                         // highlighter: one translucent path, constant width
+    ctx.globalAlpha = 0.35; ctx.lineWidth = (d.w || 14) * k;
+    ctx.beginPath(); ctx.moveTo(p[0] * k, p[1] * k);
+    for (let i = 3; i < p.length; i += 3) ctx.lineTo(p[i] * k, p[i + 1] * k);
+    if (p.length === 3) ctx.lineTo(p[0] * k + 0.1, p[1] * k);
+    ctx.stroke(); ctx.restore(); return;
+  }
+  const base = (d.w || 2.2) * k;
+  if (p.length === 3) {                              // a dot
+    ctx.fillStyle = d.c || '#111'; ctx.beginPath(); ctx.arc(p[0] * k, p[1] * k, Math.max(0.6, base * 0.6), 0, Math.PI * 2); ctx.fill(); ctx.restore(); return;
+  }
+  // smooth curve: each piece runs midpoint to midpoint, bending through the recorded point;
+  // its width follows the pen pressure at that point (0-100)
+  const n = p.length / 3, X = i => p[i * 3] * k, Y = i => p[i * 3 + 1] * k, W = i => Math.max(0.7, base * (0.45 + 1.1 * (p[i * 3 + 2] / 100)));
+  let sx = X(0), sy = Y(0);
+  for (let i = 1; i < n; i++) {
+    const last = i === n - 1;
+    const ex = last ? X(i) : (X(i) + X(i + 1)) / 2, ey = last ? Y(i) : (Y(i) + Y(i + 1)) / 2;
+    ctx.lineWidth = W(i);
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(X(i), Y(i), ex, ey); ctx.stroke();
+    sx = ex; sy = ey;
+  }
+  ctx.restore();
+}
+
+function wrapLines(ctx, text, maxW) {
+  const out = [];
+  String(text || '').split('\n').forEach(par => {
+    const words = par.split(/(\s+)/); let line = '';
+    words.forEach(w => {
+      const test = line + w;
+      if (ctx.measureText(test).width > maxW && line.trim()) { out.push(line.trimEnd()); line = w.trimStart(); }
+      else line = test;
+    });
+    out.push(line);
+  });
+  return out;
+}
+function drawText(ctx, d, k) {
+  ctx.save();
+  const size = (d.s || 20) * k;
+  ctx.font = size + 'px Arial, Helvetica, sans-serif'; ctx.fillStyle = d.c || '#111'; ctx.textBaseline = 'top';
+  const lines = wrapLines(ctx, d.t, (d.w || 420) * k);
+  lines.forEach((ln, i) => ctx.fillText(ln, d.x * k, d.y * k + i * size * 1.3));
+  ctx.restore();
+}
+function textBox(d) {                               // page-unit bounding box of a text item (approximate height)
+  const c = document.createElement('canvas').getContext('2d');
+  c.font = (d.s || 20) + 'px Arial, Helvetica, sans-serif';
+  const n = wrapLines(c, d.t, d.w || 420).length;
+  return { x: d.x, y: d.y, w: d.w || 420, h: n * (d.s || 20) * 1.3 };
+}
+function drawStamp(ctx, d, k) {
+  const st = STAMPS[d.t] || STAMPS.tick; const size = (d.s || 46) * k;
+  ctx.save(); ctx.font = 'bold ' + size + 'px Arial, "Segoe UI Symbol", sans-serif'; ctx.fillStyle = st.c;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.ch, d.x * k, d.y * k); ctx.restore();
+}
+function drawItem(ctx, row, k) {
+  if (!row || row.deleted || !row.data || typeof row.data !== 'object') return;
+  try {                                              // one odd row must never stop the rest of the page drawing
+    if (row.kind === 'ink') drawInk(ctx, row.data, k);
+    else if (row.kind === 'text') drawText(ctx, row.data, k);
+    else if (row.kind === 'stamp') drawStamp(ctx, row.data, k);
+  } catch (e) { console.warn('[live] skipped a mark', row.id, e); }
+}
+// Supabase returns at most 1000 rows per request, so read strokes in pages of 1000
+async function fetchStrokes(build) {
+  const out = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await build().order('created_at').order('id').range(from, from + 999);
+    if (error) return { data: null, error };
+    out.push(...data);
+    if (data.length < 1000) return { data: out, error: null };
+  }
+}
+function sortedItems(map) { return [...map.values()].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '') || (a._seq || 0) - (b._seq || 0)); }
+
+function segDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0; t = Math.max(0, Math.min(1, t));
+  const x = ax + t * dx - px, y = ay + t * dy - py; return Math.sqrt(x * x + y * y);
+}
+function hitItem(row, x, y, r) {
+  try { return hitItemRaw(row, x, y, r); } catch (e) { return false; }
+}
+function hitItemRaw(row, x, y, r) {
+  if (!row || row.deleted || !row.data || typeof row.data !== 'object') return false;
+  const d = row.data;
+  if (row.kind === 'ink') {
+    const p = d.p || []; const rr = r + (d.w || 2) / 2;
+    if (p.length === 3) return Math.hypot(p[0] - x, p[1] - y) <= rr;
+    for (let i = 3; i < p.length; i += 3) if (segDist(x, y, p[i - 3], p[i - 2], p[i], p[i + 1]) <= rr) return true;
+    return false;
+  }
+  if (row.kind === 'text') { const b = textBox(d); return x >= b.x - r && x <= b.x + b.w + r && y >= b.y - r && y <= b.y + b.h + r; }
+  if (row.kind === 'stamp') return Math.hypot(d.x - x, d.y - y) <= (d.s || 46) / 2 + r;
+  return false;
+}
+
+/* ---------- saving (one queue, latest version of each row wins) ----------
+   Rows stay listed as unsaved (pending or in flight) until the server confirms them, and a copy of
+   every unsaved row is kept in this browser, so work survives an iPad going to sleep mid-save. */
+const BACKUP_KEY = 'liveUnsavedRows';
+const Sync = {
+  pending: new Map(), inflight: new Map(), touched: new Set(), timer: null, busy: false, failing: false, onStatus: null,
+  slim(row) { return { id: row.id, session_id: row.session_id, page_id: row.page_id, student_id: row.student_id, author: row.author, kind: row.kind, data: row.data, deleted: !!row.deleted }; },
+  put(row) {
+    this.pending.set(row.id, this.slim(row)); this.touched.add(row.session_id);
+    this.backup(); this.status(); clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 120);
+  },
+  async flush() {
+    if (this.busy || !this.pending.size) return;
+    this.busy = true;
+    const batch = [...this.pending.values()]; this.pending.clear();
+    batch.forEach(r => this.inflight.set(r.id, r));
+    let error = null;
+    try { ({ error } = await sb.from('live_strokes').upsert(batch, { onConflict: 'id' })); } catch (e) { error = e; }
+    this.busy = false;
+    batch.forEach(r => { if (this.inflight.get(r.id) === r) this.inflight.delete(r.id); });
+    if (error) {
+      batch.forEach(r => { if (!this.pending.has(r.id)) this.pending.set(r.id, r); });
+      this.failing = true; this.backup(); this.status(error);
+      clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 3000);
+      return;
+    }
+    this.failing = false; this.backup(); this.status();
+    if (this.pending.size) { clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 60); }
+  },
+  unsaved() { return this.pending.size + this.inflight.size; },
+  readBackup() {
+    try { const o = JSON.parse(localStorage.getItem(BACKUP_KEY) || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; } catch (e) { return {}; }
+  },
+  backup() {                                       // stored per class; only the classes this tab has written to are rewritten
+    try {
+      const rows = new Map(this.inflight); this.pending.forEach((r, id) => rows.set(id, r));
+      const all = this.readBackup();
+      this.touched.forEach(sid => {
+        const mine = [...rows.values()].filter(r => r.session_id === sid);
+        if (mine.length) all[sid] = mine; else delete all[sid];
+      });
+      if (Object.keys(all).length) localStorage.setItem(BACKUP_KEY, JSON.stringify(all)); else localStorage.removeItem(BACKUP_KEY);
+    } catch (e) {}
+  },
+  // rows this browser never managed to save for this class and this person: send them again
+  recover(sessionId, keep) {
+    const rows = this.readBackup()[sessionId];
+    const mine = (Array.isArray(rows) ? rows : []).filter(r => r && r.session_id === sessionId && keep(r));
+    mine.forEach(r => { if (!this.pending.has(r.id) && !this.inflight.has(r.id)) this.put(r); });
+    return mine;
+  },
+  status(err) {
+    if (!this.onStatus) return;
+    if (this.failing) this.onStatus('Not saved yet, retrying' + (err && /row-level|policy/i.test(err.message || '') ? ' (class may have ended)' : ''), true);
+    else if (this.unsaved() || this.busy) this.onStatus('Saving…', false);
+    else this.onStatus('Saved', false);
+  }
+};
+window.addEventListener('beforeunload', e => { if (Sync.unsaved()) { Sync.flush(); e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- Board: one page with its ink, editable or not ---------- */
+let seqCounter = 0;
+let lastPenAt = 0;                                    // when a pen last touched or moved over the page
+class Board {
+  constructor(host, opts) {
+    this.o = opts;                 // { page, imgUrl, editable, author, studentId, sessionId, tool(), scrollEl, onChange }
+    this.items = new Map();
+    this.undoStack = [];
+    this.page = opts.page;
+    this.el = document.createElement('div'); this.el.className = 'page';
+    if (opts.imgUrl) { this.img = document.createElement('img'); this.img.src = opts.imgUrl; this.img.alt = ''; this.img.draggable = false; this.el.appendChild(this.img); }
+    this.cv = document.createElement('canvas'); this.el.appendChild(this.cv);
+    host.innerHTML = ''; host.appendChild(this.el);
+    this.ctx = this.cv.getContext('2d');
+    this.active = null; this.pan = null; this.editor = null;
+    this.bind();
+    this.layout();
+  }
+  get H() { return PW * this.page.height / this.page.width; }
+  layout() {
+    const host = this.el.parentElement; if (!host) return;
+    const avail = Math.max(280, host.clientWidth - 20);
+    const cssW = Math.round(Math.min(avail, 1100) * zoom);
+    const cssH = Math.round(cssW * this.H / PW);
+    this.el.style.width = cssW + 'px'; this.el.style.height = cssH + 'px';
+    let dpr = window.devicePixelRatio || 1;
+    const maxPx = 14e6; if (cssW * cssH * dpr * dpr > maxPx) dpr = Math.sqrt(maxPx / (cssW * cssH));
+    this.cv.width = Math.round(cssW * dpr); this.cv.height = Math.round(cssH * dpr);
+    this.k = this.cv.width / PW;     // canvas pixels per page unit
+    this.cssK = cssW / PW;           // css pixels per page unit
+    if (this.editor) this.placeEditor();
+    this.redraw();
+  }
+  redraw() {
+    const c = this.ctx; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, this.cv.width, this.cv.height);
+    sortedItems(this.items).forEach(r => { if (!(this.editor && this.editor.id === r.id)) drawItem(c, r, this.k); });
+  }
+  setRows(rows) { this.items.clear(); rows.forEach(r => this.items.set(r.id, r)); this.redraw(); }
+  upsertRow(row) {
+    if (this.editor && this.editor.id === row.id) return;
+    const old = this.items.get(row.id); if (old && old._local && (old._v || 0) > 0 && row.author === this.o.author) return;
+    this.items.set(row.id, row); this.scheduleRedraw();
+  }
+  scheduleRedraw() { if (this._raf) return; this._raf = requestAnimationFrame(() => { this._raf = null; this.redraw(); }); }
+  mine(row) { return row.author === this.o.author; }
+  pos(e) { const r = this.cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * PW, y: (e.clientY - r.top) / r.height * this.H }; }
+  newRow(kind, data) {
+    return { id: uuid(), session_id: this.o.sessionId, page_id: this.page.id, student_id: this.o.studentId, author: this.o.author, kind, data, deleted: false, created_at: new Date().toISOString(), _seq: ++seqCounter, _local: true, _v: 1 };
+  }
+  commit(changes) {                 // changes: [{ row, before }] ; before = null for a new row
+    changes.forEach(ch => { ch.row._local = true; ch.row._v = (ch.row._v || 0) + 1; this.items.set(ch.row.id, ch.row); Sync.put(ch.row); });
+    this.undoStack.push(changes.map(ch => ({ id: ch.row.id, before: ch.before })));
+    if (this.undoStack.length > 200) this.undoStack.shift();
+    this.redraw(); if (this.o.onChange) this.o.onChange(this);
+  }
+  undo() {
+    if (!this.o.editable) return;
+    const step = this.undoStack.pop(); if (!step) return;
+    step.forEach(s => {
+      const cur = this.items.get(s.id); if (!cur) return;
+      const row = s.before ? Object.assign({}, cur, JSON.parse(JSON.stringify(s.before))) : Object.assign({}, cur, { deleted: true });
+      row._v = (cur._v || 0) + 1; row._local = true; this.items.set(row.id, row); Sync.put(row);
+    });
+    this.redraw(); if (this.o.onChange) this.o.onChange(this);
+  }
+  snap(row) { return { data: JSON.parse(JSON.stringify(row.data)), deleted: !!row.deleted }; }
+
+  bind() {
+    const cv = this.cv;
+    cv.addEventListener('pointerdown', e => this.down(e));
+    cv.addEventListener('pointermove', e => this.move(e));
+    cv.addEventListener('pointerup', e => this.up(e));
+    cv.addEventListener('pointercancel', e => this.up(e));
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+    // iPad: stop the Pencil from scrolling the page or popping up the magnifier
+    cv.addEventListener('touchstart', e => { if ([...e.touches].some(t => t.touchType === 'stylus') || this.active) e.preventDefault(); }, { passive: false });
+    cv.addEventListener('touchmove', e => { if (this.active) e.preventDefault(); }, { passive: false });
+  }
+  down(e) {
+    const tool = this.o.tool();
+    const isTouch = e.pointerType === 'touch';
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    // palm rejection: while the pen is writing (or has just lifted), a touch is a resting hand, so ignore it completely
+    if (isTouch && (this.active || Date.now() - lastPenAt < 800)) return;
+    if (e.pointerType === 'pen') { lastPenAt = Date.now(); this.pan = null; }
+    if (this.editor) { this.closeEditor(true); if (tool.name === 'text') return; }
+    // a finger scrolls unless "Finger draws" is on (taps still place text boxes and stamps)
+    const fingerPans = isTouch && !fingerDraws && (tool.name === 'pen' || tool.name === 'hl' || tool.name === 'eraser');
+    if (fingerPans || !this.o.editable) {
+      if (isTouch && this.o.scrollEl && !this.pan) { this.pan = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { this.cv.setPointerCapture(e.pointerId); } catch (_) {} }
+      return;
+    }
+    if (this.active) return;          // one stroke at a time
+    e.preventDefault();
+    const p = this.pos(e);
+    if (tool.name === 'text') { this.textAt(p); return; }
+    if (tool.name === 'stamp') { this.commit([{ row: this.newRow('stamp', { x: r1(p.x), y: r1(p.y), t: tool.stamp, s: 46 }), before: null }]); return; }
+    try { this.cv.setPointerCapture(e.pointerId); } catch (_) {}
+    if (tool.name === 'eraser') { this.active = { id: e.pointerId, erase: [], last: p }; this.eraseAt(p); return; }
+    const hl = tool.name === 'hl';
+    const pr = this.pressure(e);
+    this.active = { id: e.pointerId, data: { c: hl ? '#facc15' : tool.color, w: hl ? 14 : 2.2, h: hl ? 1 : 0, p: [r1(p.x), r1(p.y), pr] } };
+  }
+  pressure(e) { return (e.pointerType === 'pen' && e.pressure > 0) ? Math.round(Math.min(1, e.pressure) * 100) : 50; }
+  move(e) {
+    if (e.pointerType === 'pen') lastPenAt = Date.now();
+    if (this.pan && e.pointerId === this.pan.id) {
+      if (this.active) return;                         // never scroll under a stroke that is being written
+      const se = this.o.scrollEl; se.scrollTop -= e.clientY - this.pan.y; se.scrollLeft -= e.clientX - this.pan.x;
+      this.pan.x = e.clientX; this.pan.y = e.clientY; return;
+    }
+    const a = this.active; if (!a || e.pointerId !== a.id) return;
+    e.preventDefault();
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    (evs.length ? evs : [e]).forEach(ev => {
+      const p = this.pos(ev);
+      if (a.erase) {                                   // check the whole path, so a quick swipe misses nothing
+        const L = a.last || p, steps = Math.max(1, Math.ceil(Math.hypot(p.x - L.x, p.y - L.y) / 3));
+        for (let s = 1; s <= steps; s++) this.eraseAt({ x: L.x + (p.x - L.x) * s / steps, y: L.y + (p.y - L.y) * s / steps });
+        a.last = p; return;
+      }
+      const d = a.data.p, n = d.length;
+      if (Math.hypot(p.x - d[n - 3], p.y - d[n - 2]) < 0.8) return;
+      d.push(r1(p.x), r1(p.y), this.pressure(ev));
+      // draw just the new segment now; the full redraw on pen-up tidies it
+      const c = this.ctx, k = this.k; c.save(); c.lineCap = 'round'; c.strokeStyle = a.data.c;
+      if (a.data.h) { c.globalAlpha = 0.35; c.lineWidth = a.data.w * k; }
+      else c.lineWidth = Math.max(0.7, a.data.w * k * (0.45 + 1.1 * (d[n + 2] / 100)));
+      c.beginPath(); c.moveTo(d[n - 3] * k, d[n - 2] * k); c.lineTo(d[n] * k, d[n + 1] * k); c.stroke(); c.restore();
+    });
+    if (a.data && a.data.p.length > 12000) { this.finishStroke(); const last = a.data.p.slice(-3); this.active = { id: a.id, data: Object.assign({}, a.data, { p: last }) }; }
+  }
+  up(e) {
+    if (this.pan && e.pointerId === this.pan.id) { this.pan = null; return; }
+    const a = this.active; if (!a || e.pointerId !== a.id) return;
+    if (a.erase) {
+      this.move(e);                                    // include the lift-off point
+      this.active = null;
+      if (a.erase.length) this.commit(a.erase);
+      return;
+    }
+    this.finishStroke(); this.active = null;
+  }
+  finishStroke() {
+    const a = this.active; if (!a || !a.data) return;
+    this.commit([{ row: this.newRow('ink', JSON.parse(JSON.stringify(a.data))), before: null }]);
+  }
+  eraseAt(p) {
+    const a = this.active, r = 7;
+    this.items.forEach(row => {
+      if (!this.mine(row) || row.deleted || a.erase.some(x => x.row.id === row.id)) return;
+      if (hitItem(row, p.x, p.y, r)) {
+        const before = this.snap(row);
+        const nr = Object.assign({}, row, { deleted: true });
+        this.items.set(nr.id, nr); a.erase.push({ row: nr, before });
+      }
+    });
+    if (a.erase.length) this.scheduleRedraw();
+  }
+  // ----- text boxes -----
+  textAt(p) {
+    let hit = null;
+    sortedItems(this.items).forEach(r => { if (r.kind === 'text' && this.mine(r) && hitItem(r, p.x, p.y, 4)) hit = r; });
+    const tool = this.o.tool();
+    if (hit) this.openEditor(hit, false);
+    else {
+      const w = Math.min(460, PW - p.x - 10);
+      const row = this.newRow('text', { x: r1(p.x), y: r1(Math.max(0, p.y - 10)), w: Math.max(160, r1(w)), s: 20, c: tool.color, t: '' });
+      this.openEditor(row, true);
+    }
+  }
+  openEditor(row, isNew) {
+    const ta = document.createElement('textarea'); ta.className = 'ted'; ta.value = row.data.t || '';
+    ta.setAttribute('autocapitalize', 'sentences'); ta.style.color = row.data.c || '#111';
+    this.editor = { id: row.id, row, isNew, ta, before: isNew ? null : this.snap(row) };
+    this.el.appendChild(ta); this.placeEditor(); this.redraw();
+    try { ta.focus(); } catch (_) {}                 // inside the tap, so the iPad keyboard (or Scribble) opens
+    ta.addEventListener('input', () => this.placeEditor());
+    ta.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); this.closeEditor(false); } });
+    ta.addEventListener('blur', () => setTimeout(() => { if (this.editor && this.editor.ta === ta) this.closeEditor(true); }, 0));
+    setTimeout(() => { if (document.activeElement !== ta) ta.focus(); }, 0);
+  }
+  placeEditor() {
+    const ed = this.editor; if (!ed) return; const d = ed.row.data, k = this.cssK, ta = ed.ta;
+    ta.style.left = (d.x * k) + 'px'; ta.style.top = (d.y * k) + 'px'; ta.style.width = (d.w * k) + 'px';
+    ta.style.fontSize = ((d.s || 20) * k) + 'px';
+    ta.style.height = 'auto'; ta.style.height = Math.max((d.s || 20) * k * 1.4, ta.scrollHeight) + 'px';
+  }
+  closeEditor(save) {
+    const ed = this.editor; if (!ed) return; this.editor = null;
+    const text = ed.ta.value.replace(/\s+$/, ''); ed.ta.remove();
+    if (save) {
+      if (ed.isNew && text) this.commit([{ row: Object.assign({}, ed.row, { data: Object.assign({}, ed.row.data, { t: text.slice(0, 2000) }) }), before: null }]);
+      else if (!ed.isNew && text !== (ed.row.data.t || '')) {
+        const nr = Object.assign({}, ed.row, { data: Object.assign({}, ed.row.data, { t: text.slice(0, 2000) }), deleted: !text });
+        this.commit([{ row: nr, before: ed.before }]);
+      }
+    }
+    this.redraw();
+  }
+  destroy() { if (this.editor) this.closeEditor(true); this.el.remove(); }
+}
+function r1(v) { return Math.round(v * 10) / 10; }
+
+function zoomBy(dir) {
+  const steps = [0.75, 1, 1.25, 1.5, 2];
+  let i = steps.indexOf(zoom); if (i < 0) i = 1;
+  i = Math.max(0, Math.min(steps.length - 1, i + dir)); zoom = steps[i];
+  if (board) board.layout();
+}
+window.addEventListener('resize', () => { if (board) board.layout(); });
+
+/* ---------- tool bars ---------- */
+function makeToolbar(containerId, defaults) {
+  const state = Object.assign({ name: 'pen', color: '#111111', stamp: 'tick' }, defaults);
+  const box = $(containerId);
+  function paint() {
+    box.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === state.name && (state.name !== 'stamp' || b.dataset.stamp === state.stamp)));
+    box.querySelectorAll('[data-color]').forEach(s => s.classList.toggle('on', s.dataset.color === state.color));
+  }
+  box.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
+    if (board && board.editor) board.closeEditor(true);
+    state.name = b.dataset.tool; if (b.dataset.stamp) state.stamp = b.dataset.stamp; paint();
+  }));
+  box.querySelectorAll('[data-color]').forEach(s => s.addEventListener('click', () => {
+    state.color = s.dataset.color; if (state.name === 'eraser' || state.name === 'hl') state.name = 'pen'; paint();
+  }));
+  paint();
+  return state;
+}
+
+/* ---------- start-up ---------- */
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { show('vLogin'); return; }
+  me = session.user;
+  const { data: prof, error } = await sb.from('user_profiles').select('role, full_name, email').eq('id', me.id).single();
+  if (error || !prof) { show('vLocked'); return; }
+  myRole = prof.role; myName = (prof.full_name || '').trim() || (prof.email || '').split('@')[0];
+  if (STAFF_ROLES.includes(myRole)) { $('homeWho').textContent = myName; tHome(); return; }
+  if (!PREMIUM_ROLES.includes(myRole)) { show('vLocked'); return; }
+  $('joinWho').textContent = myName;
+  stHome();
+}
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('lgBtn'), msg = $('lgMsg'); btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email: $('lgEmail').value.trim(), password: $('lgPass').value });
+  btn.disabled = false;
+  if (error) { msg.className = 'msg err'; msg.textContent = 'Could not sign in: ' + errText(error); return; }
+  msg.textContent = ''; boot();
+});
+
+/* =====================================================================
+   STUDENT
+   ===================================================================== */
+const st = { session: null, pages: [], urls: {}, idx: 0, rows: new Map(), channel: null, tool: null, hand: false, beat: null, unseen: new Set() };
+
+async function stHome() {
+  stCleanup();
+  show('vJoin');
+  const pre = new URLSearchParams(location.search).get('code');
+  if (pre && !$('joinCode').value) $('joinCode').value = pre.toUpperCase().slice(0, 6);
+  const box = $('myClasses');
+  const { data: parts, error } = await sb.from('live_participants').select('session_id, joined_at').eq('student_id', me.id).order('joined_at', { ascending: false }).limit(30);
+  if (error) { box.innerHTML = '<div class="empty">Could not load your classes.</div>'; return; }
+  if (!parts || !parts.length) { box.innerHTML = '<div class="empty">Classes you join will appear here, with your work and feedback.</div>'; return; }
+  const { data: sess } = await sb.from('live_sessions').select('id, title, status, created_at').in('id', parts.map(p => p.session_id));
+  const byId = {}; (sess || []).forEach(s => byId[s.id] = s);
+  box.innerHTML = parts.filter(p => byId[p.session_id]).map(p => {
+    const s = byId[p.session_id];
+    return '<div class="row"><div class="grow"><div class="t1">' + esc(s.title || 'Live class') + '</div><div class="t2">' + esc(fmtDate(s.created_at)) + '</div></div>'
+      + '<span class="pill ' + esc(s.status) + '">' + (s.status === 'live' ? 'Live now' : 'Ended') + '</span>'
+      + '<button class="btn sm" data-open="' + esc(s.id) + '">' + (s.status === 'live' ? 'Open' : 'View') + '</button></div>';
+  }).join('') || '<div class="empty">Classes you join will appear here.</div>';
+  box.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => stOpen(b.dataset.open)));
+}
+$('joinForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('joinCode').value.trim().toUpperCase(), msg = $('joinMsg');
+  if (!/^[A-Z0-9]{6}$/.test(code)) { msg.className = 'msg err'; msg.textContent = 'The code has 6 letters and numbers.'; return; }
+  $('joinBtn').disabled = true; msg.className = 'msg'; msg.textContent = 'Joining…';
+  const { data, error } = await sb.rpc('join_live_session', { p_code: code });
+  $('joinBtn').disabled = false;
+  if (error) { msg.className = 'msg err'; msg.textContent = errText(error); return; }
+  msg.textContent = ''; stOpen(data.session_id);
+});
+
+async function stOpen(sid) {
+  show('vBoard'); $('stScroll').innerHTML = '<div class="empty" style="text-align:center">Loading your pages…</div>';
+  const [{ data: s, error: e1 }, { data: pages, error: e2 }, { data: rows, error: e3 }, { data: part }] = await Promise.all([
+    sb.from('live_sessions').select('id, title, status').eq('id', sid).single(),
+    sb.from('live_pages').select('*').eq('session_id', sid).order('page_no').order('created_at'),
+    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', sid).eq('student_id', me.id)),
+    sb.from('live_participants').select('hand_raised, current_page').eq('session_id', sid).eq('student_id', me.id).maybeSingle()
+  ]);
+  if (e1 || e2 || e3 || !s) { toast('Could not open the class: ' + errText(e1 || e2 || e3 || 'not found')); stHome(); return; }
+  st.session = s; st.rows = new Map(); (rows || []).forEach(r => st.rows.set(r.id, r));
+  Sync.recover(sid, r => r.author === 'student' && r.student_id === me.id)
+    .forEach(r => st.rows.set(r.id, Object.assign({}, r, { _local: true, _v: 1 })));
+  st.hand = !!(part && part.hand_raised);
+  await stSetPages(pages || []);
+  const startAt = part && part.current_page ? st.pages.findIndex(p => p.id === part.current_page) : 0;
+  st.idx = Math.max(0, startAt);
+  if (!st.tool) st.tool = makeToolbar('stBar', { name: 'pen', color: '#111111' });
+  Sync.onStatus = (t, bad) => { const el = $('stStatus'); el.textContent = t; el.classList.toggle('err', !!bad); };
+  stApplyStatus();
+  stRender();
+  stSubscribe();
+  clearInterval(st.beat); st.beat = setInterval(stHeartbeat, 60000); stHeartbeat();
+}
+async function stSetPages(pages) {
+  st.pages = pages;
+  const paths = pages.map(p => p.image_path).filter(Boolean).filter(p => !st.urls[p]);
+  if (paths.length) {
+    const { data } = await sb.storage.from(BUCKET).createSignedUrls(paths, 28800);
+    (data || []).forEach(d => { if (d.signedUrl) st.urls[d.path] = d.signedUrl; });
+  }
+}
+function stApplyStatus() {
+  const live = st.session.status === 'live';
+  $('stTitle').textContent = st.session.title || 'Live class';
+  $('stTools').style.display = live ? 'contents' : 'none';
+  $('stHand').classList.toggle('hidden', !live);
+  $('stEnded').classList.toggle('hidden', live);
+  $('stHand').classList.toggle('on', st.hand);
+  $('stHand').innerHTML = st.hand ? '&#9995; Hand raised' : '&#9995; Raise hand';
+  $('stFinger').classList.toggle('on', fingerDraws);
+  $('stFinger').classList.toggle('hidden', !(navigator.maxTouchPoints > 0));
+  if (board) { board.o.editable = live; }
+}
+$('stFinger').addEventListener('click', () => { fingerDraws = !fingerDraws; $('stFinger').classList.toggle('on', fingerDraws); });
+function stRender() {
+  if (board) { board.destroy(); board = null; }
+  const n = st.pages.length;
+  if (!n) { $('stScroll').innerHTML = '<div class="empty" style="text-align:center">Your teacher has not added any pages yet.</div>'; $('stPg').textContent = '0 / 0'; return; }
+  st.idx = Math.min(st.idx, n - 1);
+  const page = st.pages[st.idx];
+  st.unseen.delete(page.id);
+  stNav();
+  board = new Board($('stScroll'), {
+    page, imgUrl: page.image_path ? st.urls[page.image_path] : null, editable: st.session.status === 'live',
+    author: 'student', studentId: me.id, sessionId: st.session.id, tool: () => st.tool, scrollEl: $('stScroll'),
+    onChange: b => b.items.forEach(r => st.rows.set(r.id, r))
+  });
+  board.setRows([...st.rows.values()].filter(r => r.page_id === page.id));
+  $('stScroll').scrollTop = 0;
+}
+function stNav() {                                                // page counter, arrows and the "feedback elsewhere" dot
+  const n = st.pages.length;
+  $('stPg').innerHTML = (n ? st.idx + 1 : 0) + ' / ' + n + ([...st.unseen].some(id => st.pages.some(p => p.id === id)) ? '<span class="feedback-dot" title="New feedback on another page"></span>' : '');
+  $('stPrev').disabled = st.idx === 0; $('stNext').disabled = st.idx >= n - 1;
+}
+function stGo(d) {
+  if (board && board.editor) board.closeEditor(true);
+  const n = st.pages.length; const i = Math.max(0, Math.min(n - 1, st.idx + d)); if (i === st.idx) return;
+  st.idx = i; stRender(); stHeartbeat();
+}
+async function stToggleHand() {
+  st.hand = !st.hand; stApplyStatus();
+  const { error } = await sb.from('live_participants').update({ hand_raised: st.hand, hand_raised_at: st.hand ? new Date().toISOString() : null })
+    .eq('session_id', st.session.id).eq('student_id', me.id);
+  if (error) { st.hand = !st.hand; stApplyStatus(); toast('Could not reach your teacher: ' + errText(error)); }
+  else toast(st.hand ? 'Your hand is up. Mr Khemistry can see it.' : 'Hand lowered.');
+}
+function stHeartbeat() {
+  if (!st.session || st.session.status !== 'live') return;
+  const page = st.pages[st.idx];
+  sb.from('live_participants').update({ last_seen: new Date().toISOString(), current_page: page ? page.id : null })
+    .eq('session_id', st.session.id).eq('student_id', me.id).then(() => {});
+}
+function stSubscribe() {
+  if (st.channel) sb.removeChannel(st.channel);
+  const sid = st.session.id;
+  const onStroke = ev => {
+      const row = ev.new; if (!row || row.session_id !== sid) return;
+      if (row.author === 'student') return;                         // our own writes are already on screen
+      const isNew = !st.rows.has(row.id);
+      st.rows.set(row.id, row);
+      const page = st.pages[st.idx];
+      if (board && page && row.page_id === page.id) board.upsertRow(row);
+      if (!row.deleted && isNew) {
+        const pi = st.pages.findIndex(p => p.id === row.page_id);
+        if (!page || row.page_id !== page.id) { st.unseen.add(row.page_id); stNav(); }
+        toast('Mr Khemistry wrote on your page ' + (pi + 1) + '.');
+      }
+  };
+  // strokes are only ever soft-deleted, so INSERT and UPDATE are all we need (DELETE events are not filtered)
+  st.channel = sb.channel('live-st-' + sid + '-' + me.id)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_strokes', filter: 'student_id=eq.' + me.id }, onStroke)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_strokes', filter: 'student_id=eq.' + me.id }, onStroke)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_sessions', filter: 'id=eq.' + sid }, ev => {
+      const was = st.session.status; st.session = Object.assign(st.session, ev.new); stApplyStatus();
+      if (was !== st.session.status) toast(st.session.status === 'live' ? 'The class is open again.' : 'The class has ended. Your work is saved.');
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'live_pages', filter: 'session_id=eq.' + sid }, () => stReloadPages())
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_participants', filter: 'student_id=eq.' + me.id }, ev => {
+      if (ev.new.session_id !== sid) return;
+      if (!!ev.new.hand_raised !== st.hand) { st.hand = !!ev.new.hand_raised; stApplyStatus(); if (!st.hand) toast('Mr Khemistry lowered your hand.'); }
+    })
+    .subscribe(status => { if (status === 'SUBSCRIBED') stResync(); });
+}
+async function stReloadPages() {
+  const cur = st.pages[st.idx] && st.pages[st.idx].id;
+  const { data, error } = await sb.from('live_pages').select('*').eq('session_id', st.session.id).order('page_no').order('created_at');
+  if (error || !data || !st.session) return;                       // keep what is on screen; the next resync tries again
+  await stSetPages(data);
+  const i = st.pages.findIndex(p => p.id === cur); st.idx = i >= 0 ? i : Math.min(st.idx, Math.max(0, st.pages.length - 1));
+  // only rebuild the page if the one on screen changed; a new page added elsewhere just updates the counter
+  if (board && st.pages[st.idx] && board.page.id === st.pages[st.idx].id) stNav(); else stRender();
+}
+async function stResync() {                                        // after a (re)connect, catch anything missed
+  if (!st.session) return;
+  const [{ data: s }, { data: rows }] = await Promise.all([
+    sb.from('live_sessions').select('id, title, status').eq('id', st.session.id).single(),
+    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', st.session.id).eq('student_id', me.id))
+  ]);
+  if (s) { st.session = s; stApplyStatus(); }
+  await stReloadPages();                                           // pages added or removed while we were away
+  (rows || []).forEach(r => {
+    const local = st.rows.get(r.id);
+    if (local && local._local && r.author === 'student') return;    // keep what this device drew
+    st.rows.set(r.id, r); if (board && r.page_id === board.page.id) board.upsertRow(r);
+  });
+}
+function stCleanup() {
+  clearInterval(st.beat); st.beat = null;
+  if (st.channel) { sb.removeChannel(st.channel); st.channel = null; }
+  if (board) { board.destroy(); board = null; }
+  st.session = null; st.unseen.clear();
+}
+function stLeave() { Sync.flush(); stHome(); }
+
+/* =====================================================================
+   TEACHER
+   ===================================================================== */
+const T = { session: null, pages: [], urls: {}, imgs: {}, parts: new Map(), rows: new Map(), channel: null, gridPage: null, focus: null, tool: null, tileCv: new Map(), dirty: new Set() };
+
+async function tHome() {
+  tCleanup(); show('vHome');
+  const box = $('sessList');
+  const [{ data: sess, error }, { data: parts }] = await Promise.all([
+    sb.from('live_sessions').select('*').order('created_at', { ascending: false }).limit(60),
+    sb.from('live_participants').select('session_id')
+  ]);
+  if (error) { box.innerHTML = '<div class="empty">Could not load classes: ' + esc(errText(error)) + '</div>'; return; }
+  const counts = {}; (parts || []).forEach(p => counts[p.session_id] = (counts[p.session_id] || 0) + 1);
+  if (!sess || !sess.length) { box.innerHTML = '<div class="empty">No classes yet. Create one above.</div>'; return; }
+  box.innerHTML = sess.map(s => '<div class="row"><div class="grow"><div class="t1">' + esc(s.title || 'Untitled class') + '</div>'
+    + '<div class="t2">Code ' + esc(s.code) + ' &middot; ' + esc(fmtDate(s.created_at)) + ' &middot; ' + (counts[s.id] || 0) + ' student' + ((counts[s.id] || 0) === 1 ? '' : 's') + '</div></div>'
+    + '<span class="pill ' + esc(s.status) + '">' + esc(s.status === 'draft' ? 'Not started' : s.status === 'live' ? 'Live' : 'Ended') + '</span>'
+    + '<button class="btn sm" data-open="' + esc(s.id) + '">Open</button>'
+    + '<button class="btn sm danger" data-del="' + esc(s.id) + '" data-title="' + esc(s.title) + '">Delete</button></div>').join('');
+  box.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => tOpen(b.dataset.open)));
+  box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => tDelete(b.dataset.del, b.dataset.title)));
+}
+function newCode() { const b = crypto.getRandomValues(new Uint8Array(6)); return [...b].map(x => CODE_CHARS[x % CODE_CHARS.length]).join(''); }
+async function tCreate() {
+  const title = $('newTitle').value.trim() || 'Live class', msg = $('homeMsg');
+  $('newBtn').disabled = true;
+  for (let tries = 0; tries < 5; tries++) {
+    const { data, error } = await sb.from('live_sessions').insert({ title, code: newCode() }).select().single();
+    if (!error) { $('newBtn').disabled = false; $('newTitle').value = ''; tOpen(data.id); return; }
+    if (error.code !== '23505') { msg.className = 'msg err'; msg.textContent = 'Could not create: ' + errText(error); break; }
+  }
+  $('newBtn').disabled = false;
+}
+async function tDelete(id, title) {
+  if (!confirm('Delete "' + (title || 'this class') + '"?\n\nThis removes its pages and every student\'s work for good.')) return;
+  const { data: files } = await sb.storage.from(BUCKET).list(id, { limit: 1000 });
+  if (files && files.length) await sb.storage.from(BUCKET).remove(files.map(f => id + '/' + f.name));
+  const { error } = await sb.from('live_sessions').delete().eq('id', id);
+  if (error) toast('Could not delete: ' + errText(error)); else toast('Class deleted.');
+  tHome();
+}
+
+async function tOpen(id) {
+  show('vSess');
+  Sync.onStatus = (t, bad) => { const el = $('tStatus'); el.textContent = t; el.classList.toggle('err', !!bad); };
+  const [{ data: s, error }, { data: parts }, { data: rows, error: rowsErr }] = await Promise.all([
+    sb.from('live_sessions').select('*').eq('id', id).single(),
+    sb.from('live_participants').select('*').eq('session_id', id),
+    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', id))
+  ]);
+  if (error || !s || rowsErr) { toast('Could not open the class: ' + errText(error || rowsErr || 'not found')); tHome(); return; }
+  pagesOpen = null;
+  T.session = s; T.parts = new Map(); (parts || []).forEach(p => T.parts.set(p.student_id, p));
+  T.rows = new Map(); (rows || []).forEach(r => T.rows.set(r.id, r));
+  Sync.recover(id, r => r.author === 'teacher')
+    .forEach(r => T.rows.set(r.id, Object.assign({}, r, { _local: true, _v: 1 })));
+  await tLoadPages();
+  if (!T.gridPage || !T.pages.some(p => p.id === T.gridPage)) T.gridPage = T.pages[0] ? T.pages[0].id : null;
+  tRenderHead(); tRenderPages(); tRenderGrid(true);
+  tSubscribe();
+}
+async function tLoadPages() {
+  const { data } = await sb.from('live_pages').select('*').eq('session_id', T.session.id).order('page_no').order('created_at');
+  T.pages = data || [];
+  const paths = T.pages.map(p => p.image_path).filter(p => p && !T.urls[p]);
+  if (paths.length) {
+    const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(paths, 28800);
+    (signed || []).forEach(d => { if (d.signedUrl) T.urls[d.path] = d.signedUrl; });
+  }
+}
+// page images are decoded only when needed (the grid page, the export), never all at once
+function tImg(page) {
+  if (!page || !page.image_path || !T.urls[page.image_path]) return null;
+  let im = T.imgs[page.id];
+  if (!im) {
+    im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => { if (T.session && page.id === T.gridPage) tRenderGrid(true); };
+    im.src = T.urls[page.image_path]; T.imgs[page.id] = im;
+  }
+  return im;
+}
+function tImgReady(page) {
+  const im = tImg(page);
+  return (!im || im.complete) ? Promise.resolve() : new Promise(r => { im.addEventListener('load', r); im.addEventListener('error', r); });
+}
+function tDropImgs(keepId) { Object.keys(T.imgs).forEach(id => { if (id !== keepId) delete T.imgs[id]; }); }
+function tRenderHead() {
+  const s = T.session;
+  $('sTitle').textContent = s.title || 'Untitled class';
+  $('sCode').textContent = s.code;
+  const pill = $('sPill'); pill.className = 'pill ' + s.status; pill.textContent = s.status === 'draft' ? 'Not started' : s.status === 'live' ? 'Live' : 'Ended';
+  const n = T.parts.size; $('sCount').textContent = n + ' student' + (n === 1 ? '' : 's') + ' joined';
+  const a = [];
+  if (s.status === 'draft') a.push('<button class="btn primary" onclick="tSetStatus(\'live\')">Start class</button>');
+  if (s.status === 'live') a.push('<button class="btn danger" onclick="tSetStatus(\'ended\')">End class</button>');
+  if (s.status === 'ended') a.push('<button class="btn" onclick="tSetStatus(\'live\')">Reopen class</button>');
+  a.push('<button class="btn" onclick="tRename()">Rename</button>');
+  a.push('<button class="btn" id="exportBtn" onclick="tExport()">Export PDF</button>');
+  $('sActions').innerHTML = a.join('');
+  tApplyPagesFold(); tApplyTileSize();
+}
+let pagesOpen = null;                                              // null = automatic: folded away while the class is live
+function tTogglePages(force) {
+  const open = force != null ? force : !(pagesOpen != null ? pagesOpen : T.session.status !== 'live');
+  if (force == null) pagesOpen = open;
+  $('pagesBody').classList.toggle('hidden', !open);
+  $('pagesToggle').textContent = open ? 'Hide' : 'Show (' + T.pages.length + ')';
+}
+function tApplyPagesFold() { tTogglePages(pagesOpen != null ? pagesOpen : T.session.status !== 'live'); }
+let tileSize = 230;
+try { tileSize = +localStorage.getItem('liveTileSize') || 230; } catch (e) {}
+function tApplyTileSize() {
+  $('grid').style.gridTemplateColumns = 'repeat(auto-fill, minmax(' + tileSize + 'px, 1fr))';
+  document.querySelectorAll('#sizeTabs [data-size]').forEach(b => b.classList.toggle('on', +b.dataset.size === tileSize));
+}
+document.querySelectorAll('#sizeTabs [data-size]').forEach(b => b.addEventListener('click', () => {
+  tileSize = +b.dataset.size; try { localStorage.setItem('liveTileSize', tileSize); } catch (e) {}
+  tApplyTileSize(); tRenderGrid(true);
+}));
+async function tSetStatus(status) {
+  if (status === 'ended' && !confirm('End the class? Students can still look at their work but cannot write any more.')) return;
+  if (status === 'live' && !T.pages.length && !confirm('There are no pages yet. Start anyway?')) return;
+  const patch = { status }; if (status === 'live' && !T.session.started_at) patch.started_at = new Date().toISOString(); if (status === 'ended') patch.ended_at = new Date().toISOString();
+  const { data, error } = await sb.from('live_sessions').update(patch).eq('id', T.session.id).select().single();
+  if (error) { toast('Could not update: ' + errText(error)); return; }
+  T.session = data; tRenderHead();
+}
+async function tRename() {
+  const t = prompt('Class title', T.session.title || ''); if (t == null) return;
+  const { data, error } = await sb.from('live_sessions').update({ title: t.trim().slice(0, 120) }).eq('id', T.session.id).select().single();
+  if (error) toast('Could not rename: ' + errText(error)); else { T.session = data; tRenderHead(); }
+}
+
+/* ----- pages ----- */
+function tRenderPages() {
+  const strip = $('pagesStrip');
+  if (!T.pages.length) { strip.innerHTML = '<div class="empty">No pages yet. Upload a PDF or add a blank page.</div>'; return; }
+  strip.innerHTML = T.pages.map((p, i) => '<div class="pthumb"><div class="im">' + (p.image_path && T.urls[p.image_path] ? '<img src="' + esc(T.urls[p.image_path]) + '" alt="" loading="lazy" decoding="async">' : 'Blank page') + '</div>'
+    + '<div class="lbl" title="' + esc(p.label) + '">' + (i + 1) + '. ' + esc(p.label || (p.image_path ? 'Page' : 'Blank')) + '</div>'
+    + '<div class="ctl"><button title="Move left" data-mv="' + i + '" data-d="-1"' + (i === 0 ? ' disabled' : '') + '>&lsaquo;</button>'
+    + '<button title="Move right" data-mv="' + i + '" data-d="1"' + (i === T.pages.length - 1 ? ' disabled' : '') + '>&rsaquo;</button>'
+    + '<button title="Delete page" data-rm="' + i + '">&#10005;</button></div></div>').join('');
+  strip.querySelectorAll('[data-mv]').forEach(b => b.addEventListener('click', () => tMovePage(+b.dataset.mv, +b.dataset.d)));
+  strip.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => tRemovePage(+b.dataset.rm)));
+}
+function nextPageNo() { return T.pages.reduce((m, p) => Math.max(m, p.page_no), 0) + 1; }
+async function tAddBlank() {
+  const { error } = await sb.from('live_pages').insert({ session_id: T.session.id, page_no: nextPageNo(), image_path: null, width: RENDER_W, height: Math.round(RENDER_W * 1.414), label: 'Blank page' });
+  if (error) { toast('Could not add: ' + errText(error)); return; }
+  await tAfterPagesChanged();
+}
+async function tMovePage(i, d) {
+  const a = T.pages[i], b = T.pages[i + d]; if (!a || !b) return;
+  // write the whole new order as 1, 2, 3 ... so a half-finished move can never leave two pages sharing a number
+  const order = T.pages.slice(); order[i] = b; order[i + d] = a;
+  const { error } = await sb.rpc('live_reorder_pages', { p_session: T.session.id, p_ids: order.map(p => p.id) });
+  if (error) toast('Could not move the page: ' + errText(error));
+  await tAfterPagesChanged();
+}
+async function tRemovePage(i) {
+  const p = T.pages[i]; if (!p) return;
+  const used = [...T.rows.values()].some(r => r.page_id === p.id && !r.deleted);
+  if (!confirm('Delete page ' + (i + 1) + '?' + (used ? '\n\nStudents have written on it. Their work on this page will be deleted too.' : ''))) return;
+  const { error } = await sb.from('live_pages').delete().eq('id', p.id);
+  if (error) { toast('Could not delete: ' + errText(error)); return; }
+  if (p.image_path) await sb.storage.from(BUCKET).remove([p.image_path]);
+  [...T.rows.values()].forEach(r => { if (r.page_id === p.id) T.rows.delete(r.id); });
+  await tAfterPagesChanged();
+}
+async function tAfterPagesChanged() {
+  await tLoadPages();
+  if (!T.pages.some(p => p.id === T.gridPage)) T.gridPage = T.pages[0] ? T.pages[0].id : null;
+  tRenderPages(); tRenderGrid(true); tApplyPagesFold();
+}
+$('pdfInput').addEventListener('change', async e => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  const msg = $('pagesMsg');
+  try {
+    msg.textContent = 'Reading the PDF…';
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+    if (pdf.numPages > 40 && !confirm('This PDF has ' + pdf.numPages + ' pages. Add them all?')) { msg.textContent = ''; return; }
+    const base = file.name.replace(/\.pdf$/i, '').slice(0, 80);
+    let no = nextPageNo();
+    for (let i = 1; i <= pdf.numPages; i++) {
+      msg.textContent = 'Adding page ' + i + ' of ' + pdf.numPages + '…';
+      const pg = await pdf.getPage(i);
+      const vp1 = pg.getViewport({ scale: 1 });
+      const vp = pg.getViewport({ scale: RENDER_W / vp1.width });
+      const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+      await pg.render({ canvasContext: cx, viewport: vp }).promise;
+      const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.9));
+      const path = T.session.id + '/' + uuid() + '.jpg';
+      const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+      if (up.error) throw up.error;
+      const ins = await sb.from('live_pages').insert({ session_id: T.session.id, page_no: no++, image_path: path, width: cv.width, height: cv.height, label: base + (pdf.numPages > 1 ? ' p' + i : '') });
+      if (ins.error) throw ins.error;
+    }
+    msg.textContent = 'Added ' + pdf.numPages + ' page' + (pdf.numPages === 1 ? '' : 's') + '.';
+  } catch (err) {
+    msg.textContent = 'Upload stopped: ' + errText(err);
+  }
+  await tAfterPagesChanged();
+});
+
+/* ----- class grid ----- */
+function tSortedParts() {
+  return [...T.parts.values()].sort((a, b) => {
+    if (a.hand_raised !== b.hand_raised) return a.hand_raised ? -1 : 1;
+    if (a.hand_raised) return (a.hand_raised_at || '').localeCompare(b.hand_raised_at || '');
+    return (a.display_name || '').localeCompare(b.display_name || '');
+  });
+}
+function tActive(p) { return p.last_seen && (Date.now() - new Date(p.last_seen).getTime()) < 150000; }
+function tRenderGrid(full) {
+  if (!T.session) return;
+  const tabs = $('gridTabs');
+  tabs.innerHTML = T.pages.map((p, i) => '<button class="tab' + (p.id === T.gridPage ? ' on' : '') + '" data-pg="' + esc(p.id) + '">Page ' + (i + 1) + '</button>').join('');
+  tabs.querySelectorAll('[data-pg]').forEach(b => b.addEventListener('click', () => { T.gridPage = b.dataset.pg; tDropImgs(T.gridPage); tRenderGrid(true); }));
+  const parts = tSortedParts();
+  $('gridEmpty').classList.toggle('hidden', parts.length > 0);
+  $('sCount').textContent = parts.length + ' student' + (parts.length === 1 ? '' : 's') + ' joined' + (parts.some(p => p.hand_raised) ? ' · ' + parts.filter(p => p.hand_raised).length + ' hand(s) up' : '');
+  const grid = $('grid');
+  if (full) { grid.innerHTML = ''; T.tileCv.clear(); }
+  const page = T.pages.find(p => p.id === T.gridPage);
+  parts.forEach(p => {
+    let tile = grid.querySelector('[data-st="' + CSS.escape(p.student_id) + '"]');
+    if (!tile) {
+      tile = document.createElement('div'); tile.className = 'tile'; tile.dataset.st = p.student_id;
+      tile.innerHTML = '<canvas></canvas><div class="nm"><span class="dot"></span><span class="grow"></span><span class="handicon"></span></div><div class="meta"></div>';
+      tile.addEventListener('click', () => tOpenFocus(p.student_id));
+      grid.appendChild(tile); T.tileCv.set(p.student_id, tile.querySelector('canvas'));
+    }
+    grid.appendChild(tile);                                           // keeps the sort order (raised hands first)
+    tile.classList.toggle('hand', !!p.hand_raised);
+    tile.querySelector('.dot').classList.toggle('on', tActive(p));
+    tile.querySelector('.grow').textContent = p.display_name || 'Student';
+    tile.querySelector('.handicon').innerHTML = p.hand_raised ? '&#9995;' : '';
+    const cur = T.pages.findIndex(x => x.id === p.current_page);
+    const n = [...T.rows.values()].filter(r => r.student_id === p.student_id && r.page_id === T.gridPage && r.author === 'student' && !r.deleted).length;
+    tile.querySelector('.meta').textContent = (cur >= 0 ? 'On page ' + (cur + 1) : 'Not on a page yet') + ' · ' + n + ' mark' + (n === 1 ? '' : 's') + ' here';
+    if (full || T.dirty.has(p.student_id)) tDrawTile(p.student_id, page);
+  });
+  T.dirty.clear();
+}
+function renderPageTo(cv, page, studentId, widthPx) {
+  const h = Math.round(widthPx * page.height / page.width);
+  cv.width = widthPx; cv.height = h;
+  const c = cv.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, widthPx, h);
+  const im = tImg(page); if (im && im.complete && im.naturalWidth) c.drawImage(im, 0, 0, widthPx, h);
+  const k = widthPx / PW;
+  sortedItems(new Map([...T.rows.values()].filter(r => r.page_id === page.id && r.student_id === studentId).map(r => [r.id, r]))).forEach(r => drawItem(c, r, k));
+  return c;
+}
+function tDrawTile(studentId, page) {
+  const cv = T.tileCv.get(studentId); if (!cv) return;
+  if (!page) { cv.width = 10; cv.height = 14; return; }
+  renderPageTo(cv, page, studentId, Math.round(cv.clientWidth * (window.devicePixelRatio || 1)) || 460);
+}
+let tGridRaf = null;
+function tQueueGrid(studentId) { if (studentId) T.dirty.add(studentId); if (tGridRaf) return; tGridRaf = requestAnimationFrame(() => { tGridRaf = null; tRenderGrid(false); }); }
+
+function tSubscribe() {
+  if (T.channel) sb.removeChannel(T.channel);
+  const sid = T.session.id;
+  const onStroke = ev => {
+      const row = ev.new; if (!row || !row.id) return;
+      if (row.author === 'teacher') { const loc = T.rows.get(row.id); if (loc && loc._local) return; }
+      T.rows.set(row.id, row);
+      if (T.focus && board && row.student_id === T.focus.student && row.page_id === board.page.id) board.upsertRow(row);
+      if (row.page_id === T.gridPage) tQueueGrid(row.student_id); else tQueueGrid(null);
+  };
+  const onPart = ev => {
+      const p = ev.new; if (!p || !p.student_id) return;
+      const old = T.parts.get(p.student_id);
+      T.parts.set(p.student_id, p);
+      if (p.hand_raised && !(old && old.hand_raised)) toast('✋ ' + (p.display_name || 'A student') + ' raised a hand.', 5000);
+      tRenderGrid(!old);
+      if (T.focus && T.focus.student === p.student_id) tFocusBar();
+  };
+  // INSERT and UPDATE only: nothing is hard-deleted during a class, and DELETE events are not filtered
+  T.channel = sb.channel('live-t-' + sid)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_strokes', filter: 'session_id=eq.' + sid }, onStroke)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_strokes', filter: 'session_id=eq.' + sid }, onStroke)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_participants', filter: 'session_id=eq.' + sid }, onPart)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_participants', filter: 'session_id=eq.' + sid }, onPart)
+    .subscribe(status => { if (status === 'SUBSCRIBED') tResync(); });
+  clearInterval(T.tick); T.tick = setInterval(() => tRenderGrid(false), 30000);   // refresh "active" dots
+}
+async function tResync() {
+  if (!T.session) return;
+  const [{ data: parts }, { data: rows }] = await Promise.all([
+    sb.from('live_participants').select('*').eq('session_id', T.session.id),
+    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', T.session.id))
+  ]);
+  (parts || []).forEach(p => T.parts.set(p.student_id, p));
+  (rows || []).forEach(r => { const loc = T.rows.get(r.id); if (loc && loc._local && r.author === 'teacher') return; T.rows.set(r.id, r); });
+  tRenderGrid(true);
+  if (T.focus) tRenderFocus();
+}
+function tCleanup() {
+  clearInterval(T.tick);
+  if (T.channel) { sb.removeChannel(T.channel); T.channel = null; }
+  tCloseFocus(true);
+  T.session = null; T.parts = new Map(); T.rows = new Map(); T.tileCv.clear(); T.imgs = {}; T.urls = {};
+  $('pagesStrip').innerHTML = ''; $('grid').innerHTML = '';
+}
+
+/* ----- one student's page (feedback) ----- */
+function tOpenFocus(studentId) {
+  if (!T.pages.length) { toast('Add a page first.'); return; }
+  const pageIdx = Math.max(0, T.pages.findIndex(p => p.id === T.gridPage));
+  T.focus = { student: studentId, pageIdx };
+  if (!T.tool) T.tool = makeToolbar('fTools', { name: 'pen', color: TEACHER_RED });
+  $('vFocus').classList.remove('hidden');
+  tRenderFocus();
+}
+function tFocusBar() {
+  const p = T.parts.get(T.focus.student); const n = T.pages.length;
+  $('fName').textContent = p ? (p.display_name || 'Student') : 'Student';
+  $('fPg').textContent = 'Page ' + (T.focus.pageIdx + 1) + ' / ' + n;
+  $('fPrev').disabled = T.focus.pageIdx === 0; $('fNext').disabled = T.focus.pageIdx >= n - 1;
+  $('fLower').classList.toggle('hidden', !(p && p.hand_raised));
+}
+function tRenderFocus() {
+  if (!T.focus) return;
+  if (board) { board.destroy(); board = null; }
+  T.focus.pageIdx = Math.min(T.focus.pageIdx, T.pages.length - 1);
+  const page = T.pages[T.focus.pageIdx]; if (!page) return;
+  tFocusBar();
+  board = new Board($('fScroll'), {
+    page, imgUrl: page.image_path ? T.urls[page.image_path] : null, editable: true,
+    author: 'teacher', studentId: T.focus.student, sessionId: T.session.id, tool: () => T.tool, scrollEl: $('fScroll'),
+    onChange: b => { b.items.forEach(r => T.rows.set(r.id, r)); tQueueGrid(T.focus && T.focus.student); }
+  });
+  board.setRows([...T.rows.values()].filter(r => r.page_id === page.id && r.student_id === T.focus.student));
+}
+function tFocusStep(d) {
+  const list = tSortedParts(); const i = list.findIndex(p => p.student_id === T.focus.student);
+  const n = list[(i + d + list.length) % list.length]; if (!n) return;
+  T.focus.student = n.student_id; tRenderFocus();
+}
+function tFocusPage(d) { const i = T.focus.pageIdx + d; if (i < 0 || i >= T.pages.length) return; T.focus.pageIdx = i; tRenderFocus(); }
+function tCloseFocus(quiet) {
+  if (board && T.focus) { board.destroy(); board = null; }
+  T.focus = null; $('vFocus').classList.add('hidden');
+  if (!quiet && T.session) tRenderGrid(true);
+}
+async function tLowerHand() {
+  const sid = T.focus.student;
+  const { error } = await sb.from('live_participants').update({ hand_raised: false, hand_raised_at: null }).eq('session_id', T.session.id).eq('student_id', sid);
+  if (error) { toast('Could not lower the hand: ' + errText(error)); return; }
+  const p = T.parts.get(sid); if (p) { p.hand_raised = false; p.hand_raised_at = null; }
+  tFocusBar();
+}
+
+/* ----- export every student's pages as one PDF ----- */
+async function tExport() {
+  const parts = [...T.parts.values()].sort((a, b) => (a.display_name || '').localeCompare(b.display_name || ''));
+  if (!parts.length || !T.pages.length) { toast('Nothing to export yet.'); return; }
+  const onlyThis = T.pages.length > 1 && confirm('Export only page ' + (T.pages.findIndex(p => p.id === T.gridPage) + 1) + '?\n\nOK = this page only.\nCancel = every page.');
+  const pages = onlyThis ? T.pages.filter(p => p.id === T.gridPage) : T.pages;
+  const btn = $('exportBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+  try {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    let done = 0; const total = parts.length * pages.length;
+    let doc = null;
+    const cv = document.createElement('canvas');
+    for (const page of pages) await tImgReady(page);
+    for (const pp of parts) {
+      for (const page of pages) {
+        done++; if (btn) btn.textContent = 'Preparing ' + done + ' / ' + total;
+        await new Promise(r => setTimeout(r, 0));      // let the screen breathe between pages
+        const c = renderPageTo(cv, page, pp.student_id, RENDER_W);
+        c.save(); c.font = 'bold 22px Arial'; c.fillStyle = '#1d4ed8'; c.textBaseline = 'top';
+        c.fillText((pp.display_name || 'Student') + '  ·  page ' + (T.pages.indexOf(page) + 1), 18, 12); c.restore();
+        const wPt = 595, hPt = Math.round(595 * page.height / page.width);
+        const orient = hPt >= wPt ? 'p' : 'l';
+        if (!doc) doc = new jspdf.jsPDF({ unit: 'pt', format: [wPt, hPt], orientation: orient });
+        else doc.addPage([wPt, hPt], orient);
+        doc.addImage(cv.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, wPt, hPt);
+      }
+    }
+    const safe = (T.session.title || 'Live class').replace(/[^\w\- ]+/g, '').trim() || 'Live class';
+    doc.save(safe + '.pdf');
+  } catch (err) {
+    toast('Export failed: ' + errText(err), 6000);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Export PDF'; }
+    tDropImgs(T.gridPage);
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') { Sync.flush(); return; }
+  if (st.session) { stResync(); stHeartbeat(); }
+  if (T.session) tResync();
+});
+
+boot().catch(e => { console.error(e); $('vLoading').innerHTML = '<div class="card"><h2>Something went wrong</h2><p>' + esc(errText(e)) + '</p><a class="btn" href="live.html">Try again</a></div>'; });
+</script>
+</body>
+</html>

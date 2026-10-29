@@ -92,6 +92,7 @@
   .tb:disabled { opacity: 0.45; cursor: default; }
   .sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border2); cursor: pointer; }
   .sw.on { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan); }
+  .tb .dotw { display: inline-block; border-radius: 50%; background: currentColor; }
   .sep { width: 1px; height: 28px; background: var(--border2); margin: 0 4px; }
   .pgnum { font-size: 0.9rem; font-weight: 600; padding: 0 4px; white-space: nowrap; }
   .status { font-size: 0.8rem; color: var(--text2); white-space: nowrap; }
@@ -178,9 +179,10 @@
       <button class="tb" data-tool="hl" title="Highlighter">&#9646; Highlight</button>
       <button class="tb" data-tool="text" title="Type a text box">T Text</button>
       <button class="tb" data-tool="eraser" title="Eraser (removes whole strokes)">&#9003; Eraser</button>
-      <span class="sw" data-color="#111111" style="background:#111111" title="Black"></span>
+      <span class="sw" data-color="#ea7a00" style="background:#ea7a00" title="Orange"></span>
       <span class="sw" data-color="#1d4ed8" style="background:#1d4ed8" title="Blue"></span>
       <span class="sw" data-color="#15803d" style="background:#15803d" title="Green"></span>
+      <button class="tb" data-size="s" title="Thin pen"><span class="dotw" style="width:4px;height:4px"></span></button><button class="tb" data-size="m" title="Medium pen"><span class="dotw" style="width:7px;height:7px"></span></button><button class="tb" data-size="l" title="Thick pen"><span class="dotw" style="width:11px;height:11px"></span></button>
       <button class="tb" onclick="board && board.undo()" title="Undo">&#8630; Undo</button>
       <button class="tb" id="stFinger" title="Let your finger draw (normally your finger scrolls)">Finger draws</button>
     </span>
@@ -260,6 +262,7 @@
     <span class="sep"></span>
     <span id="fTools" style="display:contents">
       <button class="tb" data-tool="pen" title="Red pen">&#9998; Pen</button>
+      <button class="tb" data-size="s" title="Thin pen"><span class="dotw" style="width:4px;height:4px"></span></button><button class="tb" data-size="m" title="Medium pen"><span class="dotw" style="width:7px;height:7px"></span></button><button class="tb" data-size="l" title="Thick pen"><span class="dotw" style="width:11px;height:11px"></span></button>
       <button class="tb" data-tool="text" title="Comment">T Comment</button>
       <button class="tb" data-tool="stamp" data-stamp="tick" title="Tick">&#10003;</button>
       <button class="tb" data-tool="stamp" data-stamp="cross" title="Cross">&#10007;</button>
@@ -298,6 +301,7 @@ const BUCKET = 'live-class';
 const PW = 1000;                       // page width in page units
 const RENDER_W = 1240;                 // pixel width of uploaded page images
 const TEACHER_RED = '#dc2626';
+const PEN_WIDTHS = { s: 1.3, m: 2.2, l: 3.8 };    // thin / medium / thick, in page units
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 let me = null, myRole = null, myName = '';
@@ -600,7 +604,7 @@ class Board {
     if (tool.name === 'eraser') { this.active = { id: e.pointerId, erase: [], last: p }; this.eraseAt(p); return; }
     const hl = tool.name === 'hl';
     const pr = this.pressure(e);
-    this.active = { id: e.pointerId, data: { c: hl ? '#facc15' : tool.color, w: hl ? 14 : 2.2, h: hl ? 1 : 0, p: [r1(p.x), r1(p.y), pr] } };
+    this.active = { id: e.pointerId, data: { c: hl ? '#facc15' : tool.color, w: hl ? 14 : (PEN_WIDTHS[tool.size] || 2.2), h: hl ? 1 : 0, p: [r1(p.x), r1(p.y), pr] } };
   }
   pressure(e) { return (e.pointerType === 'pen' && e.pressure > 0) ? Math.round(Math.min(1, e.pressure) * 100) : 50; }
   move(e) {
@@ -713,15 +717,20 @@ window.addEventListener('resize', () => { if (board) board.layout(); });
 
 /* ---------- tool bars ---------- */
 function makeToolbar(containerId, defaults) {
-  const state = Object.assign({ name: 'pen', color: '#111111', stamp: 'tick' }, defaults);
+  const state = Object.assign({ name: 'pen', color: '#1d4ed8', stamp: 'tick', size: 'm' }, defaults);
   const box = $(containerId);
   function paint() {
     box.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === state.name && (state.name !== 'stamp' || b.dataset.stamp === state.stamp)));
     box.querySelectorAll('[data-color]').forEach(s => s.classList.toggle('on', s.dataset.color === state.color));
+    box.querySelectorAll('[data-size]').forEach(b => b.classList.toggle('on', b.dataset.size === state.size));
   }
   box.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
     if (board && board.editor) board.closeEditor(true);
     state.name = b.dataset.tool; if (b.dataset.stamp) state.stamp = b.dataset.stamp; paint();
+  }));
+  box.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => {
+    if (board && board.editor) board.closeEditor(true);
+    state.size = b.dataset.size; if (state.name !== 'pen') state.name = 'pen'; paint();
   }));
   box.querySelectorAll('[data-color]').forEach(s => s.addEventListener('click', () => {
     state.color = s.dataset.color; if (state.name === 'eraser' || state.name === 'hl') state.name = 'pen'; paint();
@@ -803,7 +812,7 @@ async function stOpen(sid) {
   await stSetPages(pages || []);
   const startAt = part && part.current_page ? st.pages.findIndex(p => p.id === part.current_page) : 0;
   st.idx = Math.max(0, startAt);
-  if (!st.tool) st.tool = makeToolbar('stBar', { name: 'pen', color: '#111111' });
+  if (!st.tool) st.tool = makeToolbar('stBar', { name: 'pen', color: '#1d4ed8' });   // students write in orange, blue or green (Eric, 29 Oct 2026); red stays the teacher's
   Sync.onStatus = (t, bad) => { const el = $('stStatus'); el.textContent = t; el.classList.toggle('err', !!bad); };
   stApplyStatus();
   stRender();

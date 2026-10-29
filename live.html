@@ -188,7 +188,9 @@
     </span>
     <button class="tb" onclick="zoomBy(-1)" title="Smaller">&minus;</button>
     <button class="tb" onclick="zoomBy(1)" title="Bigger">+</button>
+    <button class="tb hidden" id="stFollowBtn" onclick="stJumpTo(st.session && st.session.present_page, false)" title="Go to the page Mr Khemistry is teaching">&#8617; Teacher's page</button>
     <button class="tb hand" id="stHand" onclick="stToggleHand()">&#9995; Raise hand</button>
+    <button class="tb" id="stDl" onclick="stDownload()" title="Download your pages, with Mr Khemistry's feedback, as a PDF">&#10515; My PDF</button>
     <span class="status" id="stStatus"></span>
   </div>
   <div class="banner hidden" id="stEnded">This class has ended. You can still look at your work and Mr Khemistry's feedback.</div>
@@ -249,6 +251,35 @@
 </div>
 
 <!-- teacher: one student's page -->
+<!-- teacher: present a page to teach from (projector / Zoom) -->
+<div id="vPresent" class="modal hidden">
+  <div class="boardbar">
+    <button class="tb" onclick="tClosePresent()">&larr; Class</button>
+    <button class="tb" id="pPrev" onclick="tPresentPage(-1)" title="Previous page">&lsaquo;</button>
+    <span class="pgnum" id="pPg"></span>
+    <button class="tb" id="pNext" onclick="tPresentPage(1)" title="Next page">&rsaquo;</button>
+    <span class="sep"></span>
+    <span id="pTools" style="display:contents">
+      <button class="tb" data-tool="pen" title="Pen">&#9998; Pen</button>
+      <button class="tb" data-tool="hl" title="Highlighter">&#9646; Highlight</button>
+      <button class="tb" data-tool="text" title="Type a text box">T Text</button>
+      <button class="tb" data-tool="eraser" title="Eraser">&#9003; Eraser</button>
+      <span class="sw" data-color="#111111" style="background:#111111" title="Black"></span>
+      <span class="sw" data-color="#1d4ed8" style="background:#1d4ed8" title="Blue"></span>
+      <span class="sw" data-color="#dc2626" style="background:#dc2626" title="Red"></span>
+      <span class="sw" data-color="#15803d" style="background:#15803d" title="Green"></span>
+      <button class="tb" data-size="s" title="Thin pen"><span class="dotw" style="width:4px;height:4px"></span></button><button class="tb" data-size="m" title="Medium pen"><span class="dotw" style="width:7px;height:7px"></span></button><button class="tb" data-size="l" title="Thick pen"><span class="dotw" style="width:11px;height:11px"></span></button>
+      <button class="tb" onclick="board && board.undo()">&#8630; Undo</button>
+    </span>
+    <button class="tb" onclick="zoomBy(-1)">&minus;</button>
+    <button class="tb" onclick="zoomBy(1)">+</button>
+    <button class="tb" onclick="tPresentFullscreen()" title="Fill the whole screen">&#9974; Full screen</button>
+    <button class="tb hand" id="pHands" onclick="tClosePresent()" title="Raised hands: back to the class grid">&#9995; 0</button>
+    <span class="status">Students follow this page</span>
+  </div>
+  <div class="scroll" id="pScroll"></div>
+</div>
+
 <div id="vFocus" class="modal hidden">
   <div class="boardbar">
     <button class="tb" onclick="tCloseFocus()">&larr; Class</button>
@@ -740,6 +771,19 @@ function makeToolbar(containerId, defaults) {
 }
 
 /* ---------- start-up ---------- */
+// the latest sign-in token, for the one request sent while the tab is closing
+let accessToken = null;
+sb.auth.onAuthStateChange((_e, sess) => { accessToken = sess ? sess.access_token : null; });
+window.addEventListener('pagehide', () => {
+  if (!T.present || !T.session || !accessToken) return;
+  try {
+    fetch(SUPABASE_URL + '/rest/v1/live_sessions?id=eq.' + encodeURIComponent(T.session.id), {
+      method: 'PATCH', keepalive: true,
+      headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ present_page: null })
+    });
+  } catch (e) {}
+});
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { show('vLogin'); return; }
@@ -799,7 +843,7 @@ $('joinForm').addEventListener('submit', async e => {
 async function stOpen(sid) {
   show('vBoard'); $('stScroll').innerHTML = '<div class="empty" style="text-align:center">Loading your pages…</div>';
   const [{ data: s, error: e1 }, { data: pages, error: e2 }, { data: rows, error: e3 }, { data: part }] = await Promise.all([
-    sb.from('live_sessions').select('id, title, status').eq('id', sid).single(),
+    sb.from('live_sessions').select('id, title, status, present_page').eq('id', sid).single(),
     sb.from('live_pages').select('*').eq('session_id', sid).order('page_no').order('created_at'),
     fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', sid).eq('student_id', me.id)),
     sb.from('live_participants').select('hand_raised, current_page').eq('session_id', sid).eq('student_id', me.id).maybeSingle()
@@ -810,7 +854,8 @@ async function stOpen(sid) {
     .forEach(r => st.rows.set(r.id, Object.assign({}, r, { _local: true, _v: 1 })));
   st.hand = !!(part && part.hand_raised);
   await stSetPages(pages || []);
-  const startAt = part && part.current_page ? st.pages.findIndex(p => p.id === part.current_page) : 0;
+  const startPage = (s.status === 'live' && s.present_page) || (part && part.current_page);   // join on the page being taught
+  const startAt = startPage ? st.pages.findIndex(p => p.id === startPage) : 0;
   st.idx = Math.max(0, startAt);
   if (!st.tool) st.tool = makeToolbar('stBar', { name: 'pen', color: '#1d4ed8' });   // students write in orange, blue or green (Eric, 29 Oct 2026); red stays the teacher's
   Sync.onStatus = (t, bad) => { const el = $('stStatus'); el.textContent = t; el.classList.toggle('err', !!bad); };
@@ -860,6 +905,20 @@ function stNav() {                                                // page counte
   const n = st.pages.length;
   $('stPg').innerHTML = (n ? st.idx + 1 : 0) + ' / ' + n + ([...st.unseen].some(id => st.pages.some(p => p.id === id)) ? '<span class="feedback-dot" title="New feedback on another page"></span>' : '');
   $('stPrev').disabled = st.idx === 0; $('stNext').disabled = st.idx >= n - 1;
+  const pp = st.session && st.session.status === 'live' ? st.session.present_page : null, cur = st.pages[st.idx];
+  $('stFollowBtn').classList.toggle('hidden', !(pp && cur && cur.id !== pp && st.pages.some(p => p.id === pp)));
+}
+// move to the page Mr Khemistry is presenting (students can still page away; a new page change brings them back)
+async function stJumpTo(pid, announce) {
+  if (!pid || !st.session) return;
+  let i = st.pages.findIndex(p => p.id === pid);
+  if (i < 0) { await stReloadPages(); i = st.pages.findIndex(p => p.id === pid); }
+  if (i < 0 || !st.session || (announce && st.session.present_page !== pid)) return;
+  if (board && board.active) { setTimeout(() => stJumpTo(pid, announce), 400); return; }   // let a stroke finish first
+  if (i === st.idx) { stNav(); return; }
+  if (board && board.editor) board.closeEditor(true);
+  st.idx = i; stRender(); stHeartbeat();
+  if (announce) toast('Mr Khemistry is on page ' + (i + 1) + '.');
 }
 function stGo(d) {
   if (board && board.editor) board.closeEditor(true);
@@ -900,8 +959,11 @@ function stSubscribe() {
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_strokes', filter: 'student_id=eq.' + me.id }, onStroke)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_strokes', filter: 'student_id=eq.' + me.id }, onStroke)
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_sessions', filter: 'id=eq.' + sid }, ev => {
-      const was = st.session.status; st.session = Object.assign(st.session, ev.new); stApplyStatus();
+      st.sessVer = (st.sessVer || 0) + 1;
+      const was = st.session.status, wasPage = st.session.present_page;
+      st.session = Object.assign(st.session, ev.new); stApplyStatus(); stNav();
       if (was !== st.session.status) toast(st.session.status === 'live' ? 'The class is open again.' : 'The class has ended. Your work is saved.');
+      if (st.session.status === 'live' && st.session.present_page && st.session.present_page !== wasPage) stJumpTo(st.session.present_page, true);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'live_pages', filter: 'session_id=eq.' + sid }, () => stReloadPages())
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'live_participants', filter: 'student_id=eq.' + me.id }, ev => {
@@ -921,12 +983,17 @@ async function stReloadPages() {
 }
 async function stResync() {                                        // after a (re)connect, catch anything missed
   if (!st.session) return;
+  const sid = st.session.id, ver = st.sessVer || 0;
   const [{ data: s }, { data: rows }] = await Promise.all([
-    sb.from('live_sessions').select('id, title, status').eq('id', st.session.id).single(),
-    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', st.session.id).eq('student_id', me.id))
+    sb.from('live_sessions').select('id, title, status, present_page').eq('id', sid).single(),
+    fetchStrokes(() => sb.from('live_strokes').select('*').eq('session_id', sid).eq('student_id', me.id))
   ]);
-  if (s) { st.session = s; stApplyStatus(); }
-  await stReloadPages();                                           // pages added or removed while we were away
+  if (!st.session || st.session.id !== sid) return;                 // the student left while this was loading
+  const fresh = (st.sessVer || 0) === ver;                          // a live update arrived meanwhile: it is newer, keep it
+  const wasPage = st.session.present_page;
+  if (s && fresh) { st.session = s; stApplyStatus(); }
+  await stReloadPages();                                            // pages added or removed while we were away
+  if (s && fresh && s.status === 'live' && s.present_page && s.present_page !== wasPage) stJumpTo(s.present_page, true);
   (rows || []).forEach(r => {
     const local = st.rows.get(r.id);
     if (local && local._local && r.author === 'student') return;    // keep what this device drew
@@ -940,6 +1007,51 @@ function stCleanup() {
   st.session = null; st.unseen.clear();
 }
 function stLeave() { Sync.flush(); stHome(); }
+
+function loadPageImage(url) {                                     // crossOrigin so the canvas can be saved as a PDF
+  return new Promise(res => {
+    if (!url) return res(null);
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onload = () => res(im); im.onerror = () => res(null); im.src = url;
+  });
+}
+async function stDownload() {
+  if (!st.session || !st.pages.length) { toast('There are no pages to download yet.'); return; }
+  if (board && board.editor) board.closeEditor(true);
+  const btn = $('stDl'); btn.disabled = true;
+  try {
+    // snapshot the class now, so leaving or a page change mid-download cannot mix or break the file
+    const title = st.session.title, pages = st.pages.slice(), rows = [...st.rows.values()];
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    // fresh short-lived picture links, in case the page has been open for hours
+    const urls = {}, paths = pages.map(p => p.image_path).filter(Boolean);
+    if (paths.length) {
+      const { data } = await sb.storage.from(BUCKET).createSignedUrls(paths, 600);
+      (data || []).forEach(d => { if (d.signedUrl) urls[d.path] = d.signedUrl; });
+    }
+    const cv = document.createElement('canvas');
+    let doc = null, missing = 0;
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+      btn.textContent = 'Page ' + (i + 1) + ' / ' + pages.length;
+      const im = page.image_path ? await loadPageImage(urls[page.image_path] || st.urls[page.image_path]) : null;
+      if (page.image_path && !im) missing++;
+      paintPage(cv, page, im, rows.filter(r => r.page_id === page.id), RENDER_W);
+      const wPt = 595, hPt = Math.round(595 * page.height / page.width), orient = hPt >= wPt ? 'p' : 'l';
+      if (!doc) doc = new jspdf.jsPDF({ unit: 'pt', format: [wPt, hPt], orientation: orient });
+      else doc.addPage([wPt, hPt], orient);
+      doc.addImage(cv.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, wPt, hPt);
+      await new Promise(r => setTimeout(r, 0));
+    }
+    const safe = (title || 'Live class').replace(/[^\w\- ]+/g, '').trim() || 'Live class';
+    doc.save(safe + ' - my pages.pdf');
+    if (missing) toast(missing + ' page picture(s) could not load, so those pages show only your writing. Try again in a moment.', 6000);
+  } catch (err) {
+    toast('Could not make the PDF: ' + errText(err), 6000);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '&#10515; My PDF';
+  }
+}
 
 /* =====================================================================
    TEACHER
@@ -1038,6 +1150,7 @@ function tRenderHead() {
   if (s.status === 'draft') a.push('<button class="btn primary" onclick="tSetStatus(\'live\')">Start class</button>');
   if (s.status === 'live') a.push('<button class="btn danger" onclick="tSetStatus(\'ended\')">End class</button>');
   if (s.status === 'ended') a.push('<button class="btn" onclick="tSetStatus(\'live\')">Reopen class</button>');
+  a.push('<button class="btn primary" onclick="tOpenPresent()">Present</button>');
   a.push('<button class="btn" onclick="tRename()">Rename</button>');
   a.push('<button class="btn" id="exportBtn" onclick="tExport()">Export PDF</button>');
   $('sActions').innerHTML = a.join('');
@@ -1064,7 +1177,7 @@ document.querySelectorAll('#sizeTabs [data-size]').forEach(b => b.addEventListen
 async function tSetStatus(status) {
   if (status === 'ended' && !confirm('End the class? Students can still look at their work but cannot write any more.')) return;
   if (status === 'live' && !T.pages.length && !confirm('There are no pages yet. Start anyway?')) return;
-  const patch = { status }; if (status === 'live' && !T.session.started_at) patch.started_at = new Date().toISOString(); if (status === 'ended') patch.ended_at = new Date().toISOString();
+  const patch = { status }; if (status === 'live' && !T.session.started_at) patch.started_at = new Date().toISOString(); if (status === 'ended') { patch.ended_at = new Date().toISOString(); patch.present_page = null; }
   const { data, error } = await sb.from('live_sessions').update(patch).eq('id', T.session.id).select().single();
   if (error) { toast('Could not update: ' + errText(error)); return; }
   T.session = data; tRenderHead();
@@ -1190,14 +1303,17 @@ function tRenderGrid(full) {
   });
   T.dirty.clear();
 }
-function renderPageTo(cv, page, studentId, widthPx) {
+function paintPage(cv, page, im, rows, widthPx) {
   const h = Math.round(widthPx * page.height / page.width);
   cv.width = widthPx; cv.height = h;
   const c = cv.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, widthPx, h);
-  const im = tImg(page); if (im && im.complete && im.naturalWidth) c.drawImage(im, 0, 0, widthPx, h);
+  if (im && im.complete && im.naturalWidth) c.drawImage(im, 0, 0, widthPx, h);
   const k = widthPx / PW;
-  sortedItems(new Map([...T.rows.values()].filter(r => r.page_id === page.id && r.student_id === studentId).map(r => [r.id, r]))).forEach(r => drawItem(c, r, k));
+  sortedItems(new Map(rows.map(r => [r.id, r]))).forEach(r => drawItem(c, r, k));
   return c;
+}
+function renderPageTo(cv, page, studentId, widthPx) {
+  return paintPage(cv, page, tImg(page), [...T.rows.values()].filter(r => r.page_id === page.id && r.student_id === studentId), widthPx);
 }
 function tDrawTile(studentId, page) {
   const cv = T.tileCv.get(studentId); if (!cv) return;
@@ -1224,6 +1340,7 @@ function tSubscribe() {
       if (p.hand_raised && !(old && old.hand_raised)) toast('✋ ' + (p.display_name || 'A student') + ' raised a hand.', 5000);
       tRenderGrid(!old);
       if (T.focus && T.focus.student === p.student_id) tFocusBar();
+      if (T.present) tPresentBar();
   };
   // INSERT and UPDATE only: nothing is hard-deleted during a class, and DELETE events are not filtered
   T.channel = sb.channel('live-t-' + sid)
@@ -1244,11 +1361,12 @@ async function tResync() {
   (rows || []).forEach(r => { const loc = T.rows.get(r.id); if (loc && loc._local && r.author === 'teacher') return; T.rows.set(r.id, r); });
   tRenderGrid(true);
   if (T.focus) tRenderFocus();
+  if (T.present) tPresentBar();
 }
 function tCleanup() {
   clearInterval(T.tick);
   if (T.channel) { sb.removeChannel(T.channel); T.channel = null; }
-  tCloseFocus(true);
+  tCloseFocus(true); tClosePresent(true);
   T.session = null; T.parts = new Map(); T.rows = new Map(); T.tileCv.clear(); T.imgs = {}; T.urls = {};
   $('pagesStrip').innerHTML = ''; $('grid').innerHTML = '';
 }
@@ -1288,6 +1406,78 @@ function tFocusStep(d) {
   T.focus.student = n.student_id; tRenderFocus();
 }
 function tFocusPage(d) { const i = T.focus.pageIdx + d; if (i < 0 || i >= T.pages.length) return; T.focus.pageIdx = i; tRenderFocus(); }
+/* ----- Present: Eric's own copy of each page, for the projector or Zoom ----- */
+// his teaching ink is stored on his own copy (student_id = his id), so students never see it on their pages
+function tOpenPresent() {
+  if (!T.pages.length) { toast('Add a page first.'); return; }
+  T.present = { pageIdx: Math.max(0, T.pages.findIndex(p => p.id === T.gridPage)) };
+  if (!T.ptool) T.ptool = makeToolbar('pTools', { name: 'pen', color: '#111111' });
+  $('vPresent').classList.remove('hidden');
+  tRenderPresent();
+}
+function tPresentBar() {
+  const n = T.pages.length, hands = [...T.parts.values()].filter(p => p.hand_raised).length;
+  $('pPg').textContent = 'Page ' + (T.present.pageIdx + 1) + ' / ' + n;
+  $('pPrev').disabled = T.present.pageIdx === 0; $('pNext').disabled = T.present.pageIdx >= n - 1;
+  const h = $('pHands'); h.innerHTML = '&#9995; ' + hands; h.classList.toggle('on', hands > 0);
+}
+function tRenderPresent() {
+  if (!T.present) return;
+  if (board) { board.destroy(); board = null; }
+  T.present.pageIdx = Math.min(T.present.pageIdx, T.pages.length - 1);
+  const page = T.pages[T.present.pageIdx]; if (!page) return;
+  tPresentBar();
+  board = new Board($('pScroll'), {
+    page, imgUrl: page.image_path ? T.urls[page.image_path] : null, editable: true,
+    author: 'teacher', studentId: me.id, sessionId: T.session.id, tool: () => T.ptool, scrollEl: $('pScroll'),
+    onChange: b => b.items.forEach(r => T.rows.set(r.id, r))
+  });
+  board.setRows([...T.rows.values()].filter(r => r.page_id === page.id && r.student_id === me.id));
+  tSharePage(page.id);
+}
+// one write at a time, and only the latest page wins, so quick page turns never leave students on an old page
+const shareQ = { want: undefined, busy: false };
+async function tSharePage(pid) {
+  if (!T.session) return;
+  shareQ.want = { sid: T.session.id, pid };
+  if (shareQ.busy) return;
+  shareQ.busy = true;
+  try {
+    let sent = null, tries = 0;
+    while (shareQ.want && shareQ.want !== sent) {
+      sent = shareQ.want;
+      const { error } = await sb.from('live_sessions').update({ present_page: sent.pid }).eq('id', sent.sid);
+      if (error) {                                                   // a network blip: try again (latest page) a few times
+        if (++tries >= 5) { toast('Students could not be moved to this page: ' + errText(error)); break; }
+        await new Promise(r => setTimeout(r, 1500)); sent = null; continue;
+      }
+      tries = 0;
+      if (T.session && T.session.id === sent.sid) T.session.present_page = sent.pid;
+    }
+  } finally { shareQ.busy = false; }
+}
+function tPresentPage(d) {
+  const i = T.present.pageIdx + d; if (i < 0 || i >= T.pages.length) return;
+  if (board && board.editor) board.closeEditor(true);
+  T.present.pageIdx = i; tRenderPresent();
+}
+function tPresentFullscreen() {
+  const el = $('vPresent');
+  if (document.fullscreenElement || document.webkitFullscreenElement) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  const go = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (go) go.call(el); else toast('This browser cannot go full screen.');
+}
+function tClosePresent(quiet) {
+  if (!T.present) return;
+  if (board) { board.destroy(); board = null; }
+  T.present = null; $('vPresent').classList.add('hidden');
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.webkitFullscreenElement && document.webkitExitFullscreen) document.webkitExitFullscreen();
+  } catch (e) {}
+  if (T.session) tSharePage(null);                                  // students stop following
+  if (!quiet && T.session) tRenderGrid(true);
+}
 function tCloseFocus(quiet) {
   if (board && T.focus) { board.destroy(); board = null; }
   T.focus = null; $('vFocus').classList.add('hidden');

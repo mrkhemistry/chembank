@@ -104,7 +104,7 @@
       <div class="_sim-modal-card">
         <h2>Premium simulation</h2>
         <p>This simulation comes free with every <strong>Mr Khemistry plan</strong>.</p>
-        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>ChemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
+        <p class="_sim-modal-sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>KhemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
         <div class="_sim-modal-btns">
           <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_sim-btn-primary">See plans</a>
           <a href="${PORTAL_URL}" class="_sim-btn-secondary">Sign in</a>
@@ -230,7 +230,7 @@
       <div class="_lock-card">
         <h1>Premium simulation</h1>
         <p>This simulation comes free with every <strong>Mr Khemistry plan</strong>.</p>
-        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>ChemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
+        <p class="_sub">Free users get full access to <strong>VSEPR Theory</strong>, <strong>Nucleophilic Addition</strong>, <strong>Hybridisation of Carbon</strong>, <strong>Electron Configuration</strong> and <strong>Dot-and-Cross Practice</strong>. Both plans, <strong>Recorded Lessons</strong> ($150/month) and <strong>KhemBank Premium</strong> ($100/month), unlock every simulation as a free bonus.</p>
         <div class="_btns">
           <a href="https://mrkhemistry.sg" target="_blank" rel="noopener" class="_btn-primary">See plans</a>
           <a href="${PORTAL_URL}" class="_btn-secondary">Sign in</a>

@@ -5831,8 +5831,9 @@ Option D" required></textarea>
                 `;
             }).join('');
             
-            // Hide video and explanation in quiz mode
+            // Hide video and explanation in quiz mode (and drop any iframe left from a review)
             document.getElementById('videoContainer').style.display = 'none';
+            document.getElementById('quizVideoPreview').innerHTML = '';
             document.getElementById('explanationContainer').style.display = 'none';
             
             // Update navigation buttons
@@ -6672,10 +6673,17 @@ Option D" required></textarea>
                     explanationHtml += `<div style="margin-top:1rem; text-align:center;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:400px; border-radius:12px; border:2px solid var(--primary); box-shadow:var(--shadow-md);"></div>`;
                 }
                 document.getElementById('quizExplanation').innerHTML = explanationHtml;
+            } else {
+                // Clear the previous question's explanation so it does not carry over
+                document.getElementById('explanationContainer').style.display = 'none';
+                document.getElementById('quizExplanation').innerHTML = '';
             }
-            
-            // Show video if available
-            if (question.video_url) {
+
+            // Show video if available; otherwise hide it and drop the old iframe so it stops playing
+            if (!question.video_url) {
+                document.getElementById('videoContainer').style.display = 'none';
+                document.getElementById('quizVideoPreview').innerHTML = '';
+            } else {
                 document.getElementById('videoContainer').style.display = 'block';
                 const videoPreview = document.getElementById('quizVideoPreview');
                 

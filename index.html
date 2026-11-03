@@ -433,6 +433,13 @@
             border: 1px solid var(--primary);
         }
         
+        /* Source pill (TYS / Prelim / Promos): dark teal so the white text stays readable */
+        .tag-source {
+            background: #00666f;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
         .tag-difficulty {
             background: transparent;
             color: #ffffff;
@@ -4836,7 +4843,7 @@ Option D" required></textarea>
                 let sourceText = source;
                 if (year) sourceText += ` ${year}`;
                 if (school && (source === 'Prelim' || source === 'Promos')) sourceText += ` - ${school}`;
-                sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${escapeHtml(sourceText)}</span>`;
+                sourceTag = `<span class="tag tag-source">${escapeHtml(sourceText)}</span>`;
             }
             
             // Build preview HTML - don't escape question text so LaTeX can render
@@ -5172,7 +5179,7 @@ Option D" required></textarea>
                     if (question.source_year) sourceText += ` ${question.source_year}`;
                     if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) sourceText += ` - ${question.school}`;
                     if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                    sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
+                    sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
                 }
                 
                 // Build image display
@@ -5759,7 +5766,7 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
+                sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
             }
             
             document.getElementById('quizQuestionTags').innerHTML = `
@@ -6597,7 +6604,7 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                sourceTag = `<span class="tag" style="background: var(--secondary); color: var(--white);">${sourceText}</span>`;
+                sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
             }
             
             document.getElementById('quizQuestionTags').innerHTML = `

@@ -8822,29 +8822,32 @@ Option D" required></textarea>
                 const error = null;
                 if (error) throw error;
 
-                // Tally TYS, Prelim and Promos per topic
+                // Tally TYS, Prelim, Promos and every other source (Timed Practice, Specimen, ...) per topic,
+                // so the total matches the whole bank. Each question counts once, under its main topic.
                 const tally = {};
                 (data || []).forEach(q => {
                     const t = q.topic || 'Unknown';
-                    if (!tally[t]) tally[t] = { tys: 0, prelim: 0, promos: 0 };
+                    if (!tally[t]) tally[t] = { tys: 0, prelim: 0, promos: 0, other: 0 };
                     if (q.source === 'TYS') tally[t].tys++;
                     else if (q.source === 'Prelim') tally[t].prelim++;
                     else if (q.source === 'Promos') tally[t].promos++;
+                    else tally[t].other++;
                 });
 
                 const sorted = Object.entries(tally)
-                    .map(([topic, counts]) => ({ topic, tys: counts.tys, prelim: counts.prelim, promos: counts.promos, total: counts.tys + counts.prelim + counts.promos }))
+                    .map(([topic, counts]) => ({ topic, tys: counts.tys, prelim: counts.prelim, promos: counts.promos, other: counts.other, total: counts.tys + counts.prelim + counts.promos + counts.other }))
                     .sort((a, b) => b.total - a.total);
 
                 const totalAll = sorted.reduce((s, r) => s + r.total, 0);
                 const totalTYS = sorted.reduce((s, r) => s + r.tys, 0);
                 const totalPrelim = sorted.reduce((s, r) => s + r.prelim, 0);
                 const totalPromos = sorted.reduce((s, r) => s + r.promos, 0);
+                const totalOther = sorted.reduce((s, r) => s + r.other, 0);
 
                 // Build chart canvas + table
                 let html = `
                     <div style="margin-bottom:1.2rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
-                        <div style="opacity:0.7; font-size:0.9rem; flex:1;">Question bank coverage by topic. Updates live as you upload questions.</div>
+                        <div style="opacity:0.7; font-size:0.9rem; flex:1;">Question bank coverage by topic. Updates live as you upload questions. Each question counts once, under its main topic. "Other" = Timed Practice, Specimen and any other source.</div>
                         <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                             <span style="font-size:0.85rem; background:rgba(0,217,255,0.15); border:1px solid var(--cyan-border); border-radius:8px; padding:0.3rem 0.75rem;">
                                 Total: <strong>${totalAll}</strong>
@@ -8858,6 +8861,9 @@ Option D" required></textarea>
                             <span style="font-size:0.85rem; background:rgba(74,222,128,0.15); border:1px solid rgba(74,222,128,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
                                 Promos: <strong>${totalPromos}</strong>
                             </span>
+                            <span style="font-size:0.85rem; background:rgba(148,163,184,0.15); border:1px solid rgba(148,163,184,0.4); border-radius:8px; padding:0.3rem 0.75rem;">
+                                Other: <strong>${totalOther}</strong>
+                            </span>
                         </div>
                     </div>
                     <div style="position:relative; height:520px; margin-bottom:2rem;">
@@ -8870,6 +8876,7 @@ Option D" required></textarea>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">TYS</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Prelim</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Promos</th>
+                                <th style="padding:0.5rem 0.75rem; text-align:right;">Other</th>
                                 <th style="padding:0.5rem 0.75rem; text-align:right;">Total</th>
                             </tr>
                         </thead>
@@ -8880,6 +8887,7 @@ Option D" required></textarea>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(168,85,247,0.9);">${r.tys}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(251,191,36,0.9);">${r.prelim}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(74,222,128,0.9);">${r.promos}</td>
+                                    <td style="padding:0.45rem 0.75rem; text-align:right; color:rgba(148,163,184,0.9);">${r.other}</td>
                                     <td style="padding:0.45rem 0.75rem; text-align:right; font-weight:700;">${r.total}</td>
                                 </tr>
                             `).join('')}
@@ -8917,6 +8925,14 @@ Option D" required></textarea>
                                 data: sorted.map(r => r.promos),
                                 backgroundColor: 'rgba(74,222,128,0.75)',
                                 borderColor: 'rgba(74,222,128,1)',
+                                borderWidth: 1,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Other',
+                                data: sorted.map(r => r.other),
+                                backgroundColor: 'rgba(148,163,184,0.75)',
+                                borderColor: 'rgba(148,163,184,1)',
                                 borderWidth: 1,
                                 borderRadius: 4
                             }
@@ -12271,7 +12287,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 +covKpi(nov,'novel parts','beyond-syllabus')
                 +'</div>';
             html+='<div class="cov-controls"><span class="cov-lbl">Source</span>'
-                +covSeg('covSource',[['all','All'],['TYS','TYS'],['Specimen','Specimen'],['Prelim','Prelim']],covSource)
+                +covSeg('covSource',[['all','All'],['TYS','TYS'],['Specimen','Specimen'],['Prelim','Prelim'],['Promos','Promos'],['Timed Practice','Timed Practice']],covSource)
                 +'<span class="cov-lbl">Paper</span>'
                 +covSeg('covPaper',[['all','All'],['P2','P2'],['P3','P3']],covPaper)
                 +'<span class="cov-lbl">Show</span>'
@@ -12290,6 +12306,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 gr.forEach(t=>{ html+=covRow(t,maxP); if(covOpenT[t.name]) html+=covDrill(t,span); });
             });
             html+='</tbody></table></div>';
+            if(covStore!=='struct') html+='<div class="cov-mnote">MCQ column: a question tagged to more than one topic is counted under each of its topics, so the MCQ column adds up to more than the MCQ (H2) total above. The Analytics &rarr; Question Bank card counts each question once, under its main topic.</div>';
             body.innerHTML=html;
         }
 

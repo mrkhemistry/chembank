@@ -8194,7 +8194,7 @@ Option D" required></textarea>
         // ============================================
         // ============================================
 
-        let analyticsData = { students: [], attempts: [], responses: [] };
+        let analyticsData = { students: [], attempts: [], topicStats: [], attemptSets: [], bankCounts: [] };
 
         async function loadAnalytics() {
             if (userRole !== 'admin') return;
@@ -8208,37 +8208,34 @@ Option D" required></textarea>
             });
 
             try {
-                // 1. Load all students (active + archived)
-                const { data: students, error: sErr } = await supabaseClient
-                    .from('user_profiles')
-                    .select('id, full_name, email, created_at, role')
-                    .in('role', ['student', 'premium_student', 'archived'])
-                    .order('full_name');
-                if (sErr) throw sErr;
+                // Three loads in parallel:
+                // 1. all students (active + archived)
+                // 2. all quiz attempts (paginate past PostgREST 1000-row cap)
+                // 3. admin_analytics_summary(): the database counts every question_responses row and the
+                //    H2 question bank and returns small summaries (migration 2026-11-05, admin only), so the
+                //    browser no longer downloads every answer and every question to count them itself.
+                const [profilesRes, attempts, summaryRes] = await Promise.all([
+                    supabaseClient
+                        .from('user_profiles')
+                        .select('id, full_name, email, created_at, role')
+                        .in('role', ['student', 'premium_student', 'archived'])
+                        .order('full_name'),
+                    fetchAllPaginated(() =>
+                        supabaseClient.from('quiz_attempts').select('*').order('completed_at', { ascending: false })),
+                    supabaseClient.rpc('admin_analytics_summary')
+                ]);
+                if (profilesRes.error) throw profilesRes.error;
+                if (summaryRes.error) throw summaryRes.error;
+                const students = profilesRes.data;
+                const summary = summaryRes.data || {};
 
-                // 2. Load all quiz attempts (paginate past PostgREST 1000-row cap)
-                const attempts = await fetchAllPaginated(() =>
-                    supabaseClient.from('quiz_attempts').select('*').order('completed_at', { ascending: false }));
-
-                // 3. Load all question responses (paginate past PostgREST 1000-row cap)
-                const responses = await fetchAllPaginated(() =>
-                    supabaseClient.from('question_responses').select('user_id, question_id, is_correct, quiz_attempt_id').order('id'));
-
-                // 4. Load question topics for responses (paginate in chunks of 1000 ids)
-                const questionIds = [...new Set(responses.map(r => r.question_id))];
-                let questionTopics = {};
-                if (questionIds.length > 0) {
-                    // Fetch in chunks to avoid huge .in() lists AND row cap
-                    const CHUNK = 500;
-                    for (let i = 0; i < questionIds.length; i += CHUNK) {
-                        const chunkIds = questionIds.slice(i, i + CHUNK);
-                        const chunk = await fetchAllPaginated(() =>
-                            supabaseClient.from('questions').select('id, topic').eq('syllabus', 'h2_chem').in('id', chunkIds).order('id'));
-                        chunk.forEach(q => { questionTopics[q.id] = q.topic; });
-                    }
-                }
-
-                analyticsData = { students: students || [], attempts: attempts || [], responses: responses || [], questionTopics };
+                analyticsData = {
+                    students: students || [],
+                    attempts: attempts || [],
+                    topicStats: summary.topic_stats || [],     // [[user_id, topic, correct, total], ...]
+                    attemptSets: summary.attempt_sets || [],   // [[quiz_attempt_id, [ids], [wrong ids]], ...]
+                    bankCounts: summary.bank_counts || []      // [[topic, source, n], ...] h2_chem, every source
+                };
 
                 renderAnalyticsSummary();
                 renderStudentTable();
@@ -8444,15 +8441,16 @@ Option D" required></textarea>
         }
 
         function computeTopicStats(userId = null) {
-            const { responses, questionTopics } = analyticsData;
+            // topicStats rows come pre-counted per student per topic from admin_analytics_summary()
+            const { topicStats } = analyticsData;
             const stats = {};
-            responses
-                .filter(r => userId === null || r.user_id === userId)
-                .forEach(r => {
-                    const topic = questionTopics[r.question_id] || 'Unknown';
-                    if (!stats[topic]) stats[topic] = { correct: 0, total: 0 };
-                    stats[topic].total++;
-                    if (r.is_correct) stats[topic].correct++;
+            (topicStats || [])
+                .filter(r => userId === null || r[0] === userId)
+                .forEach(([, topic, correct, total]) => {
+                    const t = topic || 'Unknown';
+                    if (!stats[t]) stats[t] = { correct: 0, total: 0 };
+                    stats[t].total += Number(total) || 0;
+                    stats[t].correct += Number(correct) || 0;
                 });
             return stats;
         }
@@ -8816,22 +8814,20 @@ Option D" required></textarea>
         async function renderQuestionBankChart() {
             const container = document.getElementById('questionBankContainer');
             try {
-                // Paginate to bypass PostgREST server-side max-rows cap (1000)
-                const data = await fetchAllPaginated(() =>
-                    supabaseClient.from('questions').select('topic, source').eq('syllabus', 'h2_chem').order('id'));
-                const error = null;
-                if (error) throw error;
+                // Counts per topic and source come pre-counted from admin_analytics_summary() (loaded by loadAnalytics)
+                const data = (analyticsData && analyticsData.bankCounts) || [];
 
                 // Tally TYS, Prelim, Promos and every other source (Timed Practice, Specimen, ...) per topic,
                 // so the total matches the whole bank. Each question counts once, under its main topic.
                 const tally = {};
-                (data || []).forEach(q => {
-                    const t = q.topic || 'Unknown';
+                data.forEach(([topic, source, n]) => {
+                    const t = topic || 'Unknown';
+                    const k = Number(n) || 0;
                     if (!tally[t]) tally[t] = { tys: 0, prelim: 0, promos: 0, other: 0 };
-                    if (q.source === 'TYS') tally[t].tys++;
-                    else if (q.source === 'Prelim') tally[t].prelim++;
-                    else if (q.source === 'Promos') tally[t].promos++;
-                    else tally[t].other++;
+                    if (source === 'TYS') tally[t].tys += k;
+                    else if (source === 'Prelim') tally[t].prelim += k;
+                    else if (source === 'Promos') tally[t].promos += k;
+                    else tally[t].other += k;
                 });
 
                 const sorted = Object.entries(tally)
@@ -8980,25 +8976,23 @@ Option D" required></textarea>
         // Revision-package attempts are saved as ordinary quiz_attempts with no flag,
         // so we identify them by matching an attempt's EXACT set of answered question
         // ids against the known REVISION_PACKAGES id lists. Reuses data already loaded
-        // into analyticsData (attempts + responses), so no extra fetch is needed.
+        // into analyticsData (attempts + attemptSets), so no extra fetch is needed.
         // Test / staff accounts to exclude from the Revision report (emails, lower-case).
         // Eric's own premium test login shows as full_name "justme".
         const REVISION_EXCLUDED_EMAILS = ['erickua2003@yahoo.com', 'p2p3.premium.test@mrkhemistry.com'];
 
         function computeRevisionReport() {
-            const { attempts, responses, students } = analyticsData;
+            const { attempts, attemptSets, students } = analyticsData;
             const excludedEmails = new Set(REVISION_EXCLUDED_EMAILS.map(e => e.toLowerCase()));
             const studentIds = new Set((students || [])
                 .filter(s => !excludedEmails.has((s.email || '').toLowerCase()))
                 .map(s => s.id));
 
             // quiz_attempt_id -> { ids:Set of answered question ids, wrong:Set of wrong ids }
+            // (attemptSets come pre-grouped from admin_analytics_summary(): distinct ids, wrong = is_correct false)
             const byAttempt = {};
-            for (const r of (responses || [])) {
-                let e = byAttempt[r.quiz_attempt_id];
-                if (!e) { e = byAttempt[r.quiz_attempt_id] = { ids: new Set(), wrong: new Set() }; }
-                e.ids.add(r.question_id);
-                if (r.is_correct === false) e.wrong.add(r.question_id);
+            for (const [attemptId, ids, wrong] of (attemptSets || [])) {
+                byAttempt[attemptId] = { ids: new Set(ids || []), wrong: new Set(wrong || []) };
             }
 
             // Signature per package = its 10 ids sorted + joined (order-independent match)
@@ -9247,7 +9241,7 @@ Option D" required></textarea>
             document.getElementById('analyticsOverview').style.display = 'none';
             document.getElementById('analyticsDrilldown').style.display = 'block';
 
-            const { attempts, responses, questionTopics } = analyticsData;
+            const { attempts } = analyticsData;
 
             const studentAttempts = attempts
                 .filter(a => a.user_id === userId)

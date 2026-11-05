@@ -12233,7 +12233,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 ensure(tgt).ct++;
             });
             (covSq||[]).forEach(q=>{
-                if(covSource!=='all' && q.source!==covSource) return;
+                if(!covSrcMatch(q.source)) return;
                 (q.parts||[]).forEach(p=>{
                     const c=sqConcepts[p.concept_id]; if(!c) return;
                     const tgt=((c.name||'').toLowerCase().indexOf(COV_KSP)>-1)?'Solubility':c.topic;
@@ -12244,7 +12244,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 });
             });
             (covMcq||[]).forEach(q=>{
-                if(covSource!=='all' && q.source!==covSource) return;
+                if(!covSrcMatch(q.source)) return;
                 let ts=(Array.isArray(q.topics)&&q.topics.length)?q.topics:(q.topic?[q.topic]:[]);
                 const seen={};
                 ts.forEach(tn=>{ if(T[tn]&&!seen[tn]){ seen[tn]=1; T[tn].mcq++; } });
@@ -12257,6 +12257,14 @@ ${section('#7a82a0', '', 'Model Answer', model)}
         function covDiff(t){ if(covPaper==='P2')return[t.e2,t.m2,t.h2]; if(covPaper==='P3')return[t.e3,t.m3,t.h3]; return[t.e2+t.e3,t.m2+t.m3,t.h2+t.h3]; }
         function covHeat(v,mx){ if(!v)return'cov-h0'; const r=v/mx; return r<0.15?'cov-h1':r<0.45?'cov-h2':'cov-h3'; }
         function covKpi(n,l,x){ return '<div class="cov-kpi"><div class="cov-n">'+n+'</div><div class="cov-l">'+sqEsc(l)+'</div>'+(x?'<div class="cov-x">'+sqEsc(x)+'</div>':'')+'</div>'; }
+        // The MCQ and structured stores spell some sources differently (MCQ 'Promos' / 'Timed Practice',
+        // structured 'Promo' / 'TP' / 'TP2'), so one filter button matches both spellings.
+        function covSrcMatch(s){
+            if(covSource==='all') return true;
+            if(covSource==='Promos') return s==='Promos'||s==='Promo';
+            if(covSource==='Timed Practice') return s==='Timed Practice'||s==='TP'||s==='TP2';
+            return s===covSource;
+        }
         function covSeg(id,opts,cur){ return '<span class="cov-seg">'+opts.map(o=>'<button onclick="covSet(\''+id+'\',\''+o[0]+'\')" class="'+(o[0]===cur?'on':'')+'">'+sqEsc(o[1])+'</button>').join('')+'</span>'; }
         function covSet(id,v){ if(id==='covPaper')covPaper=v; else if(id==='covStore')covStore=v; else if(id==='covSource')covSource=v; covRender(); }
         function covDbar(e,m,h){ const tt=e+m+h||1; return '<span class="cov-dbar"><span style="width:'+(e/tt*100)+'%;background:#06d6a0"></span><span style="width:'+(m/tt*100)+'%;background:#ffd166"></span><span style="width:'+(h/tt*100)+'%;background:#ff6b6b"></span></span> <span style="opacity:0.5;font-size:0.72rem">'+e+'/'+m+'/'+h+'</span>'; }
@@ -12267,8 +12275,8 @@ ${section('#7a82a0', '', 'Model Answer', model)}
             const rows=Object.values(T);
             let sp2=0,sp3=0,e=0,m=0,h=0,nov=0,covT=0,totT=0;
             rows.forEach(r=>{ sp2+=r.p2; sp3+=r.p3; e+=r.e2+r.e3; m+=r.m2+r.m3; h+=r.h2+r.h3; nov+=r.nov2+r.nov3; if(r.p2+r.p3>0)covT++; if(r.ct>0||r.p2+r.p3>0)totT++; });
-            const sqF=(covSq||[]).filter(q=>covSource==='all'||q.source===covSource);
-            const mcqF=(covMcq||[]).filter(q=>covSource==='all'||q.source===covSource);
+            const sqF=(covSq||[]).filter(q=>covSrcMatch(q.source));
+            const mcqF=(covMcq||[]).filter(q=>covSrcMatch(q.source));
             const nQ=sqF.length;
             const nPapers=[...new Set(sqF.map(q=>q.source+'|'+(q.school||'')+'|'+q.year+'|'+q.paper))].length;
             const mcqN=mcqF.length, mcqNovel=mcqF.filter(q=>q.is_novel_context).length;
@@ -12327,7 +12335,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 if(tgt===t.name) agg[c.id]={id:c.id,name:c.name,p2:0,p3:0,rows:[]};
             });
             (covSq||[]).forEach(q=>{
-                if(covSource!=='all' && q.source!==covSource) return;
+                if(!covSrcMatch(q.source)) return;
                 (q.parts||[]).forEach(p=>{
                     const a=agg[p.concept_id]; if(!a) return;
                     if(q.paper==='P2') a.p2++; else if(q.paper==='P3') a.p3++;

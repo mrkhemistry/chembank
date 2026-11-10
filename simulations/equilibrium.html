@@ -537,5 +537,23 @@ init();
   place();
 })();
 </script>
+<!-- phone-order: intro box below the simulation -->
+<script>
+// On phones (700px or narrower) show the definition box after the simulation and its
+// controls, so the model comes first; restore its place above the sim if the screen widens.
+(function(){
+  const box=document.getElementById('defBox'), simw=document.getElementById('simw');
+  if(!box||!simw) return;
+  const home=box.parentNode, next=box.nextSibling;
+  const mq=window.matchMedia('(max-width:700px)');
+  let moved=false;
+  function place(){
+    if(mq.matches&&!moved){ simw.after(box); moved=true; }
+    else if(!mq.matches&&moved){ home.insertBefore(box,next); moved=false; }
+  }
+  if(mq.addEventListener) mq.addEventListener('change',place); else mq.addListener(place);
+  place();
+})();
+</script>
 </body>
 </html>

@@ -157,7 +157,18 @@ const canvas = document.getElementById('chemCanvas');
 const ctx = canvas.getContext('2d');
 const DEG = Math.PI / 180;
 let W, H;
-function resize() { const wr = document.getElementById('cWrap'); W = canvas.width = wr.clientWidth; H = canvas.height = wr.clientHeight; }
+// Draw at the screen's full pixel density (sharp on iPhone) and, on screens narrower
+// than SIM_MIN_W, draw the whole scene smaller so the light path fits in the window.
+const SIM_MIN_W = 640;
+function resize() {
+  const wr = document.getElementById('cWrap');
+  const cw = wr.clientWidth, ch = wr.clientHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const fit = Math.min(1, cw / SIM_MIN_W);
+  W = cw / fit; H = ch / fit;
+  canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+  ctx.setTransform(dpr * fit, 0, 0, dpr * fit, 0, 0);
+}
 window.addEventListener('resize', resize);
 
 /* --- World layout (beam along world X; vibration drawn in an upright,
@@ -414,6 +425,24 @@ init();
     if(mq.matches&&!moved){ let at=model; nodes.forEach(n=>{ at.after(n); at=n; }); moved=true; }
     else if(!mq.matches&&moved){ for(let i=nodes.length-1;i>=0;i--){ homes[i][0].insertBefore(nodes[i],homes[i][1]); } moved=false; }
     window.dispatchEvent(new Event('resize'));
+  }
+  if(mq.addEventListener) mq.addEventListener('change',place); else mq.addListener(place);
+  place();
+})();
+</script>
+<!-- phone-order: intro box below the simulation -->
+<script>
+// On phones (700px or narrower) show the definition box after the simulation and its
+// controls, so the model comes first; restore its place above the sim if the screen widens.
+(function(){
+  const box=document.getElementById('defBox'), simw=document.getElementById('simw');
+  if(!box||!simw) return;
+  const home=box.parentNode, next=box.nextSibling;
+  const mq=window.matchMedia('(max-width:700px)');
+  let moved=false;
+  function place(){
+    if(mq.matches&&!moved){ simw.after(box); moved=true; }
+    else if(!mq.matches&&moved){ home.insertBefore(box,next); moved=false; }
   }
   if(mq.addEventListener) mq.addEventListener('change',place); else mq.addListener(place);
   place();

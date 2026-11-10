@@ -1097,9 +1097,9 @@ function buildScene(){
   // Use anodeX = znCx for Zn²⁺ as "repulsion source"... easier: use charge=0 pattern so they just diffuse, and we add directional bias manually via salt bridge crossings.
   // Cleaner: make Zn²⁺ bounce around naturally; visually, the salt bridge connects.
   ionField.add('Zn2+', COL.zn2, 0, 'Zn²⁺', 8, liqLeft, null, null, {radius:10});
-  ionField.add('SO4-', COL.so4, 0, 'SO₄', 5, liqLeft, null, null, {radius:11});
+  ionField.add('SO4-', COL.so4, 0, 'SO₄²⁻', 5, liqLeft, null, null, {radius:13});
   ionField.add('Cu2+', COL.cu2, 0, 'Cu²⁺', 8, liqRight, null, null, {radius:10, labelCol:'#fff'});
-  ionField.add('SO4-', COL.so4, 0, 'SO₄', 5, liqRight, null, null, {radius:11});
+  ionField.add('SO4-', COL.so4, 0, 'SO₄²⁻', 5, liqRight, null, null, {radius:13});
 
   // Galvanic CIRCUIT: external wire goes Zn (anode, −) → up → through bulb → down → Cu (cathode, +)
   // Electrons flow from Zn out through wire to Cu (anode→cathode externally)
@@ -1145,7 +1145,7 @@ function buildScene(){
     // Right side: aqueous CuSO4 with Cu electrodes (electrolysis of CuSO4)
     // Cations: Cu²⁺ → cathode (lCx). Anions: SO4²⁻ → anode (rCx).
     ionField.add('Cu2+', COL.cu2, +1, 'Cu²⁺', 9, elcLiq, rCx, lCx, {radius:10, labelCol:'#fff'});
-    ionField.add('SO4', COL.so4, -1, 'SO₄', 6, elcLiq, rCx, lCx, {radius:11});
+    ionField.add('SO4', COL.so4, -1, 'SO₄²⁻', 6, elcLiq, rCx, lCx, {radius:13});
   } else if(mode==='molten'){
     // Molten NaCl (no water). Inert C electrodes. Na+ → cathode, Cl- → anode.
     ionField.add('Na+', COL.na, +1, 'Na⁺', 10, elcLiq, rCx, lCx, {radius:10});

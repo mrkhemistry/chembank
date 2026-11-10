@@ -895,5 +895,25 @@ resize();
 drawLoop();
 })();
 </script>
+<!-- phone-order: buttons under the model -->
+<script>
+// On phones (700px or narrower) put the control buttons straight under the model,
+// above the graph, step cards and notes; restore the desktop order if the screen widens.
+(function(){
+  const model=document.getElementById('cWrap');
+  const nodes=['botBar'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(!model||!nodes.length) return;
+  const homes=nodes.map(n=>[n.parentNode,n.nextSibling]);
+  const mq=window.matchMedia('(max-width:700px)');
+  let moved=false;
+  function place(){
+    if(mq.matches&&!moved){ let at=model; nodes.forEach(n=>{ at.after(n); at=n; }); moved=true; }
+    else if(!mq.matches&&moved){ for(let i=nodes.length-1;i>=0;i--){ homes[i][0].insertBefore(nodes[i],homes[i][1]); } moved=false; }
+    window.dispatchEvent(new Event('resize'));
+  }
+  if(mq.addEventListener) mq.addEventListener('change',place); else mq.addListener(place);
+  place();
+})();
+</script>
 </body>
 </html>

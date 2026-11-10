@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="See the two-step SN1 mechanism for H2 Chemistry: 2-bromo-2-methylpropane ionises to a planar carbocation, then OH⁻ attacks to form 2-methylpropan-2-ol.">
-<title>Sn1 Mechanism — Mr Khemistry</title>
+<meta name="description" content="See the two-step SN1 mechanism for H2 Chemistry: 3-bromo-3-methylhexane ionises to a planar carbocation, and OH⁻ attack from either face gives a racemic mixture.">
+<title>SN1 Mechanism — Mr Khemistry</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,11 +99,11 @@
           </div>
         </div>
         <div id="stepPanel">
-          <div class="si active" id="s0"><div class="sn">Step 0</div><div class="st">Ready</div><div class="sd">2-bromo-2-methylpropane — a tertiary halogenoalkane. C–Br bond is polarised (C&#948;+ Br&#948;-).</div></div>
+          <div class="si active" id="s0"><div class="sn">Step 0</div><div class="st">Ready</div><div class="sd">3-bromo-3-methylhexane, a tertiary halogenoalkane. The carbon bonded to Br also carries CH&#8323;, C&#8322;H&#8325; and C&#8323;H&#8327;, so it is chiral. The C–Br bond is polarised (C&#948;+ Br&#948;-).</div></div>
           <div class="si" id="s1"><div class="sn">Step 1 — slow</div><div class="st">C–Br bond breaks</div><div class="sd">Heterolytic fission of C–Br. Br departs with both bonding electrons as Br&#8315;. Rate-determining step.</div></div>
           <div class="si" id="s2"><div class="sn">Intermediate</div><div class="st">Carbocation</div><div class="sd">Trigonal planar carbocation (sp&#178; hybridised). Empty p orbital exposed above and below the plane. Simulation paused.</div></div>
-          <div class="si" id="s3"><div class="sn">Step 2 — fast</div><div class="st">Nucleophilic attack</div><div class="sd">OH&#8315; attacks from both faces simultaneously with equal likelihood — pathways (a) and (b).</div></div>
-          <div class="si" id="s4"><div class="sn">Result</div><div class="st">Racemic mixture</div><div class="sd">Equal inversion + retention products formed. A racemic mixture — no net optical activity.</div></div>
+          <div class="si" id="s3"><div class="sn">Step 2 — fast</div><div class="st">Nucleophilic attack</div><div class="sd">OH&#8315; can attack from either face with equal probability, giving pathways (a) and (b).</div></div>
+          <div class="si" id="s4"><div class="sn">Result</div><div class="st">Racemic mixture</div><div class="sd">Equal amounts of the two enantiomers of 3-methylhexan-3-ol, one from inversion and one from retention: a racemic mixture with no net optical activity.</div></div>
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@
 
   <div class="notes-grid">
     <div class="note-card">
-      <h3>What is Sn1?</h3>
+      <h3>What is SN1?</h3>
       <p><strong>Unimolecular nucleophilic substitution.</strong> Rate depends only on the substrate — it is a <strong>two-step</strong> mechanism with a carbocation intermediate.</p>
     </div>
     <div class="note-card">
@@ -141,7 +141,7 @@
     </div>
     <div class="note-card">
       <h3>Racemisation</h3>
-      <p>OH&#8315; attacks from <strong>both faces with equal probability</strong>, giving equal amounts of inversion and retention products — a <strong>racemic mixture</strong> with no net optical activity.</p>
+      <p>The carbocation carbon carries three different groups (CH&#8323;, C&#8322;H&#8325; and C&#8323;H&#8327;). OH&#8315; attacks from <strong>both faces with equal probability</strong>, giving equal amounts of the two enantiomers of 3-methylhexan-3-ol: a <strong>racemic mixture</strong> with no net optical activity.</p>
     </div>
   </div>
 </div>
@@ -164,7 +164,7 @@ let brArrowProg=0,ohArrowProg=0,ohStraightProg=0;
 let aX=0.2,aY=0.5,dragging=false,lx,ly;
 const BL=92;
 
-// Tetrahedral geometry for substrate: Br on +X, 3x CH3 pointing back-left
+// Tetrahedral geometry for substrate: Br on +X; CH3, C2H5 and C3H7 point back-left
 const r2=2*Math.sqrt(2)/3;
 const TET=[
   {x:-BL/3, y:BL*r2,        z:0},
@@ -184,6 +184,9 @@ const PLAN=[
 // Product B (retention): OH on +X side, subs same as reactant but no Br
 
 const COLS={OH:'#f43f5e',Br:'#a855f7',M1:'#22d3ee',M2:'#4ade80',M3:'#fbbf24',C:'#f97316'};
+// Three different groups on the carbon bonded to Br (3-bromo-3-methylhexane), so the
+// carbon is chiral and attack from the two faces gives a pair of enantiomers.
+const SUB_LBL=['CH\u2083','C\u2082H\u2085','C\u2083H\u2087'];
 
 const views=[{aX:0.2,aY:0.5},{aX:1.52,aY:0.0},null];
 let curView=0;
@@ -483,9 +486,9 @@ function drawLoop(ts){
 
     // substituents between tet and planar
     const subs=[
-      {pos:getSubPos(0,planT),lbl:'CH\u2083',col:COLS.M1},
-      {pos:getSubPos(1,planT),lbl:'CH\u2083',col:COLS.M2},
-      {pos:getSubPos(2,planT),lbl:'CH\u2083',col:COLS.M3}
+      {pos:getSubPos(0,planT),lbl:SUB_LBL[0],col:COLS.M1},
+      {pos:getSubPos(1,planT),lbl:SUB_LBL[1],col:COLS.M2},
+      {pos:getSubPos(2,planT),lbl:SUB_LBL[2],col:COLS.M3}
     ].map(s=>({p:proj(s.pos.x,s.pos.y,s.pos.z,cx,cy),lbl:s.lbl,col:s.col}));
 
     // bonds
@@ -537,13 +540,13 @@ function drawLoop(ts){
     const subsL=PLAN.map((pl,i)=>{
       const prodInv={x:BL/3, y:TET[i].y, z:TET[i].z};
       const pos=lerp(pl,prodInv,u);
-      return{p:proj(pos.x,pos.y,pos.z,cxL,cy),lbl:'CH\u2083',col:[COLS.M1,COLS.M2,COLS.M3][i]};
+      return{p:proj(pos.x,pos.y,pos.z,cxL,cy),lbl:SUB_LBL[i],col:[COLS.M1,COLS.M2,COLS.M3][i]};
     });
     // Retention product: OH ends on +X axis, subs stay at original TET (same as reactant)
     const subsR=PLAN.map((pl,i)=>{
       const prodRet={x:TET[i].x, y:TET[i].y, z:TET[i].z};
       const pos=lerp(pl,prodRet,u);
-      return{p:proj(pos.x,pos.y,pos.z,cxR,cy),lbl:'CH\u2083',col:[COLS.M1,COLS.M2,COLS.M3][i]};
+      return{p:proj(pos.x,pos.y,pos.z,cxR,cy),lbl:SUB_LBL[i],col:[COLS.M1,COLS.M2,COLS.M3][i]};
     });
 
     // OH approaches along X axis from opposite sides
@@ -570,8 +573,8 @@ function drawLoop(ts){
     const allAts=[
       {p:pCL,r:22,col:COLS.C,lbl:'C',show:true},
       {p:pCR,r:22,col:COLS.C,lbl:'C',show:true},
-      {p:pOH_L,r:20,col:COLS.OH,lbl:'OH⁻',show:true},
-      {p:pOH_R,r:20,col:COLS.OH,lbl:'OH⁻',show:true},
+      {p:pOH_L,r:20,col:COLS.OH,lbl:state===4?'OH':'OH⁻',show:true},
+      {p:pOH_R,r:20,col:COLS.OH,lbl:state===4?'OH':'OH⁻',show:true},
       ...subsL.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true})),
       ...subsR.map(s=>({p:s.p,r:16,col:s.col,lbl:s.lbl,show:true}))
     ];

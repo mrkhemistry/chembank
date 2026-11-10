@@ -58,7 +58,7 @@
     nav,.main{padding-left:16px;padding-right:16px;}
     #topRow{flex-direction:column;height:auto;}
     #sidePanel{width:100%;border-left:none;border-top:1px solid #1e293b;}
-    #cWrap{height:360px;}
+    #cWrap{height:360px;flex:none;}
     #stepPanel{flex-direction:row;overflow-x:auto;gap:8px;}
     .si{min-width:150px;}
   }
@@ -197,7 +197,17 @@ window.setView=function(i){
   if(i!==2){aX=views[i].aX;aY=views[i].aY;}
 };
 
-function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight;}
+// Draw at the screen's full pixel density (sharp on iPhone) and, on screens narrower
+// than 480px, draw the whole scene smaller so the molecule stays inside the window.
+const SIM_MIN_W=480;
+function resize(){
+  const cw=wrap.clientWidth, ch=wrap.clientHeight;
+  const dpr=Math.min(window.devicePixelRatio||1,3);
+  const fit=Math.min(1,cw/SIM_MIN_W);
+  W=cw/fit; H=ch/fit;
+  canvas.width=Math.round(cw*dpr); canvas.height=Math.round(ch*dpr);
+  ctx.setTransform(dpr*fit,0,0,dpr*fit,0,0);
+}
 
 function proj(x,y,z,cx,cy){
   cx=cx||0; cy=cy||0;

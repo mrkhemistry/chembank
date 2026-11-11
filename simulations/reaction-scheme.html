@@ -749,6 +749,34 @@ const MOL = {
     ],
     bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,2],[6,8,1]]
   },
+  'chloromethylbenzene': {
+    name: '(Chloromethyl)benzene', formula: 'C₆H₅CH₂Cl', cls: 'Halogenoalkane',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.866,y:0.5,lab:'Cl'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,1]]
+  },
+  'bromomethylbenzene': {
+    name: '(Bromomethyl)benzene', formula: 'C₆H₅CH₂Br', cls: 'Halogenoalkane',
+    atoms: [
+      {x:1,y:0,lab:'C'},
+      {x:0.5,y:0.866,lab:'C'},
+      {x:-0.5,y:0.866,lab:'C'},
+      {x:-1,y:0,lab:'C'},
+      {x:-0.5,y:-0.866,lab:'C'},
+      {x:0.5,y:-0.866,lab:'C'},
+      {x:2,y:0,lab:'C'},
+      {x:2.866,y:0.5,lab:'Br'}
+    ],
+    bonds:[[0,1,1],[1,2,1],[2,3,1],[3,4,1],[4,5,1],[5,0,1],[0,6,1],[6,7,1]]
+  },
   'phenylmethanol': {
     name: 'Phenylmethanol', formula: 'C₆H₅CH₂OH', cls: 'Primary alcohol',
     atoms: [
@@ -920,6 +948,7 @@ const MOL = {
 ['benzene','methylbenzene','nitrobenzene','bromobenzene','chlorobenzene',
  'phenol','phenylamine','benzoic-acid','246-tribromophenol','246-tribromophenylamine',
  'benzoyl-chloride','phenylmethanol','ethyl-benzoate',
+ 'chloromethylbenzene','bromomethylbenzene',
  '4-nitromethylbenzene','4-nitrobenzoic-acid','4-nitrobenzoyl-chloride',
  'sodium-phenoxide','4-nitrophenol','24-dinitrophenol'].forEach(id => {
   if(MOL[id]) MOL[id].aromaticRings = [[0,1,2,3,4,5]];
@@ -985,6 +1014,8 @@ const CONDITIONS = {
   'pt-cat':       {label:'Pt catalyst'},
   'pd-cat':       {label:'Pd catalyst'},
   'trace-naoh':   {label:'trace NaOH(aq)'},
+  'trace-nacn':   {label:'trace NaCN / KCN'},
+  'uv-light':     {label:'UV light'},
   'then-naoh':    {label:'then NaOH(aq)'},
   'heat':         {label:'heat'}
 };
@@ -1003,12 +1034,19 @@ const RXN = {
     {r:['cl2'],       c:['aqueous','rtp'],                 p:'2-chloroethanol'},
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'bromoethane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'bromoethane'},
+    {r:['hbr'],       c:['rtp'],                           p:'bromoethane'},
+    {r:['br2'],       c:['rtp'],                           p:'12-dibromoethane'},
+    {r:['cl2'],       c:['rtp'],                           p:'12-dichloroethane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'ethanol'},
-    {r:['kmno4','dil-naoh'],   c:['cold'], p:'ethane-12-diol'}
+    {r:['kmno4','dil-naoh'],   c:['cold'], p:'ethane-12-diol'},
+    {r:['kmno4','dil-h2so4'],  c:['cold'], p:'ethane-12-diol'}
   ],
   'propene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromopropane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromopropane'},
+    {r:['hbr'],       c:['rtp'],                           p:'2-bromopropane'},
+    {r:['br2'],       c:['rtp'],                           p:'12-dibromopropane'},
+    {r:['cl2'],       c:['rtp'],                           p:'12-dichloropropane'},
     {r:['br2'],       c:['in-ccl4','rtp'],                 p:'12-dibromopropane'},
     {r:['br2'],       c:['aqueous','rtp'],                 p:'1-bromopropan-2-ol'},
     {r:['cl2'],       c:['in-ccl4','rtp'],                 p:'12-dichloropropane'},
@@ -1018,6 +1056,7 @@ const RXN = {
     {r:['h2'],        c:['pt-cat','rtp'],                  p:'propane'},
     {r:['h2'],        c:['pd-cat','rtp'],                  p:'propane'},
     {r:['kmno4','dil-naoh'],   c:['cold'], p:'propane-12-diol'},
+    {r:['kmno4','dil-h2so4'],  c:['cold'], p:'propane-12-diol'},
     // Hot acidic KMnO₄ cleaves the C=C; the =CH₂ fragment becomes CO₂ + H₂O,
     // leaving ethanoic acid as the only organic product.
     {r:['kmno4','dil-h2so4'],  c:['heat'], p:'ethanoic-acid'}
@@ -1044,6 +1083,7 @@ const RXN = {
   '2-methylpropene': [
     {r:['hbr'],       c:['in-ccl4','rtp'],                 p:'2-bromo-2-methylpropane'},
     {r:['hbr'],       c:['aqueous','rtp'],                 p:'2-bromo-2-methylpropane'},
+    {r:['hbr'],       c:['rtp'],                           p:'2-bromo-2-methylpropane'},
     {r:['h2o-steam'], c:['h3po4-cat','300c','high-pressure'], p:'2-methylpropan-2-ol'},
     // Hot acidic KMnO₄ cleaves the C=C; =CH₂ → CO₂ + H₂O, =C(CH₃)₂ → propanone.
     {r:['kmno4','dil-h2so4'],  c:['heat'], p:'propanone'}
@@ -1154,6 +1194,7 @@ const RXN = {
     {r:['k2cr2o7','dil-h2so4'], c:['heat'],               p:'ethanoic-acid'},
     {r:['kmno4','dil-h2so4'],   c:['heat'],               p:'ethanoic-acid'},
     {r:['hcn'],                 c:['trace-naoh','cold'],  p:'2-hydroxypropanenitrile'},
+    {r:['hcn'],                 c:['trace-nacn','cold'],  p:'2-hydroxypropanenitrile'},
     {r:['i2','dil-naoh'],       c:['heat'],               p:'sodium-methanoate'}
   ],
   'propanal': [
@@ -1170,6 +1211,7 @@ const RXN = {
     {r:['h2'],     c:['pt-cat','rtp'],                    p:'propan-2-ol'},
     {r:['h2'],     c:['pd-cat','rtp'],                    p:'propan-2-ol'},
     {r:['hcn'],    c:['trace-naoh','cold'],               p:'2-hydroxy-2-methylpropanenitrile'},
+    {r:['hcn'],    c:['trace-nacn','cold'],               p:'2-hydroxy-2-methylpropanenitrile'},
     {r:['i2','dil-naoh'], c:['heat'],                     p:'sodium-ethanoate'}
   ],
 
@@ -1290,7 +1332,8 @@ const RXN = {
   'ethyl-ethanoate': [
     {r:['dil-hcl'],   c:['heat'], p:'ethanoic-acid'},
     {r:['dil-h2so4'], c:['heat'], p:'ethanoic-acid'},
-    {r:['dil-naoh'],  c:['heat'], p:'sodium-ethanoate'}
+    {r:['dil-naoh'],  c:['heat'], p:'sodium-ethanoate'},
+    {r:['koh'],       c:['aqueous','heat'], p:'sodium-ethanoate'}
   ],
   'ethyl-2-hydroxy-2-methylpropanoate': [
     {r:['dil-hcl'],   c:['heat'], p:'2-hydroxy-2-methylpropanoic-acid'},
@@ -1328,7 +1371,20 @@ const RXN = {
   ],
   'methylbenzene': [
     {r:['kmno4','dil-h2so4'], c:['heat'], p:'benzoic-acid'},
-    {r:['conc-hno3','conc-h2so4'], c:['30c'], p:'4-nitromethylbenzene'}
+    {r:['conc-hno3','conc-h2so4'], c:['30c'], p:'4-nitromethylbenzene'},
+    // Free-radical substitution on the side chain (Arenes notes)
+    {r:['cl2'], c:['uv-light','rtp'], p:'chloromethylbenzene'},
+    {r:['br2'], c:['uv-light','rtp'], p:'bromomethylbenzene'}
+  ],
+  'chloromethylbenzene': [
+    {r:['koh'],      c:['aqueous','heat'], p:'phenylmethanol'},
+    {r:['dil-naoh'], c:['heat'],           p:'phenylmethanol'},
+    {r:['kmno4','dil-h2so4'], c:['heat'],  p:'benzoic-acid'}
+  ],
+  'bromomethylbenzene': [
+    {r:['koh'],      c:['aqueous','heat'], p:'phenylmethanol'},
+    {r:['dil-naoh'], c:['heat'],           p:'phenylmethanol'},
+    {r:['kmno4','dil-h2so4'], c:['heat'],  p:'benzoic-acid'}
   ],
   '4-nitromethylbenzene': [
     {r:['kmno4','dil-h2so4'], c:['heat'], p:'4-nitrobenzoic-acid'}
@@ -1368,6 +1424,28 @@ const RXN = {
   ],
   '246-tribromophenol': []
 };
+
+/* KOH gives the potassium salt, not the sodium one (11 Nov 2026). Each sodium
+   salt reached with KOH gets a potassium twin, named and drawn with K⁺, that
+   acidifies the same way. */
+(function(){
+  const swap = s => s.replace(/Na⁺/g, 'K⁺').replace(/^Sodium/, 'Potassium');
+  for(const list of Object.values(RXN)){
+    for(const rxn of list){
+      if(!rxn.r.includes('koh') || !/^sodium-/.test(rxn.p)) continue;
+      const kId = rxn.p.replace(/^sodium-/, 'potassium-');
+      if(!MOL[kId]){
+        const m = JSON.parse(JSON.stringify(MOL[rxn.p]));
+        m.name = swap(m.name);
+        m.formula = swap(m.formula);
+        m.atoms.forEach(a => { a.lab = swap(a.lab); });
+        MOL[kId] = m;
+        RXN[kId] = JSON.parse(JSON.stringify(RXN[rxn.p] || []));
+      }
+      rxn.p = kId;
+    }
+  }
+})();
 
 /* =========================================================================
    RENDERER — skeletal drawing on canvas
@@ -1822,6 +1900,35 @@ function updateSolvedCounter(){
   if(el) el.textContent = `${everSolved.size} / ${QUESTIONS.length} solved`;
 }
 
+/* Acceptance rules (Eric, 11 Nov 2026). Each RXN entry stores one model
+   answer; these rules let an equivalent answer through by adjusting the
+   student's chips against that one stored entry before the exact compare. */
+const AQUEOUS_REAGENTS = ['dil-naoh','dil-hcl','dil-h2so4','dil-hno3'];
+const NON_AQUEOUS_SOLVENTS = ['in-ethanol','in-ether','in-ccl4'];
+const SET_TEMPS = ['distil','55c','30c','300c'];
+function normalisePick(rxn, pickedR, pickedC){
+  let r = pickedR.slice(), c = pickedC.slice();
+  const drop = id => { c = c.filter(x => x !== id); };
+  // conc H3PO4 catalyst may be placed in the Reagents box instead
+  if(rxn.c.includes('h3po4-cat') && r.includes('conc-h3po4') && !c.includes('h3po4-cat')){
+    r = r.filter(x => x !== 'conc-h3po4');
+    c.push('h3po4-cat');
+  }
+  // r.t.p. is optional when it is the stored temperature
+  if(rxn.c.includes('rtp') && !c.includes('rtp')) c.push('rtp');
+  // "aqueous" adds nothing to a dilute reagent that is already aqueous
+  if(!rxn.c.includes('aqueous') && c.includes('aqueous')
+     && r.some(x => AQUEOUS_REAGENTS.includes(x))
+     && !c.some(x => NON_AQUEOUS_SOLVENTS.includes(x))) drop('aqueous');
+  // "heat" alongside distil or a set temperature (heat with immediate distillation, 55 °C)
+  if(!rxn.c.includes('heat') && c.includes('heat')
+     && rxn.c.some(x => SET_TEMPS.includes(x))) drop('heat');
+  // H2 with Ni: heat under high pressure
+  if(rxn.c.includes('ni-cat') && !rxn.c.includes('high-pressure')
+     && c.includes('high-pressure')) drop('high-pressure');
+  return {r, c};
+}
+
 function applyReaction(){
   if(solved) return;
   const list = RXN[currentMolId] || [];
@@ -1830,10 +1937,11 @@ function applyReaction(){
     flashActiveApply();
     return;
   }
-  // Look for an exact match
+  // Look for a match (exact, or equivalent under the acceptance rules)
   let matched = null;
   for(const rxn of list){
-    if(setsEqual(pickedReagents, rxn.r) && setsEqual(pickedConditions, rxn.c)){
+    const n = normalisePick(rxn, pickedReagents, pickedConditions);
+    if(setsEqual(n.r, rxn.r) && setsEqual(n.c, rxn.c)){
       matched = rxn; break;
     }
   }
@@ -1861,14 +1969,15 @@ function showSpecificFeedback(list){
     return;
   }
   // Score each candidate by how close it is to picked sets
-  let best = null, bestScore = -1;
+  let best = null, bestN = null, bestScore = -1;
   for(const rxn of list){
-    const rOverlap = pickedReagents.filter(id => rxn.r.includes(id)).length;
-    const cOverlap = pickedConditions.filter(id => rxn.c.includes(id)).length;
-    const rExact = setsEqual(pickedReagents, rxn.r) ? 100 : 0;
-    const cExact = setsEqual(pickedConditions, rxn.c) ? 100 : 0;
+    const n = normalisePick(rxn, pickedReagents, pickedConditions);
+    const rOverlap = n.r.filter(id => rxn.r.includes(id)).length;
+    const cOverlap = n.c.filter(id => rxn.c.includes(id)).length;
+    const rExact = setsEqual(n.r, rxn.r) ? 100 : 0;
+    const cExact = setsEqual(n.c, rxn.c) ? 100 : 0;
     const score = rExact + cExact + rOverlap + cOverlap;
-    if(score > bestScore){ bestScore = score; best = rxn; }
+    if(score > bestScore){ bestScore = score; best = rxn; bestN = n; }
   }
   if(!best){
     showToast('No reaction with these reagents and conditions');
@@ -1876,10 +1985,10 @@ function showSpecificFeedback(list){
   }
   const lblR = id => (REAGENTS[id] && REAGENTS[id].label) || id;
   const lblC = id => (CONDITIONS[id] && CONDITIONS[id].label) || id;
-  const missingR = best.r.filter(id => !pickedReagents.includes(id));
-  const extraR   = pickedReagents.filter(id => !best.r.includes(id));
-  const missingC = best.c.filter(id => !pickedConditions.includes(id));
-  const extraC   = pickedConditions.filter(id => !best.c.includes(id));
+  const missingR = best.r.filter(id => !bestN.r.includes(id));
+  const extraR   = bestN.r.filter(id => !best.r.includes(id));
+  const missingC = best.c.filter(id => !bestN.c.includes(id));
+  const extraC   = bestN.c.filter(id => !best.c.includes(id));
 
   const reagentsExact = missingR.length === 0 && extraR.length === 0;
   const conditionsExact = missingC.length === 0 && extraC.length === 0;

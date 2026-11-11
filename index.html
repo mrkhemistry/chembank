@@ -9911,7 +9911,7 @@ Option D" required></textarea>
                 + '<h4>Their answer</h4><p class="mathjax_ignore">' + trPlain(r.answer_text) + '</p>'
                 + (fb.missing ? '<h4>Marker: missing</h4><p class="mathjax_ignore">' + trPlain(fb.missing) + '</p>' : '')
                 + (fb.incorrect ? '<h4>Marker: incorrect</h4><p class="mathjax_ignore">' + trPlain(fb.incorrect) + '</p>' : '')
-                + '<details><summary>Question and mark scheme</summary><h4>Question</h4><p>' + trText(p.part_text || '') + '</p><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(p.mark_scheme || ''))) + '</div></details>'
+                + '<details><summary>Question and mark scheme</summary><h4>Question</h4><p>' + trText(p.part_text || '') + '</p><h4>Mark scheme</h4><div class="tr-ms">' + sanitizeQuestionText(sqMarkSchemeBreaks(String(p.mark_scheme || ''))) + '</div></details>'
                 + '<label><input type="checkbox" ' + (r.resolved ? 'checked' : '') + ' onchange="trainingFlagResolve(' + r.id + ', this.checked, this)"> Resolved</label>'
                 + '</div>';
         }
@@ -10432,7 +10432,8 @@ Option D" required></textarea>
             if (fb.incorrect) html += '<div class="tr-fb-block"><h4>Wrong or muddled</h4><p>' + trText(fb.incorrect) + '</p></div>';
             if (fb.tips) html += '<div class="tr-fb-block"><h4>Tip</h4><p>' + trText(fb.tips) + '</p></div>';
             if (body.mark_scheme) {
-                html += '<div class="tr-fb-block"><h4>Mark scheme</h4><div class="tr-ms">' + sqMarkSchemeBreaks(escapeHtml(String(body.mark_scheme))) + '</div></div>';
+                // Verbatim keys carry <b>/<u>/<br> since the 4-6 Nov 2026 restore: render them as the Paper 2 & 3 tab does (Eric, 11 Nov 2026)
+                html += '<div class="tr-fb-block"><h4>Mark scheme</h4><div class="tr-ms">' + sanitizeQuestionText(sqMarkSchemeBreaks(String(body.mark_scheme))) + '</div></div>';
                 if (body.examiner_comment) html += '<div class="tr-fb-block"><h4>Examiner comment</h4><p>' + trText(body.examiner_comment) + '</p></div>';
             }
             if (!pass && rec.teacher) html += '<div class="tr-note">Three misses on this concept. Bring this one to class.</div>';

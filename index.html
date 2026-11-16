@@ -4896,13 +4896,13 @@ Option D" required></textarea>
             
             // Stem image 1 — add placeholder into previewHTML, populate via FileReader after modal shown
             if (editingImageUrl) {
-                previewHTML += `<div style="margin:1.5rem 0;text-align:center;"><img src="${escapeHtml(editingImageUrl)}" style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--primary);box-shadow:var(--shadow-md);"></div>`;
+                previewHTML += `<div style="margin:1.5rem 0;text-align:center;"><img ${mcqSrcAttr(editingImageUrl)} style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--primary);box-shadow:var(--shadow-md);"></div>`;
             }
             previewHTML += '<div id="previewStemImg1"></div>';
 
             // Stem image 2
             if (editingImageUrl2) {
-                previewHTML += `<div style="margin:1rem 0;text-align:center;"><img src="${escapeHtml(editingImageUrl2)}" style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--primary);box-shadow:var(--shadow-md);"></div>`;
+                previewHTML += `<div style="margin:1rem 0;text-align:center;"><img ${mcqSrcAttr(editingImageUrl2)} style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--primary);box-shadow:var(--shadow-md);"></div>`;
             }
             previewHTML += '<div id="previewStemImg2"></div>';
 
@@ -4923,7 +4923,7 @@ Option D" required></textarea>
 
             // Option image — saved URL inline, new file via FileReader
             if (editingOptionImageUrl) {
-                previewHTML += `<div style="margin:1rem 0;text-align:center;"><p style="font-size:0.85rem;color:var(--accent);margin-bottom:0.5rem;">Options diagram:</p><img src="${escapeHtml(editingOptionImageUrl)}" style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--secondary);box-shadow:var(--shadow-md);"></div>`;
+                previewHTML += `<div style="margin:1rem 0;text-align:center;"><p style="font-size:0.85rem;color:var(--accent);margin-bottom:0.5rem;">Options diagram:</p><img ${mcqSrcAttr(editingOptionImageUrl)} style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--secondary);box-shadow:var(--shadow-md);"></div>`;
             }
             previewHTML += '<div id="previewOptImg"></div>';
             
@@ -4939,7 +4939,7 @@ Option D" required></textarea>
 
             // Explanation image — saved URL inline, new file via FileReader
             if (editingExplanationImageUrl) {
-                previewHTML += `<div style="margin:1rem 0;text-align:center;"><p style="font-size:0.85rem;color:var(--accent);margin-bottom:0.5rem;">Explanation diagram:</p><img src="${escapeHtml(editingExplanationImageUrl)}" style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--accent);box-shadow:var(--shadow-md);"></div>`;
+                previewHTML += `<div style="margin:1rem 0;text-align:center;"><p style="font-size:0.85rem;color:var(--accent);margin-bottom:0.5rem;">Explanation diagram:</p><img ${mcqSrcAttr(editingExplanationImageUrl)} style="max-width:100%;max-height:400px;border-radius:12px;border:2px solid var(--accent);box-shadow:var(--shadow-md);"></div>`;
             }
             previewHTML += '<div id="previewExpImg"></div>';
             
@@ -5072,23 +5072,8 @@ Option D" required></textarea>
                     submitBtn.disabled = true;
                     submitBtn.textContent = 'Uploading image...';
                     
-                    // Upload to Supabase Storage
-                    const fileExt = imageFile.name.split('.').pop();
-                    const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-                    const filePath = `question-images/${fileName}`;
-                    
-                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
-                        .from('questions')
-                        .upload(filePath, imageFile);
-                    
-                    if (uploadError) throw uploadError;
-                    
-                    // Get public URL
-                    const { data: urlData } = supabaseClient.storage
-                        .from('questions')
-                        .getPublicUrl(filePath);
-                    
-                    imageUrl = urlData.publicUrl;
+                    // Upload to Supabase Storage (premium sources go to the private bucket)
+                    imageUrl = await mcqUploadQuestionImage(imageFile, '', source);
                     
                     submitBtn.textContent = originalText;
                     submitBtn.disabled = false;
@@ -5104,12 +5089,7 @@ Option D" required></textarea>
             const imageFile2 = document.getElementById('questionImage2').files[0];
             if (imageFile2) {
                 try {
-                    const fileExt2 = imageFile2.name.split('.').pop();
-                    const fileName2 = `${Date.now()}_${Math.random().toString(36).substring(7)}_2.${fileExt2}`;
-                    const { error: uploadError2 } = await supabaseClient.storage.from('questions').upload(`question-images/${fileName2}`, imageFile2);
-                    if (uploadError2) throw uploadError2;
-                    const { data: urlData2 } = supabaseClient.storage.from('questions').getPublicUrl(`question-images/${fileName2}`);
-                    imageUrl2 = urlData2.publicUrl;
+                    imageUrl2 = await mcqUploadQuestionImage(imageFile2, '_2', source);
                 } catch (error) {
                     alert('Error uploading image 2: ' + error.message); return;
                 }
@@ -5120,12 +5100,7 @@ Option D" required></textarea>
             const optionImageFile = document.getElementById('optionImage').files[0];
             if (optionImageFile) {
                 try {
-                    const fileExtO = optionImageFile.name.split('.').pop();
-                    const fileNameO = `${Date.now()}_${Math.random().toString(36).substring(7)}_opt.${fileExtO}`;
-                    const { error: uploadErrorO } = await supabaseClient.storage.from('questions').upload(`question-images/${fileNameO}`, optionImageFile);
-                    if (uploadErrorO) throw uploadErrorO;
-                    const { data: urlDataO } = supabaseClient.storage.from('questions').getPublicUrl(`question-images/${fileNameO}`);
-                    optionImageUrl = urlDataO.publicUrl;
+                    optionImageUrl = await mcqUploadQuestionImage(optionImageFile, '_opt', source);
                 } catch (error) {
                     alert('Error uploading options image: ' + error.message); return;
                 }
@@ -5136,17 +5111,39 @@ Option D" required></textarea>
             const explanationImageFile = document.getElementById('explanationImage').files[0];
             if (explanationImageFile) {
                 try {
-                    const fileExtE = explanationImageFile.name.split('.').pop();
-                    const fileNameE = `${Date.now()}_${Math.random().toString(36).substring(7)}_exp.${fileExtE}`;
-                    const { error: uploadErrorE } = await supabaseClient.storage.from('questions').upload(`question-images/${fileNameE}`, explanationImageFile);
-                    if (uploadErrorE) throw uploadErrorE;
-                    const { data: urlDataE } = supabaseClient.storage.from('questions').getPublicUrl(`question-images/${fileNameE}`);
-                    explanationImageUrl = urlDataE.publicUrl;
+                    explanationImageUrl = await mcqUploadQuestionImage(explanationImageFile, '_exp', source);
                 } catch (error) {
                     alert('Error uploading explanation image: ' + error.message); return;
                 }
             }
             
+            // Editing a question whose source moved between free (TYS, Specimen) and premium:
+            // move the pictures it keeps into the matching bucket (IRON LAW: paid means locked on the server)
+            mcqPendingRemovals = [];
+            mcqProvisionalPublic = [];
+            if (editingQuestionId) {
+                try {
+                    // Every picture the question had when the form opened (kept, replaced or removed) moves
+                    // to the bucket that matches the new source, so no old public link of a paid question survives.
+                    const toPremium = !MCQ_PUBLIC_SOURCES.includes(source);
+                    const crossing = mcqEditOriginals.some(u => toPremium ? !mcqImgPath(u) : !!mcqImgPath(u));
+                    // Removing a public copy needs admin rights, so only admin may move a question with pictures across
+                    if (crossing && userRole !== 'admin') throw new Error('Only the admin account can move a question with pictures between free (TYS, Specimen) and premium sources');
+                    const moved = {};
+                    if (toPremium) for (const u of mcqEditOriginals) moved[u] = await mcqRehomeImage(u, source);
+                    const keep = u => (u && moved[u] !== undefined) ? moved[u] : mcqRehomeImage(u, source);
+                    if (imageUrl === null) editingImageUrl = await keep(editingImageUrl);
+                    if (imageUrl2 === null) editingImageUrl2 = await keep(editingImageUrl2);
+                    if (optionImageUrl === null) editingOptionImageUrl = await keep(editingOptionImageUrl);
+                    if (explanationImageUrl === null) editingExplanationImageUrl = await keep(editingExplanationImageUrl);
+                } catch (error) {
+                    await mcqUndoProvisional();
+                    mcqPendingRemovals = [];
+                    alert('Could not move the existing pictures for the new source: ' + error.message + '\n\nNothing was saved. Please try again.');
+                    return;
+                }
+            }
+
             const question = {
                 text: document.getElementById('questionText').value.trim(),
                 topics: Array.from(document.querySelectorAll('.upload-topic-checkbox:checked')).map(cb => cb.value),
@@ -5166,7 +5163,9 @@ Option D" required></textarea>
             };
             
             if (editingQuestionId) {
-                updateQuestionInSupabase(editingQuestionId, question);
+                const saved = await updateQuestionInSupabase(editingQuestionId, question);
+                if (saved) { mcqProvisionalPublic = []; await mcqFinishRehome(); }
+                else { mcqPendingRemovals = []; await mcqUndoProvisional(); }
             } else {
                 addQuestionToSupabase(question);
             }
@@ -5217,9 +5216,9 @@ Option D" required></textarea>
                 
                 // Build image display
                 let imagesHtml = '';
-                if (question.image_url) imagesHtml += `<div style="margin-top: 1rem;"><img src="${escapeHtml(question.image_url)}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0, 217, 255, 0.3);"></div>`;
-                if (question.image_url_2) imagesHtml += `<div style="margin-top: 0.5rem;"><img src="${escapeHtml(question.image_url_2)}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0, 217, 255, 0.3);"></div>`;
-                if (question.option_image_url) imagesHtml += `<div style="margin-top: 0.5rem;"><p style="font-size:0.8rem; color:var(--accent); margin-bottom:0.3rem;">Options diagram:</p><img src="${escapeHtml(question.option_image_url)}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(255,107,53,0.5);"></div>`;
+                if (question.image_url) imagesHtml += `<div style="margin-top: 1rem;"><img ${mcqSrcAttr(question.image_url)} style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0, 217, 255, 0.3);"></div>`;
+                if (question.image_url_2) imagesHtml += `<div style="margin-top: 0.5rem;"><img ${mcqSrcAttr(question.image_url_2)} style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(0, 217, 255, 0.3);"></div>`;
+                if (question.option_image_url) imagesHtml += `<div style="margin-top: 0.5rem;"><p style="font-size:0.8rem; color:var(--accent); margin-bottom:0.3rem;">Options diagram:</p><img ${mcqSrcAttr(question.option_image_url)} style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid rgba(255,107,53,0.5);"></div>`;
 
                 return `
                 <div class="question-item">
@@ -5245,7 +5244,7 @@ Option D" required></textarea>
                             </li>
                         `).join('')}
                     </ul>
-                    ${(question.explanation || question.explanation_image_url) ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong>${question.explanation ? ` ${sanitizeQuestionText(question.explanation)}` : ''}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
+                    ${(question.explanation || question.explanation_image_url) ? `<div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 0, 0, 0.3); border-radius: 6px;"><strong>Explanation:</strong>${question.explanation ? ` ${sanitizeQuestionText(question.explanation)}` : ''}${question.explanation_image_url ? `<div style="margin-top:0.5rem;"><img ${mcqSrcAttr(question.explanation_image_url)} style="max-width:100%; max-height:200px; border-radius:6px; border:1px solid var(--cyan-border);"></div>` : ''}</div>` : ''}
                     ${question.video_url ? `<div style="margin-top: 1rem;"><a href="${escapeHtml(question.video_url)}" target="_blank" style="color: var(--primary);">Video Explanation</a></div>` : ''}
                 </div>
             `}).join('');
@@ -5609,8 +5608,173 @@ Option D" required></textarea>
 
         // MCQ sources that are Premium only. Free accounts (role 'student') never get these in any
         // MCQ quiz, weak quiz or follow-up. Timed Practice added 16 Nov 2026 (Eric).
+        // ---- Premium MCQ pictures (private bucket 'mcq-premium', 16 Nov 2026) ----
+        // Pictures of Prelim, Promos and Timed Practice MCQs live in a private bucket that only
+        // premium, teacher and admin accounts can read (IRON LAW: paid means locked on the server).
+        // The database keeps a stable link SUPABASE_URL + '/storage/v1/object/authenticated/mcq-premium/<path>';
+        // the page swaps it for a short-lived signed link when the picture is shown.
+        // TYS, Specimen and O-level pictures stay in the public 'questions' bucket (the TYS pages use them).
+        const MCQ_PRIV_BUCKET = 'mcq-premium';
+        const MCQ_PRIV_MARK = '/storage/v1/object/authenticated/' + MCQ_PRIV_BUCKET + '/';
+        const MCQ_PUBLIC_SOURCES = ['TYS', 'Specimen'];
+        const MCQ_BLANK_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        const mcqSignedCache = new Map();   // path -> { url, exp }
+        function mcqImgPath(u) {
+            if (!u || typeof u !== 'string') return null;
+            const i = u.indexOf(MCQ_PRIV_MARK);
+            if (i < 0) return null;
+            try { return decodeURIComponent(u.slice(i + MCQ_PRIV_MARK.length).split('?')[0]); } catch (e) { return null; }
+        }
+        function mcqCached(p) { const c = mcqSignedCache.get(p); return (c && !c.fail && c.exp > Date.now()) ? c.url : null; }
+        function mcqRecentFail(p) { const c = mcqSignedCache.get(p); return !!(c && c.fail && c.exp > Date.now()); }
+        async function mcqSignPaths(paths) {
+            const need = [...new Set(paths)].filter(p => p && !mcqCached(p) && !mcqRecentFail(p));
+            for (let i = 0; i < need.length; i += 100) {
+                const chunk = need.slice(i, i + 100);
+                let data = null, error = null;
+                try { ({ data, error } = await supabaseClient.storage.from(MCQ_PRIV_BUCKET).createSignedUrls(chunk, 8 * 3600)); }
+                catch (e) { error = e; }
+                const got = new Set();
+                if (!error) (data || []).forEach(d => {
+                    if (d && d.path && d.signedUrl && !d.error) { mcqSignedCache.set(d.path, { url: d.signedUrl, exp: Date.now() + 7.5 * 3600 * 1000 }); got.add(d.path); }
+                });
+                if (error) console.warn('Picture links could not be made:', error.message || error);
+                // A path that could not be signed (no access, missing, network) keeps its placeholder; retried after a minute
+                chunk.forEach(p => { if (!got.has(p)) mcqSignedCache.set(p, { fail: true, exp: Date.now() + 60000 }); });
+            }
+        }
+        // For HTML templates: <img ${mcqSrcAttr(url)} ...>
+        function mcqSrcAttr(u) {
+            const p = mcqImgPath(u);
+            if (!p) return 'src="' + escapeHtml(u) + '"';
+            const signed = mcqCached(p);
+            if (signed) return 'src="' + escapeHtml(signed) + '"';
+            return 'src="' + MCQ_BLANK_IMG + '" data-mcq-src="' + escapeHtml(p) + '"';
+        }
+        // For code that sets img.src directly
+        function mcqSetImg(el, u) {
+            if (!el) return;
+            const p = mcqImgPath(u);
+            if (!p) { el.removeAttribute('data-mcq-src'); el.src = u; return; }
+            const signed = mcqCached(p);
+            if (signed) { el.removeAttribute('data-mcq-src'); el.src = signed; return; }
+            el.src = MCQ_BLANK_IMG; el.setAttribute('data-mcq-src', p); mcqScheduleHydrate();
+        }
+        let mcqHydrateTimer = null;
+        function mcqScheduleHydrate() { if (!mcqHydrateTimer) mcqHydrateTimer = setTimeout(mcqHydrate, 0); }
+        async function mcqHydrate() {
+            mcqHydrateTimer = null;
+            const imgs = [...document.querySelectorAll('img[data-mcq-src]')];
+            if (!imgs.length) return;
+            await mcqSignPaths(imgs.map(i => i.getAttribute('data-mcq-src')));
+            let unsigned = 0;
+            imgs.forEach(img => {
+                const p = img.getAttribute('data-mcq-src');
+                const signed = p && mcqCached(p);
+                if (signed) { img.src = signed; img.removeAttribute('data-mcq-src'); }
+                else if (p) unsigned++;
+            });
+            // A link that failed keeps its placeholder; try again after the one-minute wait
+            if (unsigned && !mcqRetryTimer) mcqRetryTimer = setTimeout(() => { mcqRetryTimer = null; mcqScheduleHydrate(); }, 61000);
+        }
+        let mcqRetryTimer = null;
+        // Any picture placeholder added to the page gets its signed link
+        new MutationObserver(muts => {
+            for (const m of muts) { if (m.addedNodes && m.addedNodes.length) { mcqScheduleHydrate(); return; } }
+        }).observe(document.documentElement, { childList: true, subtree: true });
+        // For worksheet HTML shown in a frame or a print window: swap stable links for signed ones
+        async function mcqSignHtml(html) {
+            if (!html || html.indexOf(MCQ_PRIV_MARK) < 0) return html;
+            const prefix = SUPABASE_URL + MCQ_PRIV_MARK;
+            const re = new RegExp(prefix.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '([^"\'\\s<>)]+)', 'g');
+            const paths = [];
+            html.replace(re, (m, p) => { try { paths.push(decodeURIComponent(p.split('?')[0])); } catch (e) {} return m; });
+            await mcqSignPaths(paths);
+            return html.replace(re, (m, p) => {
+                let path = p; try { path = decodeURIComponent(p.split('?')[0]); } catch (e) {}
+                const signed = mcqCached(path);
+                return signed ? escapeHtml(signed) : m;
+            });
+        }
+        // Move a kept picture to the bucket that matches the question's (new) source; returns the link to store.
+        // Free -> premium also removes the public copy so the old link stops working.
+        async function mcqRehomeImage(url, source) {
+            if (!url) return url;
+            const isPublic = MCQ_PUBLIC_SOURCES.includes(source);
+            const privPath = mcqImgPath(url);
+            const pubMark = '/storage/v1/object/public/questions/';
+            const pubIdx = url.indexOf(pubMark);
+            const pubPath = pubIdx >= 0 ? decodeURIComponent(url.slice(pubIdx + pubMark.length).split('?')[0]) : null;
+            if (isPublic && privPath) {
+                const { data, error } = await supabaseClient.storage.from(MCQ_PRIV_BUCKET).download(privPath);
+                if (error) throw error;
+                const up = await supabaseClient.storage.from('questions').upload(privPath, data, { upsert: true, contentType: data.type || undefined });
+                if (up.error) throw up.error;
+                mcqProvisionalPublic.push(privPath);   // removed again if the save fails
+                return supabaseClient.storage.from('questions').getPublicUrl(privPath).data.publicUrl;
+            }
+            if (!isPublic && pubPath) {
+                const { data, error } = await supabaseClient.storage.from('questions').download(pubPath);
+                if (error) throw error;
+                const up = await supabaseClient.storage.from(MCQ_PRIV_BUCKET).upload(pubPath, data, { upsert: true, contentType: data.type || undefined });
+                if (up.error) throw up.error;
+                const privUrl = SUPABASE_URL + MCQ_PRIV_MARK + pubPath;
+                // The public copy is removed only after the question itself has saved (mcqFinishRehome)
+                mcqPendingRemovals.push({ pubPath, pubUrl: url.split('?')[0], privUrl });
+                return privUrl;
+            }
+            return url;
+        }
+        let mcqPendingRemovals = [];
+        let mcqProvisionalPublic = [];
+        let mcqEditOriginals = [];
+        // A save that failed must not leave a paid picture in the public bucket
+        async function mcqUndoProvisional() {
+            const paths = mcqProvisionalPublic; mcqProvisionalPublic = [];
+            if (!paths.length) return;
+            const rm = await supabaseClient.storage.from('questions').remove(paths);
+            if (rm.error || !(rm.data && rm.data.length === paths.length)) alert('The save failed and these pictures could not be taken out of the public folder: ' + paths.join(', ') + '. Please ask Claude to remove them.');
+        }
+        // After the question saved: point saved worksheets at the private copy, then remove the public copy
+        async function mcqFinishRehome() {
+            const todo = mcqPendingRemovals; mcqPendingRemovals = [];
+            const problems = [];
+            for (const t of todo) {
+                try {
+                    const { data: ws, error } = await supabaseClient.from('worksheets')
+                        .select('id, student_html, tutor_html')
+                        .or(`student_html.ilike.*${t.pubPath}*,tutor_html.ilike.*${t.pubPath}*`);
+                    if (error) throw error;
+                    for (const w of (ws || [])) {
+                        const upd = {
+                            student_html: (w.student_html || '').split(t.pubUrl).join(t.privUrl),
+                            tutor_html: (w.tutor_html || '').split(t.pubUrl).join(t.privUrl)
+                        };
+                        const { error: wErr } = await supabaseClient.from('worksheets').update(upd).eq('id', w.id);
+                        if (wErr) throw wErr;
+                    }
+                    const rm = await supabaseClient.storage.from('questions').remove([t.pubPath]);
+                    if (rm.error || !(rm.data && rm.data.length)) throw new Error(rm.error ? rm.error.message : 'not removed');
+                } catch (e) {
+                    problems.push(t.pubPath + ' (' + (e.message || e) + ')');
+                }
+            }
+            if (problems.length) alert('The question saved and its pictures are in the private folder, but these public copies are still there: ' + problems.join(', ') + '. Please ask Claude to remove them.');
+        }
+        // Upload a question picture to the right bucket for its source; returns the link to store
+        async function mcqUploadQuestionImage(file, suffix, source) {
+            const ext = file.name.split('.').pop();
+            const path = `question-images/${Date.now()}_${Math.random().toString(36).substring(7)}${suffix}.${ext}`;
+            const isPublic = MCQ_PUBLIC_SOURCES.includes(source);
+            const bucket = isPublic ? 'questions' : MCQ_PRIV_BUCKET;
+            const { error } = await supabaseClient.storage.from(bucket).upload(path, file);
+            if (error) throw error;
+            if (isPublic) return supabaseClient.storage.from('questions').getPublicUrl(path).data.publicUrl;
+            return SUPABASE_URL + MCQ_PRIV_MARK + path;
+        }
+
         const PREMIUM_ONLY_SOURCES = ['Prelim', 'Promos', 'Timed Practice'];
-        function hiddenFromFree(q) { return userRole === 'student' && PREMIUM_ONLY_SOURCES.includes(q && q.source); }
+        function hiddenFromFree(q) { return userRole === 'student' && !(q && MCQ_PUBLIC_SOURCES.includes(q.source)); }   // matches the database: free = TYS and Specimen only (16 Nov 2026)
 
         // Free students do not get premium-only sources (Prelim, Promos, Timed Practice)
         function filterWeakForRole(qs) {
@@ -5824,14 +5988,14 @@ Option D" required></textarea>
                 const imageContainer = document.createElement('div');
                 imageContainer.className = 'question-image-container';
                 imageContainer.style.cssText = 'margin: 1.5rem 0; text-align: center;';
-                imageContainer.innerHTML = `<img src="${escapeHtml(question.image_url)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
+                imageContainer.innerHTML = `<img ${mcqSrcAttr(question.image_url)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
                 document.getElementById('quizQuestionText').after(imageContainer);
             }
             if (question.image_url_2) {
                 const imageContainer2 = document.createElement('div');
                 imageContainer2.className = 'question-image-container';
                 imageContainer2.style.cssText = 'margin: 0.5rem 0 1.5rem 0; text-align: center;';
-                imageContainer2.innerHTML = `<img src="${escapeHtml(question.image_url_2)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
+                imageContainer2.innerHTML = `<img ${mcqSrcAttr(question.image_url_2)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
                 // Insert after last question-image-container
                 const lastImg = quizQuestion.querySelector('.question-image-container:last-of-type') || document.getElementById('quizQuestionText');
                 lastImg.after(imageContainer2);
@@ -5844,7 +6008,7 @@ Option D" required></textarea>
                 const optImgContainer = document.createElement('div');
                 optImgContainer.className = 'option-image-container';
                 optImgContainer.style.cssText = 'margin: 1rem 0; text-align: center;';
-                optImgContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--accent); margin-bottom:0.5rem;">Options diagram:</p><img src="${escapeHtml(question.option_image_url)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--secondary); box-shadow: var(--shadow-md);">`;
+                optImgContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--accent); margin-bottom:0.5rem;">Options diagram:</p><img ${mcqSrcAttr(question.option_image_url)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--secondary); box-shadow: var(--shadow-md);">`;
                 document.getElementById('quizOptions').before(optImgContainer);
             }
 
@@ -6670,14 +6834,14 @@ Option D" required></textarea>
                 const imageContainer = document.createElement('div');
                 imageContainer.className = 'question-image-container';
                 imageContainer.style.cssText = 'margin: 1.5rem 0; text-align: center;';
-                imageContainer.innerHTML = `<img src="${escapeHtml(question.image_url)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
+                imageContainer.innerHTML = `<img ${mcqSrcAttr(question.image_url)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
                 document.getElementById('quizQuestionText').after(imageContainer);
             }
             if (question.image_url_2) {
                 const imageContainer2 = document.createElement('div');
                 imageContainer2.className = 'question-image-container';
                 imageContainer2.style.cssText = 'margin: 0.5rem 0 1.5rem 0; text-align: center;';
-                imageContainer2.innerHTML = `<img src="${escapeHtml(question.image_url_2)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
+                imageContainer2.innerHTML = `<img ${mcqSrcAttr(question.image_url_2)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--primary); box-shadow: var(--shadow-md);">`;
                 const lastImg2 = quizQuestion.querySelector('.question-image-container:last-of-type') || document.getElementById('quizQuestionText');
                 lastImg2.after(imageContainer2);
             }
@@ -6685,7 +6849,7 @@ Option D" required></textarea>
                 const optImgContainer = document.createElement('div');
                 optImgContainer.className = 'option-image-container';
                 optImgContainer.style.cssText = 'margin: 1rem 0; text-align: center;';
-                optImgContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--accent); margin-bottom:0.5rem;">Options diagram:</p><img src="${escapeHtml(question.option_image_url)}" style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--secondary); box-shadow: var(--shadow-md);">`;
+                optImgContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--accent); margin-bottom:0.5rem;">Options diagram:</p><img ${mcqSrcAttr(question.option_image_url)} style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 2px solid var(--secondary); box-shadow: var(--shadow-md);">`;
                 document.getElementById('quizOptions').before(optImgContainer);
             }
             
@@ -6720,7 +6884,7 @@ Option D" required></textarea>
                 document.getElementById('explanationContainer').style.display = 'block';
                 let explanationHtml = question.explanation ? sanitizeQuestionText(question.explanation) : '';
                 if (question.explanation_image_url) {
-                    explanationHtml += `<div style="margin-top:1rem; text-align:center;"><img src="${escapeHtml(question.explanation_image_url)}" style="max-width:100%; max-height:400px; border-radius:12px; border:2px solid var(--primary); box-shadow:var(--shadow-md);"></div>`;
+                    explanationHtml += `<div style="margin-top:1rem; text-align:center;"><img ${mcqSrcAttr(question.explanation_image_url)} style="max-width:100%; max-height:400px; border-radius:12px; border:2px solid var(--primary); box-shadow:var(--shadow-md);"></div>`;
                 }
                 document.getElementById('quizExplanation').innerHTML = explanationHtml;
             } else {
@@ -7668,10 +7832,10 @@ Option D" required></textarea>
             }).join('');
         }
 
-        function previewWorksheet(wsId, type) {
+        async function previewWorksheet(wsId, type) {
             const ws = allWorksheets.find(w => w.id === wsId);
             if (!ws) return;
-            const html = type === 'tutor' ? ws.tutor_html : ws.student_html;
+            const html = await mcqSignHtml(type === 'tutor' ? ws.tutor_html : ws.student_html);
             const label = type === 'tutor' ? ' — Answer Key' : '';
             document.getElementById('wsPreviewTitle').textContent = ws.title + label;
 
@@ -7888,10 +8052,10 @@ Option D" required></textarea>
             const selected = shuffleArray(available).slice(0, count);
             const customTitle = document.getElementById('pdfTitle').value.trim();
 
-            function printVersion(type) {
-                const html = buildPrintHtml(selected, selectedTopics, selectedDiffs, customTitle, type);
-                const label = type === 'tutor' ? ' — Tutor Answer Key' : ' — Student Version';
+            async function printVersion(type) {
                 const win = window.open('', '_blank');
+                const html = await mcqSignHtml(buildPrintHtml(selected, selectedTopics, selectedDiffs, customTitle, type));
+                const label = type === 'tutor' ? ' — Tutor Answer Key' : ' — Student Version';
                 win.document.write('<html><head><title>' + (customTitle || 'Worksheet') + label + '</title></head><body>' + html + '</body></html>');
                 win.document.close();
                 win.focus();
@@ -8087,6 +8251,7 @@ Option D" required></textarea>
             if (!q) { alert('Question not found.'); return; }
 
             editingQuestionId = id;
+            mcqEditOriginals = [q.image_url, q.image_url_2, q.option_image_url, q.explanation_image_url].filter(Boolean);
             editingImageUrl = q.image_url || null;
             editingImageUrl2 = q.image_url_2 || null;
             editingOptionImageUrl = q.option_image_url || null;
@@ -8115,7 +8280,7 @@ Option D" required></textarea>
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('questionImage').value = '';
             if (q.image_url) {
-                document.getElementById('existingImg').src = q.image_url;
+                mcqSetImg(document.getElementById('existingImg'), q.image_url);
                 document.getElementById('existingImagePreview').style.display = 'block';
             } else {
                 document.getElementById('existingImagePreview').style.display = 'none';
@@ -8125,7 +8290,7 @@ Option D" required></textarea>
             document.getElementById('imagePreview2').style.display = 'none';
             document.getElementById('questionImage2').value = '';
             if (q.image_url_2) {
-                document.getElementById('existingImg2').src = q.image_url_2;
+                mcqSetImg(document.getElementById('existingImg2'), q.image_url_2);
                 document.getElementById('existingImage2Preview').style.display = 'block';
             } else {
                 document.getElementById('existingImage2Preview').style.display = 'none';
@@ -8135,7 +8300,7 @@ Option D" required></textarea>
             document.getElementById('optionImagePreview').style.display = 'none';
             document.getElementById('optionImage').value = '';
             if (q.option_image_url) {
-                document.getElementById('existingOptionImg').src = q.option_image_url;
+                mcqSetImg(document.getElementById('existingOptionImg'), q.option_image_url);
                 document.getElementById('existingOptionImagePreview').style.display = 'block';
             } else {
                 document.getElementById('existingOptionImagePreview').style.display = 'none';
@@ -8145,7 +8310,7 @@ Option D" required></textarea>
             document.getElementById('explanationImagePreview').style.display = 'none';
             document.getElementById('explanationImage').value = '';
             if (q.explanation_image_url) {
-                document.getElementById('existingExplanationImg').src = q.explanation_image_url;
+                mcqSetImg(document.getElementById('existingExplanationImg'), q.explanation_image_url);
                 document.getElementById('existingExplanationImagePreview').style.display = 'block';
             } else {
                 document.getElementById('existingExplanationImagePreview').style.display = 'none';
@@ -8162,6 +8327,7 @@ Option D" required></textarea>
 
         function cancelEdit() {
             editingQuestionId = null;
+            mcqEditOriginals = [];
             editingImageUrl = null;
             editingImageUrl2 = null;
             editingOptionImageUrl = null;
@@ -8231,9 +8397,11 @@ Option D" required></textarea>
                 alert('Question updated successfully!');
                 cancelEdit();
                 loadQuestionsFromSupabase();
+                return true;
             } catch (error) {
                 console.error('Error updating question:', error);
                 alert('Error updating question: ' + error.message);
+                return false;
             }
         }
 

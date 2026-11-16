@@ -6578,6 +6578,11 @@ Option D" required></textarea>
                     orderedAnswers.push(r.user_answer);
                 }
             });
+            // Premium questions (Prelim, Promos, Timed Practice) are locked by the database for free
+            // accounts since 16 Nov 2026, so an old quiz made only of them comes back empty.
+            if (orderedQuestions.length === 0) {
+                throw new Error('This quiz used Premium questions (Prelim, Promos or Timed Practice), so it can only be opened with a Premium account.');
+            }
             return { orderedQuestions, orderedAnswers };
         }
 

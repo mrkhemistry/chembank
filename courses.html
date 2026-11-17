@@ -217,6 +217,7 @@
   var courseDetailView = document.getElementById('courseDetailView');
   var topicListEl = document.getElementById('topicList');
   var myRole = '';
+  var isSharer = false;
   var coursesById = {};
   var currentCourse = null;
 
@@ -235,6 +236,11 @@
       var roleRes = await sb.from('user_profiles').select('role').eq('id', session.user.id).single();
       myRole = (roleRes.data && roleRes.data.role) || '';
     } catch (e) { myRole = ''; }
+    try {
+      // A recordings-only sharer (Teacher Jasmine) may share the Sec courses. The server checks this again.
+      var sharerRes = await sb.from('recording_sharers').select('user_id').eq('user_id', session.user.id).maybeSingle();
+      isSharer = !!(sharerRes.data && sharerRes.data.user_id);
+    } catch (e) { isSharer = false; }
     setupReferralCTA(session);
     loadCourses();
   }
@@ -326,7 +332,7 @@
   function renderVideos(body) {
     var collections = body.collections || [];
     var videos = body.videos || [];
-    var canShare = myRole === 'admin' || (myRole === 'teacher' && currentCourse && currentCourse.teacher_share);
+    var canShare = myRole === 'admin' || ((myRole === 'teacher' || isSharer) && currentCourse && currentCourse.teacher_share);
     document.getElementById('detailSubtitle').textContent = videos.length + ' lesson' + (videos.length === 1 ? '' : 's');
 
     // Group videos by collection

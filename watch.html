@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="strict-origin">
+<title>Mr Khemistry: Lesson Recording</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* A shared lesson link (made by staff on the Lesson Recordings page, valid 1, 7 or 14 days).
+     The link already carries Bunny's signature and expiry; this page only shows the player.
+     Everything after # stays in the browser and is never sent to a server. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #0a0a0a; color: #ffffff; min-height: 100vh; }
+  header { background: #000; border-bottom: 1px solid #2a2a2a; height: 60px; display: flex; align-items: center; padding: 0 1.5rem; }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; line-height: 1.25; margin-bottom: 0.4rem; }
+  .until { color: #00e5ff; font-size: 0.9rem; margin-bottom: 1.2rem; }
+  .player { position: relative; padding-top: 56.25%; background: #000; border-radius: 6px; overflow: hidden; }
+  .player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .note { border: 1px solid #00e5ff; border-radius: 8px; padding: 1.5rem; font-size: 1rem; line-height: 1.6; }
+  .note a { color: #00e5ff; font-weight: 700; }
+  .cta { margin-top: 1.5rem; font-size: 0.95rem; line-height: 1.6; }
+  .cta a { color: #00e5ff; font-weight: 700; }
+</style>
+</head>
+<body>
+<header><div class="logo">Mr Khemistry</div></header>
+<main id="main"></main>
+<script>
+(function () {
+  var main = document.getElementById('main');
+  var WA = 'https://wa.me/6583322534';
+  function note(text) {
+    main.innerHTML = '<div class="note"></div>';
+    main.firstChild.textContent = text + ' ';
+    var a = document.createElement('a');
+    a.href = WA; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'WhatsApp Mr Khemistry (8332 2534)';
+    main.firstChild.appendChild(a);
+  }
+  var p = new URLSearchParams(location.hash.slice(1));
+  var lib = p.get('l') || '', vid = (p.get('v') || '').toLowerCase(), tok = (p.get('t') || '').toLowerCase(), exp = p.get('e') || '';
+  var title = (p.get('n') || 'Lesson recording').slice(0, 120);
+  var ok = /^\d{3,9}$/.test(lib) && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(vid)
+        && /^[0-9a-f]{64}$/.test(tok) && /^\d{9,11}$/.test(exp);
+  if (!ok) { note('This lesson link is broken (part of it may have been cut off when it was copied). For a new link,'); return; }
+  var expires = Number(exp) * 1000;
+  // Bunny itself refuses an expired link; this message is a courtesy, so allow 15 minutes for a
+  // phone whose clock runs fast.
+  if (Date.now() >= expires + 15 * 60 * 1000) { note('This lesson link has expired. For a new link or to sign up for the recordings,'); return; }
+
+  var h1 = document.createElement('h1'); h1.textContent = title;
+  var until = document.createElement('div'); until.className = 'until';
+  until.textContent = 'This link works until ' + new Date(expires).toLocaleString('en-SG', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + '.';
+  var box = document.createElement('div'); box.className = 'player';
+  var f = document.createElement('iframe');
+  f.allow = 'accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;';
+  f.setAttribute('allowfullscreen', '');
+  f.src = 'https://iframe.mediadelivery.net/embed/' + lib + '/' + vid + '?token=' + tok + '&expires=' + exp;
+  box.appendChild(f);
+  var cta = document.createElement('div'); cta.className = 'cta';
+  cta.innerHTML = 'Want every lesson? <a href="https://mrkhemistry.sg/" target="_blank" rel="noopener">See the recorded lesson plans</a> or <a href="' + WA + '" target="_blank" rel="noopener">WhatsApp 8332 2534</a>.';
+  main.appendChild(h1); main.appendChild(until); main.appendChild(box); main.appendChild(cta);
+})();
+</script>
+</body>
+</html>

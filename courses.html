@@ -102,6 +102,18 @@
   .player-wrap { position: relative; padding-top: 56.25%; background: #000; border-radius: 6px; overflow: hidden; }
   .player-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
+  /* Staff: share a lesson with a time-limited link */
+  .video-item .right { display: flex; align-items: center; gap: 0.75rem; }
+  .share-btn { background: transparent; border: 1px solid var(--cyan-border); color: var(--cyan); border-radius: 4px; padding: 0.25rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; }
+  .share-btn:hover { border-color: var(--cyan); }
+  .share-box { background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; padding: 1.5rem; max-width: 520px; width: 100%; }
+  .share-box p { color: var(--text); font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; }
+  .share-days { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .share-days button, .share-actions a, .share-actions button { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); border-radius: 4px; padding: 0.5rem 0.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+  .share-link { width: 100%; background: #000; color: var(--text); border: 1px solid var(--border2); border-radius: 4px; padding: 0.55rem; font-size: 0.8rem; margin-bottom: 0.8rem; }
+  .share-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .share-msg { color: var(--text); font-size: 0.9rem; margin-top: 0.8rem; min-height: 1.2em; }
+
   @media (max-width: 600px) {
     .main { padding: 2rem 1rem; }
     h2.title { font-size: 1.8rem; }
@@ -170,6 +182,30 @@
   </div>
 </div>
 
+<!-- Share modal (staff only) -->
+<div class="modal" id="shareModal">
+  <div class="share-box">
+    <div class="modal-header">
+      <div class="modal-title" id="shareTitle">Share this lesson</div>
+      <button class="modal-close" id="shareClose">Close</button>
+    </div>
+    <p>Make a link anyone can open without logging in. It stops working after the time you choose.</p>
+    <div class="share-days">
+      <button type="button" data-days="1">1 day</button>
+      <button type="button" data-days="7">7 days</button>
+      <button type="button" data-days="14">14 days</button>
+    </div>
+    <div id="shareResult" style="display:none;">
+      <input class="share-link" id="shareLink" readonly>
+      <div class="share-actions">
+        <button type="button" id="shareCopy">Copy link</button>
+        <a id="shareWhatsApp" href="#" target="_blank" rel="noopener">Send on WhatsApp</a>
+      </div>
+    </div>
+    <div class="share-msg" id="shareMsg"></div>
+  </div>
+</div>
+
 <script>
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
@@ -180,6 +216,9 @@
   var courseListView = document.getElementById('courseListView');
   var courseDetailView = document.getElementById('courseDetailView');
   var topicListEl = document.getElementById('topicList');
+  var myRole = '';
+  var coursesById = {};
+  var currentCourse = null;
 
   function showState(container, msg, withSpinner) {
     container.innerHTML = '<div class="state">' + (withSpinner ? '<div class="spinner"></div><br>' : '') + msg + '</div>';
@@ -192,6 +231,10 @@
       return;
     }
     document.getElementById('userEmail').textContent = session.user.email;
+    try {
+      var roleRes = await sb.from('user_profiles').select('role').eq('id', session.user.id).single();
+      myRole = (roleRes.data && roleRes.data.role) || '';
+    } catch (e) { myRole = ''; }
     setupReferralCTA(session);
     loadCourses();
   }
@@ -223,7 +266,7 @@
     showState(courseListEl, 'Loading courses...', true);
     var { data, error } = await sb
       .from('courses')
-      .select('id, name, bunny_library_id, display_order')
+      .select('id, name, bunny_library_id, display_order, teacher_share')
       .order('display_order');
     if (error) {
       showState(courseListEl, 'Error loading courses: ' + error.message);
@@ -233,6 +276,7 @@
       showState(courseListEl, 'You are not enrolled in any courses yet. Contact Mr Khemistry to get access.');
       return;
     }
+    data.forEach(function(c) { coursesById[c.id] = c; });
     courseListEl.innerHTML = '<div class="course-grid">' +
       data.map(function(c) {
         return '<div class="course-card" data-id="' + c.id + '" data-name="' + escapeAttr(c.name) + '">' +
@@ -250,6 +294,7 @@
   }
 
   async function openCourse(courseId, courseName) {
+    currentCourse = coursesById[courseId] || { id: courseId, teacher_share: false };
     courseListView.style.display = 'none';
     courseDetailView.style.display = 'block';
     document.getElementById('detailTitle').textContent = courseName;
@@ -281,7 +326,7 @@
   function renderVideos(body) {
     var collections = body.collections || [];
     var videos = body.videos || [];
-    var libraryId = body.course.library_id;
+    var canShare = myRole === 'admin' || (myRole === 'teacher' && currentCourse && currentCourse.teacher_share);
     document.getElementById('detailSubtitle').textContent = videos.length + ' lesson' + (videos.length === 1 ? '' : 's');
 
     // Group videos by collection
@@ -307,9 +352,12 @@
       if (!c || !c.videos.length) return;
       html += '<div class="topic"><h3>' + escapeHtml(c.name) + '</h3><div class="video-list">';
       c.videos.forEach(function(v) {
-        html += '<div class="video-item" data-guid="' + v.guid + '" data-lib="' + libraryId + '" data-title="' + escapeAttr(v.title) + '">' +
+        html += '<div class="video-item" data-guid="' + escapeAttr(v.guid) + '" data-title="' + escapeAttr(v.title) + '">' +
           '<div class="title">' + escapeHtml(v.title) + '</div>' +
-          '<div class="duration">' + fmtDuration(v.length) + '</div>' +
+          '<div class="right">' +
+            (canShare ? '<button type="button" class="share-btn">Share</button>' : '') +
+            '<div class="duration">' + fmtDuration(v.length) + '</div>' +
+          '</div>' +
         '</div>';
       });
       html += '</div></div>';
@@ -318,24 +366,93 @@
     topicListEl.innerHTML = html || '<div class="state">No videos found in this course.</div>';
     Array.prototype.forEach.call(document.querySelectorAll('.video-item'), function(el) {
       el.addEventListener('click', function() {
-        openPlayer(el.getAttribute('data-lib'), el.getAttribute('data-guid'), el.getAttribute('data-title'));
+        openPlayer(el.getAttribute('data-guid'), el.getAttribute('data-title'));
+      });
+      var sbtn = el.querySelector('.share-btn');
+      if (sbtn) sbtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openShare(el.getAttribute('data-guid'), el.getAttribute('data-title'));
       });
     });
   }
 
-  function openPlayer(libraryId, guid, title) {
-    document.getElementById('playerTitle').textContent = title;
-    document.getElementById('playerFrame').src = 'https://iframe.mediadelivery.net/embed/' + libraryId + '/' + guid + '?autoplay=true';
+  // Signed, expiring links come from the server (Edge Function video-link), never built here.
+  async function callVideoLink(payload) {
+    var { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'portal.html'; throw new Error('Please sign in again.'); }
+    var res = await fetch(SUPABASE_URL + '/functions/v1/video-link', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var body = await res.json().catch(function() { return {}; });
+    if (!res.ok) throw new Error(body.error || ('Error ' + res.status));
+    return body;
+  }
+
+  var playerRequest = 0;
+  async function openPlayer(guid, title) {
+    var mine = ++playerRequest;
+    document.getElementById('playerTitle').textContent = 'Loading ' + title + '...';
+    document.getElementById('playerFrame').src = '';
     document.getElementById('playerModal').classList.add('active');
+    try {
+      var r = await callVideoLink({ course_id: currentCourse.id, guid: guid });
+      if (mine !== playerRequest) return;   // another lesson was opened meanwhile
+      document.getElementById('playerTitle').textContent = title;
+      document.getElementById('playerFrame').src = r.url;
+    } catch (e) {
+      if (mine !== playerRequest) return;
+      document.getElementById('playerTitle').textContent = 'This lesson could not be opened: ' + e.message;
+    }
   }
 
   document.getElementById('playerClose').addEventListener('click', function() {
+    playerRequest++;
     document.getElementById('playerFrame').src = '';
     document.getElementById('playerModal').classList.remove('active');
   });
   document.getElementById('playerModal').addEventListener('click', function(e) {
     if (e.target === this) document.getElementById('playerClose').click();
   });
+
+  var shareGuid = null;
+  var shareRequest = 0;   // a slow answer for an earlier lesson is ignored
+  function openShare(guid, title) {
+    shareRequest++;
+    shareGuid = guid;
+    document.getElementById('shareTitle').textContent = 'Share: ' + title;
+    document.getElementById('shareResult').style.display = 'none';
+    document.getElementById('shareMsg').textContent = '';
+    document.getElementById('shareModal').classList.add('active');
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('#shareModal [data-days]'), function(b) {
+    b.addEventListener('click', async function() {
+      var days = Number(b.getAttribute('data-days'));
+      var msg = document.getElementById('shareMsg');
+      var mine = ++shareRequest;
+      msg.textContent = 'Making the link...';
+      document.getElementById('shareResult').style.display = 'none';
+      try {
+        var r = await callVideoLink({ course_id: currentCourse.id, guid: shareGuid, share_days: days });
+        if (mine !== shareRequest) return;   // closed, or another lesson or length chosen meanwhile
+        var until = new Date(r.expires * 1000).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+        document.getElementById('shareLink').value = r.share_url;
+        document.getElementById('shareWhatsApp').href = 'https://wa.me/?text=' + encodeURIComponent('Here is the lesson recording (link works until ' + until + '): ' + r.share_url);
+        document.getElementById('shareResult').style.display = 'block';
+        msg.textContent = 'Link ready. It works until ' + until + '.';
+      } catch (e) { if (mine === shareRequest) msg.textContent = 'Could not make the link: ' + e.message; }
+    });
+  });
+  document.getElementById('shareCopy').addEventListener('click', function() {
+    var input = document.getElementById('shareLink');
+    input.select();
+    (navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject()).then(
+      function() { document.getElementById('shareMsg').textContent = 'Copied.'; },
+      function() { document.execCommand('copy'); document.getElementById('shareMsg').textContent = 'Copied.'; });
+  });
+  document.getElementById('shareClose').addEventListener('click', function() { shareRequest++; document.getElementById('shareModal').classList.remove('active'); });
+  document.getElementById('shareModal').addEventListener('click', function(e) { if (e.target === this) { shareRequest++; this.classList.remove('active'); } });
 
   document.getElementById('backToCourses').addEventListener('click', function(e) {
     e.preventDefault();

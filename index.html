@@ -4252,6 +4252,7 @@ Option D" required></textarea>
                 showView('quiz');
                 displayQuizQuestion();
                 saveQuizProgress();
+                logRevisionStart(pkg, ordered.length);
             } catch (e) {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 alert('Error loading revision quiz: ' + e.message);
@@ -7207,6 +7208,19 @@ Option D" required></textarea>
             try {
                 supabaseClient.rpc('log_user_activity', { p_user_id: currentUser.id, p_activity_type: kind, p_activity_data: { tab: key } })
                     .then(() => {}, () => {});
+            } catch (e) {}
+        }
+
+        // Revision MCQ start log (19 Nov 2026): one row EVERY time a student starts a revision set, so starts can be
+        // compared with finished attempts (quiz_attempts only saves on Submit). Students only; fire-and-forget.
+        function logRevisionStart(pkg, nQuestions) {
+            if (!currentUser || !userRole || userRole === 'admin' || userRole === 'teacher' || !pkg) return;
+            try {
+                supabaseClient.rpc('log_user_activity', {
+                    p_user_id: currentUser.id,
+                    p_activity_type: 'revision_start',
+                    p_activity_data: { set: pkg.topic, questions: nQuestions }
+                }).then(() => {}, () => {});
             } catch (e) {}
         }
 

@@ -57,6 +57,10 @@
   .course-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.35rem; margin-bottom: 0.5rem; }
   .course-card .meta { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
   .course-card .cta { font-size: 0.8rem; color: var(--cyan); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 1rem; }
+  /* Google Classroom notes button (the link is only readable by students enrolled in the course) */
+  .notes-btn { display: inline-block; margin-top: 0.9rem; background: #00666f; color: #fff; border-radius: 6px; padding: 0.55rem 0.95rem; font-size: 0.85rem; font-weight: 700; text-decoration: none; }
+  .notes-btn:hover { background: #00525a; }
+  #detailNotes { margin: -1.2rem 0 1.6rem; }
 
   /* Topic/video list */
   .topic { margin-bottom: 2rem; animation: fadeUp 0.3s ease forwards; }
@@ -152,6 +156,7 @@
     <div class="eyebrow" id="detailEyebrow">Course</div>
     <h2 class="title" id="detailTitle"></h2>
     <p class="subtitle" id="detailSubtitle"></p>
+    <div id="detailNotes" style="display:none;"></div>
 
     <!-- Referral CTA -->
     <div class="referral-cta" id="referralCTA">
@@ -220,6 +225,7 @@
   var isSharer = false;
   var coursesById = {};
   var currentCourse = null;
+  var openSeq = 0;   // only the latest course opened may draw its lessons
 
   function showState(container, msg, withSpinner) {
     container.innerHTML = '<div class="state">' + (withSpinner ? '<div class="spinner"></div><br>' : '') + msg + '</div>';
@@ -272,8 +278,13 @@
     showState(courseListEl, 'Loading courses...', true);
     var { data, error } = await sb
       .from('courses')
-      .select('id, name, bunny_library_id, display_order, teacher_share')
+      .select('id, name, bunny_library_id, display_order, teacher_share, classroom_url')
       .order('display_order');
+    if (error) {
+      // Before the classroom_url column exists, load the courses without it
+      var retry = await sb.from('courses').select('id, name, bunny_library_id, display_order, teacher_share').order('display_order');
+      data = retry.data; error = retry.error;
+    }
     if (error) {
       showState(courseListEl, 'Error loading courses: ' + error.message);
       return;
@@ -289,14 +300,25 @@
           '<div class="meta">Course</div>' +
           '<h3>' + escapeHtml(c.name) + '</h3>' +
           '<div class="cta">View Lessons &rarr;</div>' +
+          notesButton(c) +
         '</div>';
       }).join('') +
       '</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('.course-card .notes-btn'), function(el) {
+      el.addEventListener('click', function(ev) { ev.stopPropagation(); });
+    });
     Array.prototype.forEach.call(document.querySelectorAll('.course-card'), function(el) {
       el.addEventListener('click', function() {
         openCourse(el.getAttribute('data-id'), el.getAttribute('data-name'));
       });
     });
+  }
+
+  // The course's Google Classroom (soft-copy notes and worksheets), when one is set for it
+  function notesButton(c) {
+    var url = c && typeof c.classroom_url === 'string' ? c.classroom_url : '';
+    if (url.indexOf('https://classroom.google.com/') !== 0) return '';
+    return '<a class="notes-btn" href="' + escapeAttr(url) + '" target="_blank" rel="noopener">Notes on Google Classroom &rarr;</a>';
   }
 
   async function openCourse(courseId, courseName) {
@@ -305,7 +327,11 @@
     courseDetailView.style.display = 'block';
     document.getElementById('detailTitle').textContent = courseName;
     document.getElementById('detailSubtitle').textContent = 'Loading lessons...';
+    var notesEl = document.getElementById('detailNotes');
+    notesEl.innerHTML = notesButton(currentCourse);
+    notesEl.style.display = notesEl.innerHTML ? 'block' : 'none';
     showState(topicListEl, 'Loading videos...', true);
+    var mySeq = ++openSeq;
 
     var { data: { session } } = await sb.auth.getSession();
     try {
@@ -319,12 +345,14 @@
         body: JSON.stringify({ course_id: courseId })
       });
       var body = await res.json();
+      if (mySeq !== openSeq) return;   // the student has since opened another course
       if (!res.ok) {
         showState(topicListEl, 'Error: ' + (body.error || res.status));
         return;
       }
       renderVideos(body);
     } catch (e) {
+      if (mySeq !== openSeq) return;
       showState(topicListEl, 'Network error: ' + e.message);
     }
   }

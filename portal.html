@@ -189,8 +189,8 @@
       <input type="password" id="signupPassword" placeholder="Minimum 6 characters">
     </div>
     <div class="form-group">
-      <label for="signupJoinCode">Join Code</label>
-      <input type="text" id="signupJoinCode" placeholder="From your teacher" style="text-transform:uppercase;">
+      <label for="signupJoinCode">Join Code (optional)</label>
+      <input type="text" id="signupJoinCode" placeholder="Leave blank for a free account" style="text-transform:uppercase;">
     </div>
     <button class="btn-primary" id="signupBtn">Create Account</button>
     <div class="error-msg" id="signupError"></div>
@@ -309,6 +309,8 @@
 (function() {
   var SUPABASE_URL = 'https://fvjqsohhitpnkvfirosc.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_xwEiareEvHfeAEs9RciKlA_TtlIyH-j';
+  // Learning Path (24 Nov 2026): true sends a brand-new free account straight into KhemBank. Flip with PATH_MODE = 'on' in index.html.
+  var PATH_FOR_NEW_SIGNUPS = false;
 
   function reveal() { document.body.classList.remove('auth-checking'); }
   // Safety net: never leave the page blank if the check hangs
@@ -542,8 +544,9 @@
       var successEl = document.getElementById('signupSuccess');
       errEl.classList.remove('visible');
       successEl.classList.remove('visible');
-      if (!name || !email || !password || !joinCode) {
-        errEl.textContent = 'Please fill in all fields.';
+      // Join code optional since 24 Nov 2026: blank = free account (handle_new_user defaults the role to 'student')
+      if (!name || !email || !password) {
+        errEl.textContent = 'Please fill in your name, email and password.';
         errEl.classList.add('visible');
         return;
       }
@@ -555,19 +558,28 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Creating account...';
       try {
-        // Validate join code server-side (codes are not exposed to the client)
-        var codeCheck = await sb.rpc('validate_join_code', { p_code: joinCode });
-        if (codeCheck.error) throw new Error('Could not validate join code. Please try again.');
-        var codeInfo = codeCheck.data || {};
-        if (!codeInfo.exists) throw new Error('Invalid or expired join code.');
-        if (codeInfo.reached_max) throw new Error('This join code has reached its maximum uses.');
+        // Validate join code server-side (codes are not exposed to the client); skipped when left blank
+        if (joinCode) {
+          var codeCheck = await sb.rpc('validate_join_code', { p_code: joinCode });
+          if (codeCheck.error) throw new Error('Could not validate join code. Please try again.');
+          var codeInfo = codeCheck.data || {};
+          if (!codeInfo.exists) throw new Error('Invalid or expired join code. Leave it blank for a free account.');
+          if (codeInfo.reached_max) throw new Error('This join code has reached its maximum uses.');
+        }
         // Create auth account — DB trigger reads join_code from metadata to set role/enrollment
         var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode } } });
         if (signupResult.error) throw signupResult.error;
         btn.disabled = false;
         btn.textContent = 'Create Account';
-        // Signup already logged them in: go straight to the dashboard
+        // Signup already logged them in: a new free account goes straight to its KhemBank Learning Path
+        // (switch on together with PATH_MODE = 'on' in index.html); everyone else gets the dashboard
         if (signupResult.data && signupResult.data.session) {
+          if (PATH_FOR_NEW_SIGNUPS) {
+            try {
+              var prof = await sb.from('user_profiles').select('role').eq('id', signupResult.data.session.user.id).single();
+              if (prof.data && prof.data.role === 'student') { window.location.href = 'index.html'; return; }
+            } catch (e) {}
+          }
           showDashboard(signupResult.data.session.user);
           return;
         }

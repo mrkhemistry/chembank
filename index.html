@@ -1492,6 +1492,105 @@
         #studentCheckPanel .question-images img:hover { opacity: 0.85; }
         #studentCheckPanel .pulse { animation: pulse 2s ease infinite; }
 
+        /* ===== Learning Path (free accounts, 24 Nov 2026) =====
+           Duolingo-style home: one path of 5-question lessons, each answer checked at once.
+           Eric's rules: no grey text, never white on bright cyan (dark teal #00666f behind white). */
+        .lp-wrap { max-width: 560px; margin: 0 auto; padding-bottom: 12rem; }
+        .lp-top { display: flex; align-items: center; gap: 0.9rem; justify-content: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
+        .lp-top .lp-hello { margin-right: auto; font-weight: 700; font-size: 1.05rem; color: var(--white); }
+        .lp-chip { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 700; font-size: 1rem; color: var(--white); }
+        .lp-chip.fire { color: #ffb347; }
+        .lp-chip.pts { color: #ffd166; }
+        .lp-chip svg { width: 20px; height: 20px; }
+        .lp-goal { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.9rem; color: var(--white); }
+        .lp-ring { width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(#06FFA5 var(--p, 0%), #2a2a2a var(--p, 0%) 100%); position: relative; }
+        .lp-ring::after { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--dark); }
+        .lp-unit { background: #00666f; color: #fff; border-radius: 16px; padding: 0.9rem 1.1rem; margin: 1.6rem 0 0.4rem; display: grid; gap: 0.15rem; }
+        .lp-unit:first-child { margin-top: 0; }
+        .lp-unit .lp-unit-k { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+        .lp-unit .lp-unit-t { font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
+        .lp-unit .lp-unit-n { font-size: 0.85rem; }
+        .lp-path { display: grid; gap: 0.35rem; padding: 0.6rem 0; }
+        .lp-step { display: flex; align-items: center; gap: 0.9rem; background: none; border: 0; color: var(--white); font: inherit; text-align: left; cursor: pointer; padding: 0.35rem 0.4rem; border-radius: 14px; width: 100%; }
+        .lp-step:hover, .lp-step:focus-visible { background: rgba(0,229,255,0.07); outline: none; }
+        .lp-step:nth-child(4n+2) { padding-left: 2.6rem; }
+        .lp-step:nth-child(4n+3) { padding-left: 4.2rem; }
+        .lp-step:nth-child(4n+4) { padding-left: 2.6rem; }
+        .lp-node { flex: 0 0 auto; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.2rem;
+            background: #1c1c1c; color: var(--white); border: 2px solid #3a3a3a; box-shadow: 0 4px 0 #2a2a2a; }
+        .lp-step.done .lp-node { background: #ffc94d; color: #3a2600; border-color: #ffc94d; box-shadow: 0 4px 0 #a8791a; }
+        .lp-step.next .lp-node { background: var(--primary); color: #00323a; border-color: var(--primary); box-shadow: 0 4px 0 #0a8aa0, 0 0 0 6px rgba(0,229,255,0.22); }
+        .lp-step .lp-st { display: grid; gap: 0.1rem; min-width: 0; }
+        .lp-step .lp-st b { font-size: 0.98rem; font-weight: 600; line-height: 1.35; }
+        .lp-step .lp-st span { font-size: 0.82rem; color: var(--primary); }
+        .lp-step.done .lp-st span { color: #ffd166; }
+        .lp-cta { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: linear-gradient(to top, var(--dark) 75%, rgba(10,10,10,0));
+            padding: 1.4rem max(16px, env(safe-area-inset-left, 0px)) calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+        .lp-cta-in { max-width: 560px; margin: 0 auto; display: grid; gap: 0.6rem; }
+        .lp-btn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 0.95rem 1rem; font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer; text-align: center; text-decoration: none; }
+        .lp-btn.go { background: #00666f; color: #fff; box-shadow: 0 4px 0 #003f45; }
+        .lp-btn.go:active { transform: translateY(2px); box-shadow: 0 2px 0 #003f45; }
+        .lp-btn.go:disabled { background: #1c1c1c; color: var(--white); box-shadow: none; border: 2px solid #3a3a3a; cursor: default; opacity: 0.9; }
+        .lp-btn.ok { background: #06FFA5; color: #052a1a; box-shadow: 0 4px 0 #04a86c; }
+        .lp-btn.bad { background: #ff5555; color: #fff; box-shadow: 0 4px 0 #a83232; }
+        .lp-btn.ghost { background: transparent; color: var(--white); border: 2px solid #3a3a3a; }
+        .lp-tabs { display: flex; justify-content: space-around; border-top: 1px solid #2a2a2a; padding-top: 0.55rem; }
+        .lp-tabs button { background: none; border: 0; color: var(--white); font: inherit; font-weight: 600; font-size: 0.92rem; padding: 0.35rem 0.8rem; cursor: pointer; border-radius: 10px; }
+        .lp-tabs button.on { color: var(--primary); }
+        .lp-tabs button:focus-visible { outline: 2px solid var(--primary); }
+        .lp-link { background: none; border: 0; color: var(--primary); font: inherit; font-size: 0.92rem; text-decoration: underline; cursor: pointer; padding: 0.2rem 0; }
+        .lp-note { font-size: 0.9rem; color: var(--white); line-height: 1.5; }
+        /* Path chooser */
+        .lp-choose { display: grid; gap: 1rem; padding-top: 0.5rem; }
+        .lp-choose h2 { font-size: 1.6rem; line-height: 1.25; color: var(--white); }
+        .lp-choice { display: grid; gap: 0.3rem; text-align: left; background: #141414; border: 2px solid #3a3a3a; border-radius: 16px; padding: 1rem 1.1rem; color: var(--white); font: inherit; cursor: pointer; }
+        .lp-choice b { font-size: 1.1rem; }
+        .lp-choice span { font-size: 0.92rem; line-height: 1.5; }
+        .lp-choice.sel { border-color: var(--primary); background: rgba(0,229,255,0.08); }
+        /* Lesson */
+        .lp-lbar { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.1rem; }
+        .lp-x { background: none; border: 0; color: var(--white); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.4rem; }
+        .lp-prog { flex: 1; height: 14px; background: #2a2a2a; border-radius: 8px; overflow: hidden; }
+        .lp-prog span { display: block; height: 100%; width: 0; background: #06FFA5; border-radius: 8px; transition: width 0.35s ease; }
+        .lp-count { font-weight: 700; font-size: 0.9rem; color: var(--white); }
+        .lp-ltitle { font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-bottom: 0.4rem; }
+        .lp-qsrc { display: inline-block; font-size: 0.78rem; font-weight: 600; background: #00666f; color: #fff; border-radius: 6px; padding: 0.1rem 0.5rem; margin-bottom: 0.7rem; }
+        .lp-qtext { font-size: 1.05rem; line-height: 1.65; color: var(--white); }
+        .lp-qimg { margin: 1rem 0; text-align: center; }
+        .lp-qimg img { max-width: 100%; max-height: 380px; border-radius: 10px; background: #fff; }
+        .lp-opts { display: grid; gap: 0.6rem; margin-top: 1.1rem; }
+        .lp-opt { display: flex; gap: 0.8rem; align-items: flex-start; text-align: left; width: 100%; background: #141414; border: 2px solid #3a3a3a; border-radius: 14px; padding: 0.8rem 0.9rem; color: var(--white); font: inherit; cursor: pointer; box-shadow: 0 3px 0 #2a2a2a; }
+        .lp-opt .lp-ol { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; border: 2px solid #3a3a3a; display: grid; place-items: center; font-weight: 700; }
+        .lp-opt .lp-ot { min-width: 0; line-height: 1.55; overflow-x: auto; }
+        .lp-opt.sel { border-color: var(--primary); background: rgba(0,229,255,0.08); }
+        .lp-opt.sel .lp-ol { border-color: var(--primary); color: var(--primary); }
+        .lp-opt.right { border-color: #06FFA5; background: rgba(6,255,165,0.12); }
+        .lp-opt.right .lp-ol { border-color: #06FFA5; color: #06FFA5; }
+        .lp-opt.wrong { border-color: #ff5555; background: rgba(255,85,85,0.12); }
+        .lp-opt.wrong .lp-ol { border-color: #ff5555; color: #ff8a8a; }
+        .lp-opt:disabled { cursor: default; }
+        .lp-fb { margin-top: 1.2rem; border-radius: 14px; padding: 1rem 1.1rem; display: grid; gap: 0.6rem; scroll-margin-top: 150px; }
+        .lp-fb.ok { background: rgba(6,255,165,0.1); border: 2px solid #06FFA5; }
+        .lp-fb.bad { background: rgba(255,85,85,0.1); border: 2px solid #ff5555; }
+        .lp-fb .lp-fbh { font-size: 1.2rem; font-weight: 800; }
+        .lp-fb.ok .lp-fbh { color: #06FFA5; }
+        .lp-fb.bad .lp-fbh { color: #ff8a8a; }
+        .lp-fb .lp-exp { line-height: 1.65; color: var(--white); overflow-x: auto; }
+        .lp-fb .lp-exp img { max-width: 100%; border-radius: 10px; background: #fff; margin-top: 0.6rem; }
+        /* Lesson complete */
+        .lp-done { text-align: center; display: grid; gap: 1.2rem; padding-top: 1.5rem; }
+        .lp-done h2 { font-size: 2rem; color: var(--white); }
+        .lp-done .lp-sub { font-size: 1rem; color: var(--primary); font-weight: 600; }
+        .lp-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
+        .lp-stat { border: 2px solid #3a3a3a; border-radius: 14px; padding: 0.8rem 0.4rem; display: grid; gap: 0.2rem; }
+        .lp-stat b { font-size: 1.5rem; }
+        .lp-stat span { font-size: 0.85rem; color: var(--white); }
+        .lp-stat.c b { color: var(--primary); } .lp-stat.p b { color: #ffd166; } .lp-stat.s b { color: #ffb347; }
+        @media (max-width: 480px) {
+            .lp-step:nth-child(4n+2), .lp-step:nth-child(4n+4) { padding-left: 1.6rem; }
+            .lp-step:nth-child(4n+3) { padding-left: 2.8rem; }
+        }
+        @media (prefers-reduced-motion: reduce) { .lp-prog span { transition: none; } }
     </style>
 </head>
 <body>
@@ -1565,9 +1664,9 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Join Code</label>
-                        <input type="text" id="signupJoinCode" placeholder="Enter your join code (e.g., CHEM2026)" required style="text-transform: uppercase;">
-                        <small style="opacity: 0.7;">Get this from your teacher</small>
+                        <label>Join Code (optional)</label>
+                        <input type="text" id="signupJoinCode" placeholder="Leave blank for a free account" style="text-transform: uppercase;">
+                        <small>Only if Mr Khemistry gave you a code</small>
                     </div>
                     
                     <div id="signupError" class="error-message" style="display: none;"></div>
@@ -1630,6 +1729,27 @@
     </header>
 
     <div class="container">
+        <!-- Learning Path (free accounts, 24 Nov 2026): path home, lesson and lesson-complete screens. Filled by the lp* functions. -->
+        <div id="pathView" class="view">
+            <div class="lp-wrap" id="lpHome"></div>
+        </div>
+        <div id="lessonView" class="view">
+            <div class="lp-wrap">
+                <div class="lp-lbar">
+                    <button class="lp-x" type="button" onclick="lpQuitLesson()" aria-label="Leave lesson">&#10005;</button>
+                    <div class="lp-prog" aria-hidden="true"><span id="lpProg"></span></div>
+                    <span class="lp-count" id="lpCount"></span>
+                </div>
+                <div class="lp-ltitle" id="lpLessonTitle"></div>
+                <div id="lpQuestion"></div>
+            </div>
+            <div class="lp-cta"><div class="lp-cta-in">
+                <button class="lp-btn go" type="button" id="lpMainBtn" onclick="lpMain()" disabled>Check</button>
+            </div></div>
+        </div>
+        <div id="lessonDoneView" class="view">
+            <div class="lp-wrap"><div class="lp-done" id="lpDone"></div></div>
+        </div>
         <!-- Welcome View -->
         <div id="welcomeView" class="view active">
             <div class="welcome-screen">
@@ -3853,6 +3973,7 @@ Option D" required></textarea>
                 if (teacherCard) teacherCard.style.display = 'block';
                 const structuredCard = document.getElementById('structuredCard');
                 if (structuredCard) structuredCard.style.display = 'block';
+                if (pathEnabled() && !deepLinkTab) { lpOpenHome(); return; }   // admin preview of the Learning Path (?path=1)
                 const restoreView = savedView || 'welcome';
                 const savedTab = (restoreView === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
                 showView(restoreView);
@@ -3881,6 +4002,10 @@ Option D" required></textarea>
                     const modal = document.getElementById('namePromptModal');
                     modal.style.display = 'flex';
                     setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
+                } else if (pathEnabled() && !deepLinkTab) {
+                    // Learning Path (free accounts): land on the path home, not the four tabs
+                    lpOpenHome();
+                    setTimeout(() => updateResumeButton(), 500);
                 } else {
                     // Read saved tab before showView resets it
                     const savedTab = sessionStorage.getItem('chembank_lastStudentTab');
@@ -3996,7 +4121,9 @@ Option D" required></textarea>
                     errorDiv.style.display = 'none';
                     
                     try {
-                        // Validate join code server-side (codes are not exposed to the client)
+                        // Validate join code server-side (codes are not exposed to the client).
+                        // The code is optional since 24 Nov 2026: a blank code makes a free account (handle_new_user defaults to 'student').
+                        if (joinCode) {
                         const { data: codeInfo, error: codeError } = await supabaseClient
                             .rpc('validate_join_code', { p_code: joinCode });
 
@@ -4004,10 +4131,11 @@ Option D" required></textarea>
                             throw new Error('Could not validate join code. Please try again.');
                         }
                         if (!codeInfo || !codeInfo.exists) {
-                            throw new Error('Invalid or expired join code');
+                            throw new Error('Invalid or expired join code. Leave it blank for a free account.');
                         }
                         if (codeInfo.reached_max) {
                             throw new Error('This join code has reached its maximum uses');
+                        }
                         }
 
                         // Create auth account — the handle_new_user DB trigger reads the join
@@ -4022,8 +4150,7 @@ Option D" required></textarea>
 
                         if (authError) throw authError;
 
-                        // Auto-login (session is already created by signUp)
-                        alert('Account created successfully! Welcome to KhemBank!');
+                        // Auto-login (session is already created by signUp); a free account lands on its Learning Path
                         await checkAuthState();
                         
                     } catch (error) {
@@ -5340,8 +5467,8 @@ Option D" required></textarea>
             
             updateNavigation();
 
-            // Persist current view so refresh restores it
-            if (!['login', 'signup', 'forgotPassword'].includes(viewName)) {
+            // Persist current view so refresh restores it (path screens are rebuilt from scratch, never restored)
+            if (!['login', 'signup', 'forgotPassword', 'path', 'lesson', 'lessonDone'].includes(viewName)) {
                 sessionStorage.setItem('chembank_lastView', viewName);
             }
 
@@ -5394,10 +5521,20 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             } else if (viewId === 'studentView') {
-                buttons = `
+                buttons = pathEnabled() ? `
+                    <button class="btn btn-primary" onclick="lpOpenHome()">My path</button>
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+                ` : `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
+            } else if (viewId === 'pathView') {
+                buttons = `
+                    <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+                `;
+            } else if (viewId === 'lessonView' || viewId === 'lessonDoneView') {
+                headerUsername.textContent = '';
+                buttons = '';
             } else if (viewId === 'quizView') {
                 headerUsername.textContent = '';
                 buttons = `
@@ -5405,13 +5542,13 @@ Option D" required></textarea>
                 `;
             } else if (viewId === 'resultsView') {
                 buttons = `
-                    <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
+                    <button class="btn btn-secondary" onclick="${pathEnabled() ? 'lpOpenHome()' : "showView('welcome')"}">${pathEnabled() ? 'My path' : 'Home'}</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             }
 
-            // Way back to the student portal cards (not mid-quiz)
-            if (viewId !== 'quizView') {
+            // Way back to the student portal cards (not mid-quiz or mid-lesson)
+            if (viewId !== 'quizView' && viewId !== 'lessonView' && viewId !== 'lessonDoneView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="window.location.href='portal.html'">Portal</button>
                 ` + buttons;
@@ -5609,6 +5746,386 @@ Option D" required></textarea>
 
         // MCQ sources that are Premium only. Free accounts (role 'student') never get these in any
         // MCQ quiz, weak quiz or follow-up. Timed Practice added 16 Nov 2026 (Eric).
+        // ============================================
+        // LEARNING PATH (free accounts, Phase 1, 24 Nov 2026)
+        // A Duolingo-style home for free accounts: a path of short lessons built from the free TYS and 9476 Specimen MCQs,
+        // each answer checked the moment it is tapped, then a lesson-complete screen that leads to the next lesson.
+        // Lessons are saved as ordinary quiz_attempts + question_responses, so streaks, weak questions and analytics keep working.
+        // Progress comes from the student's own question_responses: a lesson is done once all its questions have been answered.
+        // PATH_DATA is generated by Question bank files\khembank-redesign\build_lessons.py (ids checked visible without login).
+        // ============================================
+        // 'off' = nobody; 'test' = admin and free accounts that open KhemBank with ?path=1, plus PATH_TESTERS; 'on' = every free account
+        const PATH_MODE = 'test';
+        const PATH_TESTERS = ['p2p3.student.test@mrkhemistry.com'];
+        const PATH_DAILY_GOAL = 2;              // lessons (or quizzes) a day
+        const PATH_POINTS = 10;                 // points per correct answer
+        const PATH_DATA = {"v":"2026-11-24","paths":{"begin":{"t":"From the beginning","units":[{"t":"Atomic structure","lessons":[{"t":"Subatomic particles, isotopes & relative masses (1 of 3)","ids":[157,248,217,187,188]},{"t":"Subatomic particles, isotopes & relative masses (2 of 3)","ids":[127,128,67,74,7]},{"t":"Subatomic particles, isotopes & relative masses (3 of 3)","ids":[13,249,37,159,38]},{"t":"Successive ionisation energies as evidence for shells","ids":[158,189,129,130,255]},{"t":"Electronic configuration","ids":[72,11,221,5307,5308]}]},{"t":"Chemical bonding","lessons":[{"t":"Born-Haber cycles and lattice energy","ids":[106,76,14,191,131,39]},{"t":"VSEPR: shapes and bond angles","ids":[71,190,250,132,10]},{"t":"Intermolecular forces (1 of 2)","ids":[219,160,133,97,9]},{"t":"Intermolecular forces (2 of 2)","ids":[251,161,69,98,68]},{"t":"Covalent and dative","ids":[70,218,8,5310,5309]}]},{"t":"The mole","lessons":[{"t":"Percentage composition, yield and purity","ids":[222,136,165,197,103,12]},{"t":"Balanced equations and reacting masses","ids":[89,193,42,5311,5315]}]},{"t":"Gases","lessons":[{"t":"Partial pressures and mole fractions","ids":[192,162,134,224,100,252]}]},{"t":"Energetics","lessons":[{"t":"Enthalpy change definitions","ids":[225,198,137,167,107]},{"t":"dG and feasibility / spontaneity (1 of 2)","ids":[44,63,75,199,257]},{"t":"dG and feasibility / spontaneity (2 of 2)","ids":[233,105,226,5316]}]},{"t":"Reaction kinetics","lessons":[{"t":"Activation energy, temperature and the Boltzmann distribution","ids":[201,172,17,45,108,166]},{"t":"Determining order","ids":[15,169,258,16,228,259]},{"t":"Rate-determining step and reaction mechanism","ids":[139,168,5314,5317,5318]}]},{"t":"Chemical equilibria","lessons":[{"t":"Equilibrium calculations","ids":[163,109,79,19]},{"t":"Le Chatelier: concentration, pressure, temperature","ids":[46,170,138,78]}]},{"t":"Acids, bases and pH","lessons":[{"t":"Buffer action and calculations","ids":[171,23,232,110,43,253]},{"t":"Ka, Kb, Kw, pKa and pH calculations (1 of 2)","ids":[29,231,211,150,99]},{"t":"Ka, Kb, Kw, pKa and pH calculations (2 of 2)","ids":[22,260,122,5320,5321]}]},{"t":"Solubility","lessons":[{"t":"Solubility product Ksp and the common-ion effect","ids":[111,49,262,112,81,5322]}]},{"t":"Redox","lessons":[{"t":"Assigning oxidation numbers","ids":[21,80,227,151]}]},{"t":"Electrolysis","lessons":[{"t":"Quantitative electrolysis (1 of 2)","ids":[184,33,276,153,154]},{"t":"Quantitative electrolysis (2 of 2)","ids":[96,65,264,216,5334]}]},{"t":"Electrochemical cells","lessons":[{"t":"Effect of concentration / pH on electrode potential","ids":[152,62,215,95,64,155]},{"t":"Feasibility of reaction from E values","ids":[125,34,36,234,183,94]},{"t":"Practical cells, batteries and fuel cells","ids":[277,275,5313,5333,5335]}]},{"t":"The Periodic Table","lessons":[{"t":"Chlorides across Period 3","ids":[101,41,194,135,195]},{"t":"Ionisation energies and periodic/group trends","ids":[104,40,230,223]},{"t":"Periodic trends across Period 3","ids":[102,20,254,5312]}]},{"t":"Group 2 and Group 17","lessons":[{"t":"Thermal stability of carbonates and nitrates","ids":[256,164,73,196,5319]}]},{"t":"Transition elements","lessons":[{"t":"Transition elements: definition and general properties","ids":[212,186,156,66,237]},{"t":"Ligand exchange reactions","ids":[235,236,213,18]},{"t":"Colour and d-d transitions","ids":[35,126,185,5336]}]},{"t":"Introduction to organic chemistry","lessons":[{"t":"Sigma and pi bonds; orbital overlap and hybridisation","ids":[202,82,83,24,54,238]},{"t":"Constitutional isomerism","ids":[113,173,84,51,174,140]},{"t":"Enantiomerism, chirality and optical activity (1 of 2)","ids":[114,240,203,116,120]},{"t":"Enantiomerism, chirality and optical activity (2 of 2)","ids":[266,48,115,263,5325]}]},{"t":"Alkanes and alkenes","lessons":[{"t":"Free-radical substitution","ids":[204,141,55,50,175]},{"t":"Environmental impact of fuel combustion","ids":[176,52,142,26]},{"t":"Electrophilic addition","ids":[117,25,265,90]}]},{"t":"Arenes","lessons":[{"t":"Electrophilic substitution mechanisms","ids":[205,143,86,56]},{"t":"Directing effects; activation and deactivation","ids":[85,27,269]}]},{"t":"Halogenoalkanes","lessons":[{"t":"Reactivity trend of the C-X bond","ids":[177,144,88,270,206,87]},{"t":"Nucleophilic substitution","ids":[271,274,242,118,119]},{"t":"Hydrolysis and the AgNO3 test","ids":[145,53,5323,5332,5331]}]},{"t":"Hydroxy compounds","lessons":[{"t":"Oxidation of alcohols","ids":[208,28,241,272]}]},{"t":"Carbonyl compounds","lessons":[{"t":"Identifying electrophile/nucleophile role in a step","ids":[30,121,239,178]},{"t":"Structure elucidation from combined clues","ids":[179,124,5326]}]},{"t":"Carboxylic acids and derivatives","lessons":[{"t":"Reactions of derivatives","ids":[146,91,57,245,59]},{"t":"Acidity and salt formation","ids":[267,92,243,244,5328]}]},{"t":"Nitrogen compounds and polymers","lessons":[{"t":"Basicity of amines","ids":[210,180,147,60,209]},{"t":"Amides: neutrality and hydrolysis (1 of 2)","ids":[182,207,268,31,246]},{"t":"Amides: neutrality and hydrolysis (2 of 2)","ids":[181,148,123,149,61]},{"t":"Amino acids and zwitterions","ids":[93,32,58,273,247]},{"t":"Hydrolysis of polymers","ids":[214,5324,5329,5327,5330]}]}]},"tested":{"t":"Most tested first","units":[{"t":"Part 1: Atoms, ionisation energy, forces, gases","lessons":[{"t":"Subatomic particles, isotopes & relative masses (1 of 3)","ids":[248,249,217,222,187]},{"t":"Subatomic particles, isotopes & relative masses (2 of 3)","ids":[188,159,127,128,67]},{"t":"Subatomic particles, isotopes & relative masses (3 of 3)","ids":[74,7,13,37,38]},{"t":"Successive ionisation energies as evidence for shells","ids":[255,189,158,130,104]},{"t":"Ionisation energies and periodic/group trends","ids":[221,129,105,40]},{"t":"Intermolecular forces (1 of 2)","ids":[251,252,160,161]},{"t":"Intermolecular forces (2 of 2)","ids":[133,97,69,9]},{"t":"Partial pressures and mole fractions","ids":[224,134,100]}]},{"t":"Part 2: Electrolysis, electrode potentials, kinetics, pH, equilibria","lessons":[{"t":"Quantitative electrolysis (1 of 2)","ids":[264,276,216,184,153]},{"t":"Quantitative electrolysis (2 of 2)","ids":[154,96,33,65]},{"t":"Feasibility of reaction from E values","ids":[234,155,125,34,36,64]},{"t":"Activation energy, temperature and the Boltzmann distribution (1 of 2)","ids":[257,199,201,172]},{"t":"Activation energy, temperature and the Boltzmann distribution (2 of 2)","ids":[108,17,45]},{"t":"Ka, Kb, Kw, pKa and pH calculations","ids":[260,231,99,122,22]},{"t":"Equilibrium calculations","ids":[163,109,79,19,46]}]},{"t":"Part 3: Organic","lessons":[{"t":"Enantiomerism, chirality and optical activity (1 of 2)","ids":[266,240,203,174]},{"t":"Enantiomerism, chirality and optical activity (2 of 2)","ids":[140,114,116,120]},{"t":"Nucleophilic substitution","ids":[271,274,242,206,118,87]},{"t":"Amides: neutrality and hydrolysis","ids":[246,181,148,149,31]},{"t":"Basicity of amines","ids":[268,210,180,147,123,60]},{"t":"Amino acids and zwitterions","ids":[273,211,150,93,32,58]},{"t":"Acidity of phenols vs alcohols; reactions of phenol","ids":[91,92,29]},{"t":"Combining functional-group transformations (1 of 2)","ids":[269,272,241,244]},{"t":"Combining functional-group transformations (2 of 2)","ids":[207,182,57]}]}]}}};
+        const lpPreview = (function () {
+            try {
+                if (new URLSearchParams(window.location.search).get('path') === '1') sessionStorage.setItem('kb_path_preview', '1');
+                return sessionStorage.getItem('kb_path_preview') === '1';
+            } catch (e) { return false; }
+        })();
+        let lp = { loaded: false, answered: new Set(), points: 0, today: 0, streak: 0 };
+        let lpLesson = null;   // { pk, u, l, qs, i, picked, checked, answers, saved }
+        let lpChoiceDraft = 'begin';
+
+        function pathEnabled() {
+            if (!currentUser || PATH_MODE === 'off') return false;
+            if (userRole === 'admin') return lpPreview;          // Eric's preview only; admin still lands on the staff home
+            if (userRole !== 'student') return false;            // premium, class, Sec and staff keep today's screens (Phase 1)
+            if (PATH_MODE === 'on') return true;
+            return lpPreview || PATH_TESTERS.includes(String(currentUser.email || '').toLowerCase());
+        }
+        function lpChoiceKey() { return 'kb_path_choice_' + (currentUser ? currentUser.id : ''); }
+        function lpGetChoice() {
+            try { const v = localStorage.getItem(lpChoiceKey()); return PATH_DATA.paths[v] ? v : null; } catch (e) { return null; }
+        }
+        function lpSetChoice(k) { try { localStorage.setItem(lpChoiceKey(), k); } catch (e) {} }
+        function lpLog(kind, data) {
+            if (!currentUser || userRole === 'admin' || userRole === 'teacher') return;
+            try { supabaseClient.rpc('log_user_activity', { p_user_id: currentUser.id, p_activity_type: kind, p_activity_data: data || {} }).then(() => {}, () => {}); } catch (e) {}
+        }
+        function lpFlat(pk) {
+            const out = [];
+            (PATH_DATA.paths[pk] ? PATH_DATA.paths[pk].units : []).forEach((u, ui) => u.lessons.forEach((l, li) => out.push({ u: ui, l: li, lesson: l, unit: u })));
+            return out;
+        }
+        // A question that no longer loads (deleted, hidden or broken) is left out, so its lesson can still be finished
+        const lpMissing = (function () { try { return new Set(JSON.parse(localStorage.getItem('kb_path_missing') || '[]')); } catch (e) { return new Set(); } })();
+        function lpNoteMissing(ids) {
+            ids.forEach(id => lpMissing.add(id));
+            try { localStorage.setItem('kb_path_missing', JSON.stringify([...lpMissing])); } catch (e) {}
+        }
+        function lpIsDone(lesson) {
+            const ids = lesson.ids.filter(id => !lpMissing.has(id));
+            return ids.every(id => lp.answered.has(id));   // a lesson whose questions have all gone counts as done, so the path moves on
+        }
+        function lpNextPos(pk, afterIdx) {
+            const flat = lpFlat(pk);
+            for (let k = afterIdx + 1; k < flat.length; k++) if (!lpIsDone(flat[k].lesson)) return k;
+            for (let k = 0; k <= Math.min(afterIdx, flat.length - 1); k++) if (!lpIsDone(flat[k].lesson)) return k;
+            return -1;
+        }
+        function lpFlame() {
+            return '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c1 3.5-1.5 5-1.5 8 0 1.4 1 2.5 2.3 2.5 1.6 0 2.4-1.3 2.2-3.2C17.6 11 19 13.4 19 16a7 7 0 0 1-14 0c0-4.6 4.2-7.2 7-14z"/></svg>';
+        }
+        function lpMidnightIso() { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+
+        async function lpLoadProgress() {
+            const uid = currentUser.id;
+            const [resp, streaks, todayRes] = await Promise.all([
+                fetchAllPaginated(() => supabaseClient.from('question_responses').select('question_id, is_correct').eq('user_id', uid).order('id', { ascending: true })),
+                computeStreaks(uid).catch(() => ({ current: 0 })),
+                supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('user_id', uid).gte('completed_at', lpMidnightIso())
+            ]);
+            lp.answered = new Set(resp.map(r => r.question_id));
+            lp.points = resp.filter(r => r.is_correct).length * PATH_POINTS;
+            lp.streak = (streaks && streaks.current) || 0;
+            lp.today = (todayRes && typeof todayRes.count === 'number') ? todayRes.count : 0;
+            lp.loaded = true;
+        }
+
+        async function lpOpenHome() {
+            lpLesson = null;
+            showView('path');
+            const home = document.getElementById('lpHome');
+            if (!lpGetChoice()) { lpRenderChooser(); return; }
+            // Draw at once from what this page already knows (a just-finished lesson included), then refresh from the server
+            if (lp.loaded) lpRenderHome();
+            else home.innerHTML = '<p class="lp-note" style="padding:2rem 0; text-align:center;">Loading your path&hellip;</p>';
+            try { await lpLoadProgress(); }
+            catch (e) {
+                console.warn('Path progress could not load:', e);
+                // Never show an empty path that looks like lost progress: keep what we had, or ask to try again
+                if (!lp.loaded && document.getElementById('pathView').classList.contains('active')) {
+                    home.innerHTML = `<div class="lp-choose"><h2>Your path did not load</h2><p class="lp-note">Check your connection, then try again.</p></div>
+                        <div class="lp-cta"><div class="lp-cta-in"><button type="button" class="lp-btn go" onclick="lpOpenHome()">Try again</button></div></div>`;
+                    return;
+                }
+            }
+            if (document.getElementById('pathView').classList.contains('active') && lpGetChoice()) lpRenderHome();
+        }
+
+        function lpRenderChooser() {
+            const home = document.getElementById('lpHome');
+            const opt = (k, title, blurb) => `<button type="button" class="lp-choice ${lpChoiceDraft === k ? 'sel' : ''}" onclick="lpPickDraft('${k}')" aria-pressed="${lpChoiceDraft === k}"><b>${title}</b><span>${blurb}</span></button>`;
+            home.innerHTML = `
+                <div class="lp-choose">
+                    <h2>Where do you want to start?</h2>
+                    <p class="lp-note">Each lesson is about 5 real A-level questions and takes about 5 minutes. You can switch paths any time.</p>
+                    ${opt('begin', 'From the beginning', 'Topic by topic, from Atomic Structure to Nitrogen Compounds. Best if you are in JC1 or starting revision.')}
+                    ${opt('tested', 'Most tested first', 'The 17 concepts that came up in 5 or more A-level papers from 2017 to 2025. Best if you are in JC2.')}
+                </div>
+                <div class="lp-cta"><div class="lp-cta-in"><button type="button" class="lp-btn go" onclick="lpConfirmChoice()">Continue</button></div></div>`;
+        }
+        function lpPickDraft(k) { if (PATH_DATA.paths[k]) { lpChoiceDraft = k; lpRenderChooser(); } }
+        function lpConfirmChoice() {
+            lpSetChoice(lpChoiceDraft);
+            lpLog('path_choice', { path: lpChoiceDraft });
+            lpOpenHome();
+        }
+        function lpSwitchPath() { lpChoiceDraft = lpGetChoice() || 'begin'; lpRenderChooser(); window.scrollTo(0, 0); }
+
+        function lpRenderHome() {
+            const pk = lpGetChoice();
+            const path = PATH_DATA.paths[pk];
+            const flat = lpFlat(pk);
+            const nextPos = lpNextPos(pk, -1);
+            const goalPct = Math.min(100, Math.round((lp.today / PATH_DAILY_GOAL) * 100));
+            const first = (userProfile && userProfile.full_name ? userProfile.full_name.trim().split(/\s+/)[0] : '');
+            let k = 0, html = `
+                <div class="lp-top">
+                    <span class="lp-hello">${first ? 'Hi ' + escapeHtml(first) : 'Your path'}</span>
+                    <span class="lp-chip fire" title="Days in a row">${lpFlame()}${lp.streak}</span>
+                    <span class="lp-chip pts" title="Points: ${PATH_POINTS} for each correct answer">${lp.points} pts</span>
+                    <span class="lp-goal" title="Daily goal: ${PATH_DAILY_GOAL} lessons"><span class="lp-ring" style="--p:${goalPct}%"></span>${Math.min(lp.today, PATH_DAILY_GOAL)}/${PATH_DAILY_GOAL} today</span>
+                </div>`;
+            path.units.forEach((u, ui) => {
+                const doneN = u.lessons.filter(lpIsDone).length;
+                html += `<div class="lp-unit"><span class="lp-unit-k">${escapeHtml(path.t)} &middot; Unit ${ui + 1}</span><span class="lp-unit-t">${escapeHtml(u.t)}</span><span class="lp-unit-n">${doneN} of ${u.lessons.length} lessons done</span></div><div class="lp-path">`;
+                u.lessons.forEach((l, li) => {
+                    const done = lpIsDone(l), isNext = (k === nextPos);
+                    const cls = done ? 'done' : (isNext ? 'next' : '');
+                    const status = done ? 'Done &middot; tap to practise again' : (isNext ? 'Up next' : l.ids.length + ' questions');
+                    html += `<button type="button" class="lp-step ${cls}" id="lpStep${k}" onclick="lpStartLesson(${ui},${li})"><span class="lp-node">${done ? '&#10003;' : (li + 1)}</span><span class="lp-st"><b>${escapeHtml(l.t)}</b><span>${status}</span></span></button>`;
+                    k++;
+                });
+                html += '</div>';
+            });
+            html += `<p class="lp-note" style="margin-top:1.4rem;">On the <strong>${escapeHtml(path.t)}</strong> path. <button type="button" class="lp-link" onclick="lpSwitchPath()">Switch path</button></p>`;
+            const next = nextPos >= 0 ? flat[nextPos] : null;
+            const cta = next
+                ? `<button type="button" class="lp-btn go" onclick="lpStartLesson(${next.u},${next.l})">${lpIsStarted(pk) ? 'Continue' : 'Start'}: ${escapeHtml(next.lesson.t)}</button>`
+                : `<button type="button" class="lp-btn go" onclick="lpSwitchPath()">Path finished! Try the other path</button>`;
+            html += `<div class="lp-cta"><div class="lp-cta-in">${cta}
+                <nav class="lp-tabs" aria-label="KhemBank sections"><button type="button" class="on" aria-current="page">Learn</button><button type="button" onclick="lpGoPractise()">Practise</button><button type="button" onclick="lpGoProgress()">Progress</button></nav>
+                </div></div>`;
+            document.getElementById('lpHome').innerHTML = html;
+            const target = document.getElementById('lpStep' + nextPos);
+            if (target && nextPos > 2) setTimeout(() => target.scrollIntoView({ block: 'center' }), 50);
+        }
+        function lpIsStarted(pk) { return lpFlat(pk).some(f => lpIsDone(f.lesson)); }
+        function lpGoPractise() { showView('student'); logStudentUse('tab_open', 'quiz'); }
+        function lpGoProgress() { showView('student'); switchStudentTab('history'); logStudentUse('tab_open', 'history'); }
+
+        async function lpStartLesson(ui, li) {
+            const pk = lpGetChoice();
+            const unit = PATH_DATA.paths[pk] && PATH_DATA.paths[pk].units[ui];
+            const lesson = unit && unit.lessons[li];
+            if (!lesson) return;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                const { data, error } = await supabaseClient.from('questions').select(QUIZ_COLS).eq('syllabus', 'h2_chem').in('id', lesson.ids);
+                if (error) throw error;
+                const byId = {};
+                (data || []).forEach(q => { byId[q.id] = q; });
+                const ok = q => q && Array.isArray(q.options) && q.options.length;
+                const qs = lesson.ids.map(id => byId[id]).filter(ok);
+                const gone = lesson.ids.filter(id => !ok(byId[id]));
+                if (gone.length) { console.warn('Lesson questions not available:', gone); lpNoteMissing(gone); }
+                if (!qs.length) {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    alert('Sorry, this lesson is not available any more. Your path will move on to the next one.');
+                    lpOpenHome();
+                    return;
+                }
+                lpLesson = { pk, u: ui, l: li, title: lesson.t, qs, i: 0, picked: null, checked: false, answers: new Array(qs.length).fill(null), saved: false };
+                lpLog('lesson_start', { path: pk, lesson: (ui + 1) + '.' + (li + 1), questions: qs.length });
+                showView('lesson');
+                window.scrollTo(0, 0);
+                lpRenderQuestion();
+            } catch (e) {
+                alert('Sorry, the lesson could not load. Please check your connection and try again.\n\n' + (e.message || e));
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        function lpRenderQuestion() {
+            const L = lpLesson, q = L.qs[L.i];
+            document.getElementById('lpProg').style.width = Math.round((L.i / L.qs.length) * 100) + '%';
+            document.getElementById('lpCount').textContent = (L.i + 1) + ' / ' + L.qs.length;
+            document.getElementById('lpLessonTitle').textContent = L.title;
+            const src = q.source === 'Specimen' ? '9476 Specimen Paper' : ('A-level ' + (q.source_year || '') + ' Paper 1').replace('  ', ' ');
+            const img = u => u ? `<div class="lp-qimg"><img ${mcqSrcAttr(u)} alt="Figure for this question"></div>` : '';
+            const opts = q.options.map((o, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                let cls = '';
+                if (L.checked) {
+                    if (letter === q.correct_answer) cls = 'right';
+                    else if (letter === L.picked) cls = 'wrong';
+                } else if (letter === L.picked) cls = 'sel';
+                return `<button type="button" class="lp-opt ${cls}" onclick="lpPick('${letter}')" ${L.checked ? 'disabled' : ''} aria-pressed="${letter === L.picked}"><span class="lp-ol">${letter}</span><span class="lp-ot">${sanitizeQuestionText(String(o == null ? '' : o))}</span></button>`;
+            }).join('');
+            let fb = '';
+            if (L.checked) {
+                const ok = L.picked === q.correct_answer;
+                let exp = q.explanation ? sanitizeQuestionText(q.explanation) : '';
+                if (q.explanation_image_url) exp += `<div><img ${mcqSrcAttr(q.explanation_image_url)} alt="Worked solution figure"></div>`;
+                const vid = (typeof q.video_url === 'string' && /^https:\/\//i.test(q.video_url))
+                    ? `<a class="lp-link" href="${escapeHtml(q.video_url)}" target="_blank" rel="noopener">Watch the video solution</a>` : '';
+                fb = `<div class="lp-fb ${ok ? 'ok' : 'bad'}" id="lpFeedback" role="status">
+                        <span class="lp-fbh">${ok ? 'Correct!' : 'Not quite. The answer is ' + escapeHtml(q.correct_answer) + '.'}</span>
+                        ${exp ? `<div class="lp-exp">${exp}</div>` : ''}${vid}
+                        <div id="lpReport"></div>
+                      </div>`;
+            }
+            document.getElementById('lpQuestion').innerHTML = `
+                <span class="lp-qsrc">${escapeHtml(src)}</span>
+                <div class="lp-qtext">${sanitizeQuestionText(q.text)}</div>
+                ${img(q.image_url)}${img(q.image_url_2)}${img(q.option_image_url)}
+                <div class="lp-opts">${opts}</div>${fb}`;
+            if (L.checked && currentUser) {
+                const rep = document.getElementById('lpReport');
+                if (rep) rep.innerHTML = contentFlagWidget({ source: 'mcq', question_id: q.id, context: { topic: q.topic || '', source: q.source || '', year: q.source_year || '', school: '', difficulty: q.difficulty || '' } });
+            }
+            const btn = document.getElementById('lpMainBtn');
+            if (L.checked) {
+                const ok = L.picked === q.correct_answer;
+                btn.className = 'lp-btn ' + (ok ? 'ok' : 'bad');
+                btn.textContent = L.i < L.qs.length - 1 ? 'Continue' : 'Finish lesson';
+                btn.disabled = false;
+            } else {
+                btn.className = 'lp-btn go';
+                btn.textContent = 'Check';
+                btn.disabled = !L.picked;
+            }
+            mcqScheduleHydrate();
+            if (window.MathJax && MathJax.typesetPromise) {
+                const el = document.getElementById('lpQuestion');
+                try { MathJax.typesetClear([el]); } catch (e) {}
+                MathJax.typesetPromise([el]).catch(() => {});
+            }
+        }
+        function lpPick(letter) {
+            if (!lpLesson || lpLesson.checked) return;
+            lpLesson.picked = letter;
+            lpRenderQuestion();
+        }
+        function lpMain() {
+            const L = lpLesson;
+            if (!L) return;
+            if (!L.checked) {
+                if (!L.picked) return;
+                L.checked = true;
+                L.answers[L.i] = L.picked;
+                lpRenderQuestion();
+                const fb = document.getElementById('lpFeedback');
+                if (fb) setTimeout(() => fb.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                return;
+            }
+            if (L.i < L.qs.length - 1) {
+                L.i++; L.picked = null; L.checked = false;
+                lpRenderQuestion();
+                window.scrollTo(0, 0);
+                return;
+            }
+            lpFinishLesson();
+        }
+        function lpQuitLesson() {
+            if (lpLesson && lpLesson.answers.some(a => a !== null) && !lpLesson.saved) {
+                if (!confirm('Leave this lesson? Your answers in this lesson will not be saved.')) return;
+            }
+            lpOpenHome();
+        }
+
+        // Saves the attempt once: a retry reuses the attempt row already made, and inserts the answers only if they are not there yet
+        async function lpSaveLesson() {
+            const L = lpLesson;
+            const correct = L.qs.filter((q, i) => L.answers[i] === q.correct_answer).length;
+            const sources = [...new Set(L.qs.map(q => q.source).filter(Boolean))];
+            if (!L.completedAt) L.completedAt = new Date().toISOString();   // fixed once, so a retry can find a row whose reply was lost
+            if (!L.attemptId) {
+                const { data: prior, error: pe } = await supabaseClient.from('quiz_attempts').select('id')
+                    .eq('user_id', currentUser.id).eq('completed_at', L.completedAt).eq('total_questions', L.qs.length).limit(1);
+                if (pe) throw pe;
+                if (prior && prior.length) L.attemptId = prior[0].id;
+            }
+            if (!L.attemptId) {
+            const { data: att, error } = await supabaseClient.from('quiz_attempts').insert([{
+                user_id: currentUser.id,
+                completed_at: L.completedAt,
+                score: Math.round((correct / L.qs.length) * 100),
+                total_questions: L.qs.length,
+                correct_answers: correct,
+                topics: [...new Set(L.qs.map(q => q.topic))],
+                difficulties: [...new Set(L.qs.map(q => q.difficulty))],
+                source: sources.length ? sources[0] : null
+            }]).select('id').single();
+            if (error) throw error;
+            L.attemptId = att.id;
+            } else {
+                // Retry: the answers may have been saved although the reply was lost
+                const { count, error: ce } = await supabaseClient.from('question_responses').select('id', { count: 'exact', head: true }).eq('quiz_attempt_id', L.attemptId);
+                if (ce) throw ce;
+                if (count >= L.qs.length) return correct;
+            }
+            const rows = L.qs.map((q, i) => ({ quiz_attempt_id: L.attemptId, question_id: q.id, user_id: currentUser.id, user_answer: L.answers[i], is_correct: L.answers[i] === q.correct_answer }));
+            const { error: e2 } = await supabaseClient.from('question_responses').insert(rows);
+            if (e2) throw e2;
+            return correct;
+        }
+
+        async function lpFinishLesson() {
+            const L = lpLesson;
+            if (!L || L.saving) return;
+            const btn = document.getElementById('lpMainBtn');
+            L.saving = true; btn.disabled = true; btn.textContent = 'Saving...';
+            const correct = L.qs.filter((q, i) => L.answers[i] === q.correct_answer).length;
+            let saveErr = null;
+            if (!L.saved) {
+                try { await lpSaveLesson(); L.saved = true; }
+                catch (e) { saveErr = e; console.error('Lesson could not be saved:', e); }
+            }
+            L.saving = false;
+            if (L.saved) {
+                L.qs.forEach(q => lp.answered.add(q.id));
+                lp.points += correct * PATH_POINTS;
+                lp.today += 1;
+                try { lp.streak = (await computeStreaks(currentUser.id)).current || lp.streak; } catch (e) {}
+                lpLog('lesson_complete', { path: L.pk, lesson: (L.u + 1) + '.' + (L.l + 1), questions: L.qs.length, correct });
+            }
+            lpRenderDone(correct, saveErr);
+        }
+
+        function lpRenderDone(correct, saveErr) {
+            const L = lpLesson, n = L.qs.length, wrong = n - correct;
+            const flat = lpFlat(L.pk);
+            const pos = flat.findIndex(f => f.u === L.u && f.l === L.l);
+            const nextPos = lpNextPos(L.pk, pos);
+            const unit = PATH_DATA.paths[L.pk].units[L.u];
+            const unitDone = L.saved && unit.lessons.every(lpIsDone);
+            const goalLine = lp.today >= PATH_DAILY_GOAL ? `Daily goal reached: ${lp.today} today. See you tomorrow!` : `Daily goal: ${lp.today} of ${PATH_DAILY_GOAL} lessons today.`;
+            let html = '';
+            if (saveErr) {
+                html = `<h2>Almost there</h2>
+                    <p class="lp-note">Your answers could not be saved. Check your connection, then tap Try again.</p>
+                    <div class="lp-cta"><div class="lp-cta-in"><button type="button" class="lp-btn go" onclick="lpFinishLesson()">Try again</button><button type="button" class="lp-btn ghost" onclick="lpQuitLesson()">Back to path</button></div></div>`;
+            } else {
+                const cheer = correct === n ? 'Every answer right. Brilliant!'
+                    : (correct * 2 >= n ? 'Good work. Keep the streak going!' : 'Good effort. Read the explanations, then try the next one.');
+                html = `<h2>${correct === n ? 'Perfect lesson!' : 'Lesson complete!'}</h2>
+                    <div class="lp-sub">${escapeHtml(L.title)}</div>
+                    <p class="lp-note">${cheer}</p>
+                    <div class="lp-stats">
+                        <div class="lp-stat c"><b>${correct}/${n}</b><span>correct</span></div>
+                        <div class="lp-stat p"><b>+${correct * PATH_POINTS}</b><span>points</span></div>
+                        <div class="lp-stat s"><b>${lp.streak}</b><span>day streak</span></div>
+                    </div>
+                    <p class="lp-note">${goalLine}</p>
+                    ${wrong > 0 ? `<p class="lp-note">${wrong === 1 ? 'The question you missed is' : 'The ' + wrong + ' questions you missed are'} saved under <strong>Practise &rsaquo; Practise your weak questions</strong>, so you can try again later.</p>` : ''}
+                    ${unitDone ? `<p class="lp-note"><strong>You finished the unit ${escapeHtml(unit.t)}.</strong>${userRole === 'student' ? ' Want school prelim questions on it too? <a class="lp-link" href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20know%20more%20about%20KhemBank%20Premium." target="_blank" rel="noopener">Ask about KhemBank Premium</a>' : ''}</p>` : ''}
+                    <div class="lp-cta"><div class="lp-cta-in">
+                        ${nextPos >= 0 ? `<button type="button" class="lp-btn go" onclick="lpStartLesson(${flat[nextPos].u},${flat[nextPos].l})">Next lesson: ${escapeHtml(flat[nextPos].lesson.t)}</button>` : ''}
+                        <button type="button" class="lp-btn ghost" onclick="lpOpenHome()">Back to path</button>
+                    </div></div>`;
+            }
+            document.getElementById('lpDone').innerHTML = html;
+            showView('lessonDone');
+            window.scrollTo(0, 0);
+        }
+
         // ---- Premium MCQ pictures (private bucket 'mcq-premium', 16 Nov 2026) ----
         // Pictures of Prelim, Promos and Timed Practice MCQs live in a private bucket that only
         // premium, teacher and admin accounts can read (IRON LAW: paid means locked on the server).
@@ -11206,6 +11723,7 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 if (error) throw error;
                 userProfile.full_name = name;
                 document.getElementById('namePromptModal').style.display = 'none';
+                if (pathEnabled() && !deepLinkTab) { lpOpenHome(); return; }
                 showView('student');
                 applyDeepLinkTab();   // a first-time student who arrived by deep link still lands on the requested tab
             } catch (err) {

@@ -1613,6 +1613,19 @@
         .lp-rbtn:focus-visible { outline: 3px solid #2ee6f2; outline-offset: 2px; }
         .lp-rate-err { display: block; margin-top: 0.4rem; color: #ffadad; font-weight: 600; }
         .lp-rate-err[hidden] { display: none; }
+        .lp-ai { margin-top: 0.6rem; }
+        .lp-ai textarea { width: 100%; box-sizing: border-box; background: #111616; color: #fff; border: 1px solid rgba(46,230,242,0.45); border-radius: 10px; padding: 0.6rem 0.7rem; font: inherit; font-size: 1rem; line-height: 1.5; }
+        .lp-ai textarea:focus-visible { outline: 3px solid #2ee6f2; outline-offset: 1px; }
+        .lp-ai-act { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 0.6rem; }
+        .lp-ai-go { width: auto !important; padding: 0.6rem 1.2rem !important; font-size: 1rem !important; }
+        .lp-ai-out { margin-top: 0.6rem; }
+        .lp-ai-sum { margin: 0.4rem 0; color: #fff; line-height: 1.6; }
+        .lp-ai-fb .tr-verdict { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-weight: 700; font-size: 1.1rem; padding: 0.5rem 0.8rem; border-radius: 10px; background: #102828; color: #fff; }
+        .lp-ai-fb .tr-fb-block h4 { margin: 0.8rem 0 0.2rem; color: #2ee6f2; font-size: 0.95rem; }
+        .lp-ai-fb .tr-fb-block p { margin: 0; color: #fff; line-height: 1.55; }
+        .lp-ai-ms { margin: 0.6rem 0 0; color: #2ee6f2; font-weight: 600; }
+        .lp-rate.lp-rate-hidden { display: none; }
+        .lp-prem { color: #2ee6f2; font-weight: 600; }
         .lp-again { text-align: left; margin: 0 auto 1rem; padding-left: 1.3rem; max-width: 30rem; color: #fff; }
         .lp-again li { margin: 0.25rem 0; }
         .lp-btn.teal { background: #00666f; color: #fff; }
@@ -6289,10 +6302,94 @@ Option D" required></textarea>
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
         }
-        function lpRateButtons(pid) {
+        function lpRateButtons(pid, hidden) {
             const L = lpLesson, r = L.ratings[pid];
             const b = (k, t) => `<button type="button" class="lp-rbtn ${k}${r === k ? ' on' : ''}" aria-pressed="${r === k}" onclick="lpRate(${pid},'${k}')">${t}</button>`;
-            return `<div class="lp-rate" data-pid="${pid}" role="group" aria-label="How did you do on this part?"><span class="lp-rate-q">How did you do?</span><div class="lp-rate-b">${b('got', 'Got it')}${b('partly', 'Partly')}${b('missed', 'Missed')}</div><span class="lp-rate-err" hidden>Not saved. Check your connection and tap again.</span></div>`;
+            return `<div class="lp-rate${hidden ? ' lp-rate-hidden' : ''}" data-pid="${pid}" role="group" aria-label="How did you do on this part?"><span class="lp-rate-q">How did you do?</span><div class="lp-rate-b">${b('got', 'Got it')}${b('partly', 'Partly')}${b('missed', 'Missed')}</div><span class="lp-rate-err" hidden>Not saved. Check your connection and tap again.</span></div>`;
+        }
+
+        // ---- AI marking of the path's structured parts (premium, 24 Nov 2026): training-ai 'path' mode ----
+        const LP_AI_TYPES = ['written', 'calculation', 'equation', 'observation'];   // keep in step with PATH_TYPES in training-ai
+        function lpAiPart(p) { return lpTierPremium() && LP_AI_TYPES.includes(p.answer_type) && !!(lpLesson && lpLesson.sq); }
+        function lpAiBox(q, p, ansId) {
+            const ph = p.answer_type === 'calculation' ? 'Show your working and the answer, as you would in the exam.'
+                : (p.answer_type === 'equation' ? 'Type the equation. Plain typing such as H+ and -> is fine.' : 'Type your answer as you would write it in the exam.');
+            return `<div class="lp-ai" id="lpai_${p.id}">
+                <label class="tr-label" for="lpaiTa_${p.id}">Your answer</label>
+                <div class="chem-sym" data-for="lpaiTa_${p.id}" role="toolbar" aria-label="Chemistry symbols"></div>
+                <textarea id="lpaiTa_${p.id}" rows="4" maxlength="3000" placeholder="${escapeHtml(ph)}"></textarea>
+                <div class="lp-ai-act"><button type="button" class="lp-btn teal lp-ai-go" id="lpaiBtn_${p.id}" onclick="lpAiMark(${q.id},${p.id},'${ansId}')">Mark my answer</button>
+                <button type="button" class="lp-link" onclick="lpAiSkip(${p.id},'${ansId}')">Show the answer instead</button></div>
+                <div class="lp-ai-out" id="lpaiOut_${p.id}" aria-live="polite"></div>
+            </div>`;
+        }
+        function lpAiShowAnswer(ansId) {
+            const el = document.getElementById(ansId);
+            if (!el) return;
+            el.style.display = 'block';
+            if (window.MathJax && MathJax.typesetPromise) { try { MathJax.typesetPromise([el]); } catch (e) {} }
+        }
+        // No marking (skipped, or the marker is not available): show the answer and let the student rate the part
+        function lpAiSkip(pid, ansId, note) {
+            if (lpLesson && lpLesson.aiBusy === pid && !note) return;   // a marking request is still running for this part
+            const box = document.getElementById('lpai_' + pid);
+            if (box) box.querySelectorAll('textarea, .lp-ai-act, .chem-sym, label').forEach(e => { e.style.display = 'none'; });
+            const out = document.getElementById('lpaiOut_' + pid);
+            if (out && note) out.innerHTML = '<div class="tr-note">' + escapeHtml(note) + '</div>';
+            lpAiShowAnswer(ansId);
+            const r = document.querySelector('#lpQuestion .lp-rate[data-pid="' + pid + '"]');
+            if (r) r.classList.remove('lp-rate-hidden');
+        }
+        async function lpAiMark(qid, pid, ansId) {
+            const L = lpLesson;
+            if (!L || !L.sq) return;
+            const ta = document.getElementById('lpaiTa_' + pid), btn = document.getElementById('lpaiBtn_' + pid), out = document.getElementById('lpaiOut_' + pid);
+            const answer = ta ? ta.value.trim() : '';
+            if (!answer) { if (out) out.innerHTML = '<div class="tr-note">Type your answer first, or tap Show the answer instead.</div>'; return; }
+            if (L.aiBusy) return;
+            L.aiBusy = pid;   // claimed before any await, so a double tap never sends two paid marking calls (Codex)
+            if (btn) { btn.disabled = true; btn.textContent = 'Marking...'; }
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { L.aiBusy = false; if (btn) { btn.disabled = false; btn.textContent = 'Mark my answer'; } alert('Your session has expired. Please log in again.'); return; }
+            if (out) out.innerHTML = '<div class="tr-muted">Marking your answer&hellip;</div>';
+            let res = null, body = {};
+            try {
+                res = await fetch(TRAINING_FN_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_ANON_KEY },
+                    body: JSON.stringify({ part_id: pid, answer: answer, mode: 'path' })
+                });
+                body = await res.json().catch(() => ({}));
+            } catch (e) { res = null; }
+            L.aiBusy = false;
+            if (lpLesson !== L) return;
+            if (btn) { btn.disabled = false; btn.textContent = 'Mark my answer'; }
+            if (!res) { if (out) out.innerHTML = '<div class="tr-note">Marking is not reachable right now. Check your connection and tap Mark my answer again.</div>'; return; }
+            if (res.status === 429 || res.status === 403 || res.status === 404) {   // daily limit, or a part the marker does not take
+                lpAiSkip(pid, ansId, body.error || 'This part cannot be marked right now. Look at the answer and rate yourself.');
+                return;
+            }
+            if (!res.ok) { if (out) out.innerHTML = '<div class="tr-note">' + escapeHtml(body.error || 'Marking failed. Please try again.') + '</div>'; return; }
+            const fb = body.feedback || {}, got = Number(body.marks_awarded), tot = Number(body.marks) || 1;
+            const k = got >= tot ? 'got' : (got > 0 ? 'partly' : 'missed');
+            const label = { got: 'Got it', partly: 'Partly', missed: 'Missed' }[k];
+            let html = '<div class="tr-fb lp-ai-fb">';
+            html += '<div class="tr-verdict ' + (k === 'got' ? 'pass' : 'fail') + '"><span>' + label + '</span><span class="tr-score">' + escapeHtml(String(Number.isFinite(got) ? got : '?')) + '/' + escapeHtml(String(tot)) + '</span></div>';
+            if (fb.overall) html += '<p class="lp-ai-sum">' + trText(fb.overall) + '</p>';
+            html += '<div class="tr-fb-block tr-your-answer"><h4>Your answer</h4><p>' + escapeHtml(answer) + '</p></div>';
+            if (fb.missing) html += '<div class="tr-fb-block"><h4>Points you left out</h4><p>' + trText(fb.missing) + '</p></div>';
+            if (fb.incorrect) html += '<div class="tr-fb-block"><h4>Wrong or muddled</h4><p>' + trText(fb.incorrect) + '</p></div>';
+            if (fb.tips) html += '<div class="tr-fb-block"><h4>Tip</h4><p>' + trText(fb.tips) + '</p></div>';
+            html += '<p class="lp-ai-ms">The mark scheme is below.</p></div>';
+            const box = document.getElementById('lpai_' + pid);
+            if (box) box.querySelectorAll('textarea, .lp-ai-act, .chem-sym, label').forEach(e => { e.style.display = 'none'; });
+            if (out) { out.innerHTML = html; trTypeset(out); }
+            lpAiShowAnswer(ansId);
+            // The marks become the part's rating, saved like a self-rating; the rating row stays visible so a failed save
+            // shows its "Not saved" note and can be tapped again (Codex)
+            const rr = document.querySelector('#lpQuestion .lp-rate[data-pid="' + pid + '"]');
+            if (rr) { rr.classList.remove('lp-rate-hidden'); const qh = rr.querySelector('.lp-rate-q'); if (qh) qh.textContent = 'Counted as (tap to change):'; }
+            lpRate(pid, k);
         }
         function lpRenderSq() {
             const L = lpLesson, it = L.items[L.i];
@@ -6303,12 +6400,21 @@ Option D" required></textarea>
             const had = Object.prototype.hasOwnProperty.call(p2pPartMatches, it.q.id), prev = p2pPartMatches[it.q.id];
             p2pPartMatches[it.q.id] = it.match;
             let body = '';
-            lpRateHook = (q, p) => (q.id === it.q.id && it.shown.includes(p.id)) ? lpRateButtons(p.id) : '';
+            lpRateHook = (q, p, mode) => {
+                const mine = q.id === it.q.id && it.shown.includes(p.id);
+                const ai = mine && lpAiPart(p) && !L.saved[p.id];   // a part already rated (resumed set) is shown as rated
+                if (mode === 'ai') return ai;
+                return mine ? lpRateButtons(p.id, ai) : '';
+            };
             try { body = p2p3RenderQuestion(it.q); } finally {
                 lpRateHook = null;
                 if (had) p2pPartMatches[it.q.id] = prev; else delete p2pPartMatches[it.q.id];
             }
-            document.getElementById('lpQuestion').innerHTML = `<p class="lp-note lp-sqtip">Write your answers on paper first. Then tap <b>Show answer</b> and rate yourself on each part.</p>${body}`;
+            const tip = lpTierPremium()
+                ? 'Type your answer to each part and tap <b>Mark my answer</b>. For a drawing, draw it on paper, tap <b>Show answer</b> and rate yourself.'
+                : 'Write your answers on paper first. Then tap <b>Show answer</b> and rate yourself on each part. <span class="lp-prem">Premium students get every typed answer marked.</span>';
+            document.getElementById('lpQuestion').innerHTML = `<p class="lp-note lp-sqtip">${tip}</p>${body}`;
+            chemBuildSymbolStrips();
             lpSqButton();
             if (window.MathJax && MathJax.typesetPromise) {
                 const el = document.getElementById('lpQuestion');
@@ -6321,7 +6427,7 @@ Option D" required></textarea>
             const n = it.shown.filter(pid => L.saved[pid]).length, all = n === it.shown.length;
             btn.className = 'lp-btn go';
             btn.disabled = !all;
-            btn.textContent = all ? (L.i < L.items.length - 1 ? 'Next question' : 'Finish') : `Rate each part to continue (${n} of ${it.shown.length})`;
+            btn.textContent = all ? (L.i < L.items.length - 1 ? 'Next question' : 'Finish') : `${lpTierPremium() ? 'Answer' : 'Rate'} each part to continue (${n} of ${it.shown.length})`;
         }
         async function lpRate(pid, k) {
             const L = lpLesson;
@@ -8472,7 +8578,8 @@ Option D" required></textarea>
                 const hasAnsFig = ansByPart[p.id] && ansByPart[p.id].length;
                 if (hasMs || hasAnsFig){
                     const ansId = 'p2pa_'+q.id+'_'+p.id;
-                    html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
+                    if (lpRateHook && lpRateHook(q, p, 'ai') === true) html += lpAiBox(q, p, ansId);   // Learning Path, premium: typed answer marked by AI
+                    else html += '<button class="p2p3-showans" onclick="p2p3Toggle(\''+ansId+'\',this)">Show answer</button>';
                     html += '<div id="'+ansId+'" class="p2p3-answer" style="display:none">';
                     if (hasMs) html += '<div class="p2p3-ms">'+sanitizeQuestionText(sqMarkSchemeBreaks(p.mark_scheme))+'</div>';
                     if (hasAnsFig) html += '<div class="p2p3-figs">'+ansByPart[p.id].map(p2p3FigImg).join('')+'</div>';
@@ -10231,6 +10338,7 @@ Option D" required></textarea>
             try {
                 const attempts = await fetchAllPaginated(() => supabaseClient.from('training_attempts')
                     .select('id, user_id, part_id, concept_id, kind, marks, marks_awarded, pass, created_at')
+                    .or('kind.is.null,kind.neq.path')   // Learning Path answers are not Concept Trainer answers
                     .not('marks_awarded', 'is', null).order('created_at', { ascending: true }).order('id', { ascending: true }));
                 const partIds = [...new Set(attempts.map(a => a.part_id))];
                 const refs = {};
@@ -10689,6 +10797,7 @@ Option D" required></textarea>
                         .from('training_attempts')
                         .select('part_id, concept_id, pass, marks, marks_awarded, created_at')
                         .eq('user_id', uid)
+                        .or('kind.is.null,kind.neq.path')   // Learning Path answers are not Concept Trainer answers
                         .order('created_at', { ascending: true })
                         .order('id', { ascending: true }));
                 } catch (e) { data = null; }

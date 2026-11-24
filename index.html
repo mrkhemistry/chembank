@@ -1542,6 +1542,8 @@
         .lp-tabs button.on { color: var(--primary); }
         .lp-tabs button:focus-visible { outline: 2px solid var(--primary); }
         .lp-link { background: none; border: 0; color: var(--primary); font: inherit; font-size: 0.92rem; text-decoration: underline; cursor: pointer; padding: 0.2rem 0; }
+        .lp-vwrap { position: relative; padding-top: 56.25%; margin-top: 0.6rem; border-radius: 10px; overflow: hidden; background: #000; }
+        .lp-vwrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
         .lp-note { font-size: 0.9rem; color: var(--white); line-height: 1.5; }
         /* Path chooser */
         .lp-choose { display: grid; gap: 1rem; padding-top: 0.5rem; }
@@ -5394,6 +5396,8 @@ Option D" required></textarea>
         // VIEW MANAGEMENT
         // ============================================
         function showView(viewName) {
+            // Leaving a lesson: remove any lesson video so it stops playing in the background
+            if (viewName !== 'lesson') { const lv = document.getElementById('lpVideo'); if (lv) lv.innerHTML = ''; }
             // Check authentication for protected views
             if (!currentUser && viewName !== 'login' && viewName !== 'signup' && viewName !== 'forgotPassword') {
                 console.log('Redirecting to login - user not authenticated');
@@ -5973,8 +5977,12 @@ Option D" required></textarea>
                 const ok = L.picked === q.correct_answer;
                 let exp = q.explanation ? sanitizeQuestionText(q.explanation) : '';
                 if (q.explanation_image_url) exp += `<div><img ${mcqSrcAttr(q.explanation_image_url)} alt="Worked solution figure"></div>`;
-                const vid = (typeof q.video_url === 'string' && /^https:\/\//i.test(q.video_url))
-                    ? `<a class="lp-link" href="${escapeHtml(q.video_url)}" target="_blank" rel="noopener">Watch the video solution</a>` : '';
+                // Video plays inside the lesson (tap to load, so no YouTube page and no data use until asked)
+                const ytId = (typeof q.video_url === 'string') ? (q.video_url.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/) || [])[1] : null;
+                const vid = ytId
+                    ? `<div id="lpVideo"><button type="button" class="lp-link" onclick="lpShowVideo('${ytId}')">&#9654; Watch the video solution</button></div>`
+                    : ((typeof q.video_url === 'string' && /^https:\/\//i.test(q.video_url))
+                        ? `<a class="lp-link" href="${escapeHtml(q.video_url)}" target="_blank" rel="noopener">Watch the video solution</a>` : '');
                 fb = `<div class="lp-fb ${ok ? 'ok' : 'bad'}" id="lpFeedback" role="status">
                         <span class="lp-fbh">${ok ? 'Correct!' : 'Not quite. The answer is ' + escapeHtml(q.correct_answer) + '.'}</span>
                         ${exp ? `<div class="lp-exp">${exp}</div>` : ''}${vid}
@@ -6007,6 +6015,12 @@ Option D" required></textarea>
                 try { MathJax.typesetClear([el]); } catch (e) {}
                 MathJax.typesetPromise([el]).catch(() => {});
             }
+        }
+        function lpShowVideo(id) {
+            if (!/^[\w-]{11}$/.test(id)) return;
+            const box = document.getElementById('lpVideo');
+            if (!box) return;
+            box.innerHTML = `<div class="lp-vwrap"><iframe src="https://www.youtube-nocookie.com/embed/${id}?rel=0&playsinline=1&autoplay=1" title="Video solution" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
         }
         function lpPick(letter) {
             if (!lpLesson || lpLesson.checked) return;

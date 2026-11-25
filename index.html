@@ -963,6 +963,17 @@
         .ct-row { display: grid; gap: 0.75rem; padding: 0.75rem 1rem; background: rgba(10, 14, 39, 0.6); border: 1px solid rgba(0, 217, 255, 0.15); border-radius: 10px; margin-bottom: 0.45rem; font-size: 0.9rem; min-width: 640px; align-items: center; }
         .ct-students .ct-row { grid-template-columns: 1.5fr 0.6fr 0.6fr 0.7fr 1.5fr 1fr; }
         .ct-concepts .ct-row { grid-template-columns: 1.7fr 0.6fr 0.9fr 0.6fr 1.6fr; }
+        .pr-students .ct-row { grid-template-columns: 1.5fr 0.9fr 1.2fr 1.4fr 0.9fr; min-width: 720px; }
+        .pr-row { cursor: pointer; }
+        .pr-row:hover { border-color: rgba(0, 217, 255, 0.45); }
+        .pr-units { margin: -0.2rem 0 0.7rem 1.25rem; }
+        .pr-units .ct-row { grid-template-columns: 1.5fr 1.2fr 1.4fr; min-width: 600px; background: rgba(0, 217, 255, 0.05); }
+        .pr-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0 0.9rem; }
+        .pr-chip { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem; border: 1px solid rgba(0, 217, 255, 0.35); border-radius: 999px; font-size: 0.8rem; color: #fff; cursor: pointer; }
+        .pr-chip.on { background: #00666f; border-color: #00666f; }
+        .pr-chip input { accent-color: #00d9ff; }
+        .pr-bar { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.5rem; }
+        .pr-note { font-size: 0.85rem; color: #fff; margin-bottom: 1rem; }
         .ct-head { background: rgba(0, 217, 255, 0.1); font-size: 0.76rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
         .ct-sub { font-size: 0.78rem; opacity: 0.75; }
 
@@ -3180,6 +3191,7 @@ Option D" required></textarea>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('questionbank', this)">Question Bank</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('revision', this)">Revision</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('trainer', this)">Concept Trainer</button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('path', this)">Learning Path</button>
                         <button class="analytics-tab" onclick="switchAnalyticsTab('reports', this)">Reports</button>
                     </div>
 
@@ -3215,6 +3227,13 @@ Option D" required></textarea>
                     <div id="analyticsTrainer" class="analytics-section">
                         <div id="trainerReportContainer">
                             <div class="empty-state"><h3>Loading Concept Trainer data...</h3></div>
+                        </div>
+                    </div>
+
+                    <!-- Learning Path tab (25 Nov 2026): progress and scores per student, unit by unit -->
+                    <div id="analyticsPath" class="analytics-section">
+                        <div id="pathReportContainer">
+                            <div class="empty-state"><h3>Loading Learning Path data...</h3></div>
                         </div>
                     </div>
 
@@ -9556,6 +9575,8 @@ Option D" required></textarea>
                 renderQuestionBankChart();
                 renderRevisionReport();
                 loadTrainerReport();
+                analyticsLoadedOnce = true;
+                if (pathReport) pathReportRender();   // the Learning Path tab may have been opened before the students arrived
 
             } catch (err) {
                 console.error('Analytics load error:', err);
@@ -10541,6 +10562,175 @@ Option D" required></textarea>
             box.innerHTML = html;
         }
 
+        // ═══ LEARNING PATH REPORT (admin Analytics tab, 25 Nov 2026) ═══
+        // Each student's progress and scores on "From the beginning", unit by unit, from data already saved:
+        //  - MCQ lessons: question_responses. A lesson is done once all its questions are answered (as on the student's own
+        //    path); the score is each question's FIRST answer, wherever it was answered.
+        //  - Structured sets: done once every part to score has a structured_selfmarks row (as on the student's path).
+        //    Premium marks are the AI marks in training_attempts (kind 'path', the latest mark per part, as the student sees
+        //    it); "I don't know" parts count as 0. Free accounts rate themselves, so only their ratings are shown.
+        // Admin row security reads all three tables. Test accounts in REVISION_EXCLUDED_EMAILS are left out.
+        let pathReport = null;
+        let analyticsLoadedOnce = false;   // set when loadAnalytics has the student list
+        const PR_UNITS_KEY = 'kb_pr_units', PR_FREE_KEY = 'kb_pr_free', PR_SINCE_KEY = 'kb_pr_since';
+        function prGetSince() { try { const v = localStorage.getItem(PR_SINCE_KEY) || ''; return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''; } catch (e) { return ''; } }
+        function prSetSince(v) { try { localStorage.setItem(PR_SINCE_KEY, v || ''); } catch (e) {} pathReportRender(); }
+        function prSinceIso(d) { return d ? new Date(d + 'T00:00:00+08:00').toISOString() : ''; }   // midnight in Singapore
+        function prAllUnits() { return PATH_DATA.paths.begin.units.map(u => u.t); }
+        function prGetUnits() {
+            let v = null;
+            try { v = JSON.parse(localStorage.getItem(PR_UNITS_KEY) || 'null'); } catch (e) {}
+            const all = prAllUnits();
+            return Array.isArray(v) ? v.filter(t => all.includes(t)) : all;
+        }
+        function prSetUnits(v) { try { localStorage.setItem(PR_UNITS_KEY, JSON.stringify(v)); } catch (e) {} pathReportRender(); }
+        function prShowFree() { try { return localStorage.getItem(PR_FREE_KEY) === '1'; } catch (e) { return false; } }
+        function prToggleUnit(cb) {
+            const t = prAllUnits()[Number(cb.value)], sel = prGetUnits();
+            prSetUnits(cb.checked ? prAllUnits().filter(x => x === t || sel.includes(x)) : sel.filter(x => x !== t));
+        }
+        function prToggleFree(cb) { try { localStorage.setItem(PR_FREE_KEY, cb.checked ? '1' : '0'); } catch (e) {} pathReportRender(); }
+        function prToggleRow(el) {
+            const d = el.nextElementSibling;
+            if (!d || !d.classList.contains('pr-units')) return;
+            d.hidden = !d.hidden; el.setAttribute('aria-expanded', String(!d.hidden));
+        }
+        async function prFetchIn(table, cols, col, ids) {   // .in() in slices, each slice paged past the 1000-row cap
+            const out = [];
+            for (let i = 0; i < ids.length; i += 300) {
+                const slice = ids.slice(i, i + 300);
+                out.push(...await fetchAllPaginated(() => supabaseClient.from(table).select(cols).in(col, slice).order('id', { ascending: true })));
+            }
+            return out;
+        }
+        async function pathReportLoad(force) {
+            const box = document.getElementById('pathReportContainer');
+            if (!box || userRole !== 'admin') return;
+            if (pathReport && !force) { pathReportRender(); return; }
+            box.innerHTML = '<div class="empty-state"><h3>Loading Learning Path data...</h3></div>';
+            try {
+                const units = PATH_DATA.paths.begin.units;
+                const mcqIds = [...new Set(units.flatMap(u => u.lessons.filter(l => !l.sq).flatMap(l => l.ids)))];
+                const sqParts = [...new Set(units.flatMap(u => u.lessons.filter(l => l.sq).flatMap(l => l.sq.flatMap(x => x[2] || x[1]))))];
+                const [resp, att, marks, partRows] = await Promise.all([
+                    prFetchIn('question_responses', 'id, user_id, question_id, is_correct, answered_at', 'question_id', mcqIds),
+                    fetchAllPaginated(() => supabaseClient.from('training_attempts').select('id, user_id, part_id, marks, marks_awarded, created_at')
+                        .eq('kind', 'path').not('marks_awarded', 'is', null).order('created_at', { ascending: true }).order('id', { ascending: true })),
+                    prFetchIn('structured_selfmarks', 'id, user_id, part_id, rating, updated_at', 'part_id', sqParts),
+                    prFetchIn('structured_parts', 'id, marks', 'id', sqParts)
+                ]);
+                const partMarks = {};
+                partRows.forEach(p => { partMarks[p.id] = Number(p.marks) || 1; });
+                pathReport = { resp, att, marks, partMarks, at: new Date() };
+                pathReportRender();
+            } catch (err) {
+                console.error('Learning Path report:', err);
+                box.innerHTML = '<div class="empty-state"><h3>Error loading Learning Path data</h3><p>' + escapeHtml(err.message || String(err)) + '</p></div>';
+            }
+        }
+        function pathReportCompute(sel, withFree, since) {
+            const from = prSinceIso(since || '');
+            const keep = t => !from || (t && new Date(t).toISOString() >= from);   // only work on or after the chosen day
+            const resp = pathReport.resp.filter(r => keep(r.answered_at)), att = pathReport.att.filter(a => keep(a.created_at));
+            const marks = pathReport.marks.filter(m => keep(m.updated_at)), partMarks = pathReport.partMarks;
+            const excluded = new Set(REVISION_EXCLUDED_EMAILS.map(e => e.toLowerCase()));
+            const students = (analyticsData.students || []).filter(s => !excluded.has((s.email || '').toLowerCase())
+                && (s.role === 'premium_student' || (withFree && s.role === 'student')));
+            const per = {};
+            const get = uid => per[uid] || (per[uid] = { first: new Map(), rated: new Map(), score: new Map(), qT: new Map(), pT: new Map() });
+            const later = (m, k, t) => { if (t && (!m.has(k) || t > m.get(k))) m.set(k, t); };   // latest time per question / part
+            resp.forEach(r => { const p = get(r.user_id); if (!p.first.has(r.question_id)) p.first.set(r.question_id, !!r.is_correct); later(p.qT, r.question_id, r.answered_at); });
+            att.forEach(a => { const p = get(a.user_id); p.score.set(a.part_id, { got: Number(a.marks_awarded) || 0, tot: Number(a.marks) || 1, t: a.created_at }); later(p.pT, a.part_id, a.created_at); });
+            marks.forEach(m => { const p = get(m.user_id); p.rated.set(m.part_id, m.rating); p.ratedT = p.ratedT || new Map(); p.ratedT.set(m.part_id, m.updated_at); later(p.pT, m.part_id, m.updated_at); });
+            const units = PATH_DATA.paths.begin.units.filter(u => sel.includes(u.t));
+            const empty = { first: new Map(), rated: new Map(), score: new Map(), qT: new Map(), pT: new Map() };
+            return students.map(s => {
+                const prem = s.role === 'premium_student';
+                const p = per[s.id] || empty;
+                const shows = l => !(l.p && !prem) && !(l.f && prem);   // the steps this account sees (lpShow)
+                let last = null;
+                const seen = t => { if (t && (!last || t > last)) last = t; };   // only the ticked units' steps count
+                const unitRows = units.map(u => {
+                    const r = { t: u.t, mcqDone: 0, mcqTot: 0, qAns: 0, qRight: 0, sqDone: 0, sqTot: 0, got: 0, tot: 0, got1: 0, partly: 0, missed: 0 };
+                    u.lessons.filter(shows).forEach(l => {
+                        if (l.sq) {
+                            r.sqTot++;
+                            const req = l.sq.flatMap(x => x[2] || x[1]);
+                            if (req.length && req.every(pid => p.rated.has(pid))) r.sqDone++;
+                            req.forEach(pid => {
+                                seen(p.pT.get(pid));
+                                const k = p.rated.get(pid), sc = p.score.get(pid);
+                                if (k === 'got') r.got1++; else if (k === 'partly') r.partly++; else if (k === 'missed') r.missed++;
+                                // "I don't know" tapped after an earlier AI mark (a rare lost save): 0, as the student's screen shows
+                                const skipped = k === 'missed' && sc && sc.got > 0 && p.ratedT && p.ratedT.get(pid) > sc.t;
+                                if (prem && (k || sc)) { r.tot += sc ? sc.tot : (partMarks[pid] || 1); r.got += sc && !skipped ? sc.got : 0; }
+                            });
+                        } else {
+                            r.mcqTot++;
+                            if (l.ids.length && l.ids.every(id => p.first.has(id))) r.mcqDone++;
+                            l.ids.forEach(id => { seen(p.qT.get(id)); if (p.first.has(id)) { r.qAns++; if (p.first.get(id)) r.qRight++; } });
+                        }
+                    });
+                    return r;
+                });
+                const sum = k => unitRows.reduce((a, r) => a + r[k], 0);
+                const steps = sum('mcqTot') + sum('sqTot'), done = sum('mcqDone') + sum('sqDone');
+                return { s, prem, unitRows, steps, done, mcqDone: sum('mcqDone'), mcqTot: sum('mcqTot'), qAns: sum('qAns'), qRight: sum('qRight'),
+                         sqDone: sum('sqDone'), sqTot: sum('sqTot'), got: sum('got'), tot: sum('tot'), got1: sum('got1'), partly: sum('partly'), missed: sum('missed'), last };
+            });
+        }
+        function pathReportRender() {
+            const box = document.getElementById('pathReportContainer');
+            if (!box || !pathReport) return;
+            if (!analyticsLoadedOnce) { box.innerHTML = '<div class="empty-state"><h3>Loading students...</h3></div>'; return; }   // loadAnalytics redraws it
+            const all = prAllUnits(), sel = prGetUnits(), withFree = prShowFree(), since = prGetSince();
+            const pct = (a, b) => b ? Math.round(100 * a / b) : null;
+            const badge = v => v == null ? '' : (v >= 70 ? 'score-high' : v >= 50 ? 'score-mid' : 'score-low');
+            const half = n => String(Math.round(n * 2) / 2);
+            const when = iso => iso ? new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            const mcqCell = r => r.mcqTot ? r.mcqDone + ' of ' + r.mcqTot + ' lessons'
+                + (r.qAns ? '<div class="ct-sub"><span class="score-badge ' + badge(pct(r.qRight, r.qAns)) + '">' + pct(r.qRight, r.qAns) + '%</span> right first time (' + r.qRight + '/' + r.qAns + ')</div>' : '') : 'None';
+            const sqCell = (r, prem) => {
+                if (!r.sqTot) return 'None';
+                let h = r.sqDone + ' of ' + r.sqTot + ' sets';
+                if (prem && r.tot) h += '<div class="ct-sub"><span class="score-badge ' + badge(pct(r.got, r.tot)) + '">' + pct(r.got, r.tot) + '%</span> ' + half(r.got) + ' of ' + half(r.tot) + ' marks</div>';
+                else if (!prem && (r.got1 + r.partly + r.missed)) h += '<div class="ct-sub">Self-rated: ' + r.got1 + ' got it, ' + r.partly + ' partly, ' + r.missed + ' missed</div>';
+                return h;
+            };
+            let html = '<div class="pr-bar"><span style="font-weight:700; color:var(--primary);">Units</span>'
+                + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetUnits(prAllUnits())">All units</button>'
+                + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetUnits([])">Clear</button>'
+                + '<label class="pr-chip" style="margin-left:auto;">Count work from <input type="date" value="' + since + '" onchange="prSetSince(this.value)" style="background:#0a0e27; color:#fff; border:1px solid rgba(0,217,255,0.35); border-radius:6px; padding:0.15rem 0.3rem;"></label>'
+                + (since ? '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetSince(\'\')">All time</button>' : '')
+                + '<label class="pr-chip' + (withFree ? ' on' : '') + '"><input type="checkbox" ' + (withFree ? 'checked ' : '') + 'onchange="prToggleFree(this)"> Include free accounts</label>'
+                + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="pathReportLoad(true)">Refresh</button></div>'
+                + '<div class="pr-chips">' + all.map((t, i) => { const on = sel.includes(t);
+                    return '<label class="pr-chip' + (on ? ' on' : '') + '"><input type="checkbox" value="' + i + '" ' + (on ? 'checked ' : '') + 'onchange="prToggleUnit(this)"> ' + escapeHtml(t) + '</label>'; }).join('') + '</div>';
+            if (!sel.length) { box.innerHTML = html + '<div class="empty-state"><h3>Tick at least one unit</h3></div>'; return; }
+            const rows = pathReportCompute(sel, withFree, since);
+            rows.sort((a, b) => (b.done / Math.max(1, b.steps)) - (a.done / Math.max(1, a.steps)) || String(b.last || '').localeCompare(String(a.last || ''))
+                || String(a.s.full_name || a.s.email || '').localeCompare(String(b.s.full_name || b.s.email || '')));
+            const finished = rows.filter(r => r.steps && r.done === r.steps).length;
+            const started = rows.filter(r => r.done > 0 || r.qAns > 0 || r.got1 + r.partly + r.missed > 0).length;
+            const card = (v, l) => '<div class="stat-card" style="flex:1; min-width:140px;"><div class="stat-value">' + v + '</div><div class="stat-label">' + l + '</div></div>';
+            html += '<div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">' + card(rows.length, withFree ? 'Students' : 'Premium Students')
+                + card(finished, 'Finished Every Step') + card(started - finished, 'Part Way') + card(rows.length - started, 'Not Started') + '</div>'
+                + '<p class="pr-note">The "From the beginning" path, for the ' + sel.length + ' unit' + (sel.length === 1 ? '' : 's') + ' ticked, ' + (since ? 'counting only work from ' + escapeHtml(new Date(prSinceIso(since)).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })) + '. ' : 'all time. ') + 'A lesson counts as done once all its questions are answered' + (since ? ' in that time' : ', even in other practice') + '; MCQ scores use each question\'s first answer' + (since ? ' in that time' : '') + '. Structured marks are the AI marks (premium). Tap a student to see each unit. Data as at ' + escapeHtml(when(pathReport.at)) + '.</p>';
+            html += '<div class="ct-scroll pr-students"><div class="ct-row ct-head"><div>Student</div><div>Steps done</div><div>MCQ lessons</div><div>Structured questions</div><div>Last answer</div></div>'
+                + rows.map(r => {
+                    const nm = r.s.full_name || r.s.email || 'Unknown student';
+                    const p = pct(r.done, r.steps);
+                    const units = '<div class="pr-units" hidden><div class="ct-row ct-head"><div>Unit</div><div>MCQ lessons</div><div>Structured questions</div></div>'
+                        + r.unitRows.map(u => '<div class="ct-row"><div>' + escapeHtml(u.t) + '</div><div>' + mcqCell(u) + '</div><div>' + sqCell(u, r.prem) + '</div></div>').join('') + '</div>';
+                    return '<div class="ct-row pr-row" role="button" tabindex="0" aria-expanded="false" onclick="prToggleRow(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();prToggleRow(this);}">'
+                        + '<div>' + escapeHtml(nm) + '<div class="ct-sub">' + escapeHtml(r.s.email || '') + (r.prem ? '' : ' (free)') + '</div></div>'
+                        + '<div><span class="score-badge ' + badge(p) + '">' + r.done + '/' + r.steps + '</span></div>'
+                        + '<div>' + mcqCell(r) + '</div><div>' + sqCell(r, r.prem) + '</div>'
+                        + '<div class="ct-sub" style="opacity:0.95;">' + escapeHtml(when(r.last) || 'Nothing yet') + '</div></div>' + units;
+                }).join('') + '</div>';
+            box.innerHTML = html;
+        }
+
         function switchAnalyticsTab(tab, btn) {
             document.querySelectorAll('.analytics-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.analytics-section').forEach(s => s.classList.remove('active'));
@@ -10548,6 +10738,7 @@ Option D" required></textarea>
             const sectionId = 'analytics' + tab.charAt(0).toUpperCase() + tab.slice(1);
             document.getElementById(sectionId).classList.add('active');
             if (tab === 'reports') contentFlagsLoadAdmin();
+            if (tab === 'path') pathReportLoad();
         }
 
         function openDrilldown(userId, studentName) {

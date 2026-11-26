@@ -4816,7 +4816,11 @@ Option D" required></textarea>
             try {
                 const { error } = await supabaseClient.from('user_profiles').update({ level: next }).eq('id', currentUser.id);
                 if (error) throw error;
-                try { sessionStorage.removeItem('chembank_lastStudentTab'); } catch (e) {}
+                try {
+                    sessionStorage.removeItem('chembank_lastStudentTab');
+                    // Staff switching into O-level land on the O-level student view (their home page is the staff welcome screen)
+                    if ((userRole === 'admin' || userRole === 'teacher') && next === 'olevel') sessionStorage.setItem('chembank_lastView', 'student');
+                } catch (e) {}
                 window.location.reload();
             } catch (e) {
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -4826,7 +4830,8 @@ Option D" required></textarea>
         function olSetLevelLink(viewId) {
             const el = document.getElementById('olLevelSwitch'), box = document.getElementById('olUserBox');
             if (!el || !box) return;
-            const show = (viewId === 'studentView' || viewId === 'pathView') && olLevelButton() !== '';
+            const staff = userRole === 'admin' || userRole === 'teacher';
+            const show = (viewId === 'studentView' || viewId === 'pathView' || (staff && viewId === 'welcomeView')) && olLevelButton() !== '';
             el.textContent = isOlevel() ? 'Switch to A-level (H2)' : 'Switch to O-level';
             el.style.display = show ? 'inline-block' : 'none';
             box.style.display = show ? 'flex' : 'contents';

@@ -2209,6 +2209,8 @@ Option D" required></textarea>
                 #olSetupPanel .ol-chip.on { background:#00666f; border-color:#00666f; color:#ffffff; font-weight:600; }
                 #olSetupPanel .ol-check { display:inline-flex; align-items:center; gap:0.4rem; color:#ffffff; cursor:pointer; white-space:nowrap; }
                 #olSetupPanel .ol-topic-row { white-space:normal; }
+                #olSetupPanel .ol-check input[type="checkbox"] { width:auto; padding:0; margin:0; flex:0 0 auto; }   /* .form-group input makes inputs full width */
+                #olSetupPanel .form-group .ol-check { margin-bottom:0; font-weight:400; justify-content:flex-start; }
                 #olSetupPanel .ol-topic-row { display:flex; padding:0.3rem 0 0.3rem 1rem; }
                 #olSetupPanel .ol-group { margin:0.4rem 0; }
                 #olSetupPanel .ol-group > summary { cursor:pointer; color:#ffffff; font-weight:600; padding:0.35rem 0; }

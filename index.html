@@ -4528,7 +4528,7 @@ Option D" required></textarea>
         // 'preview' = any signed-in account that opened the page with ?olevel=1 (this browser tab remembers it);
         // 'on' = everyone. The view is chosen by user_profiles.level, but ACCESS stays on the role and row security:
         // O-level prelim MCQs are premium + staff only on the server; free and Sec accounts get the O-level TYS.
-        const OLEVEL_MODE = 'off';
+        const OLEVEL_MODE = 'preview';
         const OL_PREVIEW = (function () {
             try {
                 if (new URLSearchParams(initialSearch).get('olevel') === '1') sessionStorage.setItem('khem_olevel_preview', '1');

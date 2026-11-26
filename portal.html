@@ -627,11 +627,30 @@
         errEl.classList.add('visible');
         return;
       }
-      // A class code decides the level (and the O-level course) by itself, whatever was tapped (26 Nov 2026)
-      if (/^JC[12]-/.test(joinCode)) setSignupLevel('h2');
-      else if (/^SEC[34]C-\d{4}$/.test(joinCode)) { setSignupLevel('olevel'); setSignupTrack('combined'); }
-      else if (/^(SEC[34]P|TAMP-S[34]P|IP[34])-\d{4}$/.test(joinCode)) { setSignupLevel('olevel'); setSignupTrack('pure'); }
-      else if (/^SEC[34]-\d{4}$/.test(joinCode)) setSignupLevel('olevel');
+      // A join code decides the level (and the O-level course) by itself, whatever was tapped (27 Nov 2026):
+      // KhemBank says which level and course each code is for. Validated here, before the level check.
+      if (joinCode) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Checking code...';
+        var jcBox = document.getElementById('signupJoinCode');
+        if (jcBox) jcBox.readOnly = true;   // the code checked is the code used
+        var codeInfo = null, codeErr = '';
+        try {
+          var codeCheck = await sb.rpc('validate_join_code', { p_code: joinCode });
+          if (codeCheck.error) codeErr = 'Could not validate join code. Please try again.';
+          else {
+            codeInfo = codeCheck.data || {};
+            if (!codeInfo.exists) codeErr = 'Invalid or expired join code. Leave it blank for a free account.';
+            else if (codeInfo.reached_max) codeErr = 'This join code has reached its maximum uses.';
+          }
+        } catch (e) { codeErr = 'Could not validate join code. Please try again.'; }
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+        if (jcBox) jcBox.readOnly = false;
+        if (codeErr) { errEl.textContent = codeErr; errEl.classList.add('visible'); return; }
+        if (codeInfo.khem_level === 'h2' || codeInfo.khem_level === 'olevel') setSignupLevel(codeInfo.khem_level);
+        if (codeInfo.khem_level === 'olevel' && (codeInfo.khem_track === 'pure' || codeInfo.khem_track === 'combined')) setSignupTrack(codeInfo.khem_track);
+      }
       if (!signupLevel) {
         errEl.textContent = 'Please choose A level or O level at the top.';
         errEl.classList.add('visible');
@@ -645,14 +664,7 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Creating account...';
       try {
-        // Validate join code server-side (codes are not exposed to the client); skipped when left blank
-        if (joinCode) {
-          var codeCheck = await sb.rpc('validate_join_code', { p_code: joinCode });
-          if (codeCheck.error) throw new Error('Could not validate join code. Please try again.');
-          var codeInfo = codeCheck.data || {};
-          if (!codeInfo.exists) throw new Error('Invalid or expired join code. Leave it blank for a free account.');
-          if (codeInfo.reached_max) throw new Error('This join code has reached its maximum uses.');
-        }
+        // The join code was checked above (and the database trigger checks it again when the account is made)
         // Create auth account — DB trigger reads join_code from metadata to set role/enrollment
         var levelData = { level: signupLevel, olevel_track: signupLevel === 'olevel' ? signupTrack : null };
         var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode, khem_level: levelData.level, khem_track: levelData.olevel_track } } });

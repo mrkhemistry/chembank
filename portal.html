@@ -627,6 +627,11 @@
         errEl.classList.add('visible');
         return;
       }
+      // A class code decides the level (and the O-level course) by itself, whatever was tapped (26 Nov 2026)
+      if (/^JC[12]-/.test(joinCode)) setSignupLevel('h2');
+      else if (/^SEC[34]C-\d{4}$/.test(joinCode)) { setSignupLevel('olevel'); setSignupTrack('combined'); }
+      else if (/^(SEC[34]P|TAMP-S[34]P|IP[34])-\d{4}$/.test(joinCode)) { setSignupLevel('olevel'); setSignupTrack('pure'); }
+      else if (/^SEC[34]-\d{4}$/.test(joinCode)) setSignupLevel('olevel');
       if (!signupLevel) {
         errEl.textContent = 'Please choose A level or O level at the top.';
         errEl.classList.add('visible');

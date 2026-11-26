@@ -15,8 +15,8 @@
     --border: #2a2a2a;
     --border2: #3a3a3a;
     --text: #ffffff;
-    --text2: #cccccc;
-    --text3: #777777;
+    --text2: #ffffff;
+    --text3: #ffffff;   /* no grey text (Eric's rule); was #cccccc / #777777 */
     --cyan: #00e5ff;
     --cyan-dim: rgba(0,229,255,0.08);
     --cyan-border: rgba(0,229,255,0.2);
@@ -34,12 +34,12 @@
 
   .dash-header { background: #000; border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
   .dash-logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; background: linear-gradient(90deg, #ffffff 0%, #00e5ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .back-link { font-size: 0.8rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-  .back-link:hover { color: var(--cyan); }
+  .back-link { display: inline-block; font-size: 0.85rem; color: #ffffff; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; border: 1px solid var(--cyan); border-radius: 4px; padding: 0.45rem 0.85rem; text-decoration: none; white-space: nowrap; }
+  .back-link:hover { background: #00666f; color: #ffffff; }
   .dash-right { display: flex; align-items: center; gap: 1rem; }
   .dash-user { font-size: 0.8rem; color: var(--text3); text-align: right; }
   .dash-user strong { display: block; color: var(--text2); font-size: 0.875rem; font-weight: 500; }
-  .btn-signout { background: transparent; border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .btn-signout { background: transparent; border: 1px solid var(--cyan); color: #ffffff; border-radius: 4px; padding: 0.38rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; font-family: 'DM Sans', sans-serif; }
   .btn-signout:hover { border-color: var(--red); color: var(--red); }
 
   .main { padding: 3rem 2rem; max-width: 1100px; margin: 0 auto; }
@@ -122,6 +122,10 @@
     .main { padding: 2rem 1rem; }
     h2.title { font-size: 1.8rem; }
     .dash-header { padding: 0 1rem; }
+    .dash-logo { font-size: 1.05rem; white-space: nowrap; }
+    .back-link { padding: 0.4rem 0.55rem; font-size: 0.75rem; letter-spacing: 0.03em; }
+    .btn-signout { white-space: nowrap; padding: 0.38rem 0.6rem; }
+    .dash-header > div:first-child { gap: 0.6rem !important; }
     .dash-user { display: none; }
     .modal { padding: 1rem; }
   }
@@ -133,7 +137,7 @@
   <div style="display:flex;align-items:center;gap:1.25rem;">
     <div class="dash-logo">Mr Khemistry</div>
     <a href="portal.html" class="back-link" id="portalBackLink">&larr; Portal</a>
-    <a href="https://chembank.mrkhemistry.com/" class="back-link" id="khembankOlevelLink" style="display:none; color:#ffffff; font-weight:600; white-space:nowrap;">O-level practice &rarr;</a>
+    <a href="https://chembank.mrkhemistry.com/" class="back-link" id="khembankOlevelLink" style="display:none;">O-level practice &rarr;</a>
   </div>
   <div class="dash-right">
     <div class="dash-user">

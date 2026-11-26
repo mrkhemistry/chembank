@@ -132,7 +132,8 @@
 <div class="dash-header">
   <div style="display:flex;align-items:center;gap:1.25rem;">
     <div class="dash-logo">Mr Khemistry</div>
-    <a href="portal.html" class="back-link">&larr; Portal</a>
+    <a href="portal.html" class="back-link" id="portalBackLink">&larr; Portal</a>
+    <a href="https://chembank.mrkhemistry.com/" class="back-link" id="khembankOlevelLink" style="display:none;">KhemBank O-level practice &rarr;</a>
   </div>
   <div class="dash-right">
     <div class="dash-user">
@@ -222,6 +223,8 @@
   var courseDetailView = document.getElementById('courseDetailView');
   var topicListEl = document.getElementById('topicList');
   var myRole = '';
+  // O-level section (26 Nov 2026): set to true together with OLEVEL_MODE = 'on' in index.html
+  var OLEVEL_LIVE = false;
   var isSharer = false;
   var coursesById = {};
   var currentCourse = null;
@@ -242,6 +245,12 @@
       var roleRes = await sb.from('user_profiles').select('role').eq('id', session.user.id).single();
       myRole = (roleRes.data && roleRes.data.role) || '';
     } catch (e) { myRole = ''; }
+    if (OLEVEL_LIVE && myRole === 'sec_student') {
+      // Sec accounts: this page is their home, so no Portal link (it sent them straight back here); KhemBank O-level instead
+      var pl = document.getElementById('portalBackLink'); if (pl) pl.style.display = 'none';
+      var kl = document.getElementById('khembankOlevelLink'); if (kl) kl.style.display = '';
+      var rc = document.getElementById('referralCTA'); if (rc) rc.style.display = 'none';   // its text is about H2 recordings
+    }
     try {
       // A recordings-only sharer (Teacher Jasmine) may share the Sec courses. The server checks this again.
       var sharerRes = await sb.from('recording_sharers').select('user_id').eq('user_id', session.user.id).maybeSingle();

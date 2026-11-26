@@ -2049,6 +2049,24 @@ Option D" required></textarea>
                 </div>
                 
                 <div class="filters">
+                    <div class="form-group" id="filterSyllabusGroup" style="display:none;">
+                        <label>Level</label>
+                        <select id="filterSyllabus" onchange="olAdminSyllabusChanged()">
+                            <option value="h2_chem">H2 Chemistry</option>
+                            <option value="o_level_chem">O-level Chemistry</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="filterOlExtraGroup" style="display:none;">
+                        <label>O-level filter</label>
+                        <select id="filterOlExtra">
+                            <option value="">All O-level rows</option>
+                            <option value="paper_pure">Pure papers</option>
+                            <option value="paper_combined">Combined Science papers</option>
+                            <option value="course_pc">Tagged Pure + Combined</option>
+                            <option value="course_po">Tagged Pure only</option>
+                            <option value="outside">Outside the syllabus</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label>Filter by Topic</label>
                         <select id="filterTopic">
@@ -2183,7 +2201,71 @@ Option D" required></textarea>
                 </div>
             </div>
 
-            <div class="panel">
+
+            <!-- O-level Practise MCQ set-up (O-level section, stage 1, 26 Nov 2026): shown instead of the H2 panels in O-level mode -->
+            <style>
+                #olSetupPanel .ol-chips { display:flex; flex-wrap:wrap; gap:0.5rem 1rem; align-items:center; }
+                #olSetupPanel .ol-chip { background:transparent; color:#ffffff; border:1px solid var(--primary); border-radius:999px; padding:0.45rem 1rem; font:inherit; cursor:pointer; }
+                #olSetupPanel .ol-chip.on { background:#00666f; border-color:#00666f; color:#ffffff; font-weight:600; }
+                #olSetupPanel .ol-check { display:inline-flex; align-items:center; gap:0.4rem; color:#ffffff; cursor:pointer; white-space:nowrap; }
+                #olSetupPanel .ol-topic-row { white-space:normal; }
+                #olSetupPanel .ol-topic-row { display:flex; padding:0.3rem 0 0.3rem 1rem; }
+                #olSetupPanel .ol-group { margin:0.4rem 0; }
+                #olSetupPanel .ol-group > summary { cursor:pointer; color:#ffffff; font-weight:600; padding:0.35rem 0; }
+                #olSetupPanel .ol-count { color:var(--primary); font-weight:400; }
+                #olSetupPanel .ol-hint { color:#ffffff; font-size:0.88rem; line-height:1.5; margin:0.5rem 0 0; }
+                #olSetupPanel .ol-hint.ol-attn { color:var(--primary); font-weight:600; }
+                #olSetupPanel .ol-src { margin:0.6rem 0; }
+                #olSetupPanel .ol-src-label { color:#ffffff; font-weight:600; margin-bottom:0.3rem; }
+                #olSetupPanel #olEmpty { color:var(--primary); font-weight:600; margin-top:0.75rem; }
+            </style>
+            <div class="panel" id="olSetupPanel" style="display:none;">
+                <div class="panel-header">
+                    <span>O-level Chemistry MCQs</span>
+                    <span id="olBankCount" style="font-size:0.9rem;"></span>
+                </div>
+                <div class="form-group">
+                    <label>My course</label>
+                    <div class="ol-chips" id="olTrackChips">
+                        <button type="button" class="ol-chip" data-track="pure" onclick="olSetTrack('pure')">Pure Chemistry</button>
+                        <button type="button" class="ol-chip" data-track="combined" onclick="olSetTrack('combined')">Combined Science</button>
+                    </div>
+                    <p class="ol-hint" id="olTrackHint">Choose your course. IP students: choose Pure Chemistry. Combined Science shows only the questions in your syllabus.</p>
+                </div>
+                <div class="form-group">
+                    <label>Topics</label>
+                    <label class="ol-check"><input type="checkbox" id="olAllTopics" checked onchange="olToggleAllTopics(this.checked)"> <strong>All topics</strong> <span class="ol-count" id="olAllCount"></span></label>
+                    <div id="olTopicGroups"></div>
+                </div>
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <div class="ol-chips">
+                        <label class="ol-check"><input type="checkbox" class="ol-diff" value="Easy" checked onchange="olRefreshCounts()"> Easy</label>
+                        <label class="ol-check"><input type="checkbox" class="ol-diff" value="Medium" checked onchange="olRefreshCounts()"> Medium</label>
+                        <label class="ol-check"><input type="checkbox" class="ol-diff" value="Hard" checked onchange="olRefreshCounts()"> Hard</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="olNum">Number of questions</label>
+                    <select id="olNum">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                        <option value="40">40</option>
+                    </select>
+                </div>
+                <details id="olMoreOptions" class="ol-group">
+                    <summary>More options: papers and years<span id="olMoreCount"></span></summary>
+                    <div id="olSourceBoxes"></div>
+                </details>
+                <p class="ol-hint" id="olPrelimNote" style="display:none;">You get every O-level Ten-Year Series MCQ from 2017 to 2025. School prelim MCQs for O-level are coming soon.</p>
+                <div id="olEmpty" style="display:none;"></div>
+                <div id="olButtonRow" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin-top:1rem;">
+                    <button class="btn btn-primary" onclick="olStartQuiz()">Start Quiz</button>
+                </div>
+            </div>
+            <div class="panel" id="h2QuizSetupPanel">
                 <div class="panel-header">
                     <span>Select Quiz Parameters</span>
                 </div>
@@ -3530,12 +3612,51 @@ Option D" required></textarea>
     </div>
 
     <!-- Name prompt modal for first-time invited students -->
+
+    <!-- O-level question edit (admin and teacher; O-level section, 26 Nov 2026) -->
+    <div id="olEditModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10001; align-items:flex-start; justify-content:center; overflow-y:auto; padding:2rem 1rem;">
+        <div style="background:var(--dark); border:1px solid var(--cyan-border); border-radius:12px; padding:1.5rem; max-width:720px; width:100%; color:#ffffff;">
+            <h2 style="color:var(--primary); font-size:1.3rem; margin:0 0 0.4rem;">Edit O-level question</h2>
+            <p id="olEditInfo" style="color:#ffffff; font-size:0.9rem; margin:0 0 1rem;"></p>
+            <div class="form-group"><label for="olEditText">Question text</label><textarea id="olEditText" rows="6"></textarea></div>
+            <div class="form-group"><label for="olEditOptions">Options (one per line)</label><textarea id="olEditOptions" rows="5"></textarea></div>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                <div class="form-group" style="flex:1 1 140px;"><label for="olEditAnswer">Answer</label>
+                    <select id="olEditAnswer"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                <div class="form-group" style="flex:1 1 140px;"><label for="olEditDifficulty">Difficulty</label>
+                    <select id="olEditDifficulty"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
+            </div>
+            <div class="form-group"><label for="olEditTopic">Topic</label><select id="olEditTopic"></select></div>
+            <div class="form-group"><label for="olEditCourse">Course tag</label>
+                <select id="olEditCourse"><option value="pure_combined">Pure + Combined</option><option value="pure_only">Pure only</option></select></div>
+            <label style="display:flex; gap:0.5rem; align-items:center; color:#ffffff; margin-bottom:1rem;"><input type="checkbox" id="olEditOutside"> Outside the 2026 syllabus (hidden from students)</label>
+            <div class="form-group"><label for="olEditExplanation">Explanation</label><textarea id="olEditExplanation" rows="8"></textarea></div>
+            <p style="color:#ffffff; font-size:0.85rem; margin:0 0 1rem;">Pictures, source, paper and question number are not edited here.</p>
+            <div id="olEditError" style="color:var(--danger); font-size:0.9rem; margin-bottom:0.75rem;"></div>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="olEditSave()">Save changes</button>
+                <button class="btn btn-secondary" onclick="olEditClose()">Cancel</button>
+            </div>
+        </div>
+    </div>
     <div id="namePromptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:10000; align-items:center; justify-content:center;">
         <div style="background:var(--dark); border:1px solid var(--cyan-border); border-radius:12px; padding:2.5rem; max-width:420px; width:90%; text-align:center;">
             <div style="font-size:2rem; margin-bottom:1rem;"></div>
             <h2 style="color:var(--primary); font-size:1.5rem; margin-bottom:0.5rem;">Welcome to KhemBank!</h2>
             <p style="color:rgba(240,244,248,0.6); font-size:0.95rem; margin-bottom:1.5rem;">Please enter your full name to get started.</p>
             <input type="text" id="namePromptInput" placeholder="e.g. John Tan" style="width:100%; background:var(--mid-dark); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:12px 16px; color:var(--light); font-family:'DM Sans',sans-serif; font-size:1rem; outline:none; margin-bottom:1rem;">
+            <div id="namePromptLevel" style="display:none; text-align:left; margin-bottom:1rem; color:#ffffff;">
+                <div id="namePromptLevelRow" style="margin-bottom:0.75rem;">
+                    <div style="font-weight:600; margin-bottom:0.4rem;">What are you studying?</div>
+                    <label style="display:flex; gap:0.5rem; align-items:center; margin:0.3rem 0;"><input type="radio" name="npLevel" value="h2" checked onchange="olNamePromptLevelChanged()"> A-level H2 Chemistry (JC)</label>
+                    <label style="display:flex; gap:0.5rem; align-items:center; margin:0.3rem 0;"><input type="radio" name="npLevel" value="olevel" onchange="olNamePromptLevelChanged()"> O-level Chemistry (Secondary)</label>
+                </div>
+                <div id="namePromptTrackRow" style="display:none;">
+                    <div style="font-weight:600; margin-bottom:0.4rem;">Which O-level course?</div>
+                    <label style="display:flex; gap:0.5rem; align-items:center; margin:0.3rem 0;"><input type="radio" name="npTrack" value="pure"> Pure Chemistry (IP students too)</label>
+                    <label style="display:flex; gap:0.5rem; align-items:center; margin:0.3rem 0;"><input type="radio" name="npTrack" value="combined"> Combined Science</label>
+                </div>
+            </div>
             <button onclick="submitNamePrompt()" class="btn btn-primary" style="width:100%;">Continue →</button>
             <div id="namePromptError" style="display:none; color:var(--danger); font-size:0.85rem; margin-top:0.75rem;"></div>
         </div>
@@ -4058,6 +4179,7 @@ Option D" required></textarea>
                 if (teacherCard) teacherCard.style.display = 'block';
                 const structuredCard = document.getElementById('structuredCard');
                 if (structuredCard) structuredCard.style.display = 'block';
+                olAdminSetup();
                 if (pathEnabled() && !deepLinkTab) { lpOpenHome(); return; }   // admin preview of the Learning Path (?path=1)
                 const restoreView = savedView || 'welcome';
                 const savedTab = (restoreView === 'student') ? sessionStorage.getItem('chembank_lastStudentTab') : null;
@@ -4072,6 +4194,7 @@ Option D" required></textarea>
                 if (pdfCard) pdfCard.style.display = 'block';
                 const structuredCard = document.getElementById('structuredCard');
                 if (structuredCard) structuredCard.style.display = 'block';
+                olAdminSetup();
                 // Teachers can access welcome, admin, student, structured — validate before restoring
                 const allowedViews = ['welcome', 'admin', 'student', 'structured'];
                 const restoreView2 = savedView && allowedViews.includes(savedView) ? savedView : 'welcome';
@@ -4079,12 +4202,13 @@ Option D" required></textarea>
                 showView(restoreView2);
                 if (savedTab2) switchStudentTab(savedTab2);
                 applyDeepLinkTab();
-            } else if (userRole === 'student' || userRole === 'premium_student') {
+            } else if (userRole === 'student' || userRole === 'premium_student' || (userRole === 'sec_student' && olevelEnabled())) {
                 // Check if student needs to set their name first
                 const name = userProfile && userProfile.full_name ? userProfile.full_name.trim() : '';
                 const isPlaceholder = !name || name === userProfile.email.split('@')[0];
                 if (isPlaceholder) {
                     const modal = document.getElementById('namePromptModal');
+                    if (olevelEnabled()) olPrepareNamePrompt();
                     modal.style.display = 'flex';
                     setTimeout(() => document.getElementById('namePromptInput').focus(), 100);
                 } else if (pathEnabled() && !deepLinkTab) {
@@ -4398,6 +4522,431 @@ Option D" required></textarea>
         // Column list fetched for a quiz question (kept in one place so every quiz entry matches)
         const QUIZ_COLS = 'id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url';
 
+        // ===================== O-LEVEL SECTION (stage 1, 26 Nov 2026) =====================
+        // Plan: Question bank files\olevel-prelim-p1\KHEMBANK_OLEVEL_UI_PLAN.md (Fable + Codex reviewed).
+        // OLEVEL_MODE: 'off' = nobody sees it and every H2 screen and query is exactly as before;
+        // 'preview' = any signed-in account that opened the page with ?olevel=1 (this browser tab remembers it);
+        // 'on' = everyone. The view is chosen by user_profiles.level, but ACCESS stays on the role and row security:
+        // O-level prelim MCQs are premium + staff only on the server; free and Sec accounts get the O-level TYS.
+        const OLEVEL_MODE = 'off';
+        const OL_PREVIEW = (function () {
+            try {
+                if (new URLSearchParams(initialSearch).get('olevel') === '1') sessionStorage.setItem('khem_olevel_preview', '1');
+                return sessionStorage.getItem('khem_olevel_preview') === '1';
+            } catch (e) { return false; }
+        })();
+        function olevelEnabled() { return OLEVEL_MODE === 'on' || (OLEVEL_MODE === 'preview' && OL_PREVIEW); }
+        function getLevel() {
+            if (!olevelEnabled() || !currentUser) return 'h2';
+            if (userRole === 'sec_student') return 'olevel';                 // Sec accounts: O-level only, no switch
+            const lv = userProfile && userProfile.level;
+            return lv === 'olevel' ? 'olevel' : 'h2';
+        }
+        function isOlevel() { return getLevel() === 'olevel'; }
+        function curSyl() { return isOlevel() ? 'o_level_chem' : 'h2_chem'; }
+        // Accounts that use the student screens (allow lists). Sec only while the O-level section is switched on.
+        function isStudentAccount() {
+            return userRole === 'student' || userRole === 'premium_student' || (userRole === 'sec_student' && olevelEnabled());
+        }
+        // A question's main topic. H2: the topic field, exactly as before. O-level: topics[0], the fixed O-level tag
+        // (on O-level TYS rows `topic` is the old free-typed name that drives the public TYS page addresses).
+        function topicOf(q) {
+            if (!q) return null;
+            if (isOlevel()) return (Array.isArray(q.topics) && q.topics.length) ? q.topics[0] : (q.topic || null);
+            return q.topic;
+        }
+
+        const OL_TOPIC_GROUPS = [
+            ['Experimental Chemistry', ['Experimental Techniques', 'Separation and Purification', 'Qualitative Analysis']],
+            ['Particles, Bonding and the Mole', ['Kinetic Particle Theory', 'Atomic Structure', 'Chemical Bonding', 'Mole Concept and Stoichiometry']],
+            ['Acids, Bases and Salts', ['Acids and Bases', 'Salts', 'Ammonia']],
+            ['Redox and Electrochemistry', ['Redox', 'Electrolysis', 'Simple Cells']],
+            ['Periodic Table and Metals', ['Periodic Table', 'Transition Elements', 'Metals']],
+            ['Energy and Rate', ['Chemical Energetics', 'Rate of Reaction']],
+            ['Organic Chemistry', ['Fuels and Crude Oil', 'Alkanes and Alkenes', 'Alcohols, Carboxylic Acids and Esters', 'Polymers']],
+            ['Air and the Environment', ['Air Quality']]
+        ];
+        const OL_TOPICS = OL_TOPIC_GROUPS.flatMap(g => g[1]);
+        const OL_META_COLS = 'id, topic, topics, difficulty, source, source_year, school, paper, olevel_course, outside_syllabus';
+        const OL_QUIZ_COLS = QUIZ_COLS + ', paper, olevel_course, question_number';
+        let olMeta = null, olMetaPromise = null;
+
+        function olLoadMeta() {
+            if (olMeta) return Promise.resolve(olMeta);
+            if (!olMetaPromise) {
+                olMetaPromise = fetchAllPaginated(() =>
+                    supabaseClient.from('questions').select(OL_META_COLS).eq('syllabus', 'o_level_chem').order('id'))
+                    .then(rows => { olMeta = rows || []; return olMeta; })
+                    .catch(err => { olMetaPromise = null; throw err; });
+            }
+            return olMetaPromise;
+        }
+        function olAttr(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function olTrack() { const t = userProfile && userProfile.olevel_track; return (t === 'pure' || t === 'combined') ? t : null; }
+
+        // Show the O-level set-up instead of the H2 panels (called from showView('student') only while the section is on)
+        function olApplyLevelToStudentView() {
+            if (!isOlevel()) return;
+            ['tabP2P3', 'tabCheckAnswer', 'tabWorksheets', 'revPkgPanel', 'h2QuizSetupPanel'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.style.display = 'none';
+            });
+            const panel = document.getElementById('olSetupPanel');
+            if (panel) panel.style.display = 'block';
+            const resume = document.getElementById('resumeQuizBtn'), row = document.getElementById('olButtonRow');
+            if (resume && row && resume.parentNode !== row) row.appendChild(resume);   // one Resume button, moved into the O-level panel
+            olOpenSetup();
+        }
+
+        async function olOpenSetup() {
+            olRenderTrack();
+            olRenderTopics();
+            const info = document.getElementById('olBankCount');
+            try {
+                await olLoadMeta();
+            } catch (e) {
+                if (info) info.textContent = '';
+                olShowEmpty('Could not load the O-level questions. Please check your connection and reload the page.');
+                return;
+            }
+            olRenderSources();
+            olRefreshCounts();
+        }
+
+        function olRenderTrack() {
+            const t = olTrack();
+            document.querySelectorAll('#olTrackChips .ol-chip').forEach(b => b.classList.toggle('on', b.getAttribute('data-track') === t));
+            const hint = document.getElementById('olTrackHint');
+            if (hint) hint.classList.toggle('ol-attn', !t);
+        }
+        async function olSetTrack(t) {
+            if (t !== 'pure' && t !== 'combined' || !currentUser) return;
+            if (userProfile) userProfile.olevel_track = t;
+            olRenderTrack();
+            olRefreshCounts();
+            try {
+                const { error } = await supabaseClient.from('user_profiles').update({ olevel_track: t }).eq('id', currentUser.id);
+                if (error) console.warn('Could not save the O-level course:', error.message);
+            } catch (e) { console.warn('Could not save the O-level course:', e); }
+        }
+
+        function olRenderTopics() {
+            const box = document.getElementById('olTopicGroups');
+            if (!box || box.dataset.built === '1') return;
+            box.innerHTML = OL_TOPIC_GROUPS.map((g, gi) =>
+                '<details class="ol-group" data-group="' + gi + '"><summary><span>' + escapeHtml(g[0]) + '</span> <span class="ol-count" data-group-count="' + gi + '"></span></summary>' +
+                g[1].map(t => '<label class="ol-check ol-topic-row"><input type="checkbox" class="ol-topic" value="' + olAttr(t) + '" checked onchange="olTopicChanged()"> <span>' + escapeHtml(t) + '</span> <span class="ol-count"></span></label>').join('') +
+                '</details>').join('');
+            box.dataset.built = '1';
+        }
+        function olToggleAllTopics(on) {
+            document.querySelectorAll('#olTopicGroups .ol-topic').forEach(cb => { cb.checked = on; });
+            olRefreshCounts();
+        }
+        function olTopicChanged() {
+            const boxes = [...document.querySelectorAll('#olTopicGroups .ol-topic')];
+            const all = document.getElementById('olAllTopics');
+            if (all) all.checked = boxes.length > 0 && boxes.every(cb => cb.checked);
+            olRefreshCounts();
+        }
+
+        // Papers and years, built from the rows this account can read (row security decides what arrives)
+        function olRenderSources() {
+            const box = document.getElementById('olSourceBoxes');
+            if (!box || box.dataset.built === '1' || !olMeta) return;
+            const years = src => [...new Set(olMeta.filter(q => q.source === src).map(q => q.source_year))].filter(Boolean).sort((a, b) => b - a);
+            const yearBoxes = (src, label) => {
+                const ys = years(src);
+                if (!ys.length) return '';
+                return '<div class="ol-src"><div class="ol-src-label">' + label + '</div><div class="ol-chips">' +
+                    ys.map(y => '<label class="ol-check"><input type="checkbox" class="ol-src-cb" data-source="' + olAttr(src) + '" data-year="' + olAttr(y) + '" onchange="olRefreshCounts()"> ' + escapeHtml(String(y)) + '</label>').join('') + '</div></div>';
+            };
+            let html = yearBoxes('TYS', 'O-level papers (Ten-Year Series)');
+            const schools = [...new Set(olMeta.filter(q => q.source === 'Prelim').map(q => q.school))].filter(Boolean).sort((a, b) => a.localeCompare(b));
+            if (schools.length) {
+                html += yearBoxes('Prelim', 'School prelims: years');
+                html += '<details class="ol-group"><summary><span>School prelims: schools</span></summary><div class="ol-chips">' +
+                    schools.map(s => '<label class="ol-check"><input type="checkbox" class="ol-src-cb" data-source="Prelim" data-school="' + olAttr(s) + '" onchange="olRefreshCounts()"> ' + escapeHtml(s) + '</label>').join('') +
+                    '</div></details>';
+            }
+            html += '<p class="ol-hint">Leave every box empty to use all papers.</p>';
+            box.innerHTML = html;
+            box.dataset.built = '1';
+            const note = document.getElementById('olPrelimNote');
+            if (note) note.style.display = schools.length ? 'none' : 'block';
+        }
+
+        // Rows that pass the course, syllabus, difficulty and paper filters (not the topic filter)
+        function olPool() {
+            if (!olMeta) return [];
+            const track = olTrack();
+            const diffs = [...document.querySelectorAll('.ol-diff:checked')].map(cb => cb.value);
+            const ticks = [...document.querySelectorAll('#olSourceBoxes .ol-src-cb:checked')].map(cb => ({
+                source: cb.getAttribute('data-source'),
+                year: cb.getAttribute('data-year') ? parseInt(cb.getAttribute('data-year'), 10) : null,
+                school: cb.getAttribute('data-school') || null
+            }));
+            const more = document.getElementById('olMoreCount');
+            if (more) more.textContent = ticks.length ? ' (' + ticks.length + ' on)' : '';
+            const bySrc = {};
+            ticks.forEach(t => { (bySrc[t.source] = bySrc[t.source] || { years: [], schools: [] }); if (t.year) bySrc[t.source].years.push(t.year); if (t.school) bySrc[t.source].schools.push(t.school); });
+            return olMeta.filter(q => {
+                if (q.outside_syllabus === true) return false;                          // never shown to students
+                if (track === 'combined' && q.olevel_course !== 'pure_combined') return false;
+                if (!diffs.includes(q.difficulty)) return false;
+                if (q.source !== 'TYS' && hiddenFromFree(q)) return false;              // belt and braces; row security already decides
+                if (ticks.length) {
+                    const f = bySrc[q.source];
+                    if (!f) return false;
+                    if (f.years.length && !f.years.includes(parseInt(q.source_year, 10))) return false;
+                    if (f.schools.length && !f.schools.includes(q.school)) return false;
+                }
+                return true;
+            });
+        }
+        function olSelectedTopics() { return [...document.querySelectorAll('#olTopicGroups .ol-topic:checked')].map(cb => cb.value); }
+
+        function olRefreshCounts() {
+            const pool = olPool();
+            const counts = {};
+            pool.forEach(q => { const t = topicOf(q); counts[t] = (counts[t] || 0) + 1; });
+            document.querySelectorAll('#olTopicGroups .ol-topic-row').forEach(row => {
+                const cb = row.querySelector('.ol-topic');
+                const n = counts[cb.value] || 0;
+                row.querySelector('.ol-count').textContent = '(' + n + ')';
+                row.style.display = n ? '' : 'none';
+            });
+            OL_TOPIC_GROUPS.forEach((g, gi) => {
+                const n = g[1].reduce((s, t) => s + (counts[t] || 0), 0);
+                const el = document.querySelector('[data-group-count="' + gi + '"]');
+                if (el) el.textContent = '(' + n + ')';
+                const det = document.querySelector('#olTopicGroups details[data-group="' + gi + '"]');
+                if (det) det.style.display = n ? '' : 'none';
+            });
+            const sel = new Set(olSelectedTopics());
+            const chosen = pool.filter(q => sel.has(topicOf(q))).length;
+            const allCount = document.getElementById('olAllCount');
+            if (allCount) allCount.textContent = '(' + pool.length + ')';
+            const info = document.getElementById('olBankCount');
+            if (info) info.textContent = olMeta ? chosen + ' question' + (chosen === 1 ? '' : 's') + ' match' : '';
+            olShowEmpty(olMeta && !chosen ? (pool.length ? 'No questions match the topics you picked. Tick another topic.' : 'No questions match these choices. Tick another difficulty or clear the paper boxes.') : '');
+        }
+        function olShowEmpty(msg) {
+            const el = document.getElementById('olEmpty');
+            if (!el) return;
+            el.textContent = msg || '';
+            el.style.display = msg ? 'block' : 'none';
+        }
+
+        async function olStartQuiz() {
+            if (!olTrack()) {
+                const hint = document.getElementById('olTrackHint');
+                if (hint) { hint.classList.add('ol-attn'); hint.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                return;
+            }
+            if (!olMeta) { await olOpenSetup(); if (!olMeta) return; }
+            const sel = new Set(olSelectedTopics());
+            const pool = olPool().filter(q => sel.has(topicOf(q)));
+            if (!pool.length) { olRefreshCounts(); return; }
+            const n = parseInt(document.getElementById('olNum').value, 10) || 10;
+            const ids = shuffleArray(pool.map(q => q.id)).slice(0, Math.min(n, pool.length));
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                const rows = await fetchH2QuestionsByIds(OL_QUIZ_COLS, ids);   // reads curSyl(), so O-level rows only
+                const byId = new Map(rows.map(q => [q.id, q]));
+                const quiz = ids.map(id => byId.get(id)).filter(Boolean);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                if (!quiz.length) { olShowEmpty('Could not load these questions. Please try again.'); return; }
+                isWeakQuizMode = false;
+                isRevisionMode = false;
+                shuffleMap = [];
+                timerModeEnabled = false;
+                currentQuiz = quiz;
+                currentQuestionIndex = 0;
+                userAnswers = new Array(currentQuiz.length).fill(null);
+                document.getElementById('prevBtn').onclick = previousQuestion;
+                document.getElementById('nextBtn').onclick = nextQuestion;
+                document.getElementById('quizSubmitBtn').onclick = submitQuiz;
+                document.getElementById('nextBtn').textContent = 'Next Question';
+                document.getElementById('quizSubmitBtn').textContent = 'Submit Quiz';
+                quizInProgress = true;
+                showView('quiz');
+                displayQuizQuestion();
+                saveQuizProgress();
+            } catch (err) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error loading quiz questions: ' + err.message);
+            }
+        }
+
+        // Switch between H2 and O-level: save on the account, then reload so no H2 state carries across
+        async function olSwitchLevel() {
+            if (!olevelEnabled() || !currentUser || userRole === 'sec_student' || quizInProgress) return;
+            const next = isOlevel() ? 'h2' : 'olevel';
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            try {
+                const { error } = await supabaseClient.from('user_profiles').update({ level: next }).eq('id', currentUser.id);
+                if (error) throw error;
+                try { sessionStorage.removeItem('chembank_lastStudentTab'); } catch (e) {}
+                window.location.reload();
+            } catch (e) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Could not change the level. Please try again.');
+            }
+        }
+        function olLevelButton() {
+            if (!olevelEnabled() || userRole === 'sec_student' || !(isStudentAccount() || userRole === 'admin' || userRole === 'teacher')) return '';
+            return '<button class="btn btn-secondary" onclick="olSwitchLevel()">' + (isOlevel() ? 'Switch to H2' : 'Switch to O-level') + '</button>';
+        }
+
+        // First-visit screen: level (not for Sec accounts) and O-level course, beside the name box
+        function olPrepareNamePrompt() {
+            const box = document.getElementById('namePromptLevel');
+            if (!box) return;
+            if (!olevelEnabled()) { box.style.display = 'none'; return; }
+            box.style.display = 'block';
+            const lvRow = document.getElementById('namePromptLevelRow');
+            if (lvRow) lvRow.style.display = userRole === 'sec_student' ? 'none' : '';
+            const lv = getLevel();
+            document.querySelectorAll('input[name="npLevel"]').forEach(r => { r.checked = r.value === lv; });
+            const tr = olTrack();
+            document.querySelectorAll('input[name="npTrack"]').forEach(r => { r.checked = r.value === tr; });
+            olNamePromptLevelChanged();
+        }
+        function olNamePromptLevelChanged() {
+            const lv = userRole === 'sec_student' ? 'olevel' : ((document.querySelector('input[name="npLevel"]:checked') || {}).value || 'h2');
+            const tr = document.getElementById('namePromptTrackRow');
+            if (tr) tr.style.display = lv === 'olevel' ? '' : 'none';
+        }
+        function olNamePromptChoices() {
+            if (!olevelEnabled()) return null;
+            const lv = userRole === 'sec_student' ? 'olevel' : ((document.querySelector('input[name="npLevel"]:checked') || {}).value || 'h2');
+            const out = {};
+            if (userRole !== 'sec_student') out.level = lv;
+            if (lv === 'olevel') {
+                const t = (document.querySelector('input[name="npTrack"]:checked') || {}).value;
+                if (t === 'pure' || t === 'combined') out.olevel_track = t;
+            }
+            return out;
+        }
+
+        // ---------- Admin: O-level in the Question Bank (admin and teacher) ----------
+        function adminSyl() {
+            const el = document.getElementById('filterSyllabus');
+            return (olevelEnabled() && el && el.value === 'o_level_chem') ? 'o_level_chem' : 'h2_chem';
+        }
+        function adminCols(base) { return adminSyl() === 'o_level_chem' ? base + ', paper, olevel_course, outside_syllabus, question_number' : base; }
+        function olAdminExtra(q) {
+            if (adminSyl() !== 'o_level_chem') return q;
+            const v = (document.getElementById('filterOlExtra') || {}).value || '';
+            if (v === 'paper_pure') q = q.eq('paper', 'pure');
+            else if (v === 'paper_combined') q = q.eq('paper', 'combined');
+            else if (v === 'course_pc') q = q.eq('olevel_course', 'pure_combined');
+            else if (v === 'course_po') q = q.eq('olevel_course', 'pure_only');
+            else if (v === 'outside') q = q.eq('outside_syllabus', true);
+            return q;
+        }
+        let olAdminH2TopicHtml = null;
+        function olAdminSyllabusChanged() {
+            const topicSel = document.getElementById('filterTopic');
+            const extra = document.getElementById('filterOlExtraGroup');
+            const ol = adminSyl() === 'o_level_chem';
+            if (topicSel) {
+                if (olAdminH2TopicHtml === null) olAdminH2TopicHtml = topicSel.innerHTML;
+                topicSel.innerHTML = ol
+                    ? '<option value="">All Topics</option>' + OL_TOPICS.map(t => '<option value="' + olAttr(t) + '">' + escapeHtml(t) + '</option>').join('')
+                    : olAdminH2TopicHtml;
+                topicSel.value = '';
+            }
+            if (extra) extra.style.display = ol ? '' : 'none';
+            supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('syllabus', adminSyl())
+                .then(({ count }) => { const el = document.getElementById('questionCount'); if (el && typeof count === 'number') el.textContent = count; }, () => {});
+            applyAdminFilters();
+        }
+        function olAdminSetup() {
+            const g = document.getElementById('filterSyllabusGroup');
+            if (g) g.style.display = olevelEnabled() && (userRole === 'admin' || userRole === 'teacher') ? '' : 'none';
+        }
+        function olAdminTags(q) {
+            if (!q || q.paper === undefined) return '';     // H2 rows: no O-level fields fetched, nothing added
+            let h = '';
+            if (q.question_number) h += '<span class="tag" style="background:rgba(255,255,255,0.08);">Q' + escapeHtml(String(q.question_number)) + '</span>';
+            if (q.paper) h += '<span class="tag tag-source">' + (q.paper === 'combined' ? 'Combined paper' : 'Pure paper') + '</span>';
+            if (q.olevel_course) h += '<span class="tag tag-topic">' + (q.olevel_course === 'pure_combined' ? 'Pure + Combined' : 'Pure only') + '</span>';
+            if (q.outside_syllabus) h += '<span class="tag" style="background:#7a1f1f; color:#ffffff;">Outside syllabus (hidden from students)</span>';
+            return h;
+        }
+
+        // O-level edit: its own small form, so it never writes the H2 fields (`topic` on a TYS row drives the
+        // public TYS page address; syllabus, source, paper, question number and pictures are not editable here).
+        let olEditing = null;
+        async function olEditQuestion(id) {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            let q;
+            try {
+                const { data, error } = await supabaseClient.from('questions')
+                    .select('id, text, topic, topics, difficulty, source, source_year, school, paper, olevel_course, outside_syllabus, question_number, options, correct_answer, explanation')
+                    .eq('syllabus', 'o_level_chem').eq('id', id).single();
+                if (error) throw error;
+                q = data;
+            } catch (err) {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                alert('Error loading question: ' + err.message);
+                return;
+            }
+            document.getElementById('loadingOverlay').style.display = 'none';
+            olEditing = q;
+            const m = document.getElementById('olEditModal');
+            const tag = (Array.isArray(q.topics) && q.topics.length) ? q.topics[0] : '';
+            document.getElementById('olEditInfo').textContent = 'ID ' + q.id + ' · ' + q.source + ' ' + (q.source_year || '') +
+                (q.school ? ' · ' + q.school : '') + ' · ' + (q.paper === 'combined' ? 'Combined paper' : 'Pure paper') + (q.question_number ? ' · Q' + q.question_number : '');
+            document.getElementById('olEditText').value = q.text || '';
+            document.getElementById('olEditOptions').value = (q.options || []).join('\n');
+            document.getElementById('olEditAnswer').value = q.correct_answer || '';
+            document.getElementById('olEditExplanation').value = q.explanation || '';
+            document.getElementById('olEditDifficulty').value = q.difficulty || 'Medium';
+            const ts = document.getElementById('olEditTopic');
+            ts.innerHTML = OL_TOPICS.map(t => '<option value="' + olAttr(t) + '">' + escapeHtml(t) + '</option>').join('');
+            ts.value = OL_TOPICS.includes(tag) ? tag : OL_TOPICS[0];
+            document.getElementById('olEditCourse').value = q.olevel_course || 'pure_combined';
+            document.getElementById('olEditOutside').checked = q.outside_syllabus === true;
+            document.getElementById('olEditError').textContent = '';
+            m.style.display = 'flex';
+        }
+        function olEditClose() { olEditing = null; document.getElementById('olEditModal').style.display = 'none'; }
+        async function olEditSave() {
+            const q = olEditing; if (!q) return;
+            const err = document.getElementById('olEditError');
+            const options = document.getElementById('olEditOptions').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const answer = document.getElementById('olEditAnswer').value;
+            if (options.length !== (q.options || []).length) { err.textContent = 'Keep exactly ' + (q.options || []).length + ' options, one per line.'; return; }
+            if (!['A', 'B', 'C', 'D'].includes(answer)) { err.textContent = 'Choose the answer letter.'; return; }
+            const tag = document.getElementById('olEditTopic').value;
+            if (!OL_TOPICS.includes(tag)) { err.textContent = 'Choose a topic.'; return; }
+            const payload = {
+                text: document.getElementById('olEditText').value,
+                options: options,
+                correct_answer: answer,
+                explanation: document.getElementById('olEditExplanation').value,
+                difficulty: document.getElementById('olEditDifficulty').value,
+                topics: [tag],
+                olevel_course: document.getElementById('olEditCourse').value,
+                outside_syllabus: document.getElementById('olEditOutside').checked
+            };
+            if (q.source === 'Prelim') payload.topic = tag;     // prelim rows keep topic = their tag; TYS rows keep their page name
+            try {
+                const { data, error } = await supabaseClient.from('questions').update(payload)
+                    .eq('id', q.id).eq('syllabus', 'o_level_chem').select('id');
+                if (error) throw error;
+                if (!data || data.length !== 1) throw new Error('The question was not saved (no row changed).');
+                olEditClose();
+                alert('Question updated.');
+                applyAdminFilters();
+            } catch (e) {
+                err.textContent = 'Could not save: ' + e.message;
+            }
+        }
+        // =================== END O-LEVEL SECTION ===================
+
         // Fill the set dropdown from REVISION_PACKAGES: the free J2 Last-Minute sets first (everyone),
         // then the premium topic sets. Rebuilt when the role changes. Option value = index in REVISION_PACKAGES.
         function populateRevisionPackages() {
@@ -4570,6 +5119,7 @@ Option D" required></textarea>
                 localStorage.setItem('chembank_quiz_progress', JSON.stringify({
                     userId: currentUser.id,
                     savedAt: Date.now(),
+                    syllabus: curSyl(),
                     currentQuiz: currentQuiz,
                     userAnswers: userAnswers,
                     currentQuestionIndex: currentQuestionIndex,
@@ -4600,6 +5150,7 @@ Option D" required></textarea>
                     btn.style.display = 'none';
                     return;
                 }
+                if ((saved.syllabus || 'h2_chem') !== curSyl()) { btn.style.display = 'none'; return; }   // a quiz from the other level
                 const answered = saved.userAnswers.filter(a => a !== null).length;
                 btn.textContent = 'Resume Quiz (' + answered + '/' + saved.userAnswers.length + ')';
                 btn.style.display = 'inline-block';
@@ -4614,6 +5165,7 @@ Option D" required></textarea>
                 // Must belong to same user and be less than 24h old
                 if (saved.userId !== currentUser.id) { clearQuizProgress(); return false; }
                 if (Date.now() - saved.savedAt > 24 * 60 * 60 * 1000) { clearQuizProgress(); return false; }
+                if ((saved.syllabus || 'h2_chem') !== curSyl()) return false;   // kept for when the student switches back
                 currentQuiz = saved.currentQuiz;
                 userAnswers = saved.userAnswers;
                 currentQuestionIndex = saved.currentQuestionIndex;
@@ -4644,6 +5196,11 @@ Option D" required></textarea>
         }
 
         async function loadQuestionsFromSupabase() {
+            if (isOlevel() && userRole !== 'admin' && userRole !== 'teacher') {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                olLoadMeta().catch(e => console.warn('O-level list did not load:', e));
+                return;
+            }
             try {
                 console.log('Loading questions from Supabase...');
 
@@ -4711,13 +5268,15 @@ Option D" required></textarea>
             const filterIdFrom = document.getElementById('filterIdFrom').value;
             const filterIdTo = document.getElementById('filterIdTo').value;
 
-            const hasFilters = filterTopic || filterDifficulty || filterSource || filterIdFrom || filterIdTo;
+            const hasFilters = filterTopic || filterDifficulty || filterSource || filterIdFrom || filterIdTo
+                || (adminSyl() === 'o_level_chem' && (document.getElementById('filterOlExtra') || {}).value);
 
             try {
                 const PAGE_SIZE = 200;
 
                 // Build a base filter-applier so both queries use identical filters
                 function applyFilters(q) {
+                    q = olAdminExtra(q);
                     if (filterTopic) q = q.contains('topics', [filterTopic]);
                     if (filterDifficulty) q = q.eq('difficulty', filterDifficulty);
                     if (filterSource) q = q.eq('source', filterSource);
@@ -4730,8 +5289,8 @@ Option D" required></textarea>
                     // No filters: just show 10 most recent
                     const { data, error } = await supabaseClient
                         .from('questions')
-                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                        .eq('syllabus', 'h2_chem')
+                        .select(adminCols('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url'))
+                        .eq('syllabus', adminSyl())
                         .order('id', { ascending: false })
                         .limit(10);
                     if (error) throw error;
@@ -4739,15 +5298,15 @@ Option D" required></textarea>
                     displayQuestionsFromData(data || []);
                 } else {
                     // Step 1: fast count query (no data transferred)
-                    let countQuery = applyFilters(supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('syllabus', 'h2_chem'));
+                    let countQuery = applyFilters(supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('syllabus', adminSyl()));
                     const { count, error: countError } = await countQuery;
                     if (countError) throw countError;
                     const totalCount = count || 0;
 
                     // Step 2: fetch first PAGE_SIZE rows
                     let dataQuery = applyFilters(supabaseClient.from('questions')
-                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                        .eq('syllabus', 'h2_chem')
+                        .select(adminCols('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url'))
+                        .eq('syllabus', adminSyl())
                         .order('id', { ascending: false })
                         .limit(PAGE_SIZE));
                     const { data, error } = await dataQuery;
@@ -4790,9 +5349,10 @@ Option D" required></textarea>
                 const buildQuery = () => {
                     let q = supabaseClient
                         .from('questions')
-                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                        .eq('syllabus', 'h2_chem')
+                        .select(adminCols('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url'))
+                        .eq('syllabus', adminSyl())
                         .order('id', { ascending: false });
+                    q = olAdminExtra(q);
                     if (filterTopic) q = q.contains('topics', [filterTopic]);
                     if (filterDifficulty) q = q.eq('difficulty', filterDifficulty);
                     if (filterSource) q = q.eq('source', filterSource);
@@ -4817,6 +5377,7 @@ Option D" required></textarea>
             document.getElementById('filterSource').value = '';
             document.getElementById('filterIdFrom').value = '';
             document.getElementById('filterIdTo').value = '';
+            const olx = document.getElementById('filterOlExtra'); if (olx) olx.value = '';
             applyAdminFilters();
         }
 
@@ -5440,7 +6001,7 @@ Option D" required></textarea>
                             <span class="tag" style="background:rgba(255,255,255,0.08); color:var(--accent); font-family:monospace; font-size:0.8rem;">ID ${question.id}</span>
                             ${topicTags}
                             <span class="tag tag-difficulty ${question.difficulty.toLowerCase()}">${question.difficulty}</span>
-                            ${sourceTag}
+                            ${sourceTag}${olAdminTags(question)}
                         </div>
                         <div class="question-actions">
                             <button class="btn btn-secondary" style="padding: 0.5rem 1rem;" onclick="editQuestion(${question.id})">Edit</button>
@@ -5488,7 +6049,7 @@ Option D" required></textarea>
             // Role-based access control
             if (currentUser) {
                 // Students can only access student portal and quiz views
-                if ((userRole === 'student' || userRole === 'premium_student') && viewName === 'admin') {
+                if ((userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student') && viewName === 'admin') {
                     alert('Access denied. Students cannot access the teacher portal.');
                     return;
                 }
@@ -5521,6 +6082,7 @@ Option D" required></textarea>
                 // Worksheets tab: admin and teacher only since the 16 Oct 2026 clean-up (they use its Answer Key button)
                 const wsTabBtn = document.getElementById('tabWorksheets');
                 if (wsTabBtn) wsTabBtn.style.display = wsTabAllowed() ? '' : 'none';
+                if (olevelEnabled()) olApplyLevelToStudentView();
                 checkWeakQuestions(); // Show weak questions button if applicable
             }
 
@@ -5615,6 +6177,7 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
+                if (olevelEnabled()) buttons = olLevelButton() + buttons;
             } else if (viewId === 'pathView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
@@ -5636,7 +6199,9 @@ Option D" required></textarea>
 
             // Way back to the student portal cards (not mid-quiz or mid-lesson)
             if (viewId !== 'quizView' && viewId !== 'lessonView' && viewId !== 'lessonDoneView') {
-                buttons = `
+                buttons = (userRole === 'sec_student' && olevelEnabled()) ? `
+                    <button class="btn btn-secondary" onclick="window.location.href='courses.html'">Recordings</button>
+                ` + buttons : `
                     <button class="btn btn-secondary" onclick="window.location.href='portal.html'">Portal</button>
                 ` + buttons;
             }
@@ -5646,7 +6211,7 @@ Option D" required></textarea>
 
         function confirmExitQuiz() {
             if (confirm('Are you sure you want to exit the quiz? Your progress will be lost.')) {
-                if (userRole === 'student' || userRole === 'premium_student') {
+                if (userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student') {
                     showView('student');
                 } else {
                     showView('welcome');
@@ -5655,7 +6220,7 @@ Option D" required></textarea>
         }
         
         function accessTeacherPortal() {
-            if (userRole === 'student' || userRole === 'premium_student') {
+            if (userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student') {
                 alert('Access denied. Students cannot access the teacher portal.');
                 return;
             }
@@ -5734,6 +6299,7 @@ Option D" required></textarea>
             }
             const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
             const weakIds = [];
+            const masteredIds = [];
             let masteredThisWeek = 0;
             for (const [qid, responses] of byQuestion.entries()) {
                 const wrongs = responses.filter(r => r.is_correct === false);
@@ -5748,12 +6314,13 @@ Option D" required></textarea>
                     const gradResponse = correctsAfter.find(r => sgDate(r.answered_at) !== firstDate);
                     if (gradResponse && new Date(gradResponse.answered_at).getTime() >= sevenDaysAgo) {
                         masteredThisWeek++;
+                        masteredIds.push(qid);
                     }
                 } else {
                     weakIds.push(qid);
                 }
             }
-            return { weakIds, masteredThisWeek };
+            return { weakIds, masteredThisWeek, masteredIds };
         }
 
         async function checkWeakQuestions() {
@@ -5763,14 +6330,19 @@ Option D" required></textarea>
                 return;
             }
             try {
-                const { weakIds, masteredThisWeek } = await computeWeakQuestionState(currentUser.id);
+                const weakState = await computeWeakQuestionState(currentUser.id);
+                const weakIds = weakState.weakIds;
+                let masteredThisWeek = weakState.masteredThisWeek;
+                if (olevelEnabled() && weakState.masteredIds && weakState.masteredIds.length) {
+                    masteredThisWeek = (await fetchH2QuestionsByIds('id', weakState.masteredIds)).length;   // this level only
+                }
                 // Look up each weak question's topic so the student can practise one topic at a time
                 let weakQs = [];
                 if (weakIds.length > 0) {
-                    weakQs = filterWeakForRole(await fetchH2QuestionsByIds('id, topic, source', weakIds));
+                    weakQs = filterWeakForRole(await fetchH2QuestionsByIds(isOlevel() ? 'id, topic, topics, source' : 'id, topic, source', weakIds));
                 }
                 const counts = {};
-                weakQs.forEach(q => { const t = q.topic || 'Other'; counts[t] = (counts[t] || 0) + 1; });
+                weakQs.forEach(q => { const t = topicOf(q) || 'Other'; counts[t] = (counts[t] || 0) + 1; });
                 weakTopicCounts = { total: weakQs.length, byTopic: counts };
                 const weakBtn = document.getElementById('weakQuestionsBtn');
                 const weakSel = document.getElementById('weakTopicSelect');
@@ -5780,7 +6352,7 @@ Option D" required></textarea>
                         if (weakSel) {
                             const prev = weakSel.value;
                             // Order topics as in the quiz setup checklist; any others go last, A to Z
-                            const setupOrder = [...document.querySelectorAll('.topic-checkbox')].map(cb => cb.value);
+                            const setupOrder = isOlevel() ? OL_TOPICS : [...document.querySelectorAll('.topic-checkbox')].map(cb => cb.value);
                             const rank = t => { const i = setupOrder.indexOf(t); return i < 0 ? 999 : i; };
                             const topics = Object.keys(counts).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
                             weakSel.innerHTML = '';
@@ -5824,7 +6396,7 @@ Option D" required></textarea>
             for (let i = 0; i < ids.length; i += 200) {
                 const { data, error } = await supabaseClient
                     .from('questions').select(cols)
-                    .eq('syllabus', 'h2_chem').in('id', ids.slice(i, i + 200));
+                    .eq('syllabus', curSyl()).in('id', ids.slice(i, i + 200));
                 if (error) throw error;
                 if (data) out.push(...data);
             }
@@ -5891,6 +6463,7 @@ Option D" required></textarea>
 
         function pathEnabled() {
             if (!currentUser || PATH_MODE === 'off') return false;
+            if (isOlevel()) return false;                            // the Learning Path is H2 only
             if (userRole === 'admin') return lpPreview;          // Eric's preview only; admin still lands on the staff home
             if (userRole === 'premium_student') return lpV2();   // premium and class students: from v2
             if (userRole !== 'student') return false;            // teachers and staff keep today's screens
@@ -6913,11 +7486,11 @@ Option D" required></textarea>
         }
 
         const PREMIUM_ONLY_SOURCES = ['Prelim', 'Promos', 'Timed Practice'];
-        function hiddenFromFree(q) { return userRole === 'student' && !(q && MCQ_PUBLIC_SOURCES.includes(q.source)); }   // matches the database: free = TYS and Specimen only (16 Nov 2026)
+        function hiddenFromFree(q) { return (userRole === 'student' || userRole === 'sec_student') && !(q && MCQ_PUBLIC_SOURCES.includes(q.source)); }   // matches the database: free = TYS and Specimen only (16 Nov 2026)
 
         // Free students do not get premium-only sources (Prelim, Promos, Timed Practice)
         function filterWeakForRole(qs) {
-            if (userRole === 'student') return qs.filter(q => !hiddenFromFree(q));
+            if (userRole === 'student' || userRole === 'sec_student') return qs.filter(q => !hiddenFromFree(q));
             return qs;
         }
 
@@ -6942,12 +7515,12 @@ Option D" required></textarea>
                     return;
                 }
                 // Fetch weak questions directly from Supabase by ID
-                const weakData = await fetchH2QuestionsByIds(QUIZ_COLS, weakIds);
+                const weakData = await fetchH2QuestionsByIds(isOlevel() ? OL_QUIZ_COLS : QUIZ_COLS, weakIds);
                 // Apply Prelim/Promos restriction for regular students (non-premium)
                 let weakQuestions = filterWeakForRole(weakData);
                 // Narrow to the chosen topic, if the student picked one
                 if (weakTopic) {
-                    weakQuestions = weakQuestions.filter(q => (q.topic || 'Other') === weakTopic);
+                    weakQuestions = weakQuestions.filter(q => (topicOf(q) || 'Other') === weakTopic);
                 }
                 if (weakQuestions.length === 0) {
                     alert(weakTopic
@@ -7107,6 +7680,7 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
+                if (question.paper === 'combined') sourceText += ' (Combined Science)';
                 sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
             }
             
@@ -7263,15 +7837,16 @@ Option D" required></textarea>
 
             // Detect new personal bests (compare vs prior saved bests before inserting this attempt)
             let newBestTopics = [];
-            if ((userRole === 'student' || userRole === 'premium_student' || userRole === 'admin') && currentUser) {
+            if ((isStudentAccount() || userRole === 'admin') && currentUser) {
                 try {
                     const priorBests = await computePersonalBests(currentUser.id);
                     const curByTopic = {};
                     currentQuiz.forEach((q, i) => {
-                        if (!q.topic) return;
-                        if (!curByTopic[q.topic]) curByTopic[q.topic] = { correct: 0, total: 0 };
-                        curByTopic[q.topic].total++;
-                        if (isAnswerCorrect(i, userAnswers[i])) curByTopic[q.topic].correct++;
+                        const qt = topicOf(q);
+                        if (!qt) return;
+                        if (!curByTopic[qt]) curByTopic[qt] = { correct: 0, total: 0 };
+                        curByTopic[qt].total++;
+                        if (isAnswerCorrect(i, userAnswers[i])) curByTopic[qt].correct++;
                     });
                     for (const [topic, stats] of Object.entries(curByTopic)) {
                         if (stats.total < MIN_QUESTIONS_PER_TOPIC) continue;
@@ -7320,7 +7895,7 @@ Option D" required></textarea>
             // Breakdown by topic and difficulty
             const breakdown = {};
             currentQuiz.forEach((question, index) => {
-                const key = `${question.topic} - ${question.difficulty}`;
+                const key = `${topicOf(question)} - ${question.difficulty}`;
                 if (!breakdown[key]) breakdown[key] = { correct: 0, total: 0 };
                 breakdown[key].total++;
                 if (isAnswerCorrect(index, userAnswers[index])) breakdown[key].correct++;
@@ -7350,7 +7925,7 @@ Option D" required></textarea>
         
         async function saveQuizAttempt(correct, total, percentage) {
             try {
-                const topics = [...new Set(currentQuiz.map(q => q.topic))];
+                const topics = [...new Set(currentQuiz.map(q => topicOf(q)))];
                 const difficulties = [...new Set(currentQuiz.map(q => q.difficulty))];
                 const sources = [...new Set(currentQuiz.map(q => q.source).filter(s => s))];
 
@@ -7366,7 +7941,8 @@ Option D" required></textarea>
                         correct_answers: correct,
                         topics: topics,
                         difficulties: difficulties,
-                        source: sources.length > 0 ? sources[0] : null
+                        source: sources.length > 0 ? sources[0] : null,
+                        ...(curSyl() === 'o_level_chem' ? { syllabus: 'o_level_chem' } : {})
                     }])
                     .select()
                     .single();
@@ -7471,6 +8047,7 @@ Option D" required></textarea>
             const btn = document.getElementById('referralCardBtn');
             if (!card || !btn) return;
             if (!currentUser) { card.classList.remove('show'); return; }
+            if (isOlevel()) { card.classList.remove('show'); return; }   // the referral text is about the H2 recordings
             if (userRole !== 'premium_student' && userRole !== 'admin') {
                 card.classList.remove('show');
                 return;
@@ -7528,7 +8105,7 @@ Option D" required></textarea>
 
         async function loadStreak() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
+            if (!isStudentAccount() && userRole !== 'admin') return;
             const row = document.getElementById('gamificationRow');
             const card = document.getElementById('streakCard');
             const content = document.getElementById('streakContent');
@@ -7583,11 +8160,11 @@ Option D" required></textarea>
             const qIds = [...new Set(responses.map(r => r.question_id))];
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .select('id, topic')
-                .eq('syllabus', 'h2_chem')
+                .select(isOlevel() ? 'id, topic, topics' : 'id, topic')
+                .eq('syllabus', curSyl())
                 .in('id', qIds);
             if (qErr) throw qErr;
-            const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, q.topic]));
+            const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, topicOf(q)]));
 
             // Fetch attempt completion dates
             const attemptIds = [...new Set(responses.map(r => r.quiz_attempt_id))];
@@ -7628,7 +8205,7 @@ Option D" required></textarea>
 
         async function loadPersonalBests() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
+            if (!isStudentAccount() && userRole !== 'admin') return;
             const row = document.getElementById('gamificationRow');
             const card = document.getElementById('personalBestsCard');
             const content = document.getElementById('personalBestsContent');
@@ -7708,11 +8285,11 @@ Option D" required></textarea>
             const qIds = [...new Set(responses.map(r => r.question_id))];
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .select('id, topic')
-                .eq('syllabus', 'h2_chem')
+                .select(isOlevel() ? 'id, topic, topics' : 'id, topic')
+                .eq('syllabus', curSyl())
                 .in('id', qIds);
             if (qErr) throw qErr;
-            const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, q.topic]));
+            const topicByQid = Object.fromEntries((questions || []).map(q => [q.id, topicOf(q)]));
 
             const stats = {};
             for (const r of responses) {
@@ -7739,7 +8316,7 @@ Option D" required></textarea>
 
         async function loadTopicMastery() {
             if (!currentUser) return;
-            if (userRole !== 'student' && userRole !== 'premium_student' && userRole !== 'admin') return;
+            if (!isStudentAccount() && userRole !== 'admin') return;
             const card = document.getElementById('topicMasteryCard');
             const content = document.getElementById('topicMasteryContent');
             if (!card || !content) return;
@@ -7814,11 +8391,12 @@ Option D" required></textarea>
             loadingEl.style.display = 'block';
             listEl.innerHTML = '';
             try {
-                const { data, error } = await supabaseClient
+                let histQuery = supabaseClient
                     .from('quiz_attempts')
                     .select('id, completed_at, score, total_questions, correct_answers, topics, difficulties, source')
-                    .eq('user_id', currentUser.id)
-                    .order('completed_at', { ascending: false });
+                    .eq('user_id', currentUser.id);
+                if (olevelEnabled()) histQuery = histQuery.eq('syllabus', curSyl());   // only this level's quizzes
+                const { data, error } = await histQuery.order('completed_at', { ascending: false });
 
                 if (error) throw error;
 
@@ -7865,8 +8443,8 @@ Option D" required></textarea>
             const qIds = responses.map(r => r.question_id);
             const { data: questions, error: qErr } = await supabaseClient
                 .from('questions')
-                .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                .eq('syllabus', 'h2_chem')
+                .select(isOlevel() ? OL_QUIZ_COLS : 'id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                .eq('syllabus', curSyl())
                 .in('id', qIds);
             if (qErr) throw qErr;
 
@@ -7950,6 +8528,7 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
+                if (question.paper === 'combined') sourceText += ' (Combined Science)';
                 sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
             }
             
@@ -8330,6 +8909,8 @@ Option D" required></textarea>
         function wsTabAllowed() { return userRole === 'admin' || userRole === 'teacher'; }
         function ccBoxAllowed() { return userRole === 'admin' || userRole === 'teacher'; }
         function resolveStudentTab(tab) {
+            // O-level mode has only Practise MCQ and My Progress (deep links and saved tabs included)
+            if (isOlevel() && tab !== 'quiz' && tab !== 'history') return 'quiz';
             // Admin doesn't use the student Paper 2 & 3 tab; fall back to the quiz tab
             if (tab === 'p2p3' && userRole === 'admin') return 'quiz';
             // Students reaching Worksheets by an old deep link or saved tab go to the quiz tab
@@ -9410,6 +9991,7 @@ Option D" required></textarea>
         let editingExplanationImageUrl = null;
 
         async function editQuestion(id) {
+            if (adminSyl() === 'o_level_chem') return olEditQuestion(id);   // O-level rows use their own small form
             document.getElementById('loadingOverlay').style.display = 'flex';
             let q;
             try {
@@ -9614,7 +10196,7 @@ Option D" required></textarea>
                         .in('role', ['student', 'premium_student', 'archived'])
                         .order('full_name'),
                     fetchAllPaginated(() =>
-                        supabaseClient.from('quiz_attempts').select('*').order('completed_at', { ascending: false })),
+                        (olevelEnabled() ? supabaseClient.from('quiz_attempts').select('*').eq('syllabus', 'h2_chem') : supabaseClient.from('quiz_attempts').select('*')).order('completed_at', { ascending: false })),
                     supabaseClient.rpc('admin_analytics_summary')
                 ]);
                 if (profilesRes.error) throw profilesRes.error;
@@ -12536,14 +13118,26 @@ ${section('#7a82a0', '', 'Model Answer', model)}
                 errEl.style.display = 'block';
                 return;
             }
+            const olPick = olNamePromptChoices();
+            if (olPick && ('level' in olPick ? olPick.level === 'olevel' : userRole === 'sec_student') && !olPick.olevel_track) {
+                errEl.textContent = 'Please choose Pure Chemistry or Combined Science.';
+                errEl.style.display = 'block';
+                return;
+            }
             errEl.style.display = 'none';
             try {
+                const olChoices = olNamePromptChoices();   // null while the O-level section is off
                 const { error } = await supabaseClient
                     .from('user_profiles')
-                    .update({ full_name: name })
+                    .update(olChoices ? Object.assign({ full_name: name }, olChoices) : { full_name: name })
                     .eq('id', currentUser.id);
                 if (error) throw error;
                 userProfile.full_name = name;
+                if (olChoices) {
+                    const levelChanged = ('level' in olChoices) && olChoices.level !== (userProfile.level || 'h2');
+                    Object.assign(userProfile, olChoices);
+                    if (levelChanged) { window.location.reload(); return; }   // reload so the right bank loads
+                }
                 document.getElementById('namePromptModal').style.display = 'none';
                 if (pathEnabled() && !deepLinkTab) { lpOpenHome(); return; }
                 showView('student');

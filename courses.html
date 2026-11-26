@@ -133,7 +133,7 @@
   <div style="display:flex;align-items:center;gap:1.25rem;">
     <div class="dash-logo">Mr Khemistry</div>
     <a href="portal.html" class="back-link" id="portalBackLink">&larr; Portal</a>
-    <a href="https://chembank.mrkhemistry.com/" class="back-link" id="khembankOlevelLink" style="display:none;">KhemBank O-level practice &rarr;</a>
+    <a href="https://chembank.mrkhemistry.com/" class="back-link" id="khembankOlevelLink" style="display:none; color:#ffffff; font-weight:600;">O-level practice &rarr;</a>
   </div>
   <div class="dash-right">
     <div class="dash-user">
@@ -245,7 +245,9 @@
       var roleRes = await sb.from('user_profiles').select('role').eq('id', session.user.id).single();
       myRole = (roleRes.data && roleRes.data.role) || '';
     } catch (e) { myRole = ''; }
-    if (OLEVEL_LIVE && myRole === 'sec_student') {
+    var olPreview = false;
+    try { olPreview = sessionStorage.getItem('khem_olevel_preview') === '1'; } catch (e) {}
+    if ((OLEVEL_LIVE || olPreview) && myRole === 'sec_student') {
       // Sec accounts: this page is their home, so no Portal link (it sent them straight back here); KhemBank O-level instead
       var pl = document.getElementById('portalBackLink'); if (pl) pl.style.display = 'none';
       var kl = document.getElementById('khembankOlevelLink'); if (kl) kl.style.display = '';

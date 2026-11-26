@@ -1793,7 +1793,7 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span id="statusText">Connecting...</span>
             </div>
-            <span class="header-username" id="headerUsername"></span>
+            <div id="olUserBox" style="display:contents;"><span class="header-username" id="headerUsername"></span><button type="button" id="olLevelSwitch" onclick="olSwitchLevel()" style="display:none; background:none; border:none; padding:0.1rem 0; color:var(--primary); font:inherit; font-size:0.8rem; text-decoration:underline; cursor:pointer;"></button></div>
             <div class="nav-buttons" id="navButtons"></div>
         </div>
     </header>
@@ -1858,7 +1858,7 @@
 
         <!-- Admin View -->
         <div id="adminView" class="view">
-            <div class="panel">
+            <div class="panel" id="adminUploadPanel">
                 <div class="panel-header">
                     <span id="formPanelTitle">Upload Question</span>
                     <button id="cancelEditBtn" class="btn btn-secondary" onclick="cancelEdit()" style="display:none; padding: 0.5rem 1rem;">✕ Cancel Edit</button>
@@ -2168,7 +2168,7 @@ Option D" required></textarea>
                     <label for="weakTopicSelect">Choose a topic</label>
                     <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
                         <select id="weakTopicSelect" onchange="updateWeakButtonLabel()" style="flex:1 1 200px; width:auto; min-width:0;"></select>
-                        <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()">Practice Weak Questions</button>
+                        <button class="btn btn-secondary" id="weakQuestionsBtn" onclick="startWeakQuiz()">Practise Weak Questions</button>
                     </div>
                 </div>
             </div>
@@ -2205,7 +2205,9 @@ Option D" required></textarea>
             <!-- O-level Practise MCQ set-up (O-level section, stage 1, 26 Nov 2026): shown instead of the H2 panels in O-level mode -->
             <style>
                 #olSetupPanel .ol-chips { display:flex; flex-wrap:wrap; gap:0.5rem 1rem; align-items:center; }
-                #olSetupPanel .ol-chip { background:transparent; color:#ffffff; border:1px solid var(--primary); border-radius:999px; padding:0.45rem 1rem; font:inherit; cursor:pointer; }
+                #olSetupPanel .ol-chip { background:transparent; color:#ffffff; border:1px solid var(--primary); border-radius:999px; padding:0.4rem 0.8rem; font:inherit; font-size:0.95rem; cursor:pointer; }
+                #olSetupPanel #olStartBtn:disabled { opacity:0.45; cursor:not-allowed; }
+                #olSetupPanel .ol-check.ol-school { white-space:normal; }
                 #olSetupPanel .ol-chip.on { background:#00666f; border-color:#00666f; color:#ffffff; font-weight:600; }
                 #olSetupPanel .ol-check { display:inline-flex; align-items:center; gap:0.4rem; color:#ffffff; cursor:pointer; white-space:nowrap; }
                 #olSetupPanel .ol-topic-row { white-space:normal; }
@@ -2261,10 +2263,10 @@ Option D" required></textarea>
                     <summary>More options: papers and years<span id="olMoreCount"></span></summary>
                     <div id="olSourceBoxes"></div>
                 </details>
-                <p class="ol-hint" id="olPrelimNote" style="display:none;">You get every O-level Ten-Year Series MCQ from 2017 to 2025. School prelim MCQs for O-level are coming soon.</p>
+                <p class="ol-hint" id="olPrelimNote" style="display:none;">You can practise the O-level Ten-Year Series MCQs from 2017 to 2025 (the few on content no longer in the syllabus are left out). More O-level practice is on the way.</p>
                 <div id="olEmpty" style="display:none;"></div>
                 <div id="olButtonRow" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:center; margin-top:1rem;">
-                    <button class="btn btn-primary" onclick="olStartQuiz()">Start Quiz</button>
+                    <button class="btn btn-primary" id="olStartBtn" onclick="olStartQuiz()">Start Quiz</button>
                 </div>
             </div>
             <div class="panel" id="h2QuizSetupPanel">
@@ -3621,7 +3623,7 @@ Option D" required></textarea>
             <h2 style="color:var(--primary); font-size:1.3rem; margin:0 0 0.4rem;">Edit O-level question</h2>
             <p id="olEditInfo" style="color:#ffffff; font-size:0.9rem; margin:0 0 1rem;"></p>
             <div class="form-group"><label for="olEditText">Question text</label><textarea id="olEditText" rows="6"></textarea></div>
-            <div class="form-group"><label for="olEditOptions">Options (one per line)</label><textarea id="olEditOptions" rows="5"></textarea></div>
+            <div class="form-group"><label>Options</label><div id="olEditOptions"></div></div>
             <div style="display:flex; gap:1rem; flex-wrap:wrap;">
                 <div class="form-group" style="flex:1 1 140px;"><label for="olEditAnswer">Answer</label>
                     <select id="olEditAnswer"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
@@ -3645,7 +3647,7 @@ Option D" required></textarea>
         <div style="background:var(--dark); border:1px solid var(--cyan-border); border-radius:12px; padding:2.5rem; max-width:420px; width:90%; text-align:center;">
             <div style="font-size:2rem; margin-bottom:1rem;"></div>
             <h2 style="color:var(--primary); font-size:1.5rem; margin-bottom:0.5rem;">Welcome to KhemBank!</h2>
-            <p style="color:rgba(240,244,248,0.6); font-size:0.95rem; margin-bottom:1.5rem;">Please enter your full name to get started.</p>
+            <p style="color:#ffffff; font-size:0.95rem; margin-bottom:1.5rem;">Please enter your full name to get started.</p>
             <input type="text" id="namePromptInput" placeholder="e.g. John Tan" style="width:100%; background:var(--mid-dark); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:12px 16px; color:var(--light); font-family:'DM Sans',sans-serif; font-size:1rem; outline:none; margin-bottom:1rem;">
             <div id="namePromptLevel" style="display:none; text-align:left; margin-bottom:1rem; color:#ffffff;">
                 <div id="namePromptLevelRow" style="margin-bottom:0.75rem;">
@@ -4227,6 +4229,8 @@ Option D" required></textarea>
                     // Show resume button if there's cached quiz progress
                     setTimeout(() => updateResumeButton(), 500);
                 }
+            } else if (userRole === 'sec_student') {
+                window.location.href = 'courses.html';   // Sec accounts use the recordings page while the O-level section is off
             }
         }
         
@@ -4570,7 +4574,14 @@ Option D" required></textarea>
         ];
         const OL_TOPICS = OL_TOPIC_GROUPS.flatMap(g => g[1]);
         const OL_META_COLS = 'id, topic, topics, difficulty, source, source_year, school, paper, olevel_course, outside_syllabus';
-        const OL_QUIZ_COLS = QUIZ_COLS + ', paper, olevel_course, question_number';
+        const OL_QUIZ_COLS = QUIZ_COLS + ', paper, olevel_course, outside_syllabus, question_number';
+        // O-level weak questions: same course and syllabus rules as the set-up (outside-syllabus rows never shown;
+        // Combined students do not get Pure-only questions)
+        function olWeakFilter(qs) {
+            if (!isOlevel()) return qs;
+            const combined = olTrack() === 'combined';
+            return qs.filter(q => q.outside_syllabus !== true && !(combined && q.olevel_course !== 'pure_combined'));
+        }
         let olMeta = null, olMetaPromise = null;
 
         function olLoadMeta() {
@@ -4619,6 +4630,8 @@ Option D" required></textarea>
             document.querySelectorAll('#olTrackChips .ol-chip').forEach(b => b.classList.toggle('on', b.getAttribute('data-track') === t));
             const hint = document.getElementById('olTrackHint');
             if (hint) hint.classList.toggle('ol-attn', !t);
+            const start = document.getElementById('olStartBtn');
+            if (start) start.disabled = !t;
         }
         async function olSetTrack(t) {
             if (t !== 'pure' && t !== 'combined' || !currentUser) return;
@@ -4627,8 +4640,12 @@ Option D" required></textarea>
             olRefreshCounts();
             try {
                 const { error } = await supabaseClient.from('user_profiles').update({ olevel_track: t }).eq('id', currentUser.id);
-                if (error) console.warn('Could not save the O-level course:', error.message);
-            } catch (e) { console.warn('Could not save the O-level course:', e); }
+                if (error) throw error;
+            } catch (e) {
+                console.warn('Could not save the O-level course:', e);
+                const hint = document.getElementById('olTrackHint');
+                if (hint) hint.textContent = 'Your course could not be saved, so you may need to choose it again next time. Choose your course. IP students: choose Pure Chemistry. Combined Science shows only the questions in your syllabus.';
+            }
         }
 
         function olRenderTopics() {
@@ -4667,7 +4684,7 @@ Option D" required></textarea>
             if (schools.length) {
                 html += yearBoxes('Prelim', 'School prelims: years');
                 html += '<details class="ol-group"><summary><span>School prelims: schools</span></summary><div class="ol-chips">' +
-                    schools.map(s => '<label class="ol-check"><input type="checkbox" class="ol-src-cb" data-source="Prelim" data-school="' + olAttr(s) + '" onchange="olRefreshCounts()"> ' + escapeHtml(s) + '</label>').join('') +
+                    schools.map(s => '<label class="ol-check ol-school"><input type="checkbox" class="ol-src-cb" data-source="Prelim" data-school="' + olAttr(s) + '" onchange="olRefreshCounts()"> ' + escapeHtml(s) + '</label>').join('') +
                     '</div></details>';
             }
             html += '<p class="ol-hint">Leave every box empty to use all papers.</p>';
@@ -4729,7 +4746,7 @@ Option D" required></textarea>
             const allCount = document.getElementById('olAllCount');
             if (allCount) allCount.textContent = '(' + pool.length + ')';
             const info = document.getElementById('olBankCount');
-            if (info) info.textContent = olMeta ? chosen + ' question' + (chosen === 1 ? '' : 's') + ' match' : '';
+            if (info) info.textContent = !olMeta ? '' : (!olTrack() ? 'Choose your course first' : chosen + ' question' + (chosen === 1 ? '' : 's') + ' match');
             olShowEmpty(olMeta && !chosen ? (pool.length ? 'No questions match the topics you picked. Tick another topic.' : 'No questions match these choices. Tick another difficulty or clear the paper boxes.') : '');
         }
         function olShowEmpty(msg) {
@@ -4782,7 +4799,9 @@ Option D" required></textarea>
 
         // Switch between H2 and O-level: save on the account, then reload so no H2 state carries across
         async function olSwitchLevel() {
-            if (!olevelEnabled() || !currentUser || userRole === 'sec_student' || quizInProgress) return;
+            if (!olevelEnabled() || !currentUser || userRole === 'sec_student') return;
+            const qv = document.getElementById('quizView');
+            if (qv && qv.classList.contains('active')) return;                  // not mid-quiz
             const next = isOlevel() ? 'h2' : 'olevel';
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
@@ -4794,6 +4813,16 @@ Option D" required></textarea>
                 document.getElementById('loadingOverlay').style.display = 'none';
                 alert('Could not change the level. Please try again.');
             }
+        }
+        function olSetLevelLink(viewId) {
+            const el = document.getElementById('olLevelSwitch'), box = document.getElementById('olUserBox');
+            if (!el || !box) return;
+            const show = (viewId === 'studentView' || viewId === 'pathView') && olLevelButton() !== '';
+            el.textContent = isOlevel() ? 'Switch to A-level (H2)' : 'Switch to O-level';
+            el.style.display = show ? 'inline-block' : 'none';
+            box.style.display = show ? 'flex' : 'contents';
+            box.style.flexDirection = 'column';
+            box.style.alignItems = 'flex-end';
         }
         function olLevelButton() {
             if (!olevelEnabled() || userRole === 'sec_student' || !(isStudentAccount() || userRole === 'admin' || userRole === 'teacher')) return '';
@@ -4847,7 +4876,7 @@ Option D" required></textarea>
             else if (v === 'outside') q = q.eq('outside_syllabus', true);
             return q;
         }
-        let olAdminH2TopicHtml = null;
+        let olAdminH2TopicHtml = null, olAdminH2SourceHtml = null;
         function olAdminSyllabusChanged() {
             const topicSel = document.getElementById('filterTopic');
             const extra = document.getElementById('filterOlExtraGroup');
@@ -4860,6 +4889,14 @@ Option D" required></textarea>
                 topicSel.value = '';
             }
             if (extra) extra.style.display = ol ? '' : 'none';
+            const srcSel = document.getElementById('filterSource');
+            if (srcSel) {
+                if (olAdminH2SourceHtml === null) olAdminH2SourceHtml = srcSel.innerHTML;
+                srcSel.innerHTML = ol ? '<option value="">All Sources</option><option value="TYS">TYS</option><option value="Prelim">Prelim</option>' : olAdminH2SourceHtml;
+                srcSel.value = '';
+            }
+            const up = document.getElementById('adminUploadPanel');
+            if (up) up.style.display = ol ? 'none' : '';   // the upload form writes H2 rows only; O-level rows come in through the digitise-mcq skill
             supabaseClient.from('questions').select('id', { count: 'exact', head: true }).eq('syllabus', adminSyl())
                 .then(({ count }) => { const el = document.getElementById('questionCount'); if (el && typeof count === 'number') el.textContent = count; }, () => {});
             applyAdminFilters();
@@ -4902,8 +4939,14 @@ Option D" required></textarea>
             document.getElementById('olEditInfo').textContent = 'ID ' + q.id + ' · ' + q.source + ' ' + (q.source_year || '') +
                 (q.school ? ' · ' + q.school : '') + ' · ' + (q.paper === 'combined' ? 'Combined paper' : 'Pure paper') + (q.question_number ? ' · Q' + q.question_number : '');
             document.getElementById('olEditText').value = q.text || '';
-            document.getElementById('olEditOptions').value = (q.options || []).join('\n');
-            document.getElementById('olEditAnswer').value = q.correct_answer || '';
+            const L = 'ABCDEFGH';
+            const opts = q.options || [];
+            const ob = document.getElementById('olEditOptions');
+            ob.innerHTML = opts.map((o, i) => '<div style="display:flex; gap:0.5rem; align-items:flex-start; margin-bottom:0.4rem;"><span style="color:#ffffff; font-weight:600; padding-top:0.6rem;">' + L[i] + '</span><textarea class="ol-edit-opt" rows="2" style="flex:1;"></textarea></div>').join('');
+            ob.querySelectorAll('.ol-edit-opt').forEach((t, i) => { t.value = opts[i] == null ? '' : String(opts[i]); });
+            const ans = document.getElementById('olEditAnswer');
+            ans.innerHTML = opts.map((o, i) => '<option value="' + L[i] + '">' + L[i] + '</option>').join('');
+            ans.value = q.correct_answer || '';
             document.getElementById('olEditExplanation').value = q.explanation || '';
             document.getElementById('olEditDifficulty').value = q.difficulty || 'Medium';
             const ts = document.getElementById('olEditTopic');
@@ -4918,10 +4961,10 @@ Option D" required></textarea>
         async function olEditSave() {
             const q = olEditing; if (!q) return;
             const err = document.getElementById('olEditError');
-            const options = document.getElementById('olEditOptions').value.split('\n').map(s => s.trim()).filter(Boolean);
+            const options = [...document.querySelectorAll('#olEditOptions .ol-edit-opt')].map(t => t.value);   // exactly as typed
             const answer = document.getElementById('olEditAnswer').value;
-            if (options.length !== (q.options || []).length) { err.textContent = 'Keep exactly ' + (q.options || []).length + ' options, one per line.'; return; }
-            if (!['A', 'B', 'C', 'D'].includes(answer)) { err.textContent = 'Choose the answer letter.'; return; }
+            if (options.length !== (q.options || []).length) { err.textContent = 'The options could not be read. Close the form and try again.'; return; }
+            if (!'ABCDEFGH'.slice(0, options.length).includes(answer) || !answer) { err.textContent = 'Choose the answer letter.'; return; }
             const tag = document.getElementById('olEditTopic').value;
             if (!OL_TOPICS.includes(tag)) { err.textContent = 'Choose a topic.'; return; }
             const payload = {
@@ -5987,7 +6030,7 @@ Option D" required></textarea>
                     if (question.source_year) sourceText += ` ${question.source_year}`;
                     if (question.school && (question.source === 'Prelim' || question.source === 'Promos')) sourceText += ` - ${question.school}`;
                     if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                    sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
+                    sourceTag = `<span class="tag tag-source">${escapeHtml(sourceText)}</span>`;
                 }
                 
                 // Build image display
@@ -6179,12 +6222,10 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
-                if (olevelEnabled()) buttons = olLevelButton() + buttons;
             } else if (viewId === 'pathView') {
                 buttons = `
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
-                if (olevelEnabled()) buttons = olLevelButton() + buttons;   // the path home needs the level switch too (preview, 26 Nov 2026)
             } else if (viewId === 'lessonView' || viewId === 'lessonDoneView') {
                 headerUsername.textContent = '';
                 buttons = '';
@@ -6199,6 +6240,13 @@ Option D" required></textarea>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             }
+
+            if (olevelEnabled() && isOlevel() && isStudentAccount() && (viewId === 'studentView' || viewId === 'resultsView')) {
+                // O-level students: no Home button (the welcome screen is H2 staff wording)
+                buttons = (viewId === 'resultsView' ? `<button class="btn btn-secondary" onclick="showView('student')">Back to practice</button>` : '')
+                    + `<button class="btn btn-secondary" onclick="logout()">Sign Out</button>`;
+            }
+            if (olevelEnabled()) olSetLevelLink(viewId);
 
             // Way back to the student portal cards (not mid-quiz or mid-lesson)
             if (viewId !== 'quizView' && viewId !== 'lessonView' && viewId !== 'lessonDoneView') {
@@ -6342,7 +6390,7 @@ Option D" required></textarea>
                 // Look up each weak question's topic so the student can practise one topic at a time
                 let weakQs = [];
                 if (weakIds.length > 0) {
-                    weakQs = filterWeakForRole(await fetchH2QuestionsByIds(isOlevel() ? 'id, topic, topics, source' : 'id, topic, source', weakIds));
+                    weakQs = olWeakFilter(filterWeakForRole(await fetchH2QuestionsByIds(isOlevel() ? 'id, topic, topics, source, olevel_course, outside_syllabus' : 'id, topic, source', weakIds)));
                 }
                 const counts = {};
                 weakQs.forEach(q => { const t = topicOf(q) || 'Other'; counts[t] = (counts[t] || 0) + 1; });
@@ -7503,7 +7551,7 @@ Option D" required></textarea>
             if (!weakBtn) return;
             const topic = weakSel ? weakSel.value : '';
             const n = topic ? (weakTopicCounts.byTopic[topic] || 0) : weakTopicCounts.total;
-            weakBtn.textContent = `Practice Weak Questions (${n})`;
+            weakBtn.textContent = `Practise Weak Questions (${n})`;
         }
 
         async function startWeakQuiz() {
@@ -7520,7 +7568,7 @@ Option D" required></textarea>
                 // Fetch weak questions directly from Supabase by ID
                 const weakData = await fetchH2QuestionsByIds(isOlevel() ? OL_QUIZ_COLS : QUIZ_COLS, weakIds);
                 // Apply Prelim/Promos restriction for regular students (non-premium)
-                let weakQuestions = filterWeakForRole(weakData);
+                let weakQuestions = olWeakFilter(filterWeakForRole(weakData));
                 // Narrow to the chosen topic, if the student picked one
                 if (weakTopic) {
                     weakQuestions = weakQuestions.filter(q => (topicOf(q) || 'Other') === weakTopic);
@@ -7683,8 +7731,8 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                if (question.paper === 'combined') sourceText += ' (Combined Science)';
-                sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
+                if (question.paper === 'combined') sourceText += ' · Combined Science';
+                sourceTag = `<span class="tag tag-source">${escapeHtml(sourceText)}</span>`;
             }
             
             document.getElementById('quizQuestionTags').innerHTML = `
@@ -8398,7 +8446,7 @@ Option D" required></textarea>
                     .from('quiz_attempts')
                     .select('id, completed_at, score, total_questions, correct_answers, topics, difficulties, source')
                     .eq('user_id', currentUser.id);
-                if (olevelEnabled()) histQuery = histQuery.eq('syllabus', curSyl());   // only this level's quizzes
+                histQuery = histQuery.eq('syllabus', curSyl());   // only this level's quizzes
                 const { data, error } = await histQuery.order('completed_at', { ascending: false });
 
                 if (error) throw error;
@@ -8531,8 +8579,8 @@ Option D" required></textarea>
                     sourceText += ` - ${question.school}`;
                 }
                 if (question.source === 'Specimen') sourceText = `9476 Specimen (${question.source_year || 2026})`;
-                if (question.paper === 'combined') sourceText += ' (Combined Science)';
-                sourceTag = `<span class="tag tag-source">${sourceText}</span>`;
+                if (question.paper === 'combined') sourceText += ' · Combined Science';
+                sourceTag = `<span class="tag tag-source">${escapeHtml(sourceText)}</span>`;
             }
             
             document.getElementById('quizQuestionTags').innerHTML = `
@@ -10199,7 +10247,7 @@ Option D" required></textarea>
                         .in('role', ['student', 'premium_student', 'archived'])
                         .order('full_name'),
                     fetchAllPaginated(() =>
-                        (olevelEnabled() ? supabaseClient.from('quiz_attempts').select('*').eq('syllabus', 'h2_chem') : supabaseClient.from('quiz_attempts').select('*')).order('completed_at', { ascending: false })),
+                        supabaseClient.from('quiz_attempts').select('*').eq('syllabus', 'h2_chem').order('completed_at', { ascending: false })),
                     supabaseClient.rpc('admin_analytics_summary')
                 ]);
                 if (profilesRes.error) throw profilesRes.error;

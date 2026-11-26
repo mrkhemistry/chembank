@@ -6182,6 +6182,7 @@ Option D" required></textarea>
                 buttons = `
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
+                if (olevelEnabled()) buttons = olLevelButton() + buttons;   // the path home needs the level switch too (preview, 26 Nov 2026)
             } else if (viewId === 'lessonView' || viewId === 'lessonDoneView') {
                 headerUsername.textContent = '';
                 buttons = '';

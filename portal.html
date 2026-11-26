@@ -55,6 +55,13 @@
   .login-footer { text-align: center; margin-top: 1.25rem; font-size: 0.875rem; color: var(--text3); line-height: 1.6; }
   .login-footer a { color: var(--cyan); text-decoration: none; }
   .login-footer a:hover { text-decoration: underline; }
+  /* Level choice for new students (26 Nov 2026) */
+  .level-choice { display: flex; gap: 0.6rem; margin-top: 0.6rem; }
+  .level-btn { flex: 1; background: transparent; color: #ffffff; border: 1px solid var(--cyan); border-radius: 4px; padding: 0.75rem 0.5rem; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; }
+  .level-btn.on { background: #00666f; border-color: #00666f; color: #ffffff; }
+  .new-student-label { color: #ffffff; font-size: 0.9rem; font-weight: 600; }
+  .level-label { color: #ffffff; }
+  .level-hint { color: #ffffff; font-size: 0.85rem; margin-top: 0.45rem; line-height: 1.5; }
   .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
 
   /* DASHBOARD */
@@ -131,7 +138,12 @@
     <button class="btn-primary" id="loginBtn">Sign In</button>
     <div class="error-msg" id="loginError"></div>
     <div class="login-footer">
-      <a href="#" id="signupLink">Student? Sign up here</a><br><br>
+      <div class="new-student-label">New student? Create your account for</div>
+      <div class="level-choice">
+        <button type="button" class="level-btn" data-signup-level="h2">A level</button>
+        <button type="button" class="level-btn" data-signup-level="olevel">O level</button>
+      </div>
+      <a href="#" id="signupLink" style="display:none;">Sign up</a><br>
       <a href="#" id="forgotLink">Forgot password?</a>
     </div>
   </div>
@@ -175,6 +187,21 @@
       <h1>Mr Khemistry</h1>
       <p>Create Account</p>
       <div class="divider"></div>
+    </div>
+    <div class="form-group">
+      <label class="level-label">I am studying</label>
+      <div class="level-choice" id="signupLevelChoice">
+        <button type="button" class="level-btn" data-level="h2">A level (JC)</button>
+        <button type="button" class="level-btn" data-level="olevel">O level (Sec)</button>
+      </div>
+    </div>
+    <div class="form-group" id="signupTrackGroup" style="display:none;">
+      <label class="level-label">My O-level course</label>
+      <div class="level-choice" id="signupTrackChoice">
+        <button type="button" class="level-btn" data-track="pure">Pure Chemistry</button>
+        <button type="button" class="level-btn" data-track="combined">Combined Science</button>
+      </div>
+      <div class="level-hint">IP students: choose Pure Chemistry.</div>
     </div>
     <div class="form-group">
       <label for="signupName">Full Name</label>
@@ -229,12 +256,12 @@
           <div class="card-tag">Question Bank</div>
         </div>
         <div class="card-body">
-          <div class="card-desc">Practise MCQs by topic, retry the ones you got wrong, and work through Paper 2 and 3 questions from the TYS and school prelims.</div>
+          <div class="card-desc" id="khembankDesc">Practise MCQs by topic, retry the ones you got wrong, and work through Paper 2 and 3 questions from the TYS and school prelims.</div>
           <div class="card-cta">Open KhemBank &rarr;</div>
         </div>
       </a>
 
-      <a class="tool-card" data-card="concept_trainer" href="https://chembank.mrkhemistry.com/?tab=training" target="_blank">
+      <a class="tool-card" data-h2-only data-card="concept_trainer" href="https://chembank.mrkhemistry.com/?tab=training" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#10003;</div>
           <div class="card-name">Concept Trainer</div>
@@ -246,7 +273,7 @@
         </div>
       </a>
 
-      <a class="tool-card" data-card="simulations" href="https://chembank.mrkhemistry.com/simulations/" target="_blank">
+      <a class="tool-card" data-h2-only data-card="simulations" href="https://chembank.mrkhemistry.com/simulations/" target="_blank">
         <div class="card-header">
           <div class="card-icon">&#9883;</div>
           <div class="card-name">Simulations</div>
@@ -272,7 +299,7 @@
 
       <!-- Notes: Google Classroom (JC1, JC2) and NotebookLM in one card. Not a link itself; each button is.
            data-classroom keeps the year filter working when a profile has a classroom set. -->
-      <div class="tool-card" data-hide-chembank-only>
+      <div class="tool-card" data-hide-chembank-only data-h2-only>
         <div class="card-header">
           <div class="card-icon">&#128218;</div>
           <div class="card-name">Notes</div>
@@ -385,7 +412,7 @@
         if (signedInFound && !document.getElementById('dashboardView').classList.contains('active')) showSlowOrLogin();
       }, 8000);
       document.getElementById('userEmail').textContent = user.email;
-      sb.from('user_profiles').select('role, chembank_only, classroom').eq('id', user.id).single().then(function(res) {
+      sb.from('user_profiles').select('role, chembank_only, classroom, level, olevel_track').eq('id', user.id).single().then(function(res) {
         console.log('role check:', res);
         if (res.data && res.data.role === 'sec_student') {
           window.location.href = 'courses.html';
@@ -403,6 +430,25 @@
         var classroom = res.data && res.data.classroom;
         document.querySelectorAll('[data-classroom]').forEach(function(c) {
           c.style.display = (chembankOnly || (classroom && c.getAttribute('data-classroom') !== classroom)) ? 'none' : '';
+        });
+        // Level (26 Nov 2026): an account created on this page carries it in its sign-up details; copy it once if the
+        // profile has none. O-level accounts see only the KhemBank and Lesson Recordings cards.
+        var lv = res.data && res.data.level;
+        var meta = (user && user.user_metadata) || {};
+        if (res.data && !lv && (meta.khem_level === 'h2' || meta.khem_level === 'olevel')) {
+          lv = meta.khem_level;
+          var fix = { level: lv };
+          if (lv === 'olevel' && (meta.khem_track === 'pure' || meta.khem_track === 'combined')) fix.olevel_track = meta.khem_track;
+          sb.from('user_profiles').update(fix).eq('id', user.id).then(function() {}, function() {});
+        }
+        var isOl = lv === 'olevel' && res.data && res.data.role !== 'admin' && res.data.role !== 'teacher';
+        var kbDesc = document.getElementById('khembankDesc');
+        if (kbDesc) kbDesc.textContent = isOl
+          ? 'Practise O-level MCQs by topic and retry the ones you got wrong, with a worked explanation for every question.'
+          : 'Practise MCQs by topic, retry the ones you got wrong, and work through Paper 2 and 3 questions from the TYS and school prelims.';
+        document.querySelectorAll('[data-h2-only]').forEach(function(c) {
+          if (isOl) c.style.display = 'none';
+          else if (!c.hasAttribute('data-hide-chembank-only')) c.style.display = '';
         });
         document.getElementById('adminCard').style.display = 'none';
         clearTimeout(dashTimer);
@@ -529,6 +575,32 @@
       showView('signupView');
     });
 
+    // Level for a new account (26 Nov 2026): chosen on the sign-in page or the sign-up form, saved on the account
+    var signupLevel = null, signupTrack = null;
+    function setSignupLevel(lv) {
+      signupLevel = (lv === 'h2' || lv === 'olevel') ? lv : null;
+      document.querySelectorAll('#signupLevelChoice .level-btn').forEach(function(b) { var on = b.getAttribute('data-level') === signupLevel; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+      document.getElementById('signupTrackGroup').style.display = signupLevel === 'olevel' ? '' : 'none';
+    }
+    function setSignupTrack(t) {
+      signupTrack = (t === 'pure' || t === 'combined') ? t : null;
+      document.querySelectorAll('#signupTrackChoice .level-btn').forEach(function(b) { var on = b.getAttribute('data-track') === signupTrack; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    }
+    document.querySelectorAll('[data-signup-level]').forEach(function(b) {
+      b.addEventListener('click', function() {
+        setSignupLevel(b.getAttribute('data-signup-level'));
+        document.getElementById('loginError').classList.remove('visible');
+        showView('signupView');
+        var nm = document.getElementById('signupName'); if (nm) nm.focus();
+      });
+    });
+    document.querySelectorAll('#signupLevelChoice .level-btn').forEach(function(b) {
+      b.addEventListener('click', function() { setSignupLevel(b.getAttribute('data-level')); });
+    });
+    document.querySelectorAll('#signupTrackChoice .level-btn').forEach(function(b) {
+      b.addEventListener('click', function() { setSignupTrack(b.getAttribute('data-track')); });
+    });
+
     document.getElementById('backToLoginFromSignup').addEventListener('click', function(e) {
       e.preventDefault();
       showView('loginView');
@@ -555,6 +627,16 @@
         errEl.classList.add('visible');
         return;
       }
+      if (!signupLevel) {
+        errEl.textContent = 'Please choose A level or O level at the top.';
+        errEl.classList.add('visible');
+        return;
+      }
+      if (signupLevel === 'olevel' && !signupTrack) {
+        errEl.textContent = 'Please choose Pure Chemistry or Combined Science.';
+        errEl.classList.add('visible');
+        return;
+      }
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Creating account...';
       try {
@@ -567,14 +649,20 @@
           if (codeInfo.reached_max) throw new Error('This join code has reached its maximum uses.');
         }
         // Create auth account — DB trigger reads join_code from metadata to set role/enrollment
-        var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode } } });
+        var levelData = { level: signupLevel, olevel_track: signupLevel === 'olevel' ? signupTrack : null };
+        var signupResult = await sb.auth.signUp({ email: email, password: password, options: { data: { full_name: name, join_code: joinCode, khem_level: levelData.level, khem_track: levelData.olevel_track } } });
         if (signupResult.error) throw signupResult.error;
+        // Save the level on the new account (the sign-in path below also copies it from the metadata if this fails)
+        var levelSaved = false;
+        if (signupResult.data && signupResult.data.session) {
+          try { var upd = await sb.from('user_profiles').update(levelData).eq('id', signupResult.data.session.user.id); levelSaved = !upd.error; } catch (e) {}
+        }
         btn.disabled = false;
         btn.textContent = 'Create Account';
         // Signup already logged them in: a new free account goes straight to its KhemBank Learning Path
         // (switch on together with PATH_MODE = 'on' in index.html); everyone else gets the dashboard
         if (signupResult.data && signupResult.data.session) {
-          if (PATH_FOR_NEW_SIGNUPS) {
+          if (PATH_FOR_NEW_SIGNUPS && levelSaved) {   // if the level did not save, the dashboard copies it from the sign-up details first
             try {
               var prof = await sb.from('user_profiles').select('role').eq('id', signupResult.data.session.user.id).single();
               if (prof.data && prof.data.role === 'student') { window.location.href = 'index.html'; return; }

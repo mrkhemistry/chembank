@@ -4808,7 +4808,7 @@ Option D" required></textarea>
 
         // Switch between H2 and O-level: save on the account, then reload so no H2 state carries across
         async function olSwitchLevel() {
-            if (!olevelEnabled() || !currentUser || userRole === 'sec_student') return;
+            if (!olevelEnabled() || !currentUser || (userRole !== 'admin' && userRole !== 'teacher')) return;   // staff only
             const qv = document.getElementById('quizView');
             if (qv && qv.classList.contains('active')) return;                  // not mid-quiz
             const next = isOlevel() ? 'h2' : 'olevel';
@@ -4831,7 +4831,8 @@ Option D" required></textarea>
             const el = document.getElementById('olLevelSwitch'), box = document.getElementById('olUserBox');
             if (!el || !box) return;
             const staff = userRole === 'admin' || userRole === 'teacher';
-            const show = (viewId === 'studentView' || viewId === 'pathView' || (staff && viewId === 'welcomeView')) && olLevelButton() !== '';
+            // Students choose their level when they create their account (Eric, 26 Nov 2026), so only staff get the switch
+            const show = staff && (viewId === 'studentView' || viewId === 'pathView' || viewId === 'welcomeView') && olLevelButton() !== '';
             el.textContent = isOlevel() ? 'Switch to A-level (H2)' : 'Switch to O-level';
             el.style.display = show ? 'inline-block' : 'none';
             box.style.display = show ? 'flex' : 'contents';
@@ -4844,35 +4845,14 @@ Option D" required></textarea>
         }
 
         // First-visit screen: level (not for Sec accounts) and O-level course, beside the name box
+        // First-visit screen: students now choose their level when they create their account on the portal
+        // (Eric, 26 Nov 2026), so the name prompt asks for the name only. These stay as no-ops for the callers.
         function olPrepareNamePrompt() {
             const box = document.getElementById('namePromptLevel');
-            if (!box) return;
-            if (!olevelEnabled()) { box.style.display = 'none'; return; }
-            box.style.display = 'block';
-            const lvRow = document.getElementById('namePromptLevelRow');
-            if (lvRow) lvRow.style.display = userRole === 'sec_student' ? 'none' : '';
-            const lv = getLevel();
-            document.querySelectorAll('input[name="npLevel"]').forEach(r => { r.checked = r.value === lv; });
-            const tr = olTrack();
-            document.querySelectorAll('input[name="npTrack"]').forEach(r => { r.checked = r.value === tr; });
-            olNamePromptLevelChanged();
+            if (box) box.style.display = 'none';
         }
-        function olNamePromptLevelChanged() {
-            const lv = userRole === 'sec_student' ? 'olevel' : ((document.querySelector('input[name="npLevel"]:checked') || {}).value || 'h2');
-            const tr = document.getElementById('namePromptTrackRow');
-            if (tr) tr.style.display = lv === 'olevel' ? '' : 'none';
-        }
-        function olNamePromptChoices() {
-            if (!olevelEnabled()) return null;
-            const lv = userRole === 'sec_student' ? 'olevel' : ((document.querySelector('input[name="npLevel"]:checked') || {}).value || 'h2');
-            const out = {};
-            if (userRole !== 'sec_student') out.level = lv;
-            if (lv === 'olevel') {
-                const t = (document.querySelector('input[name="npTrack"]:checked') || {}).value;
-                if (t === 'pure' || t === 'combined') out.olevel_track = t;
-            }
-            return out;
-        }
+        function olNamePromptLevelChanged() {}
+        function olNamePromptChoices() { return null; }
 
         // ---------- Admin: O-level in the Question Bank (admin and teacher) ----------
         function adminSyl() {

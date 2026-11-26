@@ -4595,6 +4595,13 @@ Option D" required></textarea>
             return olMetaPromise;
         }
         function olAttr(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        // An option whose text is empty (77 O-level TYS rows draw A to D in the question picture): say so instead of a blank button.
+        // Every other option renders exactly as before.
+        function olOptionText(raw) {
+            const html = sanitizeQuestionText(raw);
+            const plain = String(raw == null ? '' : raw).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+            return plain ? html : '<span style="color:#ffffff; font-style:italic;">See the picture above</span>';
+        }
         function olTrack() { const t = userProfile && userProfile.olevel_track; return (t === 'pure' || t === 'combined') ? t : null; }
 
         // Show the O-level set-up instead of the H2 panels (called from showView('student') only while the section is on)
@@ -4747,6 +4754,8 @@ Option D" required></textarea>
             if (allCount) allCount.textContent = '(' + pool.length + ')';
             const info = document.getElementById('olBankCount');
             if (info) info.textContent = !olMeta ? '' : (!olTrack() ? 'Choose your course first' : chosen + ' question' + (chosen === 1 ? '' : 's') + ' match');
+            const startBtn = document.getElementById('olStartBtn');
+            if (startBtn) startBtn.disabled = !olTrack() || !olMeta || !chosen;   // nothing to start
             olShowEmpty(olMeta && !chosen ? (pool.length ? 'No questions match the topics you picked. Tick another topic.' : 'No questions match these choices. Tick another difficulty or clear the paper boxes.') : '');
         }
         function olShowEmpty(msg) {
@@ -4826,7 +4835,7 @@ Option D" required></textarea>
         }
         function olLevelButton() {
             if (!olevelEnabled() || userRole === 'sec_student' || !(isStudentAccount() || userRole === 'admin' || userRole === 'teacher')) return '';
-            return '<button class="btn btn-secondary" onclick="olSwitchLevel()">' + (isOlevel() ? 'Switch to H2' : 'Switch to O-level') + '</button>';
+            return 'yes';   // only a yes/no test now: the switch itself is the link under the account name (olSetLevelLink)
         }
 
         // First-visit screen: level (not for Sec accounts) and O-level course, beside the name box
@@ -7799,7 +7808,7 @@ Option D" required></textarea>
                 return `
                     <div class="option ${isSelected ? 'selected' : ''}" onclick="selectOption('${displayLetter}')">
                         <div class="option-letter">${displayLetter}</div>
-                        <div class="option-text">${sanitizeQuestionText(optionsArray[originalIndex])}</div>
+                        <div class="option-text">${olOptionText(optionsArray[originalIndex])}</div>
                     </div>
                 `;
             }).join('');
@@ -8641,7 +8650,7 @@ Option D" required></textarea>
                 return `
                     <div class="${className}">
                         <div class="option-letter">${displayLetter}</div>
-                        <div class="option-text">${sanitizeQuestionText(String(question.options[originalIndex] ?? ''))}</div>
+                        <div class="option-text">${olOptionText(String(question.options[originalIndex] ?? ''))}</div>
                         ${isUserAnswer ? '<span style="margin-left: auto;">Your answer</span>' : ''}
                         ${isCorrectAnswer ? '<span style="margin-left: auto; color: var(--success);">✓ Correct</span>' : ''}
                     </div>

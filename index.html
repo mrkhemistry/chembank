@@ -11988,7 +11988,7 @@ Option D" required></textarea>
                 return;
             }
             const box = w.querySelector('.cf-box'); if (box) box.style.display = 'none';
-            const link = w.querySelector('.cf-link'); if (link) { link.textContent = 'Reported — thank you'; link.classList.add('cf-sent'); link.style.display = ''; }
+            const link = w.querySelector('.cf-link'); if (link) { link.textContent = 'Reported. Thank you.'; link.classList.add('cf-sent'); link.style.display = ''; }
         }
 
         // ---- Admin Reports tab (reads every content_flags row; lazy-loaded when the tab opens) ----
@@ -12007,7 +12007,7 @@ Option D" required></textarea>
             const uids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
             if (uids.length) jobs.push(supabaseClient.from('user_profiles').select('id, full_name, email').in('id', uids).then(({ data }) => { (data || []).forEach(u => { who[u.id] = u; }); }));
             const mcqIds = [...new Set(rows.filter(r => r.source === 'mcq').map(r => r.question_id).filter(Boolean))];
-            if (mcqIds.length) jobs.push(supabaseClient.from('questions').select('id, text, topic, source, source_year, school, image_url, option_image_url').in('id', mcqIds).then(({ data }) => { (data || []).forEach(x => { mcq[x.id] = x; }); }));
+            if (mcqIds.length) jobs.push(supabaseClient.from('questions').select('id, text, topic, source, source_year, school, image_url, option_image_url, syllabus, paper').in('id', mcqIds).then(({ data }) => { (data || []).forEach(x => { mcq[x.id] = x; }); }));
             const sqIds = [...new Set(rows.filter(r => r.source === 'p2p3').map(r => r.structured_question_id).filter(Boolean))];
             if (sqIds.length) jobs.push(supabaseClient.from('structured_questions').select('id, year, paper, school, source, question_number').in('id', sqIds).then(({ data }) => { (data || []).forEach(x => { sq[x.id] = x; }); }));
             await Promise.all(jobs);
@@ -12024,7 +12024,8 @@ Option D" required></textarea>
             let ref = '', snippet = '';
             if (r.source === 'mcq') {
                 const info = mcq[r.question_id] || {};
-                ref = 'MCQ · id ' + r.question_id + ' · ' + [ (ctx.topic || info.topic), (info.source || ctx.source), (info.source_year || ctx.year), (info.school || ctx.school) ].filter(Boolean).join(' · ');
+                const isOl = String(info.syllabus || '').indexOf('o_level') === 0;   // O-level reports labelled (27 Nov 2026)
+                ref = (isOl ? 'O-level MCQ' : 'MCQ') + ' · id ' + r.question_id + ' · ' + [ (ctx.topic || info.topic), (info.source || ctx.source), (info.source_year || ctx.year), (info.school || ctx.school), (isOl && info.paper === 'combined' ? 'Combined Science' : '') ].filter(Boolean).join(' · ');
                 if (info.text) snippet = sanitizeQuestionText(info.text);
             } else {
                 const info = sq[r.structured_question_id] || {};

@@ -229,7 +229,7 @@
   var myRole = '';
   // O-level section (26 Nov 2026): set to true together with OLEVEL_MODE = 'on' in index.html
   var OLEVEL_LIVE = true;
-  var isSharer = false;
+  var sharedCourseIds = {};   // courses this account may share (course_sharers; 27 Nov 2026: each tutor only their own)
   var coursesById = {};
   var currentCourse = null;
   var openSeq = 0;   // only the latest course opened may draw its lessons
@@ -259,10 +259,10 @@
       var rc = document.getElementById('referralCTA'); if (rc) rc.style.display = 'none';   // its text is about H2 recordings
     }
     try {
-      // A recordings-only sharer (Teacher Jasmine) may share the Sec courses. The server checks this again.
-      var sharerRes = await sb.from('recording_sharers').select('user_id').eq('user_id', session.user.id).maybeSingle();
-      isSharer = !!(sharerRes.data && sharerRes.data.user_id);
-    } catch (e) { isSharer = false; }
+      // A tutor (Teacher Jasmine, Kelly, Jean) may share only the courses listed for them. The server checks this again.
+      var sharerRes = await sb.from('course_sharers').select('course_id').eq('user_id', session.user.id);
+      (sharerRes.data || []).forEach(function (r) { sharedCourseIds[r.course_id] = true; });
+    } catch (e) { sharedCourseIds = {}; }
     setupReferralCTA(session);
     loadCourses();
   }
@@ -376,7 +376,7 @@
   function renderVideos(body) {
     var collections = body.collections || [];
     var videos = body.videos || [];
-    var canShare = myRole === 'admin' || ((myRole === 'teacher' || isSharer) && currentCourse && currentCourse.teacher_share);
+    var canShare = myRole === 'admin' || (currentCourse && currentCourse.teacher_share && sharedCourseIds[currentCourse.id] === true);
     document.getElementById('detailSubtitle').textContent = videos.length + ' lesson' + (videos.length === 1 ? '' : 's');
 
     // Group videos by collection

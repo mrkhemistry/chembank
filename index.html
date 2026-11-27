@@ -3491,7 +3491,7 @@ Option D" required></textarea>
             <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
                 <label class="pdf-type-btn active" id="pdfTypeStudentLabel" style="cursor:pointer; display:flex; align-items:center; gap:0.75rem;">
                     <input type="checkbox" id="pdfTypeStudent" checked style="width:18px; height:18px; cursor:pointer; accent-color: var(--primary);">
-                    <span><strong>Student Version</strong><small style="display:block;">Questions only — no answers</small></span>
+                    <span><strong>Student Version</strong><small style="display:block;">Questions only, no answers</small></span>
                 </label>
                 <label class="pdf-type-btn" id="pdfTypeTutorLabel" style="cursor:pointer; display:flex; align-items:center; gap:0.75rem;">
                     <input type="checkbox" id="pdfTypeTutor" style="width:18px; height:18px; cursor:pointer; accent-color: var(--accent);">
@@ -3501,6 +3501,31 @@ Option D" required></textarea>
 
             <!-- Filters -->
             <div class="panel" style="padding:1.5rem; margin-bottom:1.5rem;">
+                <!-- Level (O-level section, 27 Nov 2026): shown while the O-level section is on -->
+                <div class="form-group" id="pdfLevelGroup" style="display:none;">
+                    <label for="pdfLevel">Level</label>
+                    <select id="pdfLevel" onchange="pdfLevelChanged()">
+                        <option value="h2_chem">A-Level H2 Chemistry</option>
+                        <option value="o_level_chem">O-level Chemistry</option>
+                    </select>
+                </div>
+                <div id="pdfOlGroup" style="display:none;">
+                    <div class="form-group">
+                        <label for="pdfOlCourse">O-level course</label>
+                        <select id="pdfOlCourse" onchange="checkPdfAvailability()">
+                            <option value="">Pure Chemistry (all questions)</option>
+                            <option value="combined">Combined Science (only questions in the Combined syllabus)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pdfOlSource">Papers</label>
+                        <select id="pdfOlSource" onchange="checkPdfAvailability()">
+                            <option value="">TYS and school prelims</option>
+                            <option value="TYS">TYS only</option>
+                            <option value="Prelim">School prelims only</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>Topics <span style="color:var(--danger);">*</span> <span style="font-weight:400; font-size:0.85rem; opacity:0.7;">(Select one or more)</span></label>
                     <div style="margin-bottom:0.5rem;">
@@ -3565,7 +3590,7 @@ Option D" required></textarea>
             <!-- Worksheet title (optional) -->
             <div class="form-group">
                 <label>Worksheet Title (Optional)</label>
-                <input type="text" id="pdfTitle" placeholder="e.g. Kinetics Practice — Set 1">
+                <input type="text" id="pdfTitle" placeholder="e.g. Kinetics Practice, Set 1">
             </div>
 
             <div style="display:flex; gap:1rem; margin-top:1rem; flex-wrap:wrap;">
@@ -4597,10 +4622,12 @@ Option D" required></textarea>
         function olAttr(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
         // An option whose text is empty (77 O-level TYS rows draw A to D in the question picture): say so instead of a blank button.
         // Every other option renders exactly as before.
-        function olOptionText(raw) {
+        function olOptionText(raw, forPrint) {
             const html = sanitizeQuestionText(raw);
             const plain = String(raw == null ? '' : raw).replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-            return plain ? html : '<span style="color:#ffffff; font-style:italic;">See the picture above</span>';
+            if (plain) return html;
+            return forPrint ? '<em>See the picture above</em>'                       // black on paper
+                            : '<span style="color:#ffffff; font-style:italic;">See the picture above</span>';
         }
         function olTrack() { const t = userProfile && userProfile.olevel_track; return (t === 'pure' || t === 'combined') ? t : null; }
 
@@ -9737,6 +9764,28 @@ Option D" required></textarea>
                 return;
             }
             document.getElementById('pdfModal').style.display = 'block';
+            const lg = document.getElementById('pdfLevelGroup');
+            if (lg) lg.style.display = olevelEnabled() ? '' : 'none';
+            checkPdfAvailability();
+        }
+
+        // Worksheet level (27 Nov 2026): H2 by default; O-level swaps in the 23 O-level topics and its options
+        function pdfSyl() {
+            const el = document.getElementById('pdfLevel');
+            return (olevelEnabled() && el && el.value === 'o_level_chem') ? 'o_level_chem' : 'h2_chem';
+        }
+        let pdfH2TopicHtml = null;
+        function pdfLevelChanged() {
+            const box = document.getElementById('pdfTopicCheckboxes');
+            const ol = pdfSyl() === 'o_level_chem';
+            if (box) {
+                if (pdfH2TopicHtml === null) pdfH2TopicHtml = box.innerHTML;
+                box.innerHTML = ol
+                    ? OL_TOPICS.map(t => '<label class="checkbox-label"><input type="checkbox" class="pdf-topic-cb" value="' + olAttr(t) + '"><span>' + escapeHtml(t) + '</span></label>').join('')
+                    : pdfH2TopicHtml;
+            }
+            const all = document.getElementById('pdfSelectAllTopics'); if (all) all.checked = false;
+            const og = document.getElementById('pdfOlGroup'); if (og) og.style.display = ol ? '' : 'none';
             checkPdfAvailability();
         }
 
@@ -9767,10 +9816,11 @@ Option D" required></textarea>
                 let allData = [];
                 let from = 0;
                 while (true) {
+                    const pdfOl = pdfSyl() === 'o_level_chem';
                     const { data, error } = await supabaseClient
                         .from('questions')
-                        .select('id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
-                        .eq('syllabus', 'h2_chem')
+                        .select((pdfOl ? 'olevel_course, outside_syllabus, paper, ' : '') + 'id, text, topic, topics, difficulty, source, source_year, school, options, correct_answer, explanation, image_url, image_url_2, option_image_url, explanation_image_url, video_url')
+                        .eq('syllabus', pdfSyl())
                         .in('difficulty', selectedDiffs)
                         .range(from, from + PAGE_SIZE - 1);
                     if (error) throw error;
@@ -9780,7 +9830,15 @@ Option D" required></textarea>
                     from += PAGE_SIZE;
                 }
 
+                const ol = pdfSyl() === 'o_level_chem';
+                const olCombined = ol && (document.getElementById('pdfOlCourse') || {}).value === 'combined';
+                const olSource = ol ? ((document.getElementById('pdfOlSource') || {}).value || '') : '';
                 return allData.filter(q => {
+                    if (ol) {
+                        if (q.outside_syllabus === true) return false;                      // never on a worksheet
+                        if (olCombined && q.olevel_course !== 'pure_combined') return false;
+                        if (olSource && q.source !== olSource) return false;
+                    }
                     const questionTopics = (Array.isArray(q.topics) && q.topics.length > 0) ? q.topics : (q.topic ? [q.topic] : []);
                     return selectedTopics.some(t => questionTopics.includes(t));
                 });
@@ -9860,11 +9918,23 @@ Option D" required></textarea>
             async function printVersion(type) {
                 const win = window.open('', '_blank');
                 const html = await mcqSignHtml(buildPrintHtml(selected, selectedTopics, selectedDiffs, customTitle, type));
-                const label = type === 'tutor' ? ' — Tutor Answer Key' : ' — Student Version';
-                win.document.write('<html><head><title>' + (customTitle || 'Worksheet') + label + '</title></head><body>' + html + '</body></html>');
+                const label = type === 'tutor' ? ' (Tutor Answer Key)' : ' (Student Version)';
+                // MathJax in the print window (same settings as this page), then print once it has typeset (max 8 s)
+                const mj = '<script>window.MathJax = { tex: { packages: { \'[-]\': [\'textmacros\', \'html\'] }, autoload: { html: [] }, require: { allow: { html: false } } }, '
+                    + 'output: { displayOverflow: \'linebreak\' }, '
+                    + 'options: { menuOptions: { settings: { enrich: false, speech: false, braille: false, assistiveMml: true } } }, '
+                    + 'startup: { pageReady: () => MathJax.startup.defaultPageReady().then(() => { window.__khemTypeset = true; }) } };<\/script>'
+                    + '<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/4.1.3/tex-mml-chtml.js"><\/script>';
+                win.document.write('<html><head><title>' + escapeHtml(customTitle || 'Worksheet') + label + '</title>' + mj + '</head><body>' + html + '</body></html>');
                 win.document.close();
                 win.focus();
-                setTimeout(() => win.print(), 600);
+                let waited = 0;
+                const tick = setInterval(() => {
+                    waited += 250;
+                    if (win.closed) { clearInterval(tick); return; }
+                    const imgsDone = [...win.document.images].every(im => im.complete);   // signed diagrams loaded (or failed)
+                    if ((win.__khemTypeset && imgsDone) || waited >= 8000) { clearInterval(tick); setTimeout(() => win.print(), 300); }
+                }, 250);
             }
 
             if (wantStudent) printVersion('student');
@@ -9878,13 +9948,25 @@ Option D" required></textarea>
             // topics can be an array or a string (backwards compat)
             const topicsArray = Array.isArray(topics) ? topics : [topics];
             const topicLabel = topicsArray.length === 1 ? topicsArray[0] : topicsArray.join(', ');
-            const worksheetTitle = customTitle || `${topicLabel} — ${isTutor ? 'Answer Key' : 'Practice Worksheet'}`;
+            const worksheetTitle = customTitle || `${topicLabel}: ${isTutor ? 'Answer Key' : 'Practice Worksheet'}`;
             const versionLabel = isTutor ? 'TUTOR ANSWER KEY' : 'STUDENT WORKSHEET';
+            const subjectLabel = pdfSyl() === 'o_level_chem' ? 'O-level Chemistry' : 'A-Level H2 Chemistry';
+            const cssText = v => String(v).replace(/["\\]/g, '');   // safe inside a CSS content string
 
             let html = `
             <style>
                 @page { margin: 18mm 18mm 18mm 18mm; }
-                @page { @bottom-center { content: counter(page) " / " counter(pages); font-family: Arial, sans-serif; font-size: 9pt; color: #777; } }
+                @page {
+                    @top-right { content: "Generated by KhemBank"; font-family: Arial, sans-serif; font-size: 8.5pt; color: #000; }
+                    @bottom-left { content: "${cssText(dateStr)}"; font-family: Arial, sans-serif; font-size: 8.5pt; color: #000; }
+                    @bottom-center { content: counter(page) " / " counter(pages); font-family: Arial, sans-serif; font-size: 9pt; color: #000; }
+                }
+                .ws-gen { font-size: 9pt; font-weight: bold; margin-bottom: 4px; }
+                ${isTutor ? `/* Tutor key: a long question with its explanation may continue on the next page (no half-empty pages),
+                   but a picture, an option line or the answer heading is never split (27 Nov 2026) */
+                body .question-block { page-break-inside: auto; break-inside: auto; }
+                body .question-img, body .option-row, body .ans-label, body .question-num { page-break-inside: avoid; break-inside: avoid; }
+                body .question-num { page-break-after: avoid; break-after: avoid; }` : ''}
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; background: #fff; }
 
@@ -9934,8 +10016,9 @@ Option D" required></textarea>
                     <div class="ws-title">${escapeHtml(worksheetTitle)}</div>
                     <div class="ws-version">${versionLabel}</div>
                 </div>
+                <div class="ws-gen">Generated by KhemBank</div>
                 <div class="ws-meta">
-                    <span>Topic: <strong>${escapeHtml(topicLabel)}</strong> &nbsp;|&nbsp; Difficulty: ${escapeHtml(diffLabel)} &nbsp;|&nbsp; Questions: ${questions.length}</span>
+                    <span>${escapeHtml(subjectLabel)} &nbsp;|&nbsp; Topic: <strong>${escapeHtml(topicLabel)}</strong> &nbsp;|&nbsp; Difficulty: ${escapeHtml(diffLabel)} &nbsp;|&nbsp; Questions: ${questions.length}</span>
 
                 </div>
             </div>
@@ -9977,7 +10060,7 @@ Option D" required></textarea>
                     html += `
                         <div class="option-row ${isCorrect ? 'correct-ans' : ''}">
                             <span class="option-letter">${letter}.</span>
-                            <span class="option-text">${sanitizeQuestionText(opt)}</span>
+                            <span class="option-text">${olOptionText(opt, true)}</span>
                             ${isCorrect ? '' : ''}
                         </div>`;
                 });
@@ -10018,8 +10101,8 @@ Option D" required></textarea>
             // Footer
             html += `
             <div class="ws-footer">
-                <span>KhemBank — Mr Khemistry Tuition Centre</span>
-                <span>${isTutor ? 'CONFIDENTIAL — TUTOR USE ONLY' : 'A-Level H2 Chemistry'}</span>
+                <span>Generated by KhemBank${isTutor ? ' &nbsp;|&nbsp; Confidential: tutor use only' : ''}</span>
+                <span>${escapeHtml(dateStr)}</span>
             </div>`;
 
             return html;

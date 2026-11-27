@@ -1833,7 +1833,7 @@
                         <p>Upload questions, create quizzes, tag content by topic and difficulty, add video explanations, and manage your question bank.</p>
                     </div>
                     
-                    <div class="portal-card" onclick="accessStudentPortal()">
+                    <div class="portal-card" id="studentCard" onclick="accessStudentPortal()">
                         <h2>MCQ Repository</h2>
                         <p>Access quizzes, practice questions by topic and difficulty, view video explanations, and track your progress.</p>
                     </div>
@@ -4256,6 +4256,12 @@ Option D" required></textarea>
                 }
             } else if (userRole === 'sec_student') {
                 window.location.href = 'courses.html';   // Sec accounts use the recordings page while the O-level section is off
+            } else if (userRole === 'tutor_olevel') {
+                // O-level tutor (Teacher Jasmine, Teacher Kelly; 27 Nov 2026): O-level worksheets only. The server gives this
+                // role the O-level questions and pictures and nothing paid in H2.
+                const sc = document.getElementById('studentCard'); if (sc) sc.style.display = 'none';
+                const pdfCard = document.getElementById('pdfCard'); if (pdfCard) pdfCard.style.display = 'block';
+                showView('welcome');
             }
         }
         
@@ -4569,7 +4575,7 @@ Option D" required></textarea>
         function olevelEnabled() { return OLEVEL_MODE === 'on' || (OLEVEL_MODE === 'preview' && OL_PREVIEW); }
         function getLevel() {
             if (!olevelEnabled() || !currentUser) return 'h2';
-            if (userRole === 'sec_student') return 'olevel';                 // Sec accounts: O-level only, no switch
+            if (userRole === 'sec_student' || userRole === 'tutor_olevel') return 'olevel';   // Sec and O-level tutor accounts: O-level only
             const lv = userProfile && userProfile.level;
             return lv === 'olevel' ? 'olevel' : 'h2';
         }
@@ -5262,7 +5268,7 @@ Option D" required></textarea>
         }
 
         async function loadQuestionsFromSupabase() {
-            if (isOlevel() && userRole !== 'admin' && userRole !== 'teacher') {
+            if (userRole === 'tutor_olevel' || (isOlevel() && userRole !== 'admin' && userRole !== 'teacher')) {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 olLoadMeta().catch(e => console.warn('O-level list did not load:', e));
                 return;
@@ -6115,7 +6121,10 @@ Option D" required></textarea>
             // Role-based access control
             if (currentUser) {
                 // Students can only access student portal and quiz views
-                if ((userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student') && viewName === 'admin') {
+                if (userRole === 'tutor_olevel' && viewName !== 'welcome' && viewName !== 'login' && viewName !== 'signup' && viewName !== 'forgotPassword') {
+                    viewName = 'welcome';   // O-level tutors: worksheets only (from the home page)
+                }
+                if ((userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student' || userRole === 'tutor_olevel') && viewName === 'admin') {
                     alert('Access denied. Students cannot access the teacher portal.');
                     return;
                 }
@@ -6292,7 +6301,7 @@ Option D" required></textarea>
         }
         
         function accessTeacherPortal() {
-            if (userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student') {
+            if (userRole === 'student' || userRole === 'premium_student' || userRole === 'sec_student' || userRole === 'tutor_olevel') {
                 alert('Access denied. Students cannot access the teacher portal.');
                 return;
             }
@@ -9759,18 +9768,24 @@ Option D" required></textarea>
         let pdfType = 'student'; // 'student' or 'tutor'
 
         function openPdfModal() {
-            if (userRole !== 'admin' && userRole !== 'teacher') {
+            if (userRole !== 'admin' && userRole !== 'teacher' && userRole !== 'tutor_olevel') {
                 alert('Access denied. Only admins and teachers can generate worksheets.');
                 return;
             }
             document.getElementById('pdfModal').style.display = 'block';
             const lg = document.getElementById('pdfLevelGroup');
-            if (lg) lg.style.display = olevelEnabled() ? '' : 'none';
+            const tutor = userRole === 'tutor_olevel';
+            if (lg) lg.style.display = (olevelEnabled() && !tutor) ? '' : 'none';
+            const saveBtn = document.querySelector('#pdfModal button[onclick="saveWorksheetToPortal()"]');
+            if (saveBtn) saveBtn.style.display = tutor ? 'none' : '';
+            if (tutor && !pdfTutorReady) { pdfTutorReady = true; pdfLevelChanged(); return; }   // O-level topics and options
             checkPdfAvailability();
         }
 
         // Worksheet level (27 Nov 2026): H2 by default; O-level swaps in the 23 O-level topics and its options
+        let pdfTutorReady = false;
         function pdfSyl() {
+            if (userRole === 'tutor_olevel') return 'o_level_chem';                 // O-level tutors: O-level only
             const el = document.getElementById('pdfLevel');
             return (olevelEnabled() && el && el.value === 'o_level_chem') ? 'o_level_chem' : 'h2_chem';
         }
@@ -9882,7 +9897,7 @@ Option D" required></textarea>
         });
 
         async function generateAndPrintPdf() {
-            if (userRole !== 'admin' && userRole !== 'teacher') {
+            if (userRole !== 'admin' && userRole !== 'teacher' && userRole !== 'tutor_olevel') {
                 alert('Access denied. Only admins and teachers can generate worksheets.');
                 return;
             }

@@ -251,6 +251,7 @@
     } catch (e) { myRole = ''; }
     var olPreview = false;
     try { olPreview = sessionStorage.getItem('khem_olevel_preview') === '1'; } catch (e) {}
+    if (myRole === 'tutor_olevel') { var rt = document.getElementById('referralCTA'); if (rt) rt.style.display = 'none'; }   // staff: no referral card
     if ((OLEVEL_LIVE || olPreview) && myRole === 'sec_student') {
       // Sec accounts: this page is their home, so no Portal link (it sent them straight back here); KhemBank O-level instead
       var pl = document.getElementById('portalBackLink'); if (pl) pl.style.display = 'none';

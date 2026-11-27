@@ -441,9 +441,11 @@
           if (lv === 'olevel' && (meta.khem_track === 'pure' || meta.khem_track === 'combined')) fix.olevel_track = meta.khem_track;
           sb.from('user_profiles').update(fix).eq('id', user.id).then(function() {}, function() {});
         }
-        var isOl = lv === 'olevel' && res.data && res.data.role !== 'admin' && res.data.role !== 'teacher';
+        var isOl = res.data && res.data.role !== 'admin' && res.data.role !== 'teacher' && (lv === 'olevel' || res.data.role === 'tutor_olevel');   // a tutor is O-level whatever the level says
         var kbDesc = document.getElementById('khembankDesc');
-        if (kbDesc) kbDesc.textContent = isOl
+        if (kbDesc) kbDesc.textContent = (res.data && res.data.role === 'tutor_olevel')
+          ? 'Make O-level MCQ worksheets to print, with a student version and a tutor answer key.'
+          : isOl
           ? 'Practise O-level MCQs by topic and retry the ones you got wrong, with a worked explanation for every question.'
           : 'Practise MCQs by topic, retry the ones you got wrong, and work through Paper 2 and 3 questions from the TYS and school prelims.';
         document.querySelectorAll('[data-h2-only]').forEach(function(c) {

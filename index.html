@@ -2176,14 +2176,14 @@ Option D" required></textarea>
                 </div>
             </div>
 
-            <!-- Revision MCQs — J2 Last-Minute sets (free + premium) and Mr Khemistry's curated per-topic sets (premium only) -->
+            <!-- Revision MCQs: Mr Khemistry's curated per-topic sets (premium only). The J2 Last-Minute sets were retired on 28 Nov 2026: their questions are on the Learning Path's Most tested first path -->
             <div class="panel" id="revPkgPanel">
                 <div class="panel-header">
                     <span>Revision MCQs</span>
                 </div>
+                <p id="revPkgPathNote" style="display:none; line-height:1.6; margin:0 0 1rem;">Looking for the J2 Last-Minute Revision questions? The most-tested TYS questions are now in <strong>Bite-sized lessons</strong>, on the <strong>Most tested first</strong> path.<br><button type="button" class="btn btn-secondary" style="margin-top:0.6rem;" onclick="revOpenMostTested()">Open Most tested first</button></p>
                 <div id="revPkgInterface" style="display:none;">
-                    <p style="line-height:1.6; margin:0 0 1rem;"><strong>J2 Last-Minute Revision:</strong> the 17 concepts that came up in 5 or more of the 9 A-Level papers from 2017 to 2025, in three parts (every TYS question on them). Answer on screen, get your score straight away, then try similar questions on anything you got wrong.</p>
-                    <p id="revPkgFreeNote" style="display:none; line-height:1.6; margin:0 0 1rem; font-size:0.9rem;">Premium also has Mr Khemistry's 10-question revision set for every topic. <a href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20sign%20up%20for%20KhemBank%20Premium." target="_blank" rel="noopener" style="color:#00e5ff; font-weight:600;">Ask about Premium on WhatsApp</a></p>
+                    <p style="line-height:1.6; margin:0 0 1rem;">Mr Khemistry's 10-question revision set for every topic. Answer on screen, get your score straight away, then try similar questions on anything you got wrong.</p>
                     <div class="form-group">
                         <label for="revPkgSelect">Choose a revision set</label>
                         <select id="revPkgSelect">
@@ -4540,16 +4540,25 @@ Option D" required></textarea>
             // J2 Last-Minute Revision (16 Nov 2026): every H2 TYS P1 MCQ (2017-2025) on the 17 concepts
             // tested in 5+ of the 9 years, 9476-valid only (enzyme-saturation and dG-equilibrium-position
             // questions left out). Grouped by concept, oldest year first. free: true = open to free
-            // accounts too (all TYS, which free accounts already see). Listed first in the dropdown.
-            { topic: "J2 Last-Minute Part 1: Atoms, ionisation energy, forces, gases", short: "Part 1: Atoms, ionisation energy, forces, gases (35 Qs)", free: true,
+            // accounts too (all TYS, which free accounts already see). RETIRED 28 Nov 2026 (Eric): hidden from the dropdown and
+            // blocked from starting, kept here (same order) so the admin Revision report still finds past attempts.
+            { topic: "J2 Last-Minute Part 1: Atoms, ionisation energy, forces, gases", short: "Part 1: Atoms, ionisation energy, forces, gases (35 Qs)", free: true, retired: true,
               ids: [248, 249, 217, 222, 187, 188, 159, 127, 128, 67, 74, 7, 13, 37, 38, 255, 189, 158, 130, 104, 221, 129, 105, 40, 251, 252, 160, 161, 133, 97, 69, 9, 224, 134, 100] },
-            { topic: "J2 Last-Minute Part 2: Electrolysis, electrode potentials, kinetics, pH, equilibria", short: "Part 2: Electrolysis, electrode potentials, kinetics, pH, equilibria (32 Qs)", free: true,
+            { topic: "J2 Last-Minute Part 2: Electrolysis, electrode potentials, kinetics, pH, equilibria", short: "Part 2: Electrolysis, electrode potentials, kinetics, pH, equilibria (32 Qs)", free: true, retired: true,
               ids: [264, 276, 216, 184, 153, 154, 96, 33, 65, 234, 155, 125, 34, 36, 64, 257, 199, 201, 172, 108, 17, 45, 260, 231, 99, 122, 22, 163, 109, 79, 19, 46] },
-            { topic: "J2 Last-Minute Part 3: Organic", short: "Part 3: Organic (41 Qs)", free: true,
+            { topic: "J2 Last-Minute Part 3: Organic", short: "Part 3: Organic (41 Qs)", free: true, retired: true,
               ids: [266, 240, 203, 174, 140, 114, 116, 120, 271, 274, 242, 206, 118, 87, 246, 181, 148, 149, 31, 268, 210, 180, 147, 123, 60, 273, 211, 150, 93, 32, 58, 91, 92, 29, 269, 272, 241, 244, 207, 182, 57] },
         ];
         function revPkgIsPremiumRole() { return userRole === 'premium_student' || userRole === 'admin'; }
-        function revPkgAllowed(pkg) { return !!pkg && (revPkgIsPremiumRole() || (pkg.free === true && !!userRole)); }
+        function revPkgAllowed(pkg) { return !!pkg && !pkg.retired && (revPkgIsPremiumRole() || (pkg.free === true && !!userRole)); }
+        // The pointer under Revision MCQs: open the Learning Path on Most tested first (28 Nov 2026)
+        function revOpenMostTested() {
+            if (typeof pathEnabled !== 'function' || !pathEnabled()) return;
+            lpSetChoice('tested');
+            lpLog('path_choice', { path: 'tested', from: 'revision_panel' });
+            lpOpenHome();
+            window.scrollTo(0, 0);
+        }
         // Precomputed "same concept" follow-up shortlists: for each revision-package question id,
         // the most similar OTHER MCQs in its topic, ranked by question-wording (TF-IDF) similarity so
         // the follow-up tests the SAME concept, not just the same topic. Built by scratchpad/build_similar.py.
@@ -5021,8 +5030,8 @@ Option D" required></textarea>
         }
         // =================== END O-LEVEL SECTION ===================
 
-        // Fill the set dropdown from REVISION_PACKAGES: the free J2 Last-Minute sets first (everyone),
-        // then the premium topic sets. Rebuilt when the role changes. Option value = index in REVISION_PACKAGES.
+        // Fill the set dropdown from REVISION_PACKAGES: the premium topic sets (the J2 sets are retired).
+        // Rebuilt when the role changes. Option value = index in REVISION_PACKAGES.
         function populateRevisionPackages() {
             const sel = document.getElementById('revPkgSelect');
             if (!sel) return;
@@ -5043,12 +5052,11 @@ Option D" required></textarea>
                 });
                 if (grp.children.length) sel.appendChild(grp);
             };
-            addGroup('J2 Last-Minute Revision (TYS)', pkg => pkg.free === true);
-            if (prem) addGroup('Topical Revision (10 questions per topic)', pkg => pkg.free !== true);
+            if (prem) addGroup('Topical Revision (10 questions per topic)', pkg => pkg.free !== true && !pkg.retired);
             sel.dataset.filled = key;
         }
 
-        // Load a curated revision package into the on-screen quiz (topic sets premium only; J2 sets for every account)
+        // Load a curated revision package into the on-screen quiz (topic sets, premium only)
         async function startRevisionPackage() {
             const sel = document.getElementById('revPkgSelect');
             const idx = (sel && sel.value !== '') ? parseInt(sel.value) : -1;
@@ -9073,15 +9081,15 @@ Option D" required></textarea>
                 quizPanel.style.display = 'block';
                 tabQuiz.classList.add('active');
                 updateQuizMoreOptions(true);
-                // Revision MCQs: everyone sees the picker (free accounts get the J2 Last-Minute sets only,
-                // plus a one-line Premium note); premium also gets the topic sets
+                // Revision MCQs: premium gets the topic sets, free accounts the Premium teaser; anyone on the
+                // Learning Path also gets a pointer to Most tested first (the J2 sets were retired on 28 Nov 2026)
                 const revPrem = revPkgIsPremiumRole();
                 const revInterface = document.getElementById('revPkgInterface');
                 const revTeaser = document.getElementById('revPkgTeaser');
-                const revFreeNote = document.getElementById('revPkgFreeNote');
-                if (revInterface) revInterface.style.display = 'block';
-                if (revTeaser) revTeaser.style.display = 'none';
-                if (revFreeNote) revFreeNote.style.display = revPrem ? 'none' : 'block';
+                const revPathNote = document.getElementById('revPkgPathNote');
+                if (revInterface) revInterface.style.display = revPrem ? 'block' : 'none';
+                if (revTeaser) revTeaser.style.display = revPrem ? 'none' : 'block';
+                if (revPathNote) revPathNote.style.display = (typeof pathEnabled === 'function' && pathEnabled()) ? 'block' : 'none';
                 populateRevisionPackages();
             } else if (tab === 'worksheets') {
                 wsPanel.style.display = 'block';

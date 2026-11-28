@@ -1650,7 +1650,10 @@
         .p2p3-v2only { display: none !important; }
         body.p2p3-v2 .p2p3-v2only { display: block !important; }
         body.p2p3-v2 .p2p3-v1only { display: none !important; }
-        body.p2p3-v2 #p2p3PathBtn { width: 100%; margin: 0 0 1rem; }
+        /* Practise Structured Questions card for premium accounts (path chooser and path home, Eric 28 Nov 2026) */
+        .lp-sqcard { border-color: #00666f; background: #0f1f21; }
+        .lp-sqcard b { color: var(--primary); }
+        .lp-wrap > .lp-sqcard { width: 100%; margin: 0 0 1.2rem; }
         .p2p3-v2intro { font-size: 0.95rem; margin: 0 0 1rem; color: #fff; }
         body:not(.p2p3-v2) #p2p3Adv > summary { display: none; }
         #p2p3Adv > summary { cursor: pointer; color: var(--cyan, #2ee6f2); text-decoration: underline; margin: 0.4rem 0 0.6rem; font-size: 0.92rem; }
@@ -3074,7 +3077,6 @@ Option D" required></textarea>
                 <div class="panel" style="max-width:1000px;margin:0 auto;">
                     <div class="panel-header"><span>Paper 2 &amp; 3 Practice</span></div>
                     <div id="p2p3Interface" style="display:none;">
-                        <button type="button" class="lp-btn teal" id="p2p3PathBtn" onclick="lpOpenHome()" style="display:none">Continue your path</button>
                         <p class="p2p3-v2only p2p3-v2intro">Pick a topic and tap <b>Show questions</b>. Write your answers on paper, then tap <b>Show answer</b> on each part.</p>
                         <p class="p2p3-v1only" style="opacity:0.75;font-size:0.9rem;margin-bottom:1rem;">Structured (Paper&nbsp;2) and free-response (Paper&nbsp;3) practice by topic and concept, from real school Prelim and Ten-Year-Series questions. Or switch to <b>Whole paper</b> to work through one school&rsquo;s Paper&nbsp;2 or Paper&nbsp;3 in its original order. Pick a topic, add a concept if you want one, narrow with the filters if you like, then reveal the worked answer part by part.</p>
                         <div id="p2p3FreeNote" class="p2p3-freenote" style="display:none;">Your free account includes every <b>Ten-Year-Series</b> Paper&nbsp;2 and Paper&nbsp;3 question (2017 to 2025) and the <b>9476 Specimen</b> Papers&nbsp;2 and&nbsp;3, with the answers. <b>Premium</b> adds more than 1,300 school Prelim questions from every JC. <a href="https://wa.me/6583322534?text=Hi%20Mr%20Khemistry%2C%20I%27d%20like%20to%20sign%20up%20for%20KhemBank%20Premium." target="_blank" rel="noopener">Sign up for Premium on WhatsApp</a>.</div>
@@ -6246,7 +6248,7 @@ Option D" required></textarea>
                 `;
             } else if (viewId === 'studentView') {
                 buttons = pathEnabled() ? `
-                    <button class="btn btn-primary" onclick="lpOpenHome()">My path</button>
+                    <button class="btn btn-primary" onclick="lpOpenHome()">Bite-sized lessons</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 ` : `
                     <button class="btn btn-secondary" onclick="showView('welcome')">Home</button>
@@ -6266,7 +6268,7 @@ Option D" required></textarea>
                 `;
             } else if (viewId === 'resultsView') {
                 buttons = `
-                    <button class="btn btn-secondary" onclick="${pathEnabled() ? 'lpOpenHome()' : "showView('welcome')"}">${pathEnabled() ? 'My path' : 'Home'}</button>
+                    <button class="btn btn-secondary" onclick="${pathEnabled() ? 'lpOpenHome()' : "showView('welcome')"}">${pathEnabled() ? 'Bite-sized lessons' : 'Home'}</button>
                     <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
                 `;
             }
@@ -6684,6 +6686,7 @@ Option D" required></textarea>
                     <p class="lp-note">Each lesson is about 5 real A-level questions and takes about 5 minutes. You can switch paths any time.</p>
                     ${opt('begin', 'From the beginning', (lpHoliday ? 'Topic by topic, starting with the organic holiday homework, then Atomic Structure to Transition Elements.' : 'Topic by topic, from Atomic Structure to Transition Elements.') + ' Best if you are in JC1 or starting revision.')}
                     ${opt('tested', 'Most tested first', 'The 17 concepts that came up in 5 or more A-level papers from 2017 to 2025. Best if you are in JC2.')}
+                    ${lpSqCard()}
                 </div>
                 <div class="lp-cta"><div class="lp-cta-in"><button type="button" class="lp-btn go" onclick="lpConfirmChoice()">Continue</button></div></div>`;
         }
@@ -6709,7 +6712,7 @@ Option D" required></textarea>
                     <span class="lp-chip fire" title="Days in a row">${lpFlame()}${lp.streak}</span>
                     <span class="lp-chip pts" title="Points: ${PATH_POINTS} for each correct answer">${lp.points} pts</span>
                     <span class="lp-goal" title="Daily goal: ${PATH_DAILY_GOAL} lessons"><span class="lp-ring" style="--p:${goalPct}%"></span>${Math.min(lp.today, PATH_DAILY_GOAL)}/${PATH_DAILY_GOAL} today</span>
-                </div>`;
+                </div>${lpSqCard(true)}`;
             const fold = lpFoldOn(pk);
             let foldDrawn = false;
             path.units.forEach((u, ui) => {
@@ -6756,6 +6759,14 @@ Option D" required></textarea>
         function lpSqMinutes(l) { return Math.max(5, Math.round(((l.mk || 10) * 1.5) / 5) * 5); }   // about 1.5 minutes a mark, to the nearest 5
         function lpGoPractise() { showView('student'); logStudentUse('tab_open', 'quiz'); }
         function lpGoProgress() { showView('student'); switchStudentTab('history'); logStudentUse('tab_open', 'history'); }
+        // Premium accounts (Eric, 28 Nov 2026): a card on the path chooser and the path home that opens Paper 2 & 3 practice.
+        // Free accounts never see it (their structured practice stays inside the path).
+        // short = the path home's card: title only (Eric, 28 Nov 2026); the chooser keeps the one-line description
+        function lpSqCard(short) {
+            if (userRole !== 'premium_student') return '';
+            return `<button type="button" class="lp-choice lp-sqcard" onclick="lpGoStructured()"><b>Practise Structured Questions</b>${short ? '' : '<span>Paper 2 and 3 questions by topic, or a whole school paper, with the answers part by part.</span>'}</button>`;
+        }
+        function lpGoStructured() { lpLog('path_sq_card', {}); showView('student'); openStudentTab('p2p3'); window.scrollTo(0, 0); }
 
         async function lpStartLesson(ui, li) {
             if (lpHolidayStale()) { lpOpenHome(); return; }   // the order changed at 1 Jan: show the new path before starting
@@ -9147,7 +9158,6 @@ Option D" required></textarea>
             const v2 = lpV2();
             document.body.classList.toggle('p2p3-v2', v2);
             document.body.classList.toggle('p2p3-free', free);
-            const pathBtn = document.getElementById('p2p3PathBtn'); if (pathBtn) pathBtn.style.display = (v2 && pathEnabled()) ? '' : 'none';
             const adv = document.getElementById('p2p3Adv'), numWrap = document.getElementById('p2p3NumWrap');
             if (v2 && adv && numWrap && !adv.dataset.v2) {
                 adv.dataset.v2 = '1';

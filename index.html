@@ -11368,7 +11368,8 @@ Option D" required></textarea>
         }
 
         // ═══ LEARNING PATH REPORT (admin Analytics tab, 25 Nov 2026) ═══
-        // Each student's progress and scores on "From the beginning", unit by unit, from data already saved:
+        // Each student's progress and scores on one path (From the beginning or, since 28 Nov 2026, Most tested first),
+        // unit by unit, from data already saved:
         //  - MCQ lessons: question_responses. A lesson is done once all its questions are answered (as on the student's own
         //    path); the score is each question's FIRST answer, wherever it was answered.
         //  - Structured sets: done once every part to score has a structured_selfmarks row (as on the student's path).
@@ -11377,18 +11378,22 @@ Option D" required></textarea>
         // Admin row security reads all three tables. Test accounts in REVISION_EXCLUDED_EMAILS are left out.
         let pathReport = null;
         let analyticsLoadedOnce = false;   // set when loadAnalytics has the student list
-        const PR_UNITS_KEY = 'kb_pr_units', PR_FREE_KEY = 'kb_pr_free', PR_SINCE_KEY = 'kb_pr_since';
+        const PR_UNITS_KEY = 'kb_pr_units', PR_FREE_KEY = 'kb_pr_free', PR_SINCE_KEY = 'kb_pr_since', PR_PATH_KEY = 'kb_pr_path';
+        const PR_PATHS = { begin: 'From the beginning', tested: 'Most tested first' };
+        function prGetPath() { try { return localStorage.getItem(PR_PATH_KEY) === 'tested' ? 'tested' : 'begin'; } catch (e) { return 'begin'; } }
+        function prSetPath(k) { try { localStorage.setItem(PR_PATH_KEY, k === 'tested' ? 'tested' : 'begin'); } catch (e) {} pathReportRender(); }
+        function prUnitsKey() { return prGetPath() === 'tested' ? PR_UNITS_KEY + '_tested' : PR_UNITS_KEY; }   // ticked units per path
         function prGetSince() { try { const v = localStorage.getItem(PR_SINCE_KEY) || ''; return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''; } catch (e) { return ''; } }
         function prSetSince(v) { try { localStorage.setItem(PR_SINCE_KEY, v || ''); } catch (e) {} pathReportRender(); }
         function prSinceIso(d) { return d ? new Date(d + 'T00:00:00+08:00').toISOString() : ''; }   // midnight in Singapore
-        function prAllUnits() { return PATH_DATA.paths.begin.units.map(u => u.t); }
+        function prAllUnits() { return PATH_DATA.paths[prGetPath()].units.map(u => u.t); }
         function prGetUnits() {
             let v = null;
-            try { v = JSON.parse(localStorage.getItem(PR_UNITS_KEY) || 'null'); } catch (e) {}
+            try { v = JSON.parse(localStorage.getItem(prUnitsKey()) || 'null'); } catch (e) {}
             const all = prAllUnits();
             return Array.isArray(v) ? v.filter(t => all.includes(t)) : all;
         }
-        function prSetUnits(v) { try { localStorage.setItem(PR_UNITS_KEY, JSON.stringify(v)); } catch (e) {} pathReportRender(); }
+        function prSetUnits(v) { try { localStorage.setItem(prUnitsKey(), JSON.stringify(v)); } catch (e) {} pathReportRender(); }
         function prShowFree() { try { return localStorage.getItem(PR_FREE_KEY) === '1'; } catch (e) { return false; } }
         function prToggleUnit(cb) {
             const t = prAllUnits()[Number(cb.value)], sel = prGetUnits();
@@ -11414,7 +11419,7 @@ Option D" required></textarea>
             if (pathReport && !force) { pathReportRender(); return; }
             box.innerHTML = '<div class="empty-state"><h3>Loading Learning Path data...</h3></div>';
             try {
-                const units = PATH_DATA.paths.begin.units;
+                const units = [...PATH_DATA.paths.begin.units, ...PATH_DATA.paths.tested.units];   // both paths, loaded once
                 const mcqIds = [...new Set(units.flatMap(u => u.lessons.filter(l => !l.sq).flatMap(l => l.ids)))];
                 const sqParts = [...new Set(units.flatMap(u => u.lessons.filter(l => l.sq).flatMap(l => l.sq.flatMap(x => x[2] || x[1]))))];
                 const [resp, att, marks, partRows] = await Promise.all([
@@ -11447,7 +11452,7 @@ Option D" required></textarea>
             resp.forEach(r => { const p = get(r.user_id); if (!p.first.has(r.question_id)) p.first.set(r.question_id, !!r.is_correct); later(p.qT, r.question_id, r.answered_at); });
             att.forEach(a => { const p = get(a.user_id); p.score.set(a.part_id, { got: Number(a.marks_awarded) || 0, tot: Number(a.marks) || 1, t: a.created_at }); later(p.pT, a.part_id, a.created_at); });
             marks.forEach(m => { const p = get(m.user_id); p.rated.set(m.part_id, m.rating); p.ratedT = p.ratedT || new Map(); p.ratedT.set(m.part_id, m.updated_at); later(p.pT, m.part_id, m.updated_at); });
-            const units = PATH_DATA.paths.begin.units.filter(u => sel.includes(u.t));
+            const units = PATH_DATA.paths[prGetPath()].units.filter(u => sel.includes(u.t));
             const empty = { first: new Map(), rated: new Map(), score: new Map(), qT: new Map(), pT: new Map() };
             return students.map(s => {
                 const prem = s.role === 'premium_student';
@@ -11488,7 +11493,7 @@ Option D" required></textarea>
             const box = document.getElementById('pathReportContainer');
             if (!box || !pathReport) return;
             if (!analyticsLoadedOnce) { box.innerHTML = '<div class="empty-state"><h3>Loading students...</h3></div>'; return; }   // loadAnalytics redraws it
-            const all = prAllUnits(), sel = prGetUnits(), withFree = prShowFree(), since = prGetSince();
+            const all = prAllUnits(), sel = prGetUnits(), withFree = prShowFree(), since = prGetSince(), pk = prGetPath();
             const pct = (a, b) => b ? Math.round(100 * a / b) : null;
             const badge = v => v == null ? '' : (v >= 70 ? 'score-high' : v >= 50 ? 'score-mid' : 'score-low');
             const half = n => String(Math.round(n * 2) / 2);
@@ -11502,8 +11507,10 @@ Option D" required></textarea>
                 else if (!prem && (r.got1 + r.partly + r.missed)) h += '<div class="ct-sub">Self-rated: ' + r.got1 + ' got it, ' + r.partly + ' partly, ' + r.missed + ' missed</div>';
                 return h;
             };
-            let html = '<div class="pr-bar"><span style="font-weight:700; color:var(--primary);">Units</span>'
-                + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetUnits(prAllUnits())">All units</button>'
+            let html = '<div class="pr-bar"><span style="font-weight:700; color:var(--primary);">Path</span>'
+                + Object.keys(PR_PATHS).map(k => '<button type="button" class="btn ' + (k === pk ? 'btn-primary' : 'btn-secondary') + '" aria-pressed="' + (k === pk) + '" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetPath(\'' + k + '\')">' + PR_PATHS[k] + '</button>').join('') + '</div>'
+                + '<div class="pr-bar"><span style="font-weight:700; color:var(--primary);">' + (pk === 'tested' ? 'Parts' : 'Units') + '</span>'
+                + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetUnits(prAllUnits())">' + (pk === 'tested' ? 'All parts' : 'All units') + '</button>'
                 + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetUnits([])">Clear</button>'
                 + '<label class="pr-chip" style="margin-left:auto;">Count work from <input type="date" value="' + since + '" onchange="prSetSince(this.value)" style="background:#0a0e27; color:#fff; border:1px solid rgba(0,217,255,0.35); border-radius:6px; padding:0.15rem 0.3rem;"></label>'
                 + (since ? '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="prSetSince(\'\')">All time</button>' : '')
@@ -11511,7 +11518,7 @@ Option D" required></textarea>
                 + '<button type="button" class="btn btn-secondary" style="padding:0.35rem 0.8rem; font-size:0.8rem;" onclick="pathReportLoad(true)">Refresh</button></div>'
                 + '<div class="pr-chips">' + all.map((t, i) => { const on = sel.includes(t);
                     return '<label class="pr-chip' + (on ? ' on' : '') + '"><input type="checkbox" value="' + i + '" ' + (on ? 'checked ' : '') + 'onchange="prToggleUnit(this)"> ' + escapeHtml(t) + '</label>'; }).join('') + '</div>';
-            if (!sel.length) { box.innerHTML = html + '<div class="empty-state"><h3>Tick at least one unit</h3></div>'; return; }
+            if (!sel.length) { box.innerHTML = html + '<div class="empty-state"><h3>Tick at least one ' + (pk === 'tested' ? 'part' : 'unit') + '</h3></div>'; return; }
             const rows = pathReportCompute(sel, withFree, since);
             rows.sort((a, b) => (b.done / Math.max(1, b.steps)) - (a.done / Math.max(1, a.steps)) || String(b.last || '').localeCompare(String(a.last || ''))
                 || String(a.s.full_name || a.s.email || '').localeCompare(String(b.s.full_name || b.s.email || '')));
@@ -11520,12 +11527,12 @@ Option D" required></textarea>
             const card = (v, l) => '<div class="stat-card" style="flex:1; min-width:140px;"><div class="stat-value">' + v + '</div><div class="stat-label">' + l + '</div></div>';
             html += '<div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">' + card(rows.length, withFree ? 'Students' : 'Premium Students')
                 + card(finished, 'Finished Every Step') + card(started - finished, 'Part Way') + card(rows.length - started, 'Not Started') + '</div>'
-                + '<p class="pr-note">The "From the beginning" path, for the ' + sel.length + ' unit' + (sel.length === 1 ? '' : 's') + ' ticked, ' + (since ? 'counting only work from ' + escapeHtml(new Date(prSinceIso(since)).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })) + '. ' : 'all time. ') + 'A lesson counts as done once all its questions are answered' + (since ? ' in that time' : ', even in other practice') + '; MCQ scores use each question\'s first answer' + (since ? ' in that time' : '') + '. Structured marks are the AI marks (premium). Tap a student to see each unit. Data as at ' + escapeHtml(when(pathReport.at)) + '.</p>';
+                + '<p class="pr-note">The "' + PR_PATHS[pk] + '" path, for the ' + sel.length + ' ' + (pk === 'tested' ? 'part' : 'unit') + (sel.length === 1 ? '' : 's') + ' ticked, ' + (since ? 'counting only work from ' + escapeHtml(new Date(prSinceIso(since)).toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' })) + '. ' : 'all time. ') + 'A lesson counts as done once all its questions are answered' + (since ? ' in that time' : ', even in other practice') + '; MCQ scores use each question\'s first answer' + (since ? ' in that time' : '') + '. Structured marks are the AI marks (premium). ' +(pk === 'tested' ? 'Both paths share many TYS questions, so work on one also counts on the other. ' : '') + 'Tap a student to see each ' + (pk === 'tested' ? 'part' : 'unit') + '. Data as at ' + escapeHtml(when(pathReport.at)) + '.</p>';
             html += '<div class="ct-scroll pr-students"><div class="ct-row ct-head"><div>Student</div><div>Steps done</div><div>MCQ lessons</div><div>Structured questions</div><div>Last answer</div></div>'
                 + rows.map(r => {
                     const nm = r.s.full_name || r.s.email || 'Unknown student';
                     const p = pct(r.done, r.steps);
-                    const units = '<div class="pr-units" hidden><div class="ct-row ct-head"><div>Unit</div><div>MCQ lessons</div><div>Structured questions</div></div>'
+                    const units = '<div class="pr-units" hidden><div class="ct-row ct-head"><div>' + (pk === 'tested' ? 'Part' : 'Unit') + '</div><div>MCQ lessons</div><div>Structured questions</div></div>'
                         + r.unitRows.map(u => '<div class="ct-row"><div>' + escapeHtml(u.t) + '</div><div>' + mcqCell(u) + '</div><div>' + sqCell(u, r.prem) + '</div></div>').join('') + '</div>';
                     return '<div class="ct-row pr-row" role="button" tabindex="0" aria-expanded="false" onclick="prToggleRow(this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();prToggleRow(this);}">'
                         + '<div>' + escapeHtml(nm) + '<div class="ct-sub">' + escapeHtml(r.s.email || '') + (r.prem ? '' : ' (free)') + '</div></div>'
